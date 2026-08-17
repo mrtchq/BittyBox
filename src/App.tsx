@@ -18,6 +18,7 @@ import { TEMPLATE_PRESETS } from './data/templates';
 import { TemplateGalleryModal } from './components/TemplateGalleryModal';
 import { createBittyTour } from './components/OnboardingTour';
 import { ConfirmCloseSessionModal } from './components/ConfirmCloseSessionModal';
+import { AnimatedSplash } from './components/AnimatedSplash';
 
 const DEFAULT_STARTER_HTML = `<!DOCTYPE html>
 <html>
@@ -109,6 +110,16 @@ export default function App() {
   const [isNavGalleryOpen, setIsNavGalleryOpen] = useState<boolean>(false);
   const [isCloseSessionModalOpen, setIsCloseSessionModalOpen] = useState<boolean>(false);
   const [history, setHistory] = useState<BittyHistoryItem[]>([]);
+  const [showSplash, setShowSplash] = useState<boolean>(() => {
+    try {
+      const hash = window.location.hash;
+      // If direct deep link to a capsule hash (not empty or edit route), skip splash
+      if (hash && hash !== '#/edit' && hash !== '#edit' && hash !== '#/studio' && hash !== '#/' && hash !== '#') {
+        return false;
+      }
+    } catch {}
+    return true;
+  });
 
   // Apply workspace theme to document root & sync with localStorage
   useEffect(() => {
@@ -582,6 +593,10 @@ export default function App() {
     setCurrentView('editor');
   };
 
+  if (showSplash) {
+    return <AnimatedSplash onComplete={() => setShowSplash(false)} />;
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-[#050515] text-cyan-100 relative overflow-x-hidden font-sans">
       {/* Background Animated Hologram FX */}
@@ -599,6 +614,7 @@ export default function App() {
         onExportZip={() => exportBittyToZip(content, metadata, bittyUrl)}
         onOpenTemplates={() => setIsNavGalleryOpen(true)}
         onStartTour={handleStartTour}
+        onReplaySplash={() => setShowSplash(true)}
         isEncrypted={!!metadata.password}
         hasContent={content.trim().length > 0}
         theme={workspaceTheme}
@@ -662,6 +678,7 @@ export default function App() {
           <AboutModal
             onOpenEditor={() => setCurrentView('editor')}
             onStartTour={handleStartTour}
+            onReplaySplash={() => setShowSplash(true)}
           />
         )}
       </main>

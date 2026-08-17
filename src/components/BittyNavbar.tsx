@@ -34,6 +34,7 @@ interface BittyNavbarProps {
   onExportZip?: () => void;
   onOpenTemplates?: () => void;
   onStartTour?: () => void;
+  onReplaySplash?: () => void;
   isEncrypted: boolean;
   hasContent: boolean;
   theme: WorkspaceTheme;
@@ -51,6 +52,7 @@ export const BittyNavbar: React.FC<BittyNavbarProps> = ({
   onExportZip,
   onOpenTemplates,
   onStartTour,
+  onReplaySplash,
   isEncrypted,
   hasContent,
   theme,
@@ -262,6 +264,19 @@ export const BittyNavbar: React.FC<BittyNavbarProps> = ({
             >
               <Compass className="w-3.5 h-3.5 text-teal-300 animate-spin-slow" />
               <span className="hidden sm:inline">TOUR</span>
+            </button>
+          )}
+
+          {/* Replay Holographic Splash Intro */}
+          {onReplaySplash && (
+            <button
+              id="nav-splash-btn"
+              onClick={onReplaySplash}
+              title="Replay Holographic Intro Boot"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-fuchsia-950/70 to-purple-950/70 border border-fuchsia-500/40 text-fuchsia-200 hover:text-white hover:border-fuchsia-300 hover:shadow-[0_0_12px_rgba(217,70,239,0.4)] text-xs font-cyber transition shadow-sm"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-fuchsia-300 animate-spin-slow" />
+              <span className="hidden sm:inline">INTRO</span>
             </button>
           )}
 
