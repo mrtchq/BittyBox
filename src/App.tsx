@@ -19,6 +19,8 @@ import { TemplateGalleryModal } from './components/TemplateGalleryModal';
 import { createBittyTour } from './components/OnboardingTour';
 import { ConfirmCloseSessionModal } from './components/ConfirmCloseSessionModal';
 import { AnimatedSplash } from './components/AnimatedSplash';
+import { useProStatus } from './hooks/useProStatus';
+import { ProPaywallModal } from './components/ProPaywallModal';
 
 const DEFAULT_STARTER_HTML = `<!DOCTYPE html>
 <html>
@@ -77,6 +79,7 @@ const DEFAULT_STARTER_HTML = `<!DOCTYPE html>
 </html>`;
 
 export default function App() {
+  const proStatus = useProStatus();
   const [currentView, setCurrentView] = useState<AppView>('editor');
   const [content, setContent] = useState<string>(DEFAULT_STARTER_HTML);
   const [metadata, setMetadata] = useState<BittyMetadata>({
@@ -619,6 +622,13 @@ export default function App() {
         hasContent={content.trim().length > 0}
         theme={workspaceTheme}
         onThemeChange={setWorkspaceTheme}
+        mode={proStatus.mode}
+        onModeChange={proStatus.setMode}
+        isPro={proStatus.isPro}
+        isLifetimePro={proStatus.isLifetimePro}
+        isTrialActive={proStatus.isTrialActive}
+        trialTimeRemaining={proStatus.trialTimeRemaining}
+        onOpenPaywall={proStatus.openPaywall}
       />
 
       {/* Main Content Body */}
@@ -641,6 +651,11 @@ export default function App() {
             onSwitchSession={handleSwitchSession}
             onCloseSessionById={handleCloseSessionById}
             onNewSession={handleNewBox}
+            mode={proStatus.mode}
+            isPro={proStatus.isPro}
+            isLifetimePro={proStatus.isLifetimePro}
+            isTrialActive={proStatus.isTrialActive}
+            onOpenPaywall={proStatus.openPaywall}
           />
         )}
 
@@ -711,6 +726,21 @@ export default function App() {
         contentLength={content.length}
         isEncrypted={!!metadata.password}
         sessionType={currentView === 'viewer' ? 'viewer' : 'editor'}
+      />
+
+      {/* BittyBox PRO Paywall & License Modal */}
+      <ProPaywallModal
+        isOpen={proStatus.isPaywallOpen}
+        onClose={proStatus.closePaywall}
+        isPro={proStatus.isPro}
+        isLifetimePro={proStatus.isLifetimePro}
+        isTrialActive={proStatus.isTrialActive}
+        trialTimeRemaining={proStatus.trialTimeRemaining}
+        paywallFeature={proStatus.paywallFeature}
+        onUnlockLifetime={proStatus.unlockLifetimePro}
+        onResetTrial={proStatus.resetTrial}
+        onExpireTrialForDemo={proStatus.expireTrialForDemo}
+        onSwitchToPro={() => proStatus.setMode('pro')}
       />
     </div>
   );
