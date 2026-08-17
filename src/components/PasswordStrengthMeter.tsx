@@ -13,12 +13,15 @@ import {
   AlertTriangle,
   Info,
   CheckCircle2,
-  XCircle
+  XCircle,
+  Crown
 } from 'lucide-react';
 
 interface PasswordStrengthMeterProps {
   password?: string;
   onChangePassword: (newPassword: string) => void;
+  isLocked?: boolean;
+  onOpenPaywall?: (featureName?: string) => void;
 }
 
 export interface PasswordAnalysis {
@@ -114,13 +117,13 @@ export const analyzePassword = (pwd: string): PasswordAnalysis => {
   } else if (score < 55) {
     return {
       score,
-      label: 'WEAK // BASIC PHRASE',
+      label: 'WEAK // BASIC SHIELD',
       color: 'orange',
-      barColor: 'bg-orange-500',
-      textColor: 'text-orange-400',
+      barColor: 'bg-orange-400',
+      textColor: 'text-orange-300',
       borderColor: 'border-orange-500/50',
       entropyBits,
-      crackTimeText: '~30 seconds to 5 minutes',
+      crackTimeText: '~2 to 45 minutes',
       hasMinLength,
       hasGoodLength,
       hasUpper,
@@ -183,13 +186,13 @@ export const analyzePassword = (pwd: string): PasswordAnalysis => {
 };
 
 export const generateStrongKey = (): string => {
-  const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*-_=+';
+  const chars = 'abcdefghijklmnopqrstuvwxyz' + 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' + '0123456789' + '!@#$%^&*-_=+';
   const length = 16;
   const values = new Uint32Array(length);
   window.crypto.getRandomValues(values);
   let result = '';
   for (let i = 0; i < length; i++) {
-    result += charset[values[i] % charset.length];
+    result += chars[values[i] % chars.length];
   }
   return result;
 };
@@ -197,6 +200,8 @@ export const generateStrongKey = (): string => {
 export const PasswordStrengthMeter: React.FC<PasswordStrengthMeterProps> = ({
   password = '',
   onChangePassword,
+  isLocked = false,
+  onOpenPaywall,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [copiedKey, setCopiedKey] = useState(false);
@@ -204,6 +209,10 @@ export const PasswordStrengthMeter: React.FC<PasswordStrengthMeterProps> = ({
   const analysis = useMemo(() => analyzePassword(password), [password]);
 
   const handleGenerateKey = () => {
+    if (isLocked) {
+      if (onOpenPaywall) onOpenPaywall('AES-256 Client-Side Encryption');
+      return;
+    }
     const key = generateStrongKey();
     onChangePassword(key);
   };
@@ -219,6 +228,43 @@ export const PasswordStrengthMeter: React.FC<PasswordStrengthMeterProps> = ({
     } catch {}
   };
 
+  if (isLocked) {
+    return (
+      <div 
+        onClick={() => onOpenPaywall && onOpenPaywall('AES-256 Client-Side Encryption')}
+        className="w-full mt-3 p-4 rounded-xl bg-gradient-to-r from-fuchsia-950/40 via-purple-950/40 to-black/60 border border-fuchsia-500/30 flex flex-col sm:flex-row items-center justify-between gap-3 cursor-pointer hover:border-fuchsia-400/60 transition group shadow-[0_0_20px_rgba(0,0,0,0.5)]"
+      >
+        <div className="flex items-center gap-3 text-left">
+          <div className="p-2 rounded-lg bg-fuchsia-950/80 border border-fuchsia-500/40 text-fuchsia-300 group-hover:scale-110 transition-transform">
+            <Lock className="w-5 h-5 text-fuchsia-400 animate-pulse" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-mono font-bold text-fuchsia-200 uppercase">
+                AES-256 Client-Side Encryption
+              </span>
+              <span className="px-1.5 py-0.2 bg-fuchsia-900 text-amber-300 text-[9px] font-mono font-bold border border-amber-500/40 rounded flex items-center gap-1">
+                <Crown className="w-2.5 h-2.5 fill-amber-300" />
+                PRO FEATURE
+              </span>
+            </div>
+            <p className="text-[10px] font-mono text-purple-300/70 mt-0.5">
+              Lock payloads with 256-bit client cryptography before generating URL capsules.
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          className="px-3 py-1.5 rounded-lg bg-fuchsia-950/90 border border-fuchsia-500/50 group-hover:bg-fuchsia-900 text-fuchsia-200 text-xs font-mono font-bold tracking-wider flex items-center gap-1.5 shadow-[0_0_12px_rgba(189,0,255,0.3)] shrink-0"
+        >
+          <Crown className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+          <span>UNLOCK PRO</span>
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full mt-3 p-3.5 rounded-xl bg-black/50 border border-fuchsia-500/25 space-y-3">
       {/* Header & Passcode Input */}
@@ -233,7 +279,7 @@ export const PasswordStrengthMeter: React.FC<PasswordStrengthMeterProps> = ({
           <button
             type="button"
             onClick={handleGenerateKey}
-            className="flex items-center gap-1 px-2.5 py-1 rounded bg-fuchsia-950/80 border border-fuchsia-500/40 text-fuchsia-200 hover:text-white hover:bg-fuchsia-900/80 text-[10px] font-cyber transition shadow-sm"
+            className="flex items-center gap-1 px-2.5 py-1 rounded bg-fuchsia-950/80 border border-fuchsia-500/40 text-fuchsia-200 hover:text-white hover:bg-fuchsia-900/80 text-[10px] font-cyber transition shadow-sm cursor-pointer"
             title="Generate 16-character cryptographic high-entropy passkey"
           >
             <Sparkles className="w-3 h-3 text-fuchsia-400" />
@@ -244,7 +290,7 @@ export const PasswordStrengthMeter: React.FC<PasswordStrengthMeterProps> = ({
             <button
               type="button"
               onClick={handleCopyKey}
-              className="flex items-center gap-1 px-2 py-1 rounded bg-black/60 border border-cyan-500/30 text-cyan-300 hover:text-white text-[10px] font-mono transition"
+              className="flex items-center gap-1 px-2 py-1 rounded bg-black/60 border border-cyan-500/30 text-cyan-300 hover:text-white text-[10px] font-mono transition cursor-pointer"
               title="Copy passcode"
             >
               {copiedKey ? <Check className="w-3 h-3 text-teal-300" /> : <Copy className="w-3 h-3" />}
@@ -266,7 +312,7 @@ export const PasswordStrengthMeter: React.FC<PasswordStrengthMeterProps> = ({
         <button
           type="button"
           onClick={() => setShowPassword(!showPassword)}
-          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-purple-400/60 hover:text-fuchsia-300 transition p-1"
+          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-purple-400/60 hover:text-fuchsia-300 transition p-1 cursor-pointer"
           title={showPassword ? 'Hide passcode' : 'Reveal passcode'}
         >
           {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}

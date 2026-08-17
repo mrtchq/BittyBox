@@ -42,9 +42,10 @@ import {
   Redo2,
   LogOut,
   Plus,
-  X
+  X,
+  Crown
 } from 'lucide-react';
-import { BittyMetadata, TemplatePreset, BittySession } from '../types';
+import { BittyMetadata, TemplatePreset, BittySession, WorkspaceMode } from '../types';
 import { TEMPLATE_PRESETS } from '../data/templates';
 import { motion, AnimatePresence } from 'motion/react';
 import { HoloGenerateButton } from './HoloGenerateButton';
@@ -73,6 +74,11 @@ interface BittyEditorProps {
   onSwitchSession?: (sessionId: string) => void;
   onCloseSessionById?: (sessionId: string) => void;
   onNewSession?: () => void;
+  mode?: WorkspaceMode;
+  isPro?: boolean;
+  isLifetimePro?: boolean;
+  isTrialActive?: boolean;
+  onOpenPaywall?: (featureName?: string) => void;
 }
 
 const bentoContainerVariants = {
@@ -122,6 +128,11 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
   onSwitchSession,
   onCloseSessionById,
   onNewSession,
+  mode = 'pro',
+  isPro = true,
+  isLifetimePro = false,
+  isTrialActive = true,
+  onOpenPaywall,
 }) => {
   const [showMetadata, setShowMetadata] = useState(true);
   const [showTemplates, setShowTemplates] = useState(false);
@@ -135,6 +146,47 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [autoSaveToast, setAutoSaveToast] = useState(false);
   const [manualSaveToast, setManualSaveToast] = useState(false);
+
+  // Guarded PRO Feature Handlers
+  const handleFormatCodeClick = () => {
+    if (mode === 'simple' && !isPro) {
+      if (onOpenPaywall) onOpenPaywall('Prettier Code Formatter');
+      return;
+    }
+    handleFormatCode();
+  };
+
+  const handleExportZipClick = () => {
+    if (mode === 'simple' && !isPro) {
+      if (onOpenPaywall) onOpenPaywall('ZIP Package Archive Exporter');
+      return;
+    }
+    handleExportZip();
+  };
+
+  const handleOpenGalleryClick = () => {
+    if (mode === 'simple' && !isPro) {
+      if (onOpenPaywall) onOpenPaywall('Curated Template Lab');
+      return;
+    }
+    setIsGalleryModalOpen(true);
+  };
+
+  const handleOpenSeoClick = () => {
+    if (mode === 'simple' && !isPro) {
+      if (onOpenPaywall) onOpenPaywall('SEO & Social Graph Analyzer');
+      return;
+    }
+    setIsSeoModalOpen(true);
+  };
+
+  const handleNewSessionClick = () => {
+    if (mode === 'simple' && !isPro) {
+      if (onOpenPaywall) onOpenPaywall('Multi-Session Workspace Tabs');
+      return;
+    }
+    if (onNewSession) onNewSession();
+  };
   
   // Format code state
   const [isFormatting, setIsFormatting] = useState(false);
@@ -501,67 +553,104 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
       )}
 
       {/* Multi-Session Tabs Breadcrumb Bar */}
-      <div className="mb-4 bg-[#080214]/90 border border-cyan-500/30 rounded-xl p-2 px-3 flex flex-wrap items-center justify-between gap-2 shadow-[0_4px_20px_rgba(0,0,0,0.6)] backdrop-blur-md">
-        <div className="flex items-center gap-1.5 overflow-x-auto py-0.5 max-w-full">
-          <span className="text-[10px] font-cyber text-cyan-400/80 mr-1 flex items-center gap-1 flex-shrink-0 tracking-wider">
-            <Layers className="w-3 h-3 text-cyan-400" />
-            SESSIONS //
-          </span>
+      {mode === 'simple' ? (
+        <div className="mb-4 bg-[#080214]/90 border border-cyan-500/30 rounded-xl p-2 px-3 flex flex-wrap items-center justify-between gap-2 shadow-[0_4px_20px_rgba(0,0,0,0.6)] backdrop-blur-md">
+          <div className="flex items-center gap-2 overflow-x-auto py-0.5 max-w-full">
+            <span className="text-[10px] font-cyber text-cyan-400/80 mr-1 flex items-center gap-1 flex-shrink-0 tracking-wider">
+              <Layers className="w-3 h-3 text-cyan-400" />
+              SESSION //
+            </span>
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-mono bg-cyan-950/90 border border-cyan-400 text-cyan-200 font-bold shadow-[0_0_10px_rgba(0,242,255,0.3)]">
+              <span>{metadata.favicon || '📦'}</span>
+              <span className="max-w-[160px] truncate">{metadata.title || 'Untitled Bitty Box'}</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse ml-0.5" />
+            </div>
 
-          {sessions.map((tab) => {
-            const isActive = tab.id === currentSessionId;
-            return (
-              <div
-                key={tab.id}
-                onClick={() => onSwitchSession && onSwitchSession(tab.id)}
-                className={`group flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-mono transition flex-shrink-0 cursor-pointer ${
-                  isActive
-                    ? 'bg-cyan-950/90 border border-cyan-400 text-cyan-200 font-bold shadow-[0_0_10px_rgba(0,242,255,0.3)]'
-                    : 'bg-black/50 border border-cyan-500/20 text-purple-300/70 hover:text-cyan-200 hover:bg-cyan-950/40'
-                }`}
-                title={`Switch to session: ${tab.title || 'Untitled'}`}
-              >
-                <span>{tab.favicon || '📦'}</span>
-                <span className="max-w-[120px] sm:max-w-[160px] truncate">{tab.title || 'Untitled'}</span>
-                {isActive && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse ml-0.5" />
-                )}
-                {onCloseSessionById && (
-                  <button
-                    type="button"
-                    id={`close-session-tab-${tab.id}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onCloseSessionById(tab.id);
-                    }}
-                    className="p-0.5 rounded hover:bg-rose-950/80 hover:text-rose-300 text-purple-400/50 hover:border hover:border-rose-500/40 transition cursor-pointer flex items-center justify-center ml-1"
-                    title={`Close session "${tab.title || 'Untitled'}"`}
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                )}
-              </div>
-            );
-          })}
-
-          {onNewSession && (
             <button
               type="button"
               id="editor-new-session-tab-btn"
-              onClick={onNewSession}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-mono bg-purple-950/40 border border-purple-500/30 text-purple-300 hover:text-cyan-200 hover:border-cyan-400/50 hover:bg-cyan-950/30 transition flex-shrink-0 cursor-pointer"
-              title="Open a new micro-app session tab"
+              onClick={handleNewSessionClick}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono bg-purple-950/50 border border-purple-500/40 text-purple-200 hover:text-white hover:bg-purple-900/60 transition flex-shrink-0 cursor-pointer"
+              title="Multi-session workspace tabs are unlocked in PRO mode"
             >
               <Plus className="w-3 h-3 text-cyan-400" />
-              <span>NEW BOX</span>
+              <span>NEW TAB</span>
+              <span className="text-[9px] font-mono px-1 rounded bg-fuchsia-900 text-amber-300 border border-amber-500/40 flex items-center gap-0.5">
+                <Crown className="w-2.5 h-2.5 fill-amber-300" />
+                PRO
+              </span>
             </button>
-          )}
-        </div>
+          </div>
 
-        <div className="flex items-center gap-2 ml-auto text-[10px] font-mono text-purple-300/60">
-          <span>{sessions.length} OPEN {sessions.length === 1 ? 'BOX' : 'BOXES'}</span>
+          <div className="flex items-center gap-2 ml-auto text-[10px] font-mono">
+            <span className="px-2 py-0.5 rounded bg-cyan-950/60 border border-cyan-500/30 text-cyan-300">
+              SIMPLE MODE (SINGLE DRAFT)
+            </span>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="mb-4 bg-[#080214]/90 border border-cyan-500/30 rounded-xl p-2 px-3 flex flex-wrap items-center justify-between gap-2 shadow-[0_4px_20px_rgba(0,0,0,0.6)] backdrop-blur-md">
+          <div className="flex items-center gap-1.5 overflow-x-auto py-0.5 max-w-full">
+            <span className="text-[10px] font-cyber text-cyan-400/80 mr-1 flex items-center gap-1 flex-shrink-0 tracking-wider">
+              <Layers className="w-3 h-3 text-cyan-400" />
+              SESSIONS //
+            </span>
+
+            {sessions.map((tab) => {
+              const isActive = tab.id === currentSessionId;
+              return (
+                <div
+                  key={tab.id}
+                  onClick={() => onSwitchSession && onSwitchSession(tab.id)}
+                  className={`group flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-mono transition flex-shrink-0 cursor-pointer ${
+                    isActive
+                      ? 'bg-cyan-950/90 border border-cyan-400 text-cyan-200 font-bold shadow-[0_0_10px_rgba(0,242,255,0.3)]'
+                      : 'bg-black/50 border border-cyan-500/20 text-purple-300/70 hover:text-cyan-200 hover:bg-cyan-950/40'
+                  }`}
+                  title={`Switch to session: ${tab.title || 'Untitled'}`}
+                >
+                  <span>{tab.favicon || '📦'}</span>
+                  <span className="max-w-[120px] sm:max-w-[160px] truncate">{tab.title || 'Untitled'}</span>
+                  {isActive && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse ml-0.5" />
+                  )}
+                  {onCloseSessionById && (
+                    <button
+                      type="button"
+                      id={`close-session-tab-${tab.id}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onCloseSessionById(tab.id);
+                      }}
+                      className="p-0.5 rounded hover:bg-rose-950/80 hover:text-rose-300 text-purple-400/50 hover:border hover:border-rose-500/40 transition cursor-pointer flex items-center justify-center ml-1"
+                      title={`Close session "${tab.title || 'Untitled'}"`}
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+
+            {onNewSession && (
+              <button
+                type="button"
+                id="editor-new-session-tab-btn"
+                onClick={handleNewSessionClick}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-mono bg-purple-950/40 border border-purple-500/30 text-purple-300 hover:text-cyan-200 hover:border-cyan-400/50 hover:bg-cyan-950/30 transition flex-shrink-0 cursor-pointer"
+                title="Open a new micro-app session tab"
+              >
+                <Plus className="w-3 h-3 text-cyan-400" />
+                <span>NEW BOX</span>
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2 ml-auto text-[10px] font-mono text-purple-300/60">
+            <span>{sessions.length} OPEN {sessions.length === 1 ? 'BOX' : 'BOXES'}</span>
+          </div>
+        </div>
+      )}
 
       <input 
         ref={fileInputRef} 
@@ -658,22 +747,34 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
           <div className="flex flex-wrap items-center gap-2 pt-4 mt-4 border-t border-cyan-500/15">
             <button
               id="bitty-presets-btn"
-              onClick={() => setIsGalleryModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-fuchsia-950/70 to-purple-950/70 border border-fuchsia-500/40 text-fuchsia-200 hover:bg-fuchsia-900/50 hover:text-white text-xs font-cyber transition shadow-sm"
+              onClick={handleOpenGalleryClick}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-fuchsia-950/70 to-purple-950/70 border border-fuchsia-500/40 text-fuchsia-200 hover:bg-fuchsia-900/50 hover:text-white text-xs font-cyber transition shadow-sm cursor-pointer"
               title="Browse and load ready-to-use micro-web templates"
             >
               <Sparkles className="w-3.5 h-3.5 text-fuchsia-400" />
               <span>TEMPLATE GALLERY</span>
+              {mode === 'simple' && !isPro && (
+                <span className="text-[9px] font-mono px-1 rounded bg-fuchsia-900 text-amber-300 border border-amber-500/40 flex items-center gap-0.5">
+                  <Crown className="w-2.5 h-2.5 fill-amber-300" />
+                  PRO
+                </span>
+              )}
             </button>
 
             <button
               id="bitty-seo-btn"
-              onClick={() => setIsSeoModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-950/60 border border-cyan-500/40 text-cyan-200 hover:bg-cyan-900/50 hover:text-white text-xs font-mono transition shadow-sm"
+              onClick={handleOpenSeoClick}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-950/60 border border-cyan-500/40 text-cyan-200 hover:bg-cyan-900/50 hover:text-white text-xs font-mono transition shadow-sm cursor-pointer"
               title="Open SEO & Discoverability Analyzer Modal"
             >
               <Search className="w-3.5 h-3.5 text-cyan-400" />
               <span>SEO ANALYZER</span>
+              {mode === 'simple' && !isPro && (
+                <span className="text-[9px] font-mono px-1 rounded bg-fuchsia-900 text-amber-300 border border-amber-500/40 flex items-center gap-0.5">
+                  <Crown className="w-2.5 h-2.5 fill-amber-300" />
+                  PRO
+                </span>
+              )}
             </button>
 
             {/* Split-View Layout Mode Toggle */}
@@ -681,7 +782,7 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
               <button
                 type="button"
                 onClick={() => setEditorViewMode('split')}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded text-xs font-mono transition ${
+                className={`flex items-center gap-1 px-2.5 py-1 rounded text-xs font-mono transition cursor-pointer ${
                   editorViewMode === 'split'
                     ? 'bg-cyan-950 text-cyan-300 border border-cyan-400 font-bold shadow-[0_0_8px_rgba(0,242,255,0.3)]'
                     : 'text-purple-300/70 hover:text-cyan-200'
@@ -695,7 +796,7 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
               <button
                 type="button"
                 onClick={() => setEditorViewMode('code')}
-                className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-mono transition ${
+                className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-mono transition cursor-pointer ${
                   editorViewMode === 'code'
                     ? 'bg-cyan-950 text-cyan-300 border border-cyan-400 font-bold shadow-[0_0_8px_rgba(0,242,255,0.3)]'
                     : 'text-purple-300/70 hover:text-cyan-200'
@@ -709,7 +810,7 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
               <button
                 type="button"
                 onClick={() => setEditorViewMode('preview')}
-                className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-mono transition ${
+                className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-mono transition cursor-pointer ${
                   editorViewMode === 'preview'
                     ? 'bg-cyan-950 text-cyan-300 border border-cyan-400 font-bold shadow-[0_0_8px_rgba(0,242,255,0.3)]'
                     : 'text-purple-300/70 hover:text-cyan-200'
@@ -724,7 +825,7 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
             <button
               id="bitty-import-btn"
               onClick={() => fileInputRef.current?.click()}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-950/50 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-900/40 text-xs font-mono transition"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-950/50 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-900/40 text-xs font-mono transition cursor-pointer"
             >
               <UploadCloud className="w-3.5 h-3.5" />
               <span>IMPORT FILE</span>
@@ -732,9 +833,9 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
 
             <button
               id="bitty-export-zip-btn"
-              onClick={handleExportZip}
+              onClick={handleExportZipClick}
               disabled={isExportingZip}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-950/50 border border-purple-500/40 text-purple-200 hover:bg-purple-900/50 hover:text-white text-xs font-mono transition shadow-[0_0_10px_rgba(189,0,255,0.2)]"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-950/50 border border-purple-500/40 text-purple-200 hover:bg-purple-900/50 hover:text-white text-xs font-mono transition shadow-[0_0_10px_rgba(189,0,255,0.2)] cursor-pointer"
               title="Download standalone index.html & README as ZIP package"
             >
               {zipExportSuccess ? (
@@ -746,6 +847,12 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
                 <>
                   <FolderArchive className="w-3.5 h-3.5 text-fuchsia-400" />
                   <span>{isExportingZip ? 'PACKAGING ZIP...' : 'EXPORT TO ZIP'}</span>
+                  {mode === 'simple' && !isPro && (
+                    <span className="text-[9px] font-mono px-1 rounded bg-fuchsia-900 text-amber-300 border border-amber-500/40 flex items-center gap-0.5">
+                      <Crown className="w-2.5 h-2.5 fill-amber-300" />
+                      PRO
+                    </span>
+                  )}
                 </>
               )}
             </button>
@@ -1215,6 +1322,8 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
             <PasswordStrengthMeter
               password={metadata.password}
               onChangePassword={pwd => onChangeMetadata({ ...metadata, password: pwd })}
+              isLocked={mode === 'simple' && !isPro}
+              onOpenPaywall={onOpenPaywall}
             />
           </div>
         )}
@@ -1295,9 +1404,9 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
                 {/* PRETTIER FORMAT CODE BUTTON */}
                 <button
                   id="format-code-btn"
-                  onClick={handleFormatCode}
+                  onClick={handleFormatCodeClick}
                   disabled={isFormatting || !content.trim()}
-                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-cyber transition shadow-sm ${
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-cyber transition shadow-sm cursor-pointer ${
                     formatSuccess
                       ? 'bg-teal-950/80 border border-teal-400 text-teal-300 shadow-[0_0_10px_rgba(20,184,166,0.4)]'
                       : 'bg-gradient-to-r from-purple-950/80 to-cyan-950/80 hover:from-purple-900/90 hover:to-cyan-900/90 border border-cyan-500/40 text-cyan-200 hover:text-white'
@@ -1313,6 +1422,12 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
                     <>
                       <Wand2 className={`w-3.5 h-3.5 text-cyan-300 ${isFormatting ? 'animate-spin' : ''}`} />
                       <span>{isFormatting ? 'FORMATTING...' : 'FORMAT CODE'}</span>
+                      {mode === 'simple' && !isPro && (
+                        <span className="text-[9px] font-mono px-1 rounded bg-fuchsia-900 text-amber-300 border border-amber-500/40 flex items-center gap-0.5">
+                          <Crown className="w-2.5 h-2.5 fill-amber-300" />
+                          PRO
+                        </span>
+                      )}
                     </>
                   )}
                 </button>

@@ -27,6 +27,7 @@ export interface BittyHistoryItem {
 export type EditorMode = 'code' | 'rich';
 export type AppView = 'editor' | 'viewer' | 'history' | 'about';
 export type WorkspaceTheme = 'synthwave' | 'monochrome' | 'matrix';
+export type WorkspaceMode = 'simple' | 'pro';
 
 export interface BittySession {
   id: string;
