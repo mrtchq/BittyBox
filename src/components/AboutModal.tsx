@@ -5,9 +5,10 @@ interface AboutModalProps {
   onClose?: () => void;
   onOpenEditor?: () => void;
   onStartTour?: () => void;
+  onReplaySplash?: () => void;
 }
 
-export const AboutModal: React.FC<AboutModalProps> = ({ onOpenEditor, onStartTour }) => {
+export const AboutModal: React.FC<AboutModalProps> = ({ onOpenEditor, onStartTour, onReplaySplash }) => {
   return (
     <div className="w-full max-w-4xl mx-auto py-8 px-4 animate-in fade-in duration-200">
       <div className="bento-card p-6 sm:p-10 relative">
@@ -99,6 +100,16 @@ export const AboutModal: React.FC<AboutModalProps> = ({ onOpenEditor, onStartTou
 
         {/* Call to action & Tour trigger */}
         <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
+          {onReplaySplash && (
+            <button
+              onClick={onReplaySplash}
+              className="flex items-center gap-2 px-5 py-3 rounded-xl bg-fuchsia-950/70 border border-fuchsia-400/50 text-fuchsia-200 hover:text-white hover:bg-fuchsia-900/80 font-cyber text-xs tracking-wider transition shadow-sm"
+            >
+              <Zap className="w-4 h-4 text-fuchsia-300 animate-pulse" />
+              <span>REPLAY INTRO BOOT</span>
+            </button>
+          )}
+
           {onStartTour && (
             <button
               onClick={onStartTour}
