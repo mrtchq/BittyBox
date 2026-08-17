@@ -119,11 +119,14 @@ export const BittyNavbar: React.FC<BittyNavbarProps> = ({
   const currentThemeObj = THEMES.find(t => t.id === theme) || THEMES[0];
 
   return (
-    <header className="sticky top-0 z-40 w-full backdrop-blur-xl bg-[#0a0316]/85 border-b border-cyan-500/20 shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 h-16 flex items-center justify-between gap-2 sm:gap-3">
-        {/* Brand Logo & Mode Badge */}
-        <div className="flex items-center gap-2.5 sm:gap-3 cursor-pointer select-none" onClick={() => onViewChange('editor')}>
-          <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-fuchsia-600 via-purple-700 to-cyan-500 p-[1.5px] shadow-[0_0_15px_rgba(0,221,255,0.4)] group">
+    <header className="sticky top-0 z-40 w-full backdrop-blur-xl bg-[#0a0316]/90 border-b border-cyan-500/20 shadow-[0_4px_30px_rgba(0,0,0,0.6)]">
+      {/* =========================================================================
+          ROW 1: BRAND LOGO + MODE SWITCHER & 24H TRIAL BADGE (All Screens)
+         ========================================================================= */}
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
+        {/* Brand Logo */}
+        <div className="flex items-center gap-2 sm:gap-3 cursor-pointer select-none shrink-0" onClick={() => onViewChange('editor')}>
+          <div className="relative w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-fuchsia-600 via-purple-700 to-cyan-500 p-[1.5px] shadow-[0_0_15px_rgba(0,221,255,0.4)] group">
             <div className="w-full h-full bg-[#090314] rounded-[7px] flex items-center justify-center">
               <Box className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-400 group-hover:rotate-12 transition-transform duration-300" />
             </div>
@@ -144,79 +147,12 @@ export const BittyNavbar: React.FC<BittyNavbarProps> = ({
           </div>
         </div>
 
-        {/* PRO / SIMPLE MODE SWITCHER & 24H TRIAL BADGE */}
-        <div className="flex items-center gap-1 sm:gap-2">
-          {/* Mode Switcher Pill */}
-          <div className="flex items-center bg-[#050212] p-1 rounded-xl border border-fuchsia-500/30 shadow-inner">
-            <button
-              onClick={() => onModeChange('simple')}
-              className={`px-2.5 py-1 rounded-lg font-mono text-[11px] font-bold tracking-wider transition-all ${
-                mode === 'simple'
-                  ? 'bg-cyan-950 text-cyan-200 border border-cyan-400/50 shadow-[0_0_10px_rgba(0,242,255,0.3)]'
-                  : 'text-cyan-400/60 hover:text-cyan-200'
-              }`}
-              title="Simple Mode: Fast, distraction-free HTML-to-URL generator"
-            >
-              SIMPLE
-            </button>
-
-            <button
-              onClick={() => {
-                if (mode === 'pro') {
-                  onOpenPaywall();
-                } else {
-                  onModeChange('pro');
-                }
-              }}
-              className={`px-2.5 py-1 rounded-lg font-mono text-[11px] font-bold tracking-wider flex items-center gap-1 transition-all ${
-                mode === 'pro'
-                  ? 'bg-gradient-to-r from-fuchsia-900 to-purple-900 text-fuchsia-200 border border-fuchsia-400/60 shadow-[0_0_12px_rgba(189,0,255,0.4)]'
-                  : 'text-fuchsia-400/60 hover:text-fuchsia-200'
-              }`}
-              title="PRO Mode: Unlock encryption, multi-tabs, templates, and developer tooling"
-            >
-              <Crown className="w-3 h-3 text-amber-400 fill-amber-400" />
-              <span>PRO</span>
-            </button>
-          </div>
-
-          {/* 24h Trial / Lifetime Status Pill */}
-          <button
-            onClick={() => onOpenPaywall()}
-            className={`hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-mono text-[10px] tracking-wide border transition shadow-sm ${
-              isLifetimePro
-                ? 'bg-amber-950/80 border-amber-500/50 text-amber-300 shadow-[0_0_10px_rgba(245,158,11,0.3)]'
-                : isTrialActive
-                ? 'bg-fuchsia-950/80 border-fuchsia-500/50 text-fuchsia-300 shadow-[0_0_10px_rgba(189,0,255,0.3)]'
-                : 'bg-rose-950/80 border-rose-500/50 text-rose-300 animate-pulse'
-            }`}
-            title="Click to view PRO features or license management"
-          >
-            {isLifetimePro ? (
-              <>
-                <Crown className="w-3 h-3 text-amber-400 fill-amber-400" />
-                <span className="font-bold">LIFETIME PRO</span>
-              </>
-            ) : isTrialActive ? (
-              <>
-                <Zap className="w-3 h-3 text-fuchsia-400 animate-bounce" />
-                <span>24H PASS: <strong className="text-cyan-200">{trialTimeRemaining.hours}h {trialTimeRemaining.minutes}m</strong></span>
-              </>
-            ) : (
-              <>
-                <Lock className="w-3 h-3 text-rose-400" />
-                <span className="font-bold">UPGRADE PRO</span>
-              </>
-            )}
-          </button>
-        </div>
-
-        {/* View Switchers */}
-        <nav className="flex items-center gap-1 sm:gap-1.5 bg-purple-950/40 p-1 rounded-xl border border-purple-500/20 backdrop-blur-md">
+        {/* Center Desktop View Switchers (Hidden on mobile, shown in Row 2 below) */}
+        <nav className="hidden lg:flex items-center gap-1.5 bg-purple-950/40 p-1 rounded-xl border border-purple-500/20 backdrop-blur-md">
           <button
             id="nav-editor-btn"
             onClick={() => onViewChange('editor')}
-            className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${
               currentView === 'editor'
                 ? 'bg-gradient-to-r from-cyan-500/20 to-teal-500/20 text-cyan-200 border border-cyan-400/50 shadow-[0_0_12px_rgba(0,221,255,0.25)]'
                 : 'text-purple-200/70 hover:text-cyan-200 hover:bg-purple-900/30'
@@ -229,7 +165,7 @@ export const BittyNavbar: React.FC<BittyNavbarProps> = ({
           <button
             id="nav-preview-btn"
             onClick={() => onViewChange('viewer')}
-            className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${
               currentView === 'viewer'
                 ? 'bg-gradient-to-r from-fuchsia-500/20 to-purple-500/20 text-fuchsia-200 border border-fuchsia-400/50 shadow-[0_0_12px_rgba(255,0,222,0.25)]'
                 : 'text-purple-200/70 hover:text-fuchsia-200 hover:bg-purple-900/30'
@@ -248,36 +184,363 @@ export const BittyNavbar: React.FC<BittyNavbarProps> = ({
                 onViewChange('history');
               }
             }}
-            className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${
               currentView === 'history'
                 ? 'bg-gradient-to-r from-teal-500/20 to-cyan-500/20 text-teal-200 border border-teal-400/50 shadow-[0_0_12px_rgba(0,245,212,0.25)]'
                 : 'text-purple-200/70 hover:text-teal-200 hover:bg-purple-900/30'
             }`}
           >
             <History className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">VAULT</span>
+            <span>VAULT</span>
           </button>
 
           <button
             id="nav-about-btn"
             onClick={() => onViewChange('about')}
-            className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${
               currentView === 'about'
                 ? 'bg-gradient-to-r from-purple-500/20 to-fuchsia-500/20 text-purple-200 border border-purple-400/50 shadow-[0_0_12px_rgba(121,40,202,0.25)]'
                 : 'text-purple-200/70 hover:text-purple-200 hover:bg-purple-900/30'
             }`}
           >
             <Info className="w-3.5 h-3.5" />
-            <span className="hidden md:inline">SPECS</span>
+            <span>SPECS</span>
           </button>
         </nav>
 
-        {/* Action Controls & Theme Switcher */}
-        <div className="flex items-center gap-1 sm:gap-1.5">
-          {/* Template Gallery Direct Trigger */}
+        {/* Right Section: Mode Switcher + 24h Pass + Desktop Actions */}
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* Mode Switcher Toggle Pill */}
+          <div className="flex items-center bg-[#050212] p-0.5 sm:p-1 rounded-xl border border-fuchsia-500/30 shadow-inner">
+            <button
+              onClick={() => onModeChange('simple')}
+              className={`px-2 sm:px-2.5 py-1 rounded-lg font-mono text-[10px] sm:text-[11px] font-bold tracking-wider transition-all cursor-pointer ${
+                mode === 'simple'
+                  ? 'bg-cyan-950 text-cyan-200 border border-cyan-400/50 shadow-[0_0_10px_rgba(0,242,255,0.3)]'
+                  : 'text-cyan-400/60 hover:text-cyan-200'
+              }`}
+              title="Simple Mode: Fast, clean HTML-to-URL generator"
+            >
+              SIMPLE
+            </button>
+
+            <button
+              onClick={() => {
+                if (mode === 'pro') {
+                  onOpenPaywall();
+                } else {
+                  onModeChange('pro');
+                }
+              }}
+              className={`px-2 sm:px-2.5 py-1 rounded-lg font-mono text-[10px] sm:text-[11px] font-bold tracking-wider flex items-center gap-1 transition-all cursor-pointer ${
+                mode === 'pro'
+                  ? 'bg-gradient-to-r from-fuchsia-900 to-purple-900 text-fuchsia-200 border border-fuchsia-400/60 shadow-[0_0_12px_rgba(189,0,255,0.4)]'
+                  : 'text-fuchsia-400/60 hover:text-fuchsia-200'
+              }`}
+              title="PRO Mode: Unlock encryption, multi-tabs, templates, and developer tooling"
+            >
+              <Crown className="w-3 h-3 text-amber-400 fill-amber-400" />
+              <span>PRO</span>
+            </button>
+          </div>
+
+          {/* 24h Trial / Lifetime Status Pill */}
+          <button
+            onClick={() => onOpenPaywall()}
+            className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-lg font-mono text-[10px] tracking-wide border transition shadow-sm cursor-pointer ${
+              isLifetimePro
+                ? 'bg-amber-950/80 border-amber-500/50 text-amber-300 shadow-[0_0_10px_rgba(245,158,11,0.3)]'
+                : isTrialActive
+                ? 'bg-fuchsia-950/80 border-fuchsia-500/50 text-fuchsia-300 shadow-[0_0_10px_rgba(189,0,255,0.3)]'
+                : 'bg-rose-950/80 border-rose-500/50 text-rose-300 animate-pulse'
+            }`}
+            title="Click to view PRO features or license management"
+          >
+            {isLifetimePro ? (
+              <>
+                <Crown className="w-3 h-3 text-amber-400 fill-amber-400" />
+                <span className="font-bold hidden xs:inline">LIFETIME</span>
+                <span className="font-bold xs:hidden">PRO</span>
+              </>
+            ) : isTrialActive ? (
+              <>
+                <Zap className="w-3 h-3 text-fuchsia-400 animate-bounce shrink-0" />
+                <span className="hidden sm:inline">24H PASS: <strong className="text-cyan-200">{trialTimeRemaining.hours}h {trialTimeRemaining.minutes}m</strong></span>
+                <span className="sm:hidden font-bold">{trialTimeRemaining.hours}h {trialTimeRemaining.minutes}m</span>
+              </>
+            ) : (
+              <>
+                <Lock className="w-3 h-3 text-rose-400 shrink-0" />
+                <span className="font-bold">UPGRADE</span>
+              </>
+            )}
+          </button>
+
+          {/* Desktop Right Tool Buttons (Hidden on mobile, shown in Row 2) */}
+          <div className="hidden lg:flex items-center gap-1.5">
+            {/* Template Gallery Direct Trigger */}
+            {onOpenTemplates && (
+              <button
+                id="nav-templates-btn"
+                onClick={() => {
+                  if (mode === 'simple' && !isPro) {
+                    onOpenPaywall('Template Gallery Lab');
+                  } else {
+                    onOpenTemplates();
+                  }
+                }}
+                title="Open Template Gallery Lab"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-fuchsia-950/70 to-purple-950/70 border border-fuchsia-500/40 text-fuchsia-200 hover:text-white hover:border-fuchsia-400 text-xs font-cyber transition shadow-sm cursor-pointer"
+              >
+                <LayoutGrid className="w-3.5 h-3.5 text-fuchsia-400" />
+                <span>TEMPLATES</span>
+                {mode === 'simple' && !isPro && <span className="text-[9px] bg-fuchsia-900 text-amber-300 px-1 rounded">PRO</span>}
+              </button>
+            )}
+
+            {/* Desktop Theme Selector Dropdown */}
+            <div className="relative" ref={themeMenuRef}>
+              <button
+                id="nav-theme-toggle-btn"
+                onClick={() => {
+                  if (mode === 'simple' && !isPro) {
+                    onOpenPaywall('Cyber Workspace Themes');
+                  } else {
+                    setIsThemeMenuOpen(!isThemeMenuOpen);
+                  }
+                }}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-purple-950/50 border border-purple-500/40 text-purple-200 hover:bg-purple-900/50 hover:text-white text-xs font-mono transition shadow-sm cursor-pointer"
+                title={`Workspace Theme: ${currentThemeObj.name}`}
+              >
+                {currentThemeObj.icon}
+                <span className="hidden xl:inline text-[11px] font-bold">{currentThemeObj.name}</span>
+                <ChevronDown className="w-3 h-3 text-purple-400" />
+              </button>
+
+              {isThemeMenuOpen && (
+                <div className="absolute right-0 mt-2 w-64 rounded-xl bg-[#0a0316] border border-cyan-500/40 shadow-[0_10px_30px_rgba(0,0,0,0.8)] py-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                  <div className="px-3 py-1.5 border-b border-purple-500/20 text-[10px] font-mono text-cyan-300 font-bold uppercase tracking-wider flex items-center justify-between">
+                    <span>WORKSPACE THEMES</span>
+                    <Palette className="w-3 h-3 text-cyan-400" />
+                  </div>
+
+                  <div className="p-1 space-y-1">
+                    {THEMES.map(t => {
+                      const isSelected = theme === t.id;
+                      return (
+                        <button
+                          key={t.id}
+                          onClick={() => {
+                            onThemeChange(t.id);
+                            setIsThemeMenuOpen(false);
+                          }}
+                          className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-left text-xs transition cursor-pointer ${
+                            isSelected
+                              ? 'bg-purple-900/40 border border-cyan-400/50 text-cyan-200 shadow-sm'
+                              : 'hover:bg-purple-950/60 text-purple-200/80 hover:text-white border border-transparent'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <div className={`w-4 h-4 rounded-full bg-gradient-to-tr ${t.previewBg} p-[1px] shadow-sm flex items-center justify-center`}>
+                              <div className="w-2.5 h-2.5 rounded-full bg-black/40" />
+                            </div>
+                            <div>
+                              <div className="font-cyber font-bold text-xs flex items-center gap-1.5">
+                                {t.name}
+                              </div>
+                              <div className="text-[10px] text-purple-300/60 font-mono">
+                                {t.desc}
+                              </div>
+                            </div>
+                          </div>
+
+                          {isSelected && <Check className="w-3.5 h-3.5 text-cyan-400" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Tour & Intro */}
+            {onStartTour && (
+              <button
+                id="nav-tour-btn"
+                onClick={onStartTour}
+                title="Launch Guided Onboarding Walkthrough"
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-teal-950/70 to-cyan-950/70 border border-teal-500/40 text-teal-200 hover:text-white hover:border-teal-300 text-xs font-cyber transition shadow-sm cursor-pointer"
+              >
+                <Compass className="w-3.5 h-3.5 text-teal-300 animate-spin-slow" />
+                <span>TOUR</span>
+              </button>
+            )}
+
+            {onReplaySplash && (
+              <button
+                id="nav-splash-btn"
+                onClick={onReplaySplash}
+                title="Replay Holographic Intro Carousel"
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-fuchsia-950/70 to-purple-950/70 border border-fuchsia-500/40 text-fuchsia-200 hover:text-white hover:border-fuchsia-300 text-xs font-cyber transition shadow-sm cursor-pointer"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-fuchsia-300 animate-spin-slow" />
+                <span>INTRO</span>
+              </button>
+            )}
+
+            {isEncrypted && (
+              <span className="flex items-center gap-1 text-[11px] font-mono text-fuchsia-400 bg-fuchsia-950/80 px-2.5 py-1 rounded-md border border-fuchsia-500/40">
+                <Shield className="w-3 h-3 text-fuchsia-400" />
+                AES-256
+              </span>
+            )}
+
+            {onExportZip && (
+              <button
+                id="nav-zip-btn"
+                onClick={() => {
+                  if (mode === 'simple' && !isPro) {
+                    onOpenPaywall('ZIP Archive Export');
+                  } else {
+                    onExportZip();
+                  }
+                }}
+                title="Export to Portable ZIP Package"
+                className="p-2 rounded-lg bg-purple-950/50 border border-purple-500/30 text-purple-200 hover:bg-purple-900/50 hover:text-white transition cursor-pointer"
+              >
+                <FolderArchive className="w-4 h-4" />
+              </button>
+            )}
+
+            <button
+              id="nav-qr-btn"
+              onClick={() => {
+                if (mode === 'simple' && !isPro) {
+                  onOpenPaywall('QR Code Transmitter');
+                } else {
+                  onOpenQr();
+                }
+              }}
+              title="Generate QR Hologram"
+              className="p-2 rounded-lg bg-cyan-950/50 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-900/40 hover:text-white transition cursor-pointer"
+            >
+              <QrCode className="w-4 h-4" />
+            </button>
+
+            <button
+              id="nav-share-btn"
+              onClick={onShare}
+              title="Share Bitty Box"
+              className="p-2 rounded-lg bg-fuchsia-950/50 border border-fuchsia-500/30 text-fuchsia-300 hover:bg-fuchsia-900/40 hover:text-white transition cursor-pointer"
+            >
+              <Share2 className="w-4 h-4" />
+            </button>
+
+            <button
+              id="nav-popout-btn"
+              onClick={onPreviewInTab}
+              title="Launch in New Tab"
+              className="p-2 rounded-lg bg-teal-950/50 border border-teal-500/30 text-teal-300 hover:bg-teal-900/40 hover:text-white transition cursor-pointer"
+            >
+              <ExternalLink className="w-4 h-4" />
+            </button>
+
+            <button
+              id="nav-new-btn"
+              onClick={onNewBox}
+              title="New Bitty Box / Reset Session"
+              className="p-2 rounded-lg bg-purple-950/50 border border-purple-500/30 text-purple-300 hover:bg-purple-900/40 hover:text-white transition cursor-pointer"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </button>
+
+            {onCloseSession && (
+              <button
+                id="nav-close-session-btn"
+                onClick={onCloseSession}
+                title="Close Active Session"
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-amber-950/70 to-rose-950/70 border border-amber-500/40 text-amber-300 hover:text-white hover:border-rose-400 text-xs font-cyber transition shadow-sm cursor-pointer"
+              >
+                <LogOut className="w-3.5 h-3.5 text-amber-400" />
+                <span>CLOSE</span>
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* =========================================================================
+          ROW 2: MOBILE NAVIGATION & TOOLBAR (Visible on Mobile & Tablet < lg)
+         ========================================================================= */}
+      <div className="lg:hidden w-full border-t border-cyan-500/15 bg-[#070213]/95 px-3 py-1.5 flex flex-col gap-1.5 shadow-inner">
+        {/* Sub-row A: Primary View Switchers (STUDIO, VIEWER, VAULT, SPECS) */}
+        <div className="flex items-center justify-between gap-1 w-full">
+          <nav className="grid grid-cols-4 gap-1 w-full bg-purple-950/50 p-1 rounded-xl border border-purple-500/25">
+            <button
+              id="mobile-nav-editor-btn"
+              onClick={() => onViewChange('editor')}
+              className={`flex items-center justify-center gap-1 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${
+                currentView === 'editor'
+                  ? 'bg-gradient-to-r from-cyan-500/25 to-teal-500/25 text-cyan-200 border border-cyan-400/60 shadow-[0_0_10px_rgba(0,221,255,0.3)]'
+                  : 'text-purple-200/70 hover:text-cyan-200'
+              }`}
+            >
+              <Code className="w-3.5 h-3.5 shrink-0" />
+              <span>STUDIO</span>
+            </button>
+
+            <button
+              id="mobile-nav-preview-btn"
+              onClick={() => onViewChange('viewer')}
+              className={`flex items-center justify-center gap-1 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${
+                currentView === 'viewer'
+                  ? 'bg-gradient-to-r from-fuchsia-500/25 to-purple-500/25 text-fuchsia-200 border border-fuchsia-400/60 shadow-[0_0_10px_rgba(255,0,222,0.3)]'
+                  : 'text-purple-200/70 hover:text-fuchsia-200'
+              }`}
+            >
+              <Eye className="w-3.5 h-3.5 shrink-0" />
+              <span>VIEW</span>
+            </button>
+
+            <button
+              id="mobile-nav-history-btn"
+              onClick={() => {
+                if (mode === 'simple' && !isPro) {
+                  onOpenPaywall('Vault Capsule History');
+                } else {
+                  onViewChange('history');
+                }
+              }}
+              className={`flex items-center justify-center gap-1 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${
+                currentView === 'history'
+                  ? 'bg-gradient-to-r from-teal-500/25 to-cyan-500/25 text-teal-200 border border-teal-400/60 shadow-[0_0_10px_rgba(0,245,212,0.3)]'
+                  : 'text-purple-200/70 hover:text-teal-200'
+              }`}
+            >
+              <History className="w-3.5 h-3.5 shrink-0" />
+              <span>VAULT</span>
+            </button>
+
+            <button
+              id="mobile-nav-about-btn"
+              onClick={() => onViewChange('about')}
+              className={`flex items-center justify-center gap-1 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${
+                currentView === 'about'
+                  ? 'bg-gradient-to-r from-purple-500/25 to-fuchsia-500/25 text-purple-200 border border-purple-400/60 shadow-[0_0_10px_rgba(121,40,202,0.3)]'
+                  : 'text-purple-200/70 hover:text-purple-200'
+              }`}
+            >
+              <Info className="w-3.5 h-3.5 shrink-0" />
+              <span>SPECS</span>
+            </button>
+          </nav>
+        </div>
+
+        {/* Sub-row B: Mobile Horizontal Action Toolbar */}
+        <div className="flex items-center gap-1.5 overflow-x-auto py-1 cyber-scrollbar w-full">
+          {/* Templates Trigger */}
           {onOpenTemplates && (
             <button
-              id="nav-templates-btn"
               onClick={() => {
                 if (mode === 'simple' && !isPro) {
                   onOpenPaywall('Template Gallery Lab');
@@ -285,132 +548,35 @@ export const BittyNavbar: React.FC<BittyNavbarProps> = ({
                   onOpenTemplates();
                 }
               }}
-              title="Open Template Gallery Lab"
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-fuchsia-950/70 to-purple-950/70 border border-fuchsia-500/40 text-fuchsia-200 hover:text-white hover:border-fuchsia-400 text-xs font-cyber transition shadow-sm"
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gradient-to-r from-fuchsia-950/80 to-purple-950/80 border border-fuchsia-500/40 text-fuchsia-200 hover:text-white text-[11px] font-cyber transition shrink-0 cursor-pointer"
             >
               <LayoutGrid className="w-3.5 h-3.5 text-fuchsia-400" />
-              <span className="hidden xl:inline">TEMPLATES</span>
-              {mode === 'simple' && <span className="text-[9px] bg-fuchsia-900 text-amber-300 px-1 rounded">PRO</span>}
+              <span>TEMPLATES</span>
+              {mode === 'simple' && !isPro && <span className="text-[9px] bg-fuchsia-900 text-amber-300 px-1 rounded">PRO</span>}
             </button>
           )}
 
-          {/* PERSISTENT THEME TOGGLE DROPDOWN */}
-          <div className="relative" ref={themeMenuRef}>
-            <button
-              id="nav-theme-toggle-btn"
-              onClick={() => {
-                if (mode === 'simple' && !isPro) {
-                  onOpenPaywall('Cyber Workspace Themes');
-                } else {
-                  setIsThemeMenuOpen(!isThemeMenuOpen);
-                }
-              }}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-purple-950/50 border border-purple-500/40 text-purple-200 hover:bg-purple-900/50 hover:text-white text-xs font-mono transition shadow-sm"
-              title={`Workspace Theme: ${currentThemeObj.name}`}
-            >
-              {currentThemeObj.icon}
-              <span className="hidden 2xl:inline text-[11px] font-bold">{currentThemeObj.name}</span>
-              <ChevronDown className="w-3 h-3 text-purple-400" />
-            </button>
-
-            {isThemeMenuOpen && (
-              <div className="absolute right-0 mt-2 w-64 rounded-xl bg-[#0a0316] border border-cyan-500/40 shadow-[0_10px_30px_rgba(0,0,0,0.8)] py-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-                <div className="px-3 py-1.5 border-b border-purple-500/20 text-[10px] font-mono text-cyan-300 font-bold uppercase tracking-wider flex items-center justify-between">
-                  <span>WORKSPACE THEMES</span>
-                  <Palette className="w-3 h-3 text-cyan-400" />
-                </div>
-
-                <div className="p-1 space-y-1">
-                  {THEMES.map(t => {
-                    const isSelected = theme === t.id;
-                    return (
-                      <button
-                        key={t.id}
-                        onClick={() => {
-                          onThemeChange(t.id);
-                          setIsThemeMenuOpen(false);
-                        }}
-                        className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-left text-xs transition ${
-                          isSelected
-                            ? 'bg-purple-900/40 border border-cyan-400/50 text-cyan-200 shadow-sm'
-                            : 'hover:bg-purple-950/60 text-purple-200/80 hover:text-white border border-transparent'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <div className={`w-4 h-4 rounded-full bg-gradient-to-tr ${t.previewBg} p-[1px] shadow-sm flex items-center justify-center`}>
-                            <div className="w-2.5 h-2.5 rounded-full bg-black/40" />
-                          </div>
-                          <div>
-                            <div className="font-cyber font-bold text-xs flex items-center gap-1.5">
-                              {t.name}
-                            </div>
-                            <div className="text-[10px] text-purple-300/60 font-mono">
-                              {t.desc}
-                            </div>
-                          </div>
-                        </div>
-
-                        {isSelected && <Check className="w-3.5 h-3.5 text-cyan-400" />}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Guided Onboarding Walkthrough Trigger */}
-          {onStartTour && (
-            <button
-              id="nav-tour-btn"
-              onClick={onStartTour}
-              title="Launch Guided Onboarding Walkthrough"
-              className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-gradient-to-r from-teal-950/70 to-cyan-950/70 border border-teal-500/40 text-teal-200 hover:text-white hover:border-teal-300 text-xs font-cyber transition shadow-sm"
-            >
-              <Compass className="w-3.5 h-3.5 text-teal-300 animate-spin-slow" />
-              <span className="hidden lg:inline">TOUR</span>
-            </button>
-          )}
-
-          {/* Replay Holographic Splash Intro */}
-          {onReplaySplash && (
-            <button
-              id="nav-splash-btn"
-              onClick={onReplaySplash}
-              title="Replay Holographic Intro Carousel"
-              className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-gradient-to-r from-fuchsia-950/70 to-purple-950/70 border border-fuchsia-500/40 text-fuchsia-200 hover:text-white hover:border-fuchsia-300 text-xs font-cyber transition shadow-sm"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-fuchsia-300 animate-spin-slow" />
-              <span className="hidden lg:inline">INTRO</span>
-            </button>
-          )}
-
-          {isEncrypted && (
-            <span className="hidden lg:flex items-center gap-1 text-[11px] font-mono text-fuchsia-400 bg-fuchsia-950/80 px-2 py-1 rounded-md border border-fuchsia-500/40">
-              <Shield className="w-3 h-3 text-fuchsia-400" />
-              AES-256
-            </span>
-          )}
-
-          {onExportZip && (
-            <button
-              id="nav-zip-btn"
-              onClick={() => {
-                if (mode === 'simple' && !isPro) {
-                  onOpenPaywall('ZIP Archive Export');
-                } else {
-                  onExportZip();
-                }
-              }}
-              title="Export to Portable ZIP Package"
-              className="p-2 rounded-lg bg-purple-950/50 border border-purple-500/30 text-purple-200 hover:bg-purple-900/50 hover:text-white transition"
-            >
-              <FolderArchive className="w-4 h-4" />
-            </button>
-          )}
-
+          {/* Theme Selector (Mobile) */}
           <button
-            id="nav-qr-btn"
+            onClick={() => {
+              if (mode === 'simple' && !isPro) {
+                onOpenPaywall('Cyber Workspace Themes');
+              } else {
+                // Cycle themes on mobile
+                const currentIndex = THEMES.findIndex(t => t.id === theme);
+                const nextTheme = THEMES[(currentIndex + 1) % THEMES.length];
+                onThemeChange(nextTheme.id);
+              }
+            }}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-purple-950/60 border border-purple-500/40 text-purple-200 hover:text-white text-[11px] font-mono transition shrink-0 cursor-pointer"
+            title={`Current Theme: ${currentThemeObj.name} (Tap to cycle)`}
+          >
+            {currentThemeObj.icon}
+            <span>THEME</span>
+          </button>
+
+          {/* QR Transmit */}
+          <button
             onClick={() => {
               if (mode === 'simple' && !isPro) {
                 onOpenPaywall('QR Code Transmitter');
@@ -418,49 +584,92 @@ export const BittyNavbar: React.FC<BittyNavbarProps> = ({
                 onOpenQr();
               }
             }}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-cyan-950/60 border border-cyan-500/40 text-cyan-300 hover:text-white text-[11px] font-mono transition shrink-0 cursor-pointer"
             title="Generate QR Hologram"
-            className="p-2 rounded-lg bg-cyan-950/50 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-900/40 hover:text-white transition"
           >
-            <QrCode className="w-4 h-4" />
+            <QrCode className="w-3.5 h-3.5" />
+            <span>QR</span>
           </button>
 
+          {/* Share */}
           <button
-            id="nav-share-btn"
             onClick={onShare}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-fuchsia-950/60 border border-fuchsia-500/40 text-fuchsia-300 hover:text-white text-[11px] font-mono transition shrink-0 cursor-pointer"
             title="Share Bitty Box"
-            className="p-2 rounded-lg bg-fuchsia-950/50 border border-fuchsia-500/30 text-fuchsia-300 hover:bg-fuchsia-900/40 hover:text-white transition"
           >
-            <Share2 className="w-4 h-4" />
+            <Share2 className="w-3.5 h-3.5" />
+            <span>SHARE</span>
           </button>
 
+          {/* ZIP Export */}
+          {onExportZip && (
+            <button
+              onClick={() => {
+                if (mode === 'simple' && !isPro) {
+                  onOpenPaywall('ZIP Archive Export');
+                } else {
+                  onExportZip();
+                }
+              }}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-purple-950/60 border border-purple-500/40 text-purple-200 hover:text-white text-[11px] font-mono transition shrink-0 cursor-pointer"
+              title="Export to ZIP package"
+            >
+              <FolderArchive className="w-3.5 h-3.5" />
+              <span>ZIP</span>
+            </button>
+          )}
+
+          {/* Popout preview */}
           <button
-            id="nav-popout-btn"
             onClick={onPreviewInTab}
-            title="Launch in New Tab"
-            className="p-2 rounded-lg bg-teal-950/50 border border-teal-500/30 text-teal-300 hover:bg-teal-900/40 hover:text-white transition"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-950/60 border border-teal-500/40 text-teal-300 hover:text-white text-[11px] font-mono transition shrink-0 cursor-pointer"
+            title="Launch in new tab"
           >
-            <ExternalLink className="w-4 h-4" />
+            <ExternalLink className="w-3.5 h-3.5" />
+            <span>OPEN TAB</span>
           </button>
 
+          {/* New Box */}
           <button
-            id="nav-new-btn"
             onClick={onNewBox}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-purple-950/60 border border-purple-500/40 text-purple-300 hover:text-white text-[11px] font-mono transition shrink-0 cursor-pointer"
             title="New Bitty Box / Reset Session"
-            className="p-2 rounded-lg bg-purple-950/50 border border-purple-500/30 text-purple-300 hover:bg-purple-900/40 hover:text-white transition"
           >
-            <RefreshCw className="w-4 h-4" />
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>NEW</span>
           </button>
 
-          {/* Close Opened Session Trigger */}
+          {/* Onboarding Tour */}
+          {onStartTour && (
+            <button
+              onClick={onStartTour}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-950/60 border border-teal-500/40 text-teal-300 hover:text-white text-[11px] font-cyber transition shrink-0 cursor-pointer"
+            >
+              <Compass className="w-3.5 h-3.5 text-teal-300" />
+              <span>TOUR</span>
+            </button>
+          )}
+
+          {/* Intro Splash */}
+          {onReplaySplash && (
+            <button
+              onClick={onReplaySplash}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-fuchsia-950/60 border border-fuchsia-500/40 text-fuchsia-300 hover:text-white text-[11px] font-cyber transition shrink-0 cursor-pointer"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-fuchsia-300" />
+              <span>INTRO</span>
+            </button>
+          )}
+
+          {/* Close session button */}
           {onCloseSession && (
             <button
-              id="nav-close-session-btn"
               onClick={onCloseSession}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-950/60 border border-amber-500/40 text-amber-300 hover:text-white hover:border-rose-400 text-[11px] font-cyber transition shrink-0 cursor-pointer"
               title="Close Active Session"
-              className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-gradient-to-r from-amber-950/70 to-rose-950/70 border border-amber-500/40 text-amber-300 hover:text-white hover:border-rose-400 text-xs font-cyber transition shadow-sm cursor-pointer"
             >
               <LogOut className="w-3.5 h-3.5 text-amber-400" />
-              <span className="hidden xl:inline">CLOSE</span>
+              <span>CLOSE</span>
             </button>
           )}
         </div>
