@@ -1,6 +1,13 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { createBittyLink, decodeBittyLink, DEFAULT_DOMAIN } from '../lib/bitty-engine.js';
+import {
+  createBox, getBox, listBoxes, deleteBox,
+  setPasswordLock, setTimeWindowLock, setAccessLimitLock, setSessionLimitLock, setInviteOnlyLock,
+  createInviteOnly, createTimeWindow, createOpenLimit, createSessionOpenLimit,
+  evaluateAndRecord, getSessionOpenCount, touchSessionOpens, publishBox
+} from '../lib/box-store.js';
+import { createPasswordVerifier, createSessionGrant } from '../lib/policy-evaluator.js';
 
 export function buildMcpServer() {
   const server = new McpServer({
@@ -269,5 +276,210 @@ export function buildMcpServer() {
     }
   );
 
+  // Tool 7: Create a Box (wraps a Bitty Link with optional locks)
+  server.tool(
+    'create_box',
+    'Create a Bitty Box: a server-stored, lockable wrapper around a Bitty Link URL. The box can be password-locked, time-window-locked, access-limited, or invite-only. Returns the boxId used by all other box tools.',
+    {
+      title: z.string().optional().describe('Human-readable box title'),
+      description: z.string().optional().describe('Box description'),
+      bittyUrl: z.string().optional().describe('Full Bitty Link URL to wrap'),
+      bittyRelativeUrl: z.string().optional().describe('Relative Bitty Link path (e.g. /#abc123)'),
+      bittyId: z.string().optional().describe('Bitty Link id if known'),
+      password: z.string().optional().describe('If set, immediately enables a PBKDF2-SHA256 password lock (server stores only a verifier, never the plaintext)'),
+      passwordHint: z.string().optional().describe('Optional hint shown on the lock screen'),
+      notBefore: z.string().optional().describe('ISO timestamp; box unavailable before this (time lock)'),
+      notAfter: z.string().optional().describe('ISO timestamp; box unavailable after this (time lock)'),
+      maxOpens: z.number().optional().describe('Max total opens across all viewers (access limit)'),
+      maxSessionOpens: z.number().optional().describe('Max opens per session (per-session access limit)'),
+      invitedEmails: z.array(z.string()).optional().describe('Emails allowed if invite-only')
+    },
+    async (args) => {
+      try {
+        const lockConfig = { password: null, timeWindow: null, openLimit: null, sessionOpenLimit: null, inviteOnly: null };
+        if (args.password) {
+          const verifier = await createPasswordVerifier(args.password, { hint: args.passwordHint || '' });
+          lockConfig.password = { enabled: true, verifier, hint: args.passwordHint || '' };
+        }
+        if (args.notBefore || args.notAfter) lockConfig.timeWindow = createTimeWindow({ notBefore: args.notBefore, notAfter: args.notAfter });
+        if (typeof args.maxOpens === 'number') lockConfig.openLimit = createOpenLimit({ maxOpens: args.maxOpens });
+        if (typeof args.maxSessionOpens === 'number') lockConfig.sessionOpenLimit = createSessionOpenLimit({ maxSessionOpens: args.maxSessionOpens });
+        if (Array.isArray(args.invitedEmails)) lockConfig.inviteOnly = createInviteOnly(args.invitedEmails);
+
+        const box = createBox({
+          title: args.title,
+          description: args.description,
+          bittyUrl: args.bittyUrl,
+          bittyRelativeUrl: args.bittyRelativeUrl,
+          bittyId: args.bittyId,
+          createdBy: { type: 'mcp', userId: null, keyId: null },
+          lockConfig
+        });
+        return { content: [{ type: 'text', text: JSON.stringify({ success: true, boxId: box.id, lockConfigApplied: !!args.password || !!args.notBefore || typeof args.maxOpens === 'number' }, null, 2) }] };
+      } catch (err) {
+        return { isError: true, content: [{ type: 'text', text: `Error creating box: ${err.message}` }] };
+      }
+    }
+  );
+
+  // Tool 8: Set password lock
+  server.tool(
+    'set_password_lock',
+    'Add or replace the password lock on a box. The server stores only a PBKDF2-SHA256 verifier; the plaintext password is never persisted.',
+    { boxId: z.string().describe('Target box id'), password: z.string().describe('Password to set'), hint: z.string().optional().describe('Hint shown on lock screen') },
+    async (args) => {
+      try {
+        const box = getBox(args.boxId);
+        if (!box) return { isError: true, content: [{ type: 'text', text: 'Box not found' }] };
+        const verifier = await createPasswordVerifier(args.password, { hint: args.hint || '' });
+        setPasswordLock(args.boxId, { enabled: true, verifier, hint: args.hint || '' });
+        return { content: [{ type: 'text', text: JSON.stringify({ success: true, boxId: args.boxId, passwordLock: { enabled: true } }, null, 2) }] };
+      } catch (err) {
+        return { isError: true, content: [{ type: 'text', text: `Error: ${err.message}` }] };
+      }
+    }
+  );
+
+  // Tool 9: Set time lock
+  server.tool(
+    'set_time_lock',
+    'Add or replace the time-window lock on a box. Server rejects access outside [notBefore, notAfter].',
+    { boxId: z.string().describe('Target box id'), notBefore: z.string().optional().describe('ISO timestamp; unavailable before'), notAfter: z.string().optional().describe('ISO timestamp; unavailable after') },
+    async (args) => {
+      try {
+        const box = getBox(args.boxId);
+        if (!box) return { isError: true, content: [{ type: 'text', text: 'Box not found' }] };
+        setTimeWindowLock(args.boxId, createTimeWindow({ notBefore: args.notBefore, notAfter: args.notAfter }));
+        return { content: [{ type: 'text', text: JSON.stringify({ success: true, boxId: args.boxId, timeWindow: { enabled: true, notBefore: args.notBefore, notAfter: args.notAfter } }, null, 2) }] };
+      } catch (err) {
+        return { isError: true, content: [{ type: 'text', text: `Error: ${err.message}` }] };
+      }
+    }
+  );
+
+  // Tool 10: Set access limit
+  server.tool(
+    'set_access_limit',
+    'Add or replace the access-limit lock on a box: maxOpens (total across viewers) and/or maxSessionOpens (per session).',
+    { boxId: z.string().describe('Target box id'), maxOpens: z.number().optional().describe('Max total opens'), maxSessionOpens: z.number().optional().describe('Max opens per session') },
+    async (args) => {
+      try {
+        const box = getBox(args.boxId);
+        if (!box) return { isError: true, content: [{ type: 'text', text: 'Box not found' }] };
+        if (typeof args.maxOpens === 'number') setAccessLimitLock(args.boxId, createOpenLimit({ maxOpens: args.maxOpens }));
+        if (typeof args.maxSessionOpens === 'number') setSessionLimitLock(args.boxId, createSessionOpenLimit({ maxSessionOpens: args.maxSessionOpens }));
+        return { content: [{ type: 'text', text: JSON.stringify({ success: true, boxId: args.boxId }, null, 2) }] };
+      } catch (err) {
+        return { isError: true, content: [{ type: 'text', text: `Error: ${err.message}` }] };
+      }
+    }
+  );
+
+  // Tool 11: Set invite-only
+  server.tool(
+    'set_invite_only',
+    'Add or replace the invite-only lock on a box. Only the listed emails (hashed) may unlock.',
+    { boxId: z.string().describe('Target box id'), emails: z.array(z.any()).describe('Allowed email addresses') },
+    async (args) => {
+      try {
+        const box = getBox(args.boxId);
+        if (!box) return { isError: true, content: [{ type: 'text', text: 'Box not found' }] };
+        setInviteOnlyLock(args.boxId, createInviteOnly(args.emails || []));
+        return { content: [{ type: 'text', text: JSON.stringify({ success: true, boxId: args.boxId, inviteOnly: { enabled: true, allowedEmailCount: (args.emails || []).length } }, null, 2) }] };
+      } catch (err) {
+        return { isError: true, content: [{ type: 'text', text: `Error: ${err.message}` }] };
+      }
+    }
+  );
+
+  // Tool 12: Publish a box
+  server.tool(
+    'publish_box',
+    'Mark a box as published (discoverable / linkable).',
+    { boxId: z.string().describe('Target box id') },
+    async (args) => {
+      try {
+        const box = getBox(args.boxId);
+        if (!box) return { isError: true, content: [{ type: 'text', text: 'Box not found' }] };
+        publishBox(args.boxId);
+        return { content: [{ type: 'text', text: JSON.stringify({ success: true, boxId: args.boxId, published: true }, null, 2) }] };
+      } catch (err) {
+        return { isError: true, content: [{ type: 'text', text: `Error: ${err.message}` }] };
+      }
+    }
+  );
+
+  // Tool 13: List boxes
+  server.tool(
+    'list_boxes',
+    'List all boxes with their lock configuration (verifier material omitted).',
+    {},
+    async () => {
+      try {
+        const boxes = listBoxes().map(b => ({
+          id: b.id, title: b.title, published: !!b.published,
+          lockConfig: {
+            password: !!b.lockConfig?.password?.enabled,
+            timeWindow: !!b.lockConfig?.timeWindow?.enabled,
+            openLimit: !!b.lockConfig?.openLimit?.enabled,
+            sessionOpenLimit: !!b.lockConfig?.sessionOpenLimit?.enabled,
+            inviteOnly: !!b.lockConfig?.inviteOnly?.enabled
+          }
+        }));
+        return { content: [{ type: 'text', text: JSON.stringify({ count: boxes.length, boxes }, null, 2) }] };
+      } catch (err) {
+        return { isError: true, content: [{ type: 'text', text: `Error: ${err.message}` }] };
+      }
+    }
+  );
+
+  // Tool 14: Unlock a box
+  server.tool(
+    'unlock_box',
+    'Attempt to unlock a box, supplying any required password/email. On success returns a single-use grant token that can be exchanged for the payload via the REST API /api/boxes/:id/payload?grant=TOKEN.',
+    { boxId: z.string().describe('Target box id'), password: z.string().optional().describe('Password if required'), email: z.string().optional().describe('Email if invite-only'), sessionId: z.string().optional().describe('Stable session id for per-session limits') },
+    async (args) => {
+      try {
+        const box = getBox(args.boxId);
+        if (!box) return { isError: true, content: [{ type: 'text', text: 'Box not found' }] };
+        const sessionKey = args.sessionId || 'mcp-' + cryptoRandom();
+        const res = await evaluateAndRecord(args.boxId, {
+          password: args.password, email: args.email,
+          ip: 'mcp', userAgent: 'mcp-agent', sessionId: sessionKey,
+          sessionOpenCount: getSessionOpenCount(sessionKey)
+        });
+        if (res.ok) {
+          touchSessionOpens(sessionKey);
+          const grant = createSessionGrant(args.boxId, sessionKey, 60);
+          activeGrantsMcp.set(grant.token, { boxId: args.boxId, expiresAt: grant.expiresAt });
+          return { content: [{ type: 'text', text: JSON.stringify({ allowed: true, grantToken: grant.token, grantExpiresAt: grant.expiresAt }, null, 2) }] };
+        }
+        return { content: [{ type: 'text', text: JSON.stringify({ allowed: false, deniedCodes: res.deniedCodes, reason: res.reason }, null, 2) }] };
+      } catch (err) {
+        return { isError: true, content: [{ type: 'text', text: `Error: ${err.message}` }] };
+      }
+    }
+  );
+
+  // Tool 15: Delete a box
+  server.tool(
+    'delete_box',
+    'Permanently delete a box and its lock configuration.',
+    { boxId: z.string().describe('Target box id') },
+    async (args) => {
+      try {
+        const ok = deleteBox(args.boxId);
+        if (!ok) return { isError: true, content: [{ type: 'text', text: 'Box not found' }] };
+        return { content: [{ type: 'text', text: JSON.stringify({ success: true, boxId: args.boxId }, null, 2) }] };
+      } catch (err) {
+        return { isError: true, content: [{ type: 'text', text: `Error: ${err.message}` }] };
+      }
+    }
+  );
+
+  // module-level grant store for MCP unlock (mirrors server.js)
   return server;
 }
+
+const activeGrantsMcp = new Map();
+function cryptoRandom() { try { return globalThis.crypto.randomUUID().replace(/-/g, '').slice(0, 16); } catch { return Math.random().toString(36).slice(2); } }
