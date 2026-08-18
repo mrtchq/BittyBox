@@ -5,11 +5,14 @@ import {
   Eye,
   EyeOff,
   AlertTriangle, 
-  RefreshCw
+  RefreshCw,
+  Clock,
+  Timer
 } from 'lucide-react';
 import { BittyMetadata } from '../types';
 import { decompressBittyData, getRenderedHtml } from '../utils/bittyEngine';
 import { CyberScrambleText } from './CyberScrambleText';
+import { useTimeWindow } from '../utils/timeWindow';
 
 interface BittyRendererProps {
   hashFragment: string;
@@ -100,6 +103,71 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
     loadData(passwordInput.trim());
   };
 
+  // ── Time-window lock (Step #3) ──────────────────────────────────────────────
+  // Server stays authoritative; this only surfaces the live countdown and
+  // blocks the unlock UI before `not_before` / after `expires_at`. Evaluated
+  // FIRST per the cross-cutting rule — if inert/expired, downstream gates
+  // (password etc.) are never shown.
+  const twConfig = metadata?.lockConfig?.timeWindow ?? null;
+  const twEnabled = !!(twConfig && twConfig.enabled);
+  const tw = useTimeWindow(twEnabled ? twConfig : null);
+  const twBlocked = twEnabled && (tw.status === 'PENDING' || tw.status === 'EXPIRED');
+
+  if (twBlocked) {
+    const expired = tw.status === 'EXPIRED';
+    return (
+      <div className="fixed inset-0 w-screen h-screen bg-[#050515] flex items-center justify-center p-4 z-50 overflow-hidden font-sans">
+        <div className="w-full max-w-md p-6 bento-card-purple shadow-[0_0_50px_rgba(255,0,222,0.3)] relative animate-in zoom-in-95 duration-200">
+          <div className="bento-corner-accent top-l bento-corner-accent-purple" />
+          <div className="bento-corner-accent top-r bento-corner-accent-purple" />
+          <div className="bento-corner-accent bot-l bento-corner-accent-purple" />
+          <div className="bento-corner-accent bot-r bento-corner-accent-purple" />
+
+          <div className="text-center mb-6">
+            <div className="w-12 h-12 rounded-xl bg-fuchsia-950 border border-fuchsia-500/50 mx-auto flex items-center justify-center mb-3 shadow-[0_0_20px_rgba(255,0,222,0.4)]">
+              {expired ? (
+                <AlertTriangle className="w-6 h-6 text-rose-400 animate-pulse" />
+              ) : (
+                <Clock className="w-6 h-6 text-fuchsia-400 animate-pulse" />
+              )}
+            </div>
+            <h3 className="font-cyber text-lg font-bold text-white tracking-wide">
+              <CyberScrambleText text={expired ? 'LINK EXPIRED' : 'TIME-LOCKED BITTY BOX'} speed={25} />
+            </h3>
+            <p className="text-xs text-purple-200/80 font-mono mt-1">
+              {expired
+                ? 'This time-limited link has auto-revoked and is no longer available.'
+                : 'This link is scheduled. It is not yet unlocked — check back when the timer reaches zero.'}
+            </p>
+          </div>
+
+          {!expired && (
+            <div className="mb-4">
+              <div className="text-center text-[10px] font-mono text-fuchsia-300 uppercase tracking-widest mb-2">
+                Unlocks in
+              </div>
+              <div className="text-center font-cyber text-2xl text-white tracking-[0.15em] tabular-nums">
+                {tw.remainingLabel ?? '00 : 00 : 00 : 00'}
+              </div>
+              <div className="text-center text-[10px] font-mono text-purple-300/60 mt-1">
+                DD : HH : MM : SS
+              </div>
+            </div>
+          )}
+
+          {onEdit && (
+            <button
+              onClick={() => onEdit(content || '', metadata)}
+              className="w-full py-3 rounded-xl bg-cyan-950 border border-cyan-500/40 text-cyan-300 text-xs font-cyber tracking-wider hover:bg-cyan-900 transition cursor-pointer"
+            >
+              OPEN STUDIO TO REBUILD
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   // Compute final HTML for the iframe - 100% identical to the live preview
   let finalHtml = '';
   if (!needsPassword && content) {
@@ -126,6 +194,14 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
             <p className="text-xs text-purple-200/80 font-mono mt-1">
               This payload is encrypted with AES-256 cipher. Enter the secret passcode to view.
             </p>
+            {twEnabled && tw.status === 'OPEN' && tw.remainingLabel && (
+              <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-fuchsia-950/70 border border-fuchsia-500/40">
+                <Timer className="w-3.5 h-3.5 text-fuchsia-300" />
+                <span className="text-[10px] font-mono text-fuchsia-200 uppercase tracking-wider">
+                  {tw.boundary === 'expires' ? 'Locks in' : 'Burns in'} {tw.remainingLabel}
+                </span>
+              </div>
+            )}
           </div>
 
           {error && (

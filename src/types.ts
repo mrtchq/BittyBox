@@ -1,3 +1,5 @@
+import type { TimeWindowConfig } from './utils/timeWindow';
+
 export interface BittyMetadata {
   title: string;
   description?: string;
@@ -8,6 +10,13 @@ export interface BittyMetadata {
   author?: string;
   canonicalUrl?: string;
   language?: string;
+  /**
+   * Client-side lock configuration surfaced on the recipient lock screen.
+   * The server remains authoritative; this only drives the live countdown UI.
+   */
+  lockConfig?: {
+    timeWindow?: TimeWindowConfig;
+  };
 }
 
 export interface BittyHistoryItem {
