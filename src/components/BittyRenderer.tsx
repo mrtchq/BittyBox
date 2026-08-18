@@ -45,6 +45,9 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
   const [isLoading, setIsLoading] = useState<boolean>(() => {
     return !!(hashFragment && hashFragment.trim() && (!activeContent || !activeContent.trim()));
   });
+  // Step #3 polish: shake on wrong passcode + fade-out on successful unlock
+  const [shake, setShake] = useState<boolean>(false);
+  const [unlocking, setUnlocking] = useState<boolean>(false);
 
   const loadData = async (passcode?: string) => {
     if (!hashFragment || !hashFragment.trim()) {
@@ -67,6 +70,11 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
         setNeedsPassword(true);
         setIsEncrypted(true);
         setError(result.error);
+        if (passcode) {
+          // a submitted passcode failed → shake the input (re-triggers each attempt)
+          setShake(false);
+          requestAnimationFrame(() => requestAnimationFrame(() => setShake(true)));
+        }
         return;
       }
       if (activeContent && activeContent.trim()) {
@@ -84,8 +92,17 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
     }
 
     setIsEncrypted(result.isEncrypted);
-    setNeedsPassword(false);
     setContent(result.content);
+    if (needsPassword) {
+      // was locked → play a smooth fade-out on the overlay, then unmount
+      setUnlocking(true);
+      window.setTimeout(() => {
+        setNeedsPassword(false);
+        setUnlocking(false);
+      }, 320);
+    } else {
+      setNeedsPassword(false);
+    }
   };
 
   useEffect(() => {
@@ -177,7 +194,7 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
   // If password is required to decrypt
   if (needsPassword) {
     return (
-      <div className="fixed inset-0 w-screen h-screen bg-[#050515] flex items-center justify-center p-4 z-50 overflow-hidden font-sans">
+      <div className={`fixed inset-0 w-screen h-screen bg-[#050515] flex items-center justify-center p-4 z-50 overflow-hidden font-sans ${unlocking ? 'bitty-fade-out' : ''}`}>
         <div className="w-full max-w-md p-6 bento-card-purple shadow-[0_0_50px_rgba(255,0,222,0.3)] relative animate-in zoom-in-95 duration-200">
           <div className="bento-corner-accent top-l bento-corner-accent-purple" />
           <div className="bento-corner-accent top-r bento-corner-accent-purple" />
@@ -226,7 +243,8 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
                   }}
                   placeholder="Enter secret passcode..."
                   autoFocus
-                  className="w-full bg-[#090314] border border-fuchsia-500/40 rounded-xl pl-4 pr-11 py-2.5 text-sm text-white placeholder:text-purple-400/40 focus:outline-none focus:border-fuchsia-400 focus:ring-1 focus:ring-fuchsia-400 font-mono"
+                  className={`w-full bg-[#090314] border border-fuchsia-500/40 rounded-xl pl-4 pr-11 py-2.5 text-sm text-white placeholder:text-purple-400/40 focus:outline-none focus:border-fuchsia-400 focus:ring-1 focus:ring-fuchsia-400 font-mono ${shake ? 'bitty-shake' : ''}`}
+                  onAnimationEnd={() => setShake(false)}
                 />
                 <button
                   type="button"
