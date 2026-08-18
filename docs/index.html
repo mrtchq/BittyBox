@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="Bitty Box &bull; Whole Webpages in a URL. Serverless, self-contained, browser-rendered documents living entirely in URL fragments.">
+  <title>Bitty Box &bull; Whole Webpages in a URL</title>
+  <link rel="icon" href="/favicon.svg" id="favicon">
+  <link rel="stylesheet" href="/hybrid-theme.css">
+  <meta id="themeColor" name="theme-color" content="#14161a">
+
+  <!-- Core Bitty Engine Modules -->
+  <script type="module" src="/bitty.js"></script>
+  <script type="module" src="/index.js"></script>
+
+  <style>
+    /* Landing page specific styling */
+    .landing-wrapper {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .hero-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 4rem 1.5rem 3rem;
+      max-width: 1000px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .hero-title {
+      font-size: clamp(2.5rem, 6vw, 4.25rem);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      margin: 1.5rem 0 1rem;
+      background: linear-gradient(135deg, #ffffff 30%, #ffd43b 70%, #ff6600 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .hero-subtitle {
+      font-size: clamp(1.1rem, 2.5vw, 1.35rem);
+      color: var(--text-muted);
+      max-width: 680px;
+      margin: 0 auto 2.5rem;
+      line-height: 1.6;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2rem;
+      width: 100%;
+    }
+
+    .quick-encoder-box {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .quick-result-card {
+      display: none;
+      width: 100%;
+      max-width: 680px;
+      background: var(--bg-surface-sunken);
+      border: 1px solid rgba(255, 212, 59, 0.3);
+      border-radius: 1rem;
+      padding: 1rem 1.25rem;
+      text-align: left;
+      box-shadow: inset 4px 4px 10px #0e1013, inset -4px -4px 10px #242933;
+      animation: slideUpToast 0.3s ease;
+    }
+
+    .quick-result-card.active {
+      display: block;
+    }
+
+    .quick-result-url {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: var(--accent-gold);
+      word-break: break-all;
+      max-height: 80px;
+      overflow-y: auto;
+      margin-bottom: 0.75rem;
+      padding: 0.5rem;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 0.5rem;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.75rem;
+      max-width: 1100px;
+      margin: 2rem auto 5rem;
+      padding: 0 1.5rem;
+      width: 100%;
+    }
+
+    .feature-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: #191c22;
+      box-shadow: 4px 4px 10px #0e1013, -4px -4px 10px #313742;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.25rem;
+      color: var(--accent-gold);
+    }
+
+    .feature-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 0.5rem;
+    }
+
+    .feature-desc {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    .landing-footer {
+      border-top: 1px solid var(--glass-border);
+      padding: 2rem 1.5rem;
+      background: rgba(14, 16, 19, 0.9);
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 0.9rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .footer-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .footer-links a:hover {
+      color: var(--accent-gold);
+    }
+
+    /* Hide landing elements when rendering a Bitty Box hash payload */
+    body.rendering-hash #landing-view {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Landing Page Container (visible when no hash or browsing site) -->
+  <div id="landing-view" class="landing-wrapper">
+    <!-- Top Navigation -->
+    <nav class="neu-navbar">
+      <a href="/" class="brand-logo">
+        <div class="brand-badge">
+          <svg viewBox="0 0 24 24">
+            <path d="M21 16.5C21 16.88 20.79 17.21 20.47 17.38L12.57 21.82C12.41 21.91 12.21 21.96 12 21.96C11.79 21.96 11.59 21.91 11.43 21.82L3.53 17.38C3.21 17.21 3 16.88 3 16.5V7.5C3 7.12 3.21 6.79 3.53 6.62L11.43 2.18C11.59 2.09 11.79 2.04 12 2.04C12.21 2.04 12.41 2.09 12.57 2.18L20.47 6.62C20.79 6.79 21 7.12 21 7.5V16.5Z"/>
+          </svg>
+        </div>
+        <span>Bitty Box</span>
+      </a>
+
+      <ul class="nav-links">
+        <li><a href="/edit" class="nav-link"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Editor</a></li>
+        <li><a href="/accounts" class="nav-link"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Account</a></li>
+        <li><a href="/api/docs" class="nav-link"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> API &amp; MCP</a></li>
+        <li><a href="/edit" class="nav-link nav-link-cta">Open Editor</a></li>
+      </ul>
+    </nav>
+
+    <!-- Main Hero Section -->
+    <main class="hero-section">
+      <div class="neu-pill">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        <span>Zero Storage Browser Capsules</span>
+      </div>
+
+      <h1 class="hero-title">Whole Webpages<br>in a URL</h1>
+
+      <p class="hero-subtitle">
+        Compress and transport interactive HTML, Markdown documents, code repositories, schema recipes, and encrypted vaults directly inside self-contained URL fragments.
+      </p>
+
+      <div class="hero-actions">
+        <!-- Neumorphic Input Container (Interactive Quick Launcher) -->
+        <div class="quick-encoder-box">
+          <div class="input-container">
+            <input id="quick-input" type="text" placeholder="Type a note, markdown, or HTML to encode...">
+            <button id="quick-encode-btn" type="button">Encode</button>
+          </div>
+
+          <!-- Result Preview Box -->
+          <div id="quick-result" class="quick-result-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+              <span class="format-badge" id="quick-format-badge">HTML</span>
+              <span style="font-size: 0.8rem; color: var(--text-muted);" id="quick-size-badge">142 bytes</span>
+            </div>
+            <div class="quick-result-url" id="quick-url-display"></div>
+            <div style="display: flex; gap: 0.75rem;">
+              <button id="quick-copy-btn" class="neu-btn" style="padding: 0.4rem 0.9rem; font-size: 0.85rem;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy Link
+              </button>
+              <a id="quick-open-link" href="#" target="_blank" class="neu-btn neu-btn-primary" style="padding: 0.4rem 0.9rem; font-size: 0.85rem;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg> Open Capsule
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3D Glass Perspective Capsule Button -->
+        <div class="button-container">
+          <a href="/edit" class="button" id="hero-get-started-btn">
+            <span>
+              Get Started
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+            </span>
+          </a>
+        </div>
+      </div>
+    </main>
+
+    <!-- Feature Grid -->
+    <section class="features-grid">
+      <div class="neu-card">
+        <div class="feature-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+        </div>
+        <h3 class="feature-title">Zero Backend Storage</h3>
+        <p class="feature-desc">Documents live entirely within the URL fragment using GZIP and LZMA byte compression. No databases or hosting servers required.</p>
+      </div>
+
+      <div class="neu-card">
+        <div class="feature-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <h3 class="feature-title">AES-256 Encryption</h3>
+        <p class="feature-desc">Protect sensitive notes and private web applications with authenticated client-side AES-GCM cryptography before link generation.</p>
+      </div>
+
+      <div class="neu-card">
+        <div class="feature-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 9.17 4.24-4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="m9.17 14.83-4.24 4.24"/></svg>
+        </div>
+        <h3 class="feature-title">AI &amp; MCP Integration</h3>
+        <p class="feature-desc">Generate, inspect, and automate Bitty Box capsules directly with AI agents using our Streamable HTTP Model Context Protocol server.</p>
+      </div>
+
+      <div class="neu-card">
+        <div class="feature-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+        </div>
+        <h3 class="feature-title">Universal Renderers</h3>
+        <p class="feature-desc">Native support for rich Markdown, syntax-highlighted code files, Schema.org recipe cards, SVG graphics, JSON viewers, and HTML apps.</p>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="landing-footer">
+      <div class="footer-links">
+        <a href="/edit">Text Editor</a>
+        <span>&bull;</span>
+        <a href="/accounts">Account &amp; API Keys</a>
+        <span>&bull;</span>
+        <a href="/api/docs">API Documentation</a>
+        <span>&bull;</span>
+        <a href="/mcp">MCP Server Endpoint</a>
+        <span>&bull;</span>
+        <a href="https://github.com/mrtchq/bittybox" target="_blank" rel="noopener">GitHub</a>
+      </div>
+      <div>Bitty Box &bull; Self-Contained Web Capsule Runtime</div>
+    </footer>
+  </div>
+
+  <!-- Client-side Quick Encoder Logic -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const quickInput = document.getElementById('quick-input');
+      const quickBtn = document.getElementById('quick-encode-btn');
+      const quickResult = document.getElementById('quick-result');
+      const quickUrlDisplay = document.getElementById('quick-url-display');
+      const quickCopyBtn = document.getElementById('quick-copy-btn');
+      const quickOpenLink = document.getElementById('quick-open-link');
+      const quickFormatBadge = document.getElementById('quick-format-badge');
+      const quickSizeBadge = document.getElementById('quick-size-badge');
+
+      async function handleQuickEncode() {
+        const text = (quickInput.value || '').trim();
+        if (!text) {
+          quickInput.focus();
+          return;
+        }
+
+        try {
+          quickBtn.innerText = 'ENCODING...';
+          const res = await fetch('/api/bitty/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: text, title: 'Bitty Note' })
+          });
+          const data = await res.json();
+
+          if (data && data.url) {
+            quickUrlDisplay.innerText = data.url;
+            quickOpenLink.href = data.url;
+            quickFormatBadge.innerText = (data.format || 'HTML').toUpperCase();
+            quickSizeBadge.innerText = (data.byteLength || data.url.length) + ' bytes';
+            quickResult.classList.add('active');
+
+            // Save to local link history
+            try {
+              const history = JSON.parse(localStorage.getItem('bittybox_history') || '[]');
+              history.unshift({
+                url: data.url,
+                title: data.title || 'Bitty Note',
+                format: data.format || 'text',
+                created: new Date().toISOString(),
+                byteLength: data.byteLength || data.url.length
+              });
+              localStorage.setItem('bittybox_history', JSON.stringify(history.slice(0, 100)));
+            } catch (e) {
+              console.debug('History save skipped', e);
+            }
+
+            // Copy automatically
+            navigator.clipboard.writeText(data.url).then(() => {
+              quickCopyBtn.innerText = 'Copied!';
+              setTimeout(() => { quickCopyBtn.innerText = 'Copy Link'; }, 2000);
+            });
+          }
+        } catch (err) {
+          alert('Error generating link: ' + err.message);
+        } finally {
+          quickBtn.innerText = 'ENCODE';
+        }
+      }
+
+      quickBtn.addEventListener('click', handleQuickEncode);
+      quickInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          handleQuickEncode();
+        }
+      });
+
+      quickCopyBtn.addEventListener('click', () => {
+        const url = quickUrlDisplay.innerText;
+        if (url) {
+          navigator.clipboard.writeText(url).then(() => {
+            quickCopyBtn.innerText = 'Copied!';
+            setTimeout(() => { quickCopyBtn.innerText = 'Copy Link'; }, 2000);
+          });
+        }
+      });
+    });
+  </script>
+
+</body>
+</html>

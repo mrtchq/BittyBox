@@ -29,6 +29,7 @@ import {
   Database,
   WifiOff
 } from 'lucide-react';
+import { CyberScrambleText } from './CyberScrambleText';
 
 interface AnimatedSplashProps {
   onComplete: () => void;
@@ -50,6 +51,7 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
   const [direction, setDirection] = useState<number>(1);
   const [isAutoPlay, setIsAutoPlay] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [isWarping, setIsWarping] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
@@ -226,10 +228,16 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
   // Handle Exit and launch into app
   const handleLaunch = useCallback(() => {
     playWarpSound();
-    setIsExiting(true);
+    setIsWarping(true);
+    setIsAutoPlay(false);
+
+    // Let the ring tunnel animate in 3D perspective and pan before revealing Studio
     setTimeout(() => {
-      onComplete();
-    }, 850);
+      setIsExiting(true);
+      setTimeout(() => {
+        onComplete();
+      }, 500);
+    }, 2600);
   }, [onComplete, playWarpSound]);
 
   // Auto-play timer
@@ -613,10 +621,10 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
               <div className="flex items-center justify-between gap-2 mb-3 sm:mb-5">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/80 border border-cyan-400/40 text-cyan-300 font-mono text-[11px] sm:text-xs tracking-wider shadow-[0_0_12px_rgba(0,242,255,0.2)]">
                   <Radio className="w-3 h-3 text-emerald-400 animate-pulse" />
-                  <span>{activeSlideData.tag}</span>
+                  <CyberScrambleText text={activeSlideData.tag} speed={20} />
                 </div>
                 <div className="text-[10px] sm:text-[11px] font-mono text-cyan-400/60 uppercase tracking-widest">
-                  {activeSlideData.category}
+                  <CyberScrambleText text={activeSlideData.category} speed={15} />
                 </div>
               </div>
 
@@ -804,8 +812,8 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
 
               {/* Slide Headline & Description */}
               <div className="text-center space-y-2 mt-2">
-                <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold font-mono tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-cyan-200 via-teal-100 to-fuchsia-300">
-                  {activeSlideData.title}{' '}
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold font-mono tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-cyan-200 via-teal-100 to-fuchsia-300 flex flex-wrap items-center justify-center gap-x-2">
+                  <CyberScrambleText text={activeSlideData.title} speed={18} />
                   <span
                     className={
                       activeSlideData.accentColor === 'fuchsia'
@@ -817,7 +825,7 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
                         : 'text-cyan-300 drop-shadow-[0_0_15px_rgba(0,242,255,0.8)]'
                     }
                   >
-                    {activeSlideData.highlight}
+                    <CyberScrambleText text={activeSlideData.highlight} speed={22} delay={150} />
                   </span>
                 </h2>
 
@@ -914,6 +922,45 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
           <span>ZERO STORAGE // 100% CLIENT COMPUTE</span>
         </div>
       </footer>
+
+      {/* Quantum Hyperspace Ring Tunnel Warp Transition Overlay */}
+      <AnimatePresence>
+        {isWarping && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.85 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.5, filter: 'blur(24px)' }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
+            className="rings-warp-portal-container"
+          >
+            <div className="rings anim-pan">
+              <div style={{ '--delay': '06' } as React.CSSProperties} className="ring anim-zoomIn" />
+              <div style={{ '--delay': '04' } as React.CSSProperties} className="ring anim-zoomIn" />
+              <div style={{ '--delay': '03' } as React.CSSProperties} className="ring anim-zoomIn" />
+              <div style={{ '--delay': '02' } as React.CSSProperties} className="ring anim-zoomIn" />
+              <div style={{ '--delay': '01' } as React.CSSProperties} className="ring anim-zoomIn" />
+              <div style={{ '--delay': '00' } as React.CSSProperties} className="ring anim-zoomIn" />
+            </div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25, duration: 0.4 }}
+              className="mt-8 flex flex-col items-center gap-2 z-10"
+            >
+              <div className="flex items-center gap-2.5 px-5 py-2 rounded-full bg-[#070318]/90 border border-cyan-400/60 shadow-[0_0_30px_rgba(0,242,255,0.45)] backdrop-blur-md">
+                <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping" />
+                <span className="font-cyber font-bold text-xs sm:text-sm tracking-widest text-cyan-200">
+                  WARPING TO STUDIO WORKSPACE
+                </span>
+              </div>
+              <span className="text-[11px] font-mono text-fuchsia-300/80 tracking-widest uppercase">
+                Initializing In-URL Zero-Server Matrix...
+              </span>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

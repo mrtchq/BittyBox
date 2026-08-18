@@ -390,3 +390,20 @@ export async function hashString(str: string): Promise<string> {
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 16);
 }
+
+export function getRenderedHtml(content: string, metadata?: Partial<BittyMetadata>): string {
+  if (!content || !content.trim()) {
+    return '';
+  }
+  const trimmed = content.trim();
+  if (
+    trimmed.toLowerCase().includes('<html') ||
+    trimmed.toLowerCase().includes('<!doctype')
+  ) {
+    return content;
+  }
+  const lang = metadata?.language || 'en';
+  const title = metadata?.title || 'Bitty Box';
+  return `<!DOCTYPE html><html lang="${lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${title}</title><style>body{margin:0 auto;padding:1.5rem;max-width:40em;font-family:-apple-system,BlinkMacSystemFont,sans-serif;line-height:1.6;}</style></head><body>${content}</body></html>`;
+}
+

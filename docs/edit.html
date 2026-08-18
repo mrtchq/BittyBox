@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Editor &bull; Bitty Box</title>
+  <link id="favicon" rel="icon" href="/favicon.svg">
+  <link rel="canonical" id="canonical" href="/edit">
+  <meta id="themeColor" name="theme-color" content="#14161a">
+
+  <!-- Style Sheets -->
+  <link rel="stylesheet" href="/hybrid-theme.css">
+  <link rel="stylesheet" href="/edit.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/styles/atom-one-dark.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined">
+
+  <!-- Core Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/highlight.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.min.js"></script>
+  <script src="/js/crypto-js.min.js"></script>
+  <script src="/js/lzma/lzma_worker-min.js"></script>
+  <script src="/edit.js" type="module"></script>
+</head>
+
+<body class="edit-page">
+  <!-- Minimal Top Header -->
+  <header class="edit-header">
+    <div class="header-left">
+      <a href="/" class="edit-logo" title="Back to Bitty Box home">
+        <div class="brand-badge" style="width: 28px; height: 28px;">
+          <svg viewBox="0 0 24 24" style="width: 16px; height: 16px;">
+            <path d="M21 16.5C21 16.88 20.79 17.21 20.47 17.38L12.57 21.82C12.41 21.91 12.21 21.96 12 21.96C11.79 21.96 11.59 21.91 11.43 21.82L3.53 17.38C3.21 17.21 3 16.88 3 16.5V7.5C3 7.12 3.21 6.79 3.53 6.62L11.43 2.18C11.59 2.09 11.79 2.04 12 2.04C12.21 2.04 12.41 2.09 12.57 2.18L20.47 6.62C20.79 6.79 21 7.12 21 7.5V16.5Z"/>
+          </svg>
+        </div>
+        <span>Bitty Box</span>
+      </a>
+      
+      <!-- Document Title / Settings Button -->
+      <div id="doc-title" class="title-trigger-btn" title="Edit document title, metadata & password">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        <span id="doc-title-text" class="title-text">untitled</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <a href="/accounts" class="header-link" title="Account & API Keys">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>Account</span>
+      </a>
+      <a href="/api/docs" class="header-link" title="Interactive API & MCP Docs">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <span>API Docs</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- Title & Metadata Dropdown Modal -->
+  <div id="metadata-modal" class="metadata-popup-panel">
+    <div class="metadata-header">
+      <h4>Document Metadata &amp; Security</h4>
+      <button id="close-metadata-btn" type="button" class="icon-close-btn">&times;</button>
+    </div>
+    <form id="md-contents">
+      <div class="neu-field-row">
+        <label for="md-title">Title</label>
+        <input type="text" name="title" id="md-title" placeholder="Document title">
+      </div>
+      <div class="neu-field-row">
+        <label for="md-description">Description</label>
+        <input type="text" name="description" id="md-description" placeholder="Brief summary">
+      </div>
+      <div class="neu-field-row">
+        <label for="md-favicon">Favicon</label>
+        <input type="text" name="favicon" id="md-favicon" placeholder="Emoji or icon URL">
+      </div>
+      <div class="neu-field-row">
+        <label for="md-password">Password (AES-256)</label>
+        <input type="password" name="password" id="md-password" placeholder="Optional encryption password">
+      </div>
+      <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem;">
+        <input type="checkbox" name="includeMetadata" id="md-include" value="true" checked>
+        <label for="md-include" style="font-size: 0.85rem; color: var(--text-muted); cursor: pointer;">Include link metadata</label>
+      </div>
+    </form>
+  </div>
+
+  <iframe class="hide-before-edit" id="preview-frame"></iframe>
+
+  <!-- Editor Container -->
+  <div class="editor-container">
+    <div id="doc-file"></div>
+    <input id="file-input" type="file" name="name" style="display: none;" />
+    <div id="drop-zone">Drop file to encode</div>
+
+    <!-- Live Toast Message -->
+    <div id="copy-message" class="neu-toast" style="display: none;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffd43b" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      <span>Link copied to clipboard!</span>
+    </div>
+
+    <div id="placeholder">Type notes, paste markdown or HTML, or drag and drop files here to encode into a Bitty Box capsule...</div>
+
+    <!-- Quill Editor Canvas -->
+    <div id="editor"></div>
+  </div>
+
+  <!-- Bottom Dock Toolbar -->
+  <footer class="toolbar" id="menubar">
+    <!-- Format Tools -->
+    <div class="toolbar-left" id="formatbar">
+      <button class="menu-item neu-tool-btn" id="format-toggle" title="Toggle formatting bar">Aa</button>
+      <span class="ql-formats">
+        <button class="ql-bold" title="Bold"></button>
+        <button class="ql-italic" title="Italic"></button>
+        <select class="ql-header" id="ql-header" title="Heading level">
+          <option selected></option>
+          <option value="1">H1</option>
+          <option value="2">H2</option>
+          <option value="3">H3</option>
+        </select>
+        <select class="ql-color" title="Text Color"></select>
+        <select class="ql-background" title="Highlight Color"></select>
+        <button class="ql-code-block" title="Code Block"></button>
+        <button class="ql-link" title="Insert Link"></button>
+        <button type="button" class="ql-list" value="bullet" title="Bullet List"></button>
+        <button type="button" class="ql-list" value="ordered" title="Numbered List"></button>
+        <button class="ql-clean" title="Clear Formatting"></button>
+      </span>
+    </div>
+
+    <!-- Right Controls: Copy Link & Bytes Counter Button -->
+    <div class="toolbar-right">
+      <button id="copy" class="neu-btn" style="padding: 0.5rem 1rem; font-size: 0.85rem;" title="Copy Bitty Box shareable link">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        <span>Copy Link</span>
+      </button>
+
+      <!-- Bytes Counter / Capsule Generator Button -->
+      <button id="length" class="bytes-pill-btn" title="Generate &amp; Copy compressed Bitty Box link">
+        0 bytes
+      </button>
+    </div>
+  </footer>
+
+</body>
+</html>
