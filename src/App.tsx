@@ -9,71 +9,84 @@ import { QrModal } from './components/QrModal';
 import { BittyMetadata, BittyHistoryItem, AppView, TemplatePreset, WorkspaceTheme, BittySession } from './types';
 import { 
   compressContent, 
+  decompressBittyData,
   buildBittyUrl, 
   parseBittyHash, 
   hashString 
 } from './utils/bittyEngine';
 import { exportBittyToZip } from './utils/zipExport';
 import { TEMPLATE_PRESETS } from './data/templates';
-import { TemplateGalleryModal } from './components/TemplateGalleryModal';
 import { createBittyTour } from './components/OnboardingTour';
 import { ConfirmCloseSessionModal } from './components/ConfirmCloseSessionModal';
 import { AnimatedSplash } from './components/AnimatedSplash';
 import { useProStatus } from './hooks/useProStatus';
 import { ProPaywallModal } from './components/ProPaywallModal';
+import { EdgeGripHandles } from './components/EdgeGripHandles';
+import { TemplatesSidePanel } from './components/TemplatesSidePanel';
+import { StudioToolsSidePanel } from './components/StudioToolsSidePanel';
+import { useEdgeSwipe } from './hooks/useEdgeSwipe';
+import { ClickSparkEffect } from './components/ClickSparkEffect';
 
 const DEFAULT_STARTER_HTML = `<!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Welcome to Bitty Box</title>
+  <title>Welcome</title>
   <style>
     body {
-      background: #050515;
-      color: #00ddff;
-      font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif;
-      padding: 3rem 2rem;
-      max-width: 600px;
-      margin: 0 auto;
-      line-height: 1.6;
+      background: #0a0a0c;
+      color: #e4e4e7;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 1.5rem;
+      box-sizing: border-box;
     }
     .card {
-      border: 1px solid #00f2ff;
-      box-shadow: 0 0 25px rgba(0, 242, 255, 0.25);
-      background: rgba(10, 10, 30, 0.85);
+      background: #18181b;
+      border: 1px solid #27272a;
       border-radius: 12px;
-      padding: 2rem;
-      backdrop-filter: blur(10px);
+      padding: 2.5rem;
+      max-width: 500px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
     }
     h1 {
-      color: #00f2ff;
-      text-shadow: 0 0 12px rgba(0, 242, 255, 0.5);
+      color: #38bdf8;
       font-size: 1.8rem;
       margin-top: 0;
+      margin-bottom: 0.75rem;
     }
-    .tag {
-      display: inline-block;
-      background: rgba(0, 242, 255, 0.15);
-      color: #00f2ff;
-      border: 1px solid #00f2ff;
-      font-size: 0.75rem;
-      padding: 0.2rem 0.6rem;
-      border-radius: 4px;
-      font-family: monospace;
-      margin-bottom: 1rem;
+    p {
+      color: #a1a1aa;
+      line-height: 1.6;
+      margin-bottom: 1.5rem;
     }
-    a { color: #bd00ff; text-decoration: none; font-weight: bold; }
-    a:hover { text-decoration: underline; color: #00f2ff; }
+    button {
+      background: #0284c7;
+      color: #ffffff;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: #0369a1;
+    }
   </style>
 </head>
 <body>
   <div class="card">
-    <div class="tag">BITTY BOX // ZERO-SERVER PAYLOAD</div>
-    <h1>Hello from Bitty Box!</h1>
-    <p>This entire webpage is compressed and stored inside the URL you are viewing right now.</p>
-    <p>There are no databases, no servers hosting this content, and no tracking cookies. Everything lives purely in the hash fragment!</p>
-    <p><a href="#/edit" target="_top">&larr; Open Bitty Box Studio to build yours</a></p>
+    <h1>Welcome to My Webpage</h1>
+    <p>This is a standalone web page generated entirely from code in the editor.</p>
+    <button onclick="alert('Hello from your app!')">Click Me</button>
   </div>
 </body>
 </html>`;
@@ -83,8 +96,8 @@ export default function App() {
   const [currentView, setCurrentView] = useState<AppView>('editor');
   const [content, setContent] = useState<string>(DEFAULT_STARTER_HTML);
   const [metadata, setMetadata] = useState<BittyMetadata>({
-    title: 'Hello Bitty Box',
-    description: 'A compressed micro-webpage living entirely in a URL',
+    title: 'My Webpage',
+    description: 'A self-contained webpage living entirely in a URL',
     favicon: '📦',
     includeMetadata: true,
   });
@@ -110,9 +123,38 @@ export default function App() {
   const [compressedBytes, setCompressedBytes] = useState<number>(0);
   const [isCopied, setIsCopied] = useState<boolean>(false);
   const [isQrOpen, setIsQrOpen] = useState<boolean>(false);
-  const [isNavGalleryOpen, setIsNavGalleryOpen] = useState<boolean>(false);
+  const [isLeftTemplatesPanelOpen, setIsLeftTemplatesPanelOpen] = useState<boolean>(false);
+  const [isRightToolsPanelOpen, setIsRightToolsPanelOpen] = useState<boolean>(false);
   const [isCloseSessionModalOpen, setIsCloseSessionModalOpen] = useState<boolean>(false);
   const [history, setHistory] = useState<BittyHistoryItem[]>([]);
+
+  // Edge Swiping Gesture Hook
+  useEdgeSwipe({
+    onSwipeFromLeft: () => setIsLeftTemplatesPanelOpen(true),
+    onSwipeFromRight: () => setIsRightToolsPanelOpen(true),
+    onSwipeLeftToClose: () => setIsLeftTemplatesPanelOpen(false),
+    onSwipeRightToClose: () => setIsRightToolsPanelOpen(false),
+    isLeftOpen: isLeftTemplatesPanelOpen,
+    isRightOpen: isRightToolsPanelOpen,
+  });
+
+  // Global Keyboard Shortcuts (Ctrl/Cmd + [ for Templates, Ctrl/Cmd + ] for Tools)
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      const isMac = typeof navigator !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+      const isCtrlOrCmd = isMac ? e.metaKey : e.ctrlKey;
+      if (isCtrlOrCmd && e.key === '[') {
+        e.preventDefault();
+        setIsLeftTemplatesPanelOpen(prev => !prev);
+      } else if (isCtrlOrCmd && e.key === ']') {
+        e.preventDefault();
+        setIsRightToolsPanelOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, []);
+
   const [showSplash, setShowSplash] = useState<boolean>(() => {
     try {
       const hash = window.location.hash;
@@ -169,8 +211,8 @@ export default function App() {
       // Check autosaved session draft fallback
       let initialContent = DEFAULT_STARTER_HTML;
       let initialMeta: BittyMetadata = {
-        title: 'Hello Bitty Box',
-        description: 'A compressed micro-webpage living entirely in a URL',
+        title: 'My Webpage',
+        description: 'A self-contained webpage living entirely in a URL',
         favicon: '📦',
         includeMetadata: true,
       };
@@ -188,7 +230,7 @@ export default function App() {
 
       const initialSess: BittySession = {
         id: 'sess-default',
-        title: initialMeta.title || 'Hello Bitty Box',
+        title: initialMeta.title || 'My Webpage',
         favicon: initialMeta.favicon || '📦',
         content: initialContent,
         metadata: initialMeta,
@@ -315,12 +357,12 @@ export default function App() {
           const freshId = 'sess-' + Date.now();
           const freshSession: BittySession = {
             id: freshId,
-            title: 'Hello Bitty Box',
+            title: 'My Webpage',
             favicon: '📦',
             content: DEFAULT_STARTER_HTML,
             metadata: {
-              title: 'Hello Bitty Box',
-              description: 'A compressed micro-webpage living entirely in a URL',
+              title: 'My Webpage',
+              description: 'A self-contained webpage living entirely in a URL',
               favicon: '📦',
               includeMetadata: true,
             },
@@ -436,6 +478,11 @@ export default function App() {
               image: parsedMeta.image || prev.image,
             }));
           }
+          decompressBittyData(payload).then(res => {
+            if (!res.error && !res.needsPassword && res.content) {
+              setContent(res.content);
+            }
+          });
           setCurrentView('viewer');
         }
       } else if (hash === '#/edit' || hash === '#edit') {
@@ -482,6 +529,9 @@ export default function App() {
       createdAt: Date.now(),
       encrypted: !!metadata.password,
     });
+
+    // Immediately render the pure generated site with zero Bittybox UI
+    setCurrentView('viewer');
   };
 
   // Switch to preset template and create a new session
@@ -559,12 +609,12 @@ export default function App() {
     const newId = 'sess-' + Date.now();
     const newSession: BittySession = {
       id: newId,
-      title: 'New Bitty Box',
+      title: 'My Webpage',
       favicon: '📦',
       content: DEFAULT_STARTER_HTML,
       metadata: {
-        title: 'New Bitty Box',
-        description: 'A compressed micro-webpage living entirely in a URL',
+        title: 'My Webpage',
+        description: 'A self-contained webpage living entirely in a URL',
         favicon: '📦',
         includeMetadata: true,
       },
@@ -600,10 +650,35 @@ export default function App() {
     return <AnimatedSplash onComplete={() => setShowSplash(false)} />;
   }
 
+  // If in viewer mode (generated site / capsule URL), render only the pure preview iframe with zero Bittybox UI
+  if (currentView === 'viewer') {
+    return (
+      <BittyRenderer
+        hashFragment={hashFragment}
+        activeContent={content}
+        metadata={metadata}
+        onEdit={handleEditFromViewer}
+        onOpenQr={() => setIsQrOpen(true)}
+        onShare={handleShare}
+        onCloseSession={handleRequestCloseSession}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-[#050515] text-cyan-100 relative overflow-x-hidden font-sans">
       {/* Background Animated Hologram FX */}
       <HoloBackground theme={workspaceTheme} />
+      {/* Global Interactive Quantum Click Spark FX */}
+      <ClickSparkEffect theme={workspaceTheme} />
+
+      {/* Edge Grip Handles on Center Far Left & Center Far Right */}
+      <EdgeGripHandles
+        onOpenLeft={() => setIsLeftTemplatesPanelOpen(true)}
+        onOpenRight={() => setIsRightToolsPanelOpen(true)}
+        isLeftOpen={isLeftTemplatesPanelOpen}
+        isRightOpen={isRightToolsPanelOpen}
+      />
 
       {/* Top Cyber Navigation Bar */}
       <BittyNavbar
@@ -615,7 +690,8 @@ export default function App() {
         onCloseSession={handleRequestCloseSession}
         onPreviewInTab={handlePreviewInTab}
         onExportZip={() => exportBittyToZip(content, metadata, bittyUrl)}
-        onOpenTemplates={() => setIsNavGalleryOpen(true)}
+        onOpenTemplates={() => setIsLeftTemplatesPanelOpen(true)}
+        onOpenTools={() => setIsRightToolsPanelOpen(true)}
         onStartTour={handleStartTour}
         onReplaySplash={() => setShowSplash(true)}
         isEncrypted={!!metadata.password}
@@ -651,6 +727,8 @@ export default function App() {
             onSwitchSession={handleSwitchSession}
             onCloseSessionById={handleCloseSessionById}
             onNewSession={handleNewBox}
+            onOpenTemplatesPanel={() => setIsLeftTemplatesPanelOpen(true)}
+            onOpenToolsPanel={() => setIsRightToolsPanelOpen(true)}
             mode={proStatus.mode}
             isPro={proStatus.isPro}
             isLifetimePro={proStatus.isLifetimePro}
@@ -698,22 +776,64 @@ export default function App() {
         )}
       </main>
 
+      {/* Full-Screen Templates Side Panel (Sliding from Left) */}
+      <TemplatesSidePanel
+        isOpen={isLeftTemplatesPanelOpen}
+        onClose={() => setIsLeftTemplatesPanelOpen(false)}
+        onSelectTemplate={tpl => {
+          handleSelectTemplate(tpl);
+        }}
+        currentContentLength={content.trim().length}
+        sessions={sessions}
+        currentSessionId={currentSessionId}
+        onSwitchSession={handleSwitchSession}
+        onNewSession={handleNewBox}
+        mode={proStatus.mode}
+        isPro={proStatus.isPro}
+        onOpenPaywall={proStatus.openPaywall}
+      />
+
+      {/* Full-Screen Studio Tools Side Panel (Sliding from Right) */}
+      <StudioToolsSidePanel
+        isOpen={isRightToolsPanelOpen}
+        onClose={() => setIsRightToolsPanelOpen(false)}
+        onGenerate={handleGenerate}
+        bittyUrl={bittyUrl}
+        originalBytes={originalBytes}
+        compressedBytes={compressedBytes}
+        isCopied={isCopied}
+        onOpenQr={() => setIsQrOpen(true)}
+        onShare={handleShare}
+        onPreviewInTab={handlePreviewInTab}
+        onExportZip={() => exportBittyToZip(content, metadata, bittyUrl)}
+        onNewBox={handleNewBox}
+        onCloseSession={handleRequestCloseSession}
+        onStartTour={handleStartTour}
+        onReplaySplash={() => setShowSplash(true)}
+        metadata={metadata}
+        theme={workspaceTheme}
+        onThemeChange={setWorkspaceTheme}
+        mode={proStatus.mode}
+        onModeChange={proStatus.setMode}
+        isPro={proStatus.isPro}
+        isLifetimePro={proStatus.isLifetimePro}
+        isTrialActive={proStatus.isTrialActive}
+        trialTimeRemaining={proStatus.trialTimeRemaining}
+        onOpenPaywall={proStatus.openPaywall}
+        onOpenHistory={() => setCurrentView('history')}
+        onOpenSpecs={() => setCurrentView('about')}
+        sessions={sessions}
+        currentSessionId={currentSessionId}
+        onSwitchSession={handleSwitchSession}
+        onCloseSessionById={handleCloseSessionById}
+      />
+
       {/* QR Transmitter Modal */}
       <QrModal
         isOpen={isQrOpen}
         onClose={() => setIsQrOpen(false)}
         url={bittyUrl || window.location.href}
         title={metadata.title || 'Bitty Box'}
-      />
-
-      {/* Template Gallery Modal triggered from Navigation Bar */}
-      <TemplateGalleryModal
-        isOpen={isNavGalleryOpen}
-        onClose={() => setIsNavGalleryOpen(false)}
-        onSelectTemplate={tpl => {
-          handleSelectTemplate(tpl);
-        }}
-        currentContentLength={content.trim().length}
       />
 
       {/* Confirmation Warning Modal for Closing Opened Sessions */}

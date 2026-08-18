@@ -56,6 +56,8 @@ import { PasswordStrengthMeter } from './PasswordStrengthMeter';
 import { TemplateGalleryModal } from './TemplateGalleryModal';
 import { SeoAnalyzerModal } from './SeoAnalyzerModal';
 import { useUndoRedo } from '../hooks/useUndoRedo';
+import { CyberScrambleText } from './CyberScrambleText';
+import { getRenderedHtml } from '../utils/bittyEngine';
 
 interface BittyEditorProps {
   content: string;
@@ -74,6 +76,8 @@ interface BittyEditorProps {
   onSwitchSession?: (sessionId: string) => void;
   onCloseSessionById?: (sessionId: string) => void;
   onNewSession?: () => void;
+  onOpenTemplatesPanel?: () => void;
+  onOpenToolsPanel?: () => void;
   mode?: WorkspaceMode;
   isPro?: boolean;
   isLifetimePro?: boolean;
@@ -128,6 +132,8 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
   onSwitchSession,
   onCloseSessionById,
   onNewSession,
+  onOpenTemplatesPanel,
+  onOpenToolsPanel,
   mode = 'pro',
   isPro = true,
   isLifetimePro = false,
@@ -169,7 +175,11 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
       if (onOpenPaywall) onOpenPaywall('Curated Template Lab');
       return;
     }
-    setIsGalleryModalOpen(true);
+    if (onOpenTemplatesPanel) {
+      onOpenTemplatesPanel();
+    } else {
+      setIsGalleryModalOpen(true);
+    }
   };
 
   const handleOpenSeoClick = () => {
@@ -414,14 +424,12 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
     }
   };
 
-  // Compute live preview HTML
+  // Compute live preview HTML (100% identical to generated box output)
   let previewHtml = '';
   if (!content.trim()) {
     previewHtml = `<!DOCTYPE html><html><body style="margin:0;display:flex;height:100vh;align-items:center;justify-content:center;background:#050515;color:#00f2ff;font-family:sans-serif;"><p style="font-size:12px;opacity:0.6;font-family:monospace;">[ Holographic Stream Initialized &bull; Waiting for input ]</p></body></html>`;
-  } else if (!content.includes('<html') && !content.includes('<!DOCTYPE')) {
-    previewHtml = `<!DOCTYPE html><html lang="${metadata.language || 'en'}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${metadata.title || 'Bitty Box'}</title><style>body{margin:0 auto;padding:1.5rem;max-width:40em;font-family:-apple-system,BlinkMacSystemFont,sans-serif;line-height:1.6;color:#e0f2fe;background:#050515;}</style></head><body>${content}</body></html>`;
   } else {
-    previewHtml = content;
+    previewHtml = getRenderedHtml(content, metadata);
   }
 
   // Handle Export to ZIP
@@ -676,9 +684,9 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
 
           {/* Top Bar inside cell */}
           <div className="flex items-center justify-between gap-2 mb-4">
-            <div className="bento-card-header !mb-0">
+            <div className="bento-card-header !mb-0 flex items-center gap-1.5">
               <Zap className="w-3.5 h-3.5 text-cyan-400" />
-              SYSTEM PROTOCOL // TRANSMISSION IDENTIFIER
+              <CyberScrambleText text="SYSTEM PROTOCOL // TRANSMISSION IDENTIFIER" speed={25} />
             </div>
             
             {/* Auto-Save Status Badge & Shortcut Indicators */}
@@ -860,12 +868,24 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
             <button
               id="bitty-meta-btn"
               onClick={() => setShowMetadata(!showMetadata)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-950/40 border border-purple-500/30 text-purple-200 hover:bg-purple-900/30 text-xs font-mono transition"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-950/40 border border-purple-500/30 text-purple-200 hover:bg-purple-900/30 text-xs font-mono transition cursor-pointer"
             >
               <Sliders className="w-3.5 h-3.5" />
               <span>PARAMS & META TAGS</span>
               {showMetadata ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
             </button>
+
+            {onOpenToolsPanel && (
+              <button
+                id="bitty-tools-panel-btn"
+                onClick={onOpenToolsPanel}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-950/60 border border-cyan-500/40 text-cyan-200 hover:bg-cyan-900/50 hover:text-white text-xs font-cyber transition shadow-sm cursor-pointer"
+                title="Open Studio Tools & Actions Deck Side Panel"
+              >
+                <Sliders className="w-3.5 h-3.5 text-cyan-400" />
+                <span>STUDIO DECK</span>
+              </button>
+            )}
 
             {/* Close Session Trigger */}
             {onCloseSession && (
@@ -898,9 +918,9 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
 
           <div>
             <div className="flex items-center justify-between pb-1">
-              <div className="bento-card-header !mb-0">
+              <div className="bento-card-header !mb-0 flex items-center gap-1.5">
                 <Activity className="w-3.5 h-3.5 text-cyan-400" />
-                Telemetry &amp; Transmission Stats
+                <CyberScrambleText text="TELEMETRY & TRANSMISSION STATS" speed={25} />
               </div>
             </div>
 
@@ -1017,9 +1037,9 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 mb-2">
             <div className="flex items-center gap-2">
-              <div className="bento-card-header !mb-0">
+              <div className="bento-card-header !mb-0 flex items-center gap-1.5">
                 <BarChart3 className="w-3.5 h-3.5 text-cyan-400" />
-                Code Complexity &amp; Structural Metrics Dashboard
+                <CyberScrambleText text="CODE COMPLEXITY & METRICS DASHBOARD" speed={25} />
               </div>
             </div>
 
@@ -1582,21 +1602,8 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
             isCopied={isCopied}
             byteCount={originalBytes}
             compressedCount={compressedBytes}
-            label="GENERATE BITTY"
-            subLabel={`${compressedBytes} B`}
+            label="GENERATE BOX"
           />
-
-          {/* Quick Action: SEO Score Modal */}
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
-            <button
-              type="button"
-              onClick={() => setIsSeoModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-cyan-500/40 bg-cyan-950/50 hover:bg-cyan-900/60 text-cyan-300 text-xs font-mono transition shadow-sm"
-            >
-              <Search className="w-3.5 h-3.5 text-cyan-400" />
-              <span>CHECK SEO SCORE</span>
-            </button>
-          </div>
 
           {/* Shareable Link Display */}
           {bittyUrl && (
