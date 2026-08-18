@@ -27,9 +27,17 @@ import {
   CheckCircle2,
   Terminal,
   Database,
-  WifiOff
+  WifiOff,
+  Clock,
+  Timer,
+  Gauge,
+  Flame,
+  Bot,
+  Brain,
+  KeyRound
 } from 'lucide-react';
 import { CyberScrambleText } from './CyberScrambleText';
+import { homeSlides } from '../content/homeSlides';
 
 interface AnimatedSplashProps {
   onComplete: () => void;
@@ -43,6 +51,8 @@ interface CarouselSlide {
   highlight: string;
   description: string;
   accentColor: 'cyan' | 'fuchsia' | 'emerald' | 'amber' | 'violet';
+  bullets: string[];
+  cta: string;
   icon: React.ReactNode;
 }
 
@@ -142,64 +152,60 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
     } catch {}
   }, [soundEnabled, initAudio]);
 
-  // Slides Definition
-  const slides: CarouselSlide[] = [
+  // Slides Definition: 5 Core Capabilities
+  // Copy is authored in src/content/homeSlides.ts so the homepage deck, SEO copy,
+  // and future static landing surface cannot drift apart.
+  const slideChrome: Array<Omit<CarouselSlide, 'id' | 'title' | 'highlight' | 'description' | 'bullets' | 'cta'>> = [
     {
-      id: 'zero-server',
       category: 'ZERO-SERVER ARCHITECTURE',
-      tag: '01 // IN-URL COMPRESSION',
-      title: 'The Entire Web Living in a',
-      highlight: 'Single URL Hash',
-      description:
-        'Bitty Box compresses full HTML5, CSS, and JavaScript applications into self-contained URL fragments. Zero databases, zero cloud storage, zero tracking cookies.',
+      tag: '01 // IN-URL RUNTIME',
       accentColor: 'cyan',
-      icon: <Box className="w-8 h-8 text-cyan-300" />,
+      icon: (
+        <img
+          src="/bittybox-logo.png"
+          alt="Bitty Box Logo"
+          className="w-12 h-12 object-contain drop-shadow-[0_0_12px_rgba(0,242,255,0.8)]"
+        />
+      ),
     },
     {
-      id: 'crypto-deflate',
-      category: 'QUANTUM CRYPTOGRAPHY',
-      tag: '02 // AES-GCM + DEFLATE',
-      title: '90%+ Data Reduction with',
-      highlight: 'Client-Side Encryption',
-      description:
-        'Powered by high-efficiency Pako Deflate compression and 256-bit AES cryptographic locks. Protect proprietary apps and sensitive documents directly in the link.',
+      category: 'ZERO-KNOWLEDGE VAULT',
+      tag: '02 // PASSWORD LOCK',
       accentColor: 'fuchsia',
       icon: <Lock className="w-8 h-8 text-fuchsia-300" />,
     },
     {
-      id: 'studio-sandbox',
-      category: 'MULTI-SESSION STUDIO',
-      tag: '03 // ISOLATED DOM VM',
-      title: 'Instant Live Sandbox with',
-      highlight: 'Multi-Tab Workspaces',
-      description:
-        'Write and preview code simultaneously with zero server compilation delays. Manage multiple active sessions, curated templates, and one-click ZIP packaging.',
+      category: 'TEMPORAL ACCESS CONTROL',
+      tag: '03 // TIME-BASED LOCK',
+      accentColor: 'amber',
+      icon: <Clock className="w-8 h-8 text-amber-300" />,
+    },
+    {
+      category: 'VPS-BACKED QUOTA CONTROL',
+      tag: '04 // ACCESS LIMIT LOCK',
       accentColor: 'emerald',
-      icon: <Layers className="w-8 h-8 text-emerald-300" />,
+      icon: <Gauge className="w-8 h-8 text-emerald-300" />,
     },
     {
-      id: 'instant-transmit',
-      category: 'UNIVERSAL DISTRIBUTION',
-      tag: '04 // ZERO HOSTING COSTS',
-      title: 'Permanent Uptime & Instant',
-      highlight: 'QR Code Beaming',
-      description:
-        'Share capsules over chat, email, or physical printouts via high-density QR codes. Impossible to deplatform or delete because your site lives in the link.',
+      category: 'LIVE AGENT HANDSHAKE',
+      tag: '05 // AGENTIC VOICE LOCK',
       accentColor: 'violet',
-      icon: <QrCode className="w-8 h-8 text-violet-300" />,
-    },
-    {
-      id: 'launch-ready',
-      category: 'SYSTEM ARMED & READY',
-      tag: '05 // LAUNCH PROTOCOL',
-      title: 'Experience the Future of',
-      highlight: 'Serverless Computing',
-      description:
-        'Enter Bitty Box Studio now to compose your first micro-application or explore our cyber-optimized starter templates.',
-      accentColor: 'cyan',
-      icon: <Zap className="w-8 h-8 text-cyan-300" />,
+      icon: <Bot className="w-8 h-8 text-violet-300" />,
     },
   ];
+
+  const slides: CarouselSlide[] = homeSlides.map((slide, index) => ({
+    id: slide.id,
+    category: slideChrome[index]?.category ?? slide.kicker,
+    tag: slideChrome[index]?.tag ?? slide.kicker,
+    title: slide.kicker,
+    highlight: slide.headline,
+    description: slide.body,
+    bullets: slide.bullets,
+    cta: slide.cta,
+    accentColor: slideChrome[index]?.accentColor ?? 'cyan',
+    icon: slideChrome[index]?.icon ?? <Box className="w-8 h-8 text-cyan-300" />,
+  }));
 
   // Slide navigation handlers
   const goToSlide = useCallback((newIndex: number, newDirection?: number) => {
@@ -493,16 +499,17 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
       <header className="relative z-20 w-full px-4 sm:px-8 py-3.5 flex items-center justify-between border-b border-cyan-500/20 bg-[#060419]/75 backdrop-blur-xl">
         {/* Logo & Protocol Badge */}
         <div className="flex items-center gap-3">
-          <div className="relative flex items-center justify-center w-8 h-8 rounded-lg bg-cyan-950/80 border border-cyan-400/50 shadow-[0_0_15px_rgba(0,242,255,0.4)]">
-            <Box className="w-4 h-4 text-cyan-300 animate-pulse" />
-            <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+          <div className="relative flex items-center justify-center w-11 h-11 rounded-xl bg-cyan-950/90 border border-cyan-400/60 shadow-[0_0_20px_rgba(0,242,255,0.5)] overflow-hidden p-1">
+            <img
+              src="/bittybox-logo.png"
+              alt="Bitty Box Logo"
+              className="w-full h-full object-contain drop-shadow-[0_0_8px_rgba(0,242,255,0.7)]"
+            />
+            <div className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
           </div>
           <div>
             <div className="text-xs font-mono font-bold tracking-widest text-cyan-300 flex items-center gap-2">
               <span>BITTY BOX</span>
-              <span className="px-1.5 py-0.5 bg-fuchsia-950/90 text-fuchsia-300 text-[10px] border border-fuchsia-500/40 rounded font-mono tracking-normal">
-                v2.0 // ZERO-SERVER
-              </span>
             </div>
             <div className="hidden sm:block text-[10px] font-mono text-cyan-400/60 tracking-wider">
               CLIENT-SIDE IN-URL OPERATING SYSTEM
@@ -565,7 +572,7 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
       </header>
 
       {/* Main Interactive Carousel Area */}
-      <main className="relative z-10 flex-1 flex items-center justify-center w-full px-3 sm:px-6 py-2 sm:py-4 max-w-5xl mx-auto overflow-hidden">
+      <main className="relative z-10 flex-1 flex items-center justify-center w-full px-3 sm:px-6 py-2 sm:py-4 md:py-1 max-w-5xl md:max-w-7xl mx-auto overflow-y-auto">
         {/* Prev Slide Arrow (Desktop & Tablet) */}
         <button
           onClick={prevSlide}
@@ -596,7 +603,7 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
                   prevSlide();
                 }
               }}
-              className="w-full max-w-3xl bg-[#090620]/80 border border-cyan-500/30 rounded-2xl p-5 sm:p-8 md:p-10 shadow-[0_0_50px_rgba(0,0,0,0.85),inset_0_0_25px_rgba(0,242,255,0.08)] backdrop-blur-2xl relative overflow-hidden flex flex-col justify-between cursor-grab active:cursor-grabbing max-h-[82dvh]"
+              className="w-full max-w-3xl md:max-w-5xl md:min-h-[70dvh] bg-[#090620]/80 border border-cyan-500/30 rounded-2xl p-5 sm:p-8 md:p-10 shadow-[0_0_50px_rgba(0,0,0,0.85),inset_0_0_25px_rgba(0,242,255,0.08)] backdrop-blur-2xl relative overflow-y-auto flex flex-col justify-between cursor-grab active:cursor-grabbing max-h-full min-h-0 scrollbar-thin scrollbar-thumb-cyan-500/40 scrollbar-track-transparent"
             >
               {/* Corner Sci-Fi Bracket Accents */}
               <div className="absolute top-2 left-2 w-3 h-3 border-t-2 border-l-2 border-cyan-400/80 pointer-events-none" />
@@ -613,6 +620,8 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
                     ? 'bg-emerald-500'
                     : activeSlideData.accentColor === 'violet'
                     ? 'bg-violet-500'
+                    : activeSlideData.accentColor === 'amber'
+                    ? 'bg-amber-500'
                     : 'bg-cyan-500'
                 }`}
               />
@@ -646,8 +655,12 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
                           transformStyle: 'preserve-3d',
                         }}
                       >
-                        <div className="absolute inset-0 border-2 border-cyan-400 bg-cyan-500/20 backdrop-blur-sm shadow-[0_0_20px_rgba(0,242,255,0.5)] [transform:translateZ(30px)] flex items-center justify-center">
-                          <Box className="w-8 h-8 text-cyan-200 animate-pulse" />
+                        <div className="absolute inset-0 border-2 border-cyan-400 bg-cyan-500/20 backdrop-blur-sm shadow-[0_0_20px_rgba(0,242,255,0.5)] [transform:translateZ(30px)] flex items-center justify-center p-1.5">
+                          <img
+                            src="/bittybox-logo.png"
+                            alt="Bitty Box Logo"
+                            className="w-12 h-12 sm:w-14 sm:h-14 object-contain animate-pulse drop-shadow-[0_0_12px_rgba(0,242,255,0.9)]"
+                          />
                         </div>
                         <div className="absolute inset-0 border-2 border-fuchsia-500 bg-fuchsia-500/20 backdrop-blur-sm [transform:rotateY(180deg)_translateZ(30px)]" />
                         <div className="absolute inset-0 border-2 border-cyan-400 bg-cyan-500/20 backdrop-blur-sm [transform:rotateY(90deg)_translateZ(30px)]" />
@@ -699,112 +712,159 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
                     <div className="w-full bg-[#050314] border border-fuchsia-500/30 rounded-lg p-2.5 font-mono text-[11px] text-fuchsia-200 flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Lock className="w-3.5 h-3.5 text-fuchsia-400 animate-pulse" />
-                        <span>AES-GCM 256-BIT CLIENT ENCRYPTION</span>
+                        <span className="truncate">AES-GCM 256-BIT CLIENT ENCRYPTION</span>
                       </div>
-                      <span className="text-emerald-400 font-bold text-[10px]">VERIFIED</span>
+                      <span className="text-emerald-400 font-bold text-[10px] shrink-0">VERIFIED</span>
                     </div>
                   </div>
                 )}
 
                 {currentSlide === 2 && (
-                  /* Slide 3: Multi-Session Studio & Sandboxed VM */
-                  <div className="relative flex flex-col items-center justify-center w-full max-w-md">
-                    <div className="w-full bg-[#050314] border border-emerald-500/40 rounded-xl p-3 shadow-[0_0_25px_rgba(0,255,204,0.15)] font-mono text-xs">
-                      {/* Window Header */}
-                      <div className="flex items-center justify-between border-b border-emerald-500/20 pb-2 mb-2">
-                        <div className="flex items-center gap-1.5">
-                          <span className="w-2.5 h-2.5 rounded-full bg-rose-500/80" />
-                          <span className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
-                          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
+                  /* Slide 3: Temporal Decay & Time-Based Lock */
+                  <div className="relative flex flex-col items-center justify-center w-full max-w-md space-y-3">
+                    {/* High-Tech Digital Expiry Clock */}
+                    <div className="relative flex items-center justify-center gap-3 sm:gap-4 p-4 rounded-xl bg-amber-950/40 border border-amber-500/40 shadow-[0_0_25px_rgba(245,158,11,0.2)]">
+                      {/* Hours */}
+                      <div className="flex flex-col items-center">
+                        <div className="px-3 py-2 rounded-lg bg-[#070514] border border-amber-400/50 text-amber-300 font-mono font-extrabold text-xl sm:text-2xl shadow-[0_0_10px_rgba(245,158,11,0.3)]">
+                          04
                         </div>
-                        <span className="text-[10px] text-emerald-400/80 font-bold">BITTY STUDIO VM</span>
-                        <div className="flex items-center gap-1 text-[10px] text-emerald-400">
-                          <Activity className="w-3 h-3 animate-pulse" />
-                          <span>LIVE</span>
-                        </div>
+                        <span className="text-[9px] font-mono text-amber-400/70 mt-1 uppercase tracking-wider">HRS</span>
                       </div>
 
-                      {/* Code Typing Animation Mock */}
-                      <div className="space-y-1 text-[11px] text-emerald-300/90 text-left font-mono">
-                        <div className="flex items-center gap-2">
-                          <span className="text-fuchsia-400 font-bold">const</span>
-                          <span className="text-cyan-300">capsule</span>
-                          <span className="text-cyan-400">=</span>
-                          <span className="text-amber-300">new BittyBox()</span>;
+                      <span className="text-amber-400 font-mono text-2xl font-bold animate-pulse">:</span>
+
+                      {/* Minutes */}
+                      <div className="flex flex-col items-center">
+                        <div className="px-3 py-2 rounded-lg bg-[#070514] border border-amber-400/50 text-amber-300 font-mono font-extrabold text-xl sm:text-2xl shadow-[0_0_10px_rgba(245,158,11,0.3)]">
+                          59
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-cyan-300">capsule</span>.<span className="text-emerald-300">render</span>(<span className="text-amber-200">"&lt;h1&gt;Hello World&lt;/h1&gt;"</span>);
+                        <span className="text-[9px] font-mono text-amber-400/70 mt-1 uppercase tracking-wider">MIN</span>
+                      </div>
+
+                      <span className="text-amber-400 font-mono text-2xl font-bold animate-pulse">:</span>
+
+                      {/* Seconds */}
+                      <div className="flex flex-col items-center">
+                        <div className="px-3 py-2 rounded-lg bg-[#070514] border border-amber-400/50 text-amber-300 font-mono font-extrabold text-xl sm:text-2xl shadow-[0_0_10px_rgba(245,158,11,0.3)] animate-pulse">
+                          59
                         </div>
-                        <div className="text-emerald-400/60 text-[10px] pt-1">
-                          // Zero latency • Realtime preview • Instant ZIP export
+                        <span className="text-[9px] font-mono text-amber-400/70 mt-1 uppercase tracking-wider">SEC</span>
+                      </div>
+
+                      {/* Pulsing Expiry Beacon */}
+                      <div className="hidden sm:flex items-center justify-center pl-2 border-l border-amber-500/30">
+                        <div className="relative flex items-center justify-center w-10 h-10">
+                          <div className="absolute w-8 h-8 rounded-full border border-dashed border-amber-400/50 animate-spin-slow" />
+                          <Clock className="w-5 h-5 text-amber-300 animate-pulse" />
                         </div>
                       </div>
+                    </div>
+
+                    {/* Temporal Status HUD */}
+                    <div className="w-full bg-[#050314] border border-amber-500/30 rounded-lg p-2.5 font-mono text-[11px] text-amber-200 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Timer className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+                        <span className="truncate">TEMPORAL EXPIRY ENGINE // AUTO-DECAY ACTIVE</span>
+                      </div>
+                      <span className="text-amber-400 font-bold text-[10px] shrink-0">EPOCH SECURED</span>
                     </div>
                   </div>
                 )}
 
                 {currentSlide === 3 && (
-                  /* Slide 4: Instant QR Transmit & Permanent Uptime */
+                  /* Slide 4: View Quota & Burn-After-Reading Access Limits */
                   <div className="relative flex flex-col items-center justify-center w-full max-w-md space-y-3">
-                    <div className="relative flex items-center justify-center">
-                      {/* Radar Beam Pulse Rings */}
-                      <div className="absolute w-36 h-36 rounded-full border border-violet-400/30 animate-ping" />
-                      <div className="relative p-3 bg-[#06041a] border-2 border-violet-400 rounded-xl shadow-[0_0_30px_rgba(189,0,255,0.4)] flex items-center justify-center">
-                        <QrCode className="w-16 h-16 text-violet-300" />
-                        {/* Laser Scan Line */}
-                        <div className="absolute inset-x-2 h-1 bg-gradient-to-r from-transparent via-cyan-300 to-transparent shadow-[0_0_10px_#00f2ff] animate-[scan_2s_infinite]" />
+                    <div className="w-full bg-[#050314] border border-emerald-500/40 rounded-xl p-3 sm:p-4 shadow-[0_0_25px_rgba(0,255,204,0.15)] font-mono">
+                      <div className="flex items-center justify-between border-b border-emerald-500/20 pb-2 mb-3">
+                        <div className="flex items-center gap-2 text-emerald-300 text-xs font-bold">
+                          <Gauge className="w-4 h-4 text-emerald-400" />
+                          <span>SESSION QUOTA METER</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-950/80 border border-emerald-500/40 text-[10px] text-emerald-300">
+                          <Flame className="w-3 h-3 text-emerald-400 animate-pulse" />
+                          <span>BURN-ON-READ</span>
+                        </div>
+                      </div>
+
+                      {/* Segmented Energy View Bars */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-emerald-400/80">Authorized Accesses:</span>
+                          <span className="text-emerald-200 font-bold">01 / 05 Consumed</span>
+                        </div>
+
+                        {/* 5 Segmented Blocks */}
+                        <div className="grid grid-cols-5 gap-1.5 h-3.5">
+                          <div className="bg-emerald-400 rounded-sm shadow-[0_0_8px_rgba(0,255,204,0.8)] animate-pulse" />
+                          <div className="bg-emerald-950/60 border border-emerald-500/40 rounded-sm" />
+                          <div className="bg-emerald-950/60 border border-emerald-500/40 rounded-sm" />
+                          <div className="bg-emerald-950/60 border border-emerald-500/40 rounded-sm" />
+                          <div className="bg-emerald-950/60 border border-emerald-500/40 rounded-sm" />
+                        </div>
+
+                        <div className="flex justify-between text-[10px] text-emerald-400/60 pt-1">
+                          <span>Active Session</span>
+                          <span>4 Locked Quotas Remaining</span>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-4 text-xs font-mono text-violet-200">
-                      <div className="flex items-center gap-1.5">
-                        <WifiOff className="w-3.5 h-3.5 text-cyan-400" />
-                        <span>WORKS OFFLINE</span>
+                    {/* Quota Lock HUD */}
+                    <div className="w-full bg-[#050314] border border-emerald-500/30 rounded-lg p-2.5 font-mono text-[11px] text-emerald-200 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                        <span className="truncate">TAMPER-EVIDENT CLIENT COUNTER</span>
                       </div>
-                      <span>&bull;</span>
-                      <div className="flex items-center gap-1.5">
-                        <Database className="w-3.5 h-3.5 text-fuchsia-400" />
-                        <span>ZERO DATABASE</span>
-                      </div>
+                      <span className="text-emerald-400 font-bold text-[10px] shrink-0">QUOTA ENFORCED</span>
                     </div>
                   </div>
                 )}
 
                 {currentSlide === 4 && (
-                  /* Slide 5: Launchpad & Quick Starter Presets */
+                  /* Slide 5: Innovative Autonomous Agentic Lock */
                   <div className="relative flex flex-col items-center justify-center w-full max-w-md space-y-3">
-                    <div className="w-full grid grid-cols-2 gap-2 text-left font-mono">
-                      <div className="p-2.5 rounded-lg bg-cyan-950/60 border border-cyan-500/40 shadow-[0_0_12px_rgba(0,242,255,0.15)]">
-                        <div className="text-cyan-300 font-bold text-xs flex items-center gap-1.5 mb-0.5">
-                          <Zap className="w-3 h-3 text-cyan-400" />
-                          <span>Code Editor</span>
+                    {/* Neural Agent Core Orb */}
+                    <div className="relative flex items-center justify-center">
+                      <div className="absolute w-36 h-36 rounded-full border border-dashed border-violet-400/40 animate-[spin_8s_linear_infinite]" />
+                      <div className="absolute w-28 h-28 rounded-full border border-cyan-400/30 animate-[spin_6s_linear_infinite_reverse]" />
+
+                      <div className="relative p-4 bg-[#070318] border-2 border-violet-400 rounded-2xl shadow-[0_0_30px_rgba(189,0,255,0.4)] flex items-center justify-center">
+                        <Bot className="w-12 h-12 text-violet-300" />
+                        <Brain className="w-5 h-5 text-cyan-300 animate-pulse absolute -bottom-1 -right-1" />
+                      </div>
+                    </div>
+
+                    {/* AI Proof-of-Reasoning Challenge Matrix */}
+                    <div className="w-full bg-[#050314] border border-violet-500/40 rounded-xl p-3 font-mono text-xs">
+                      <div className="flex items-center justify-between border-b border-violet-500/20 pb-1.5 mb-2">
+                        <div className="flex items-center gap-1.5 text-violet-300 font-bold text-[11px]">
+                          <Cpu className="w-3.5 h-3.5 text-violet-400" />
+                          <span>AUTONOMOUS AGENT HANDSHAKE</span>
                         </div>
-                        <p className="text-[10px] text-cyan-400/70">Syntax highlighting & live preview</p>
+                        <span className="text-[10px] text-cyan-300 bg-cyan-950/60 border border-cyan-500/40 px-2 py-0.5 rounded font-bold">
+                          M2M GATED
+                        </span>
                       </div>
 
-                      <div className="p-2.5 rounded-lg bg-fuchsia-950/60 border border-fuchsia-500/40 shadow-[0_0_12px_rgba(189,0,255,0.15)]">
-                        <div className="text-fuchsia-300 font-bold text-xs flex items-center gap-1.5 mb-0.5">
-                          <Lock className="w-3 h-3 text-fuchsia-400" />
-                          <span>AES Encryption</span>
+                      <div className="space-y-1 text-[11px] text-violet-200/90 text-left font-mono">
+                        <div className="flex items-center gap-2 text-cyan-300">
+                          <span className="text-fuchsia-400">challenge:</span>
+                          <span>ProofOfAgentChallenge.verify()</span>
                         </div>
-                        <p className="text-[10px] text-fuchsia-400/70">Password lock sensitive links</p>
+                        <div className="text-[10px] text-violet-400/70">
+                          // Semantic reasoning puzzle solved • Autonomous agent unlocked
+                        </div>
                       </div>
+                    </div>
 
-                      <div className="p-2.5 rounded-lg bg-emerald-950/60 border border-emerald-500/40 shadow-[0_0_12px_rgba(0,255,204,0.15)]">
-                        <div className="text-emerald-300 font-bold text-xs flex items-center gap-1.5 mb-0.5">
-                          <Layers className="w-3 h-3 text-emerald-400" />
-                          <span>Multi-Session</span>
-                        </div>
-                        <p className="text-[10px] text-emerald-400/70">Tabs & template gallery</p>
+                    {/* Live Agentic Status HUD */}
+                    <div className="w-full bg-[#050314] border border-violet-500/30 rounded-lg p-2.5 font-mono text-[11px] text-violet-200 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="w-3.5 h-3.5 text-violet-400 animate-spin" />
+                        <span className="truncate">AGENTIC REASONING AUTHENTICATED</span>
                       </div>
-
-                      <div className="p-2.5 rounded-lg bg-violet-950/60 border border-violet-500/40 shadow-[0_0_12px_rgba(189,0,255,0.15)]">
-                        <div className="text-violet-300 font-bold text-xs flex items-center gap-1.5 mb-0.5">
-                          <QrCode className="w-3 h-3 text-violet-400" />
-                          <span>QR Transmitter</span>
-                        </div>
-                        <p className="text-[10px] text-violet-400/70">Scan & view on any device</p>
-                      </div>
+                      <span className="text-violet-300 font-bold text-[10px] shrink-0">AI-SECURED</span>
                     </div>
                   </div>
                 )}
@@ -822,6 +882,8 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
                         ? 'text-emerald-300 drop-shadow-[0_0_15px_rgba(0,255,204,0.8)]'
                         : activeSlideData.accentColor === 'violet'
                         ? 'text-violet-300 drop-shadow-[0_0_15px_rgba(189,0,255,0.8)]'
+                        : activeSlideData.accentColor === 'amber'
+                        ? 'text-amber-300 drop-shadow-[0_0_15px_rgba(245,158,11,0.8)]'
                         : 'text-cyan-300 drop-shadow-[0_0_15px_rgba(0,242,255,0.8)]'
                     }
                   >
@@ -829,9 +891,21 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
                   </span>
                 </h2>
 
-                <p className="text-xs sm:text-sm text-cyan-200/80 font-mono max-w-xl mx-auto leading-relaxed line-clamp-3 sm:line-clamp-none">
+                <p className="text-xs sm:text-sm text-cyan-200/80 font-mono max-w-2xl mx-auto leading-relaxed line-clamp-3 sm:line-clamp-none">
                   {activeSlideData.description}
                 </p>
+
+                <div className="grid gap-1.5 sm:grid-cols-3 max-w-3xl mx-auto pt-1 text-left">
+                  {activeSlideData.bullets.slice(0, 3).map((bullet) => (
+                    <div
+                      key={bullet}
+                      className="flex items-start gap-1.5 rounded-lg border border-cyan-500/20 bg-cyan-950/20 px-2.5 py-2 text-[10px] sm:text-[11px] font-mono leading-snug text-cyan-100/80"
+                    >
+                      <CheckCircle2 className="mt-0.5 h-3 w-3 shrink-0 text-emerald-300" />
+                      <span>{bullet}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {/* Action Button: Next or Launch Studio */}
@@ -852,7 +926,7 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
                     className="flex-1 py-3 px-6 rounded-xl bg-gradient-to-r from-cyan-500 via-teal-400 to-fuchsia-500 text-black font-mono font-extrabold text-sm sm:text-base tracking-wider flex items-center justify-center gap-3 shadow-[0_0_30px_rgba(0,242,255,0.6)] hover:shadow-[0_0_45px_rgba(0,242,255,0.9)] hover:scale-[1.02] active:scale-95 transition-all duration-300"
                   >
                     <Zap className="w-5 h-5 fill-black animate-bounce" />
-                    <span>LAUNCH STUDIO WORKSPACE</span>
+                    <span>{activeSlideData.cta || 'LAUNCH STUDIO WORKSPACE'}</span>
                     <Sparkles className="w-4 h-4 animate-spin" />
                   </button>
                 ) : (
