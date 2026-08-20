@@ -17,8 +17,19 @@ export const AboutModal: React.FC<AboutModalProps> = ({ onOpenEditor, onStartTou
         <div className="bento-corner-accent bot-l" />
         <div className="bento-corner-accent bot-r" />
 
-        {/* Header Badge */}
-        <div className="text-center max-w-2xl mx-auto mb-10">
+        {/* Brand Logo & Header Badge */}
+        <div className="text-center max-w-2xl mx-auto mb-10 flex flex-col items-center">
+          <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-cyan-400 via-fuchsia-500 to-indigo-600 p-[2px] shadow-[0_0_30px_rgba(0,242,255,0.4)] mb-4 group">
+            <div className="w-full h-full bg-[#090314]/90 rounded-[14px] flex items-center justify-center overflow-hidden p-2">
+              <img
+                src="/bittybox-logo.png"
+                alt="Bitty Box Logo"
+                className="w-full h-full object-contain drop-shadow-[0_0_12px_rgba(0,242,255,0.8)] group-hover:scale-110 transition-transform duration-300"
+              />
+            </div>
+            <div className="absolute -inset-1 bg-gradient-to-r from-cyan-400 to-fuchsia-500 rounded-2xl blur-md opacity-50 group-hover:opacity-80 transition duration-300 -z-10 animate-pulse" />
+          </div>
+
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/80 border border-cyan-400/40 text-cyan-300 text-xs font-mono mb-4">
             <Zap className="w-3.5 h-3.5 text-cyan-300" />
             ZERO SERVER PERSISTENCE &bull; 100% URL PACKED

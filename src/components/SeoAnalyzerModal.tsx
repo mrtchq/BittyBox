@@ -142,36 +142,36 @@ export const SeoAnalyzerModal: React.FC<SeoAnalyzerModalProps> = ({
       checks.push({
         id: 'desc-empty',
         category: 'description',
-        title: 'Meta Description is Missing',
+        title: 'Description is Missing',
         status: 'fail',
         score: 0,
         maxScore: 25,
-        message: 'Without a meta description, search engines extract arbitrary text fragments which hurts click-through rates.',
-        suggestion: `Explore ${title || 'this self-contained application'}, fully encapsulated inside a zero-server URL. Instant client execution with zero backend latency.`,
+        message: 'Without a description, search engines and chat apps will not show a summary preview.',
+        suggestion: `Explore ${title || 'this page'}, packed directly inside a private shareable link. Opens instantly in any browser.`,
         quickFix: () => {
           onChangeMetadata({
             ...metadata,
-            description: `Explore ${title || 'this self-contained application'}, fully encapsulated inside a zero-server URL. Instant client execution with zero backend latency.`,
+            description: `Explore ${title || 'this page'}, packed directly inside a private shareable link. Opens instantly in any browser.`,
           });
-          showToast('Added rich Meta Description!');
+          showToast('Added page description!');
         },
       });
     } else if (descLen < 50) {
       checks.push({
         id: 'desc-short',
         category: 'description',
-        title: 'Meta Description is Too Brief',
+        title: 'Description is Too Short',
         status: 'warn',
         score: 12,
         maxScore: 25,
-        message: `Description is ${descLen} characters. Aim for 120–160 characters to provide a comprehensive summary and call-to-action.`,
-        suggestion: `${description} Powered by Bitty Box URL-native micro-architecture. Zero server dependencies, ultra-fast client-side execution.`,
+        message: `Description is ${descLen} characters. Aim for 120–160 characters to give visitors a clear summary.`,
+        suggestion: `${description} Created with Bitty Box. Runs 100% in your browser with zero servers.`,
         quickFix: () => {
           onChangeMetadata({
             ...metadata,
-            description: `${description} Powered by Bitty Box URL-native micro-architecture. Zero server dependencies, ultra-fast client-side execution.`.slice(0, 155),
+            description: `${description} Created with Bitty Box. Runs 100% in your browser with zero servers.`.slice(0, 155),
           });
-          showToast('Expanded Meta Description!');
+          showToast('Expanded page description!');
         },
       });
     } else if (descLen > 165) {
@@ -367,16 +367,16 @@ export const SeoAnalyzerModal: React.FC<SeoAnalyzerModalProps> = ({
   const handleAutoOptimizeAll = () => {
     onChangeMetadata({
       ...metadata,
-      title: title && title.length >= 15 ? title : `${title || 'Interactive Micro-App'} — Zero-Server Bitty Box`,
+      title: title && title.length >= 15 ? title : `${title || 'Interactive Page'} — Bitty Box`,
       description: description && description.length >= 50 
         ? description 
-        : `Explore ${title || 'this self-contained application'}, fully encapsulated inside a zero-server URL. Instant client execution with zero backend latency.`,
+        : `Explore ${title || 'this page'}, packed directly inside a private shareable link. Opens instantly in any browser.`,
       language: language || 'en',
       author: author && author !== 'Anonymous Agent' ? author : 'Bitty Box Creator',
       favicon: favicon || '⚡',
       image: image || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&auto=format&fit=crop&q=80',
     });
-    showToast('✨ All SEO & Meta Tags auto-optimized to 100% score!');
+    showToast('✨ All details auto-optimized to 100% score!');
   };
 
   // Full HTML Meta code generator
@@ -508,7 +508,7 @@ ${image ? `<meta property="twitter:image" content="${image}">\n` : ''}
             }`}
           >
             <Globe className="w-3.5 h-3.5" />
-            <span>LIVE SERP SIMULATOR</span>
+            <span>SEARCH &amp; SOCIAL PREVIEW</span>
           </button>
 
           <button
@@ -520,7 +520,7 @@ ${image ? `<meta property="twitter:image" content="${image}">\n` : ''}
             }`}
           >
             <FileText className="w-3.5 h-3.5" />
-            <span>GENERATED META &amp; JSON-LD</span>
+            <span>HTML META CODE</span>
           </button>
         </div>
 

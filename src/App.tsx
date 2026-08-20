@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { BittyNavbar } from './components/BittyNavbar';
 import { HoloBackground } from './components/HoloBackground';
 import { BittyEditor } from './components/BittyEditor';
@@ -9,6 +9,7 @@ import { QrModal } from './components/QrModal';
 import { BittyMetadata, BittyHistoryItem, AppView, TemplatePreset, WorkspaceTheme, BittySession } from './types';
 import { 
   compressContent, 
+  compressContentSync,
   decompressBittyData,
   buildBittyUrl, 
   parseBittyHash, 
@@ -91,15 +92,32 @@ const DEFAULT_STARTER_HTML = `<!DOCTYPE html>
 </body>
 </html>`;
 
+function getInitialUrlState() {
+  if (typeof window === 'undefined') return { hash: '', payload: '', metadata: null, isViewer: false };
+  const hash = window.location.hash;
+  if (hash && hash.length > 2 && hash !== '#/edit' && hash !== '#edit' && hash !== '#/studio' && hash !== '#/' && hash !== '#') {
+    const { payload, metadata } = parseBittyHash(hash);
+    return { hash, payload, metadata, isViewer: Boolean(payload) };
+  }
+  return { hash: '', payload: '', metadata: null, isViewer: false };
+}
+
 export default function App() {
   const proStatus = useProStatus();
-  const [currentView, setCurrentView] = useState<AppView>('editor');
-  const [content, setContent] = useState<string>(DEFAULT_STARTER_HTML);
-  const [metadata, setMetadata] = useState<BittyMetadata>({
-    title: 'My Webpage',
-    description: 'A self-contained webpage living entirely in a URL',
-    favicon: '📦',
-    includeMetadata: true,
+  const initialUrl = useMemo(() => getInitialUrlState(), []);
+  const [currentView, setCurrentView] = useState<AppView>(() => (initialUrl.isViewer ? 'viewer' : 'editor'));
+  const [inlinePreviewActive, setInlinePreviewActive] = useState<boolean>(false);
+  const [content, setContent] = useState<string>(() => (initialUrl.isViewer ? '' : DEFAULT_STARTER_HTML));
+  const [metadata, setMetadata] = useState<BittyMetadata>(() => {
+    return {
+      title: initialUrl.metadata?.title || 'My Webpage',
+      description: initialUrl.metadata?.description || 'A self-contained webpage living entirely in a URL',
+      favicon: initialUrl.metadata?.favicon || '📦',
+      image: initialUrl.metadata?.image,
+      boxId: initialUrl.metadata?.boxId,
+      lockConfig: initialUrl.metadata?.lockConfig,
+      includeMetadata: true,
+    };
   });
 
   // Multi-session state
@@ -117,8 +135,8 @@ export default function App() {
     return 'monochrome';
   });
 
-  const [bittyUrl, setBittyUrl] = useState<string>('');
-  const [hashFragment, setHashFragment] = useState<string>('');
+  const [bittyUrl, setBittyUrl] = useState<string>(() => (initialUrl.hash ? window.location.href : ''));
+  const [hashFragment, setHashFragment] = useState<string>(() => initialUrl.payload);
   const [originalBytes, setOriginalBytes] = useState<number>(0);
   const [compressedBytes, setCompressedBytes] = useState<number>(0);
   const [isCopied, setIsCopied] = useState<boolean>(false);
@@ -156,13 +174,7 @@ export default function App() {
   }, []);
 
   const [showSplash, setShowSplash] = useState<boolean>(() => {
-    try {
-      const hash = window.location.hash;
-      // If direct deep link to a capsule hash (not empty or edit route), skip splash
-      if (hash && hash !== '#/edit' && hash !== '#edit' && hash !== '#/studio' && hash !== '#/' && hash !== '#') {
-        return false;
-      }
-    } catch {}
+    if (initialUrl.isViewer) return false;
     return true;
   });
 
@@ -429,8 +441,9 @@ export default function App() {
     } catch {}
   };
 
-  // Re-calculate compression on content or metadata changes
+  // Re-calculate compression on content or metadata changes (ONLY when in Studio Editor)
   const updateCompression = useCallback(async () => {
+    if (currentView === 'viewer') return;
     if (!content.trim()) {
       setOriginalBytes(0);
       setCompressedBytes(0);
@@ -449,14 +462,15 @@ export default function App() {
     const fullUrl = buildBittyUrl(compressedUrl, metadata);
     setBittyUrl(fullUrl);
     setHashFragment(compressedUrl);
-  }, [content, metadata]);
+  }, [content, metadata, currentView]);
 
   useEffect(() => {
+    if (currentView === 'viewer') return;
     const timer = setTimeout(() => {
       updateCompression();
     }, 200);
     return () => clearTimeout(timer);
-  }, [content, metadata, updateCompression]);
+  }, [content, metadata, currentView, updateCompression]);
 
   // Read URL on mount or hashchange
   useEffect(() => {
@@ -468,14 +482,17 @@ export default function App() {
         const { payload, metadata: parsedMeta } = parseBittyHash(hash);
 
         if (payload) {
+          setShowSplash(false);
           setHashFragment(payload);
-          if (parsedMeta.title || parsedMeta.description || parsedMeta.favicon) {
+          if (parsedMeta) {
             setMetadata(prev => ({
               ...prev,
               title: parsedMeta.title || prev.title,
               description: parsedMeta.description || prev.description,
               favicon: parsedMeta.favicon || prev.favicon,
               image: parsedMeta.image || prev.image,
+              boxId: parsedMeta.boxId || prev.boxId,
+              lockConfig: parsedMeta.lockConfig || prev.lockConfig,
             }));
           }
           decompressBittyData(payload).then(res => {
@@ -495,18 +512,65 @@ export default function App() {
     return () => window.removeEventListener('hashchange', handleUrlChange);
   }, []);
 
-  // Generate & Copy action
+  // Generate & Copy action (opens generated URL in a new tab like OPEN TAB)
   const handleGenerate = async () => {
+    // 1. Determine target URL synchronously so window.open executes within the user click gesture
+    let targetUrl = bittyUrl;
+    if (!metadata.password) {
+      try {
+        const syncRes = compressContentSync(content, { mimeType: 'text/html' });
+        if (syncRes) {
+          targetUrl = buildBittyUrl(syncRes.compressedUrl, metadata);
+        }
+      } catch {}
+    }
+
+    // 2. Open new tab synchronously in direct user gesture context
+    let newTab: Window | null = null;
+    if (targetUrl) {
+      newTab = window.open(targetUrl, '_blank');
+    } else {
+      newTab = window.open('', '_blank');
+    }
+
+    // 3. Complete async compression, state update, address bar update, history record & clipboard
     const { compressedUrl, originalBytes: orig, compressedBytes: comp } = await compressContent(content, {
       password: metadata.password,
     });
 
-    const fullUrl = buildBittyUrl(compressedUrl, metadata);
+    let updatedMetadata = { ...metadata };
+    if (metadata.lockConfig?.openLimit?.enabled && !metadata.boxId) {
+      try {
+        const res = await fetch('/api/boxes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: metadata.title || 'Bitty Box',
+            bittyUrl: compressedUrl,
+            lockConfig: metadata.lockConfig,
+          }),
+        });
+        const data = await res.json();
+        if (data.boxId) {
+          updatedMetadata.boxId = data.boxId;
+          setMetadata(updatedMetadata);
+        }
+      } catch {}
+    }
+
+    const fullUrl = buildBittyUrl(compressedUrl, updatedMetadata);
     setBittyUrl(fullUrl);
     setHashFragment(compressedUrl);
 
     // Save to browser address bar without reload
     window.history.replaceState(null, '', fullUrl);
+
+    // If newTab was opened without targetUrl or URL updated, redirect it to fullUrl
+    if (newTab && (!targetUrl || targetUrl !== fullUrl)) {
+      try {
+        newTab.location.href = fullUrl;
+      } catch {}
+    }
 
     // Copy to clipboard
     try {
@@ -529,9 +593,6 @@ export default function App() {
       createdAt: Date.now(),
       encrypted: !!metadata.password,
     });
-
-    // Immediately render the pure generated site with zero Bittybox UI
-    setCurrentView('viewer');
   };
 
   // Switch to preset template and create a new session
@@ -571,8 +632,18 @@ export default function App() {
 
   // Launch in new tab
   const handlePreviewInTab = () => {
-    if (bittyUrl) {
-      window.open(bittyUrl, '_blank');
+    let targetUrl = bittyUrl;
+    if (!metadata.password) {
+      try {
+        const syncRes = compressContentSync(content, { mimeType: 'text/html' });
+        if (syncRes) {
+          targetUrl = buildBittyUrl(syncRes.compressedUrl, metadata);
+        }
+      } catch {}
+    }
+
+    if (targetUrl) {
+      window.open(targetUrl, '_blank');
     } else {
       window.open(window.location.href, '_blank');
     }
@@ -636,6 +707,14 @@ export default function App() {
     setCurrentView('editor');
   };
 
+  // Toggle the in-page live preview (Viewer nav button) without leaving the editor
+  const onToggleInlinePreview = useCallback(() => {
+    setInlinePreviewActive(prev => !prev);
+  }, []);
+  const onExitInlinePreview = useCallback(() => {
+    setInlinePreviewActive(false);
+  }, []);
+
   // Switch from viewer back to studio editor with content
   const handleEditFromViewer = (newContent: string, newMeta: Partial<BittyMetadata>) => {
     if (newContent) setContent(newContent);
@@ -655,7 +734,7 @@ export default function App() {
     return (
       <BittyRenderer
         hashFragment={hashFragment}
-        activeContent={content}
+        activeContent={hashFragment ? undefined : content}
         metadata={metadata}
         onEdit={handleEditFromViewer}
         onOpenQr={() => setIsQrOpen(true)}
@@ -684,6 +763,7 @@ export default function App() {
       <BittyNavbar
         currentView={currentView}
         onViewChange={setCurrentView}
+        onViewerClick={onToggleInlinePreview}
         onOpenQr={() => setIsQrOpen(true)}
         onShare={handleShare}
         onNewBox={handleNewBox}
@@ -729,6 +809,9 @@ export default function App() {
             onNewSession={handleNewBox}
             onOpenTemplatesPanel={() => setIsLeftTemplatesPanelOpen(true)}
             onOpenToolsPanel={() => setIsRightToolsPanelOpen(true)}
+            inlinePreviewActive={inlinePreviewActive}
+            onToggleInlinePreview={() => setInlinePreviewActive(prev => !prev)}
+            onExitInlinePreview={() => setInlinePreviewActive(false)}
             mode={proStatus.mode}
             isPro={proStatus.isPro}
             isLifetimePro={proStatus.isLifetimePro}
@@ -740,7 +823,7 @@ export default function App() {
         {currentView === 'viewer' && (
           <BittyRenderer
             hashFragment={hashFragment}
-            activeContent={content}
+            activeContent={hashFragment ? undefined : content}
             metadata={metadata}
             onEdit={handleEditFromViewer}
             onOpenQr={() => setIsQrOpen(true)}

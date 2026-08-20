@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bitty Box — Remaining-Opens Badge (UI Design Reference)</title>
+<style>
+  :root {
+    --bg: #0d0221;
+    --bg2: #190b2e;
+    --cyan: #2de2e6;
+    --magenta: #ff2e97;
+    --purple: #a162e8;
+    --amber: #ffb347;
+    --red: #ff5470;
+    --ink: #e9e6ff;
+    --muted: #9b8bc4;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 2.5rem 1.25rem;
+    background: radial-gradient(1200px 600px at 70% -10%, #2a0d4a 0%, var(--bg) 55%);
+    color: var(--ink);
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    line-height: 1.5;
+  }
+  h1 { font-size: 1.35rem; letter-spacing: 0.04em; margin: 0 0 0.25rem; }
+  h1 .accent { color: var(--magenta); }
+  p.lead { color: var(--muted); max-width: 60ch; margin: 0 0 2rem; }
+  .grid { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem; }
+
+  /* ── The badge ───────────────────────────────────────────── */
+  .opens-badge {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    padding: 0.4rem 0.85rem; border-radius: 999px;
+    font-size: 0.85rem; font-weight: 600; letter-spacing: 0.02em;
+    border: 1px solid currentColor;
+    background: color-mix(in srgb, currentColor 12%, transparent);
+    box-shadow: 0 0 14px color-mix(in srgb, currentColor 35%, transparent);
+    white-space: nowrap;
+  }
+  .opens-badge .ico { width: 1em; height: 1em; display: inline-block; }
+  .opens-badge .count { font-variant-numeric: tabular-nums; font-size: 0.95rem; }
+  .opens-badge[data-state="ok"]      { color: var(--cyan); }
+  .opens-badge[data-state="low"]     { color: var(--amber); }
+  .opens-badge[data-state="sealed"]  { color: var(--red); }
+
+  /* ── Drop-in render helper (consumes the lockScreen payload) ─ */
+  pre.code {
+    background: var(--bg2); border: 1px solid #322056; border-radius: 12px;
+    padding: 1rem 1.1rem; overflow:auto; color: var(--ink);
+    font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; font-size: 0.8rem;
+  }
+  .note { color: var(--muted); font-size: 0.82rem; max-width: 65ch; }
+</style>
+</head>
+<body>
+  <h1>Bitty Box <span class="accent">Remaining-Opens Badge</span> — UI Design</h1>
+  <p class="lead">
+    Server-authoritative scarcity badge for a max-opens / one-time locked Box.
+    The value is derived on the server from <code>opensUsed</code> (see
+    <code>buildLockScreen</code> → <code>remainingOpens</code>) and is never
+    computed client-side, so it can't be spoofed to override the gate.
+  </p>
+
+  <div class="grid">
+    <span class="opens-badge" data-state="ok">
+      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 5h6l-5 4 2 7-6-4-6 4 2-7-5-4h6z"/></svg>
+      <span><span class="count">9</span> opens left</span>
+    </span>
+
+    <span class="opens-badge" data-state="low">
+      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 5h6l-5 4 2 7-6-4-6 4 2-7-5-4h6z"/></svg>
+      <span><span class="count">1</span> open left — last chance</span>
+    </span>
+
+    <span class="opens-badge" data-state="sealed">
+      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+      <span>Sealed — 0 opens left</span>
+    </span>
+  </div>
+
+  <p class="note">
+    State rule: <b>ok</b> when <code>remainingOpens &gt; 1</code>,
+    <b>low</b> (amber warning) when exactly <code>1</code>,
+    <b>sealed</b> (red, lock icon) when <code>0</code> / <code>exhausted === true</code>.
+    Hide the badge entirely when <code>remainingOpens === null</code> (no open-limit lock).
+  </p>
+
+  <h3 style="margin-top:2rem;color:var(--purple)">Drop-in render snippet</h3>
+  <pre class="code">// lockScreen = response from POST /api/boxes/:id/unlock (denied branch)
+function renderOpensBadge(lockScreen) {
+  const r = lockScreen.remainingOpens;
+  if (r === null || r === undefined) return '';          // no open-limit lock
+  if (r <= 0 || lockScreen.exhausted) {
+    return `&lt;span class="opens-badge" data-state="sealed"&gt;
+      &lt;svg class="ico" viewBox="0 0 24 24"&gt;…lock…&lt;/svg&gt; Sealed — 0 opens left&lt;/span&gt;`;
+  }
+  const state = r === 1 ? 'low' : 'ok';
+  const label = r === 1 ? 'open left — last chance' : 'opens left';
+  return `&lt;span class="opens-badge" data-state="${state}"&gt;
+    &lt;svg class="ico" viewBox="0 0 24 24"&gt;…star…&lt;/svg&gt;
+    &lt;span&gt;&lt;span class="count"&gt;${r}&lt;/span&gt; ${label}&lt;/span&gt;&lt;/span&gt;`;
+}</pre>
+
+  <p class="note">
+    Pair this with the synthwave <code>.opens-badge</code> styles above. The badge
+    is informational-only; the actual allow/deny decision always comes from the
+    server (<code>evaluateOpenLimit</code>).
+  </p>
+</body>
+</html>

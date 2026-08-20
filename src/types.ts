@@ -10,12 +10,18 @@ export interface BittyMetadata {
   author?: string;
   canonicalUrl?: string;
   language?: string;
+  boxId?: string;
   /**
-   * Client-side lock configuration surfaced on the recipient lock screen.
-   * The server remains authoritative; this only drives the live countdown UI.
+   * Client-side & server-backed lock configuration surfaced on the recipient lock screen.
    */
   lockConfig?: {
     timeWindow?: TimeWindowConfig;
+    openLimit?: {
+      enabled?: boolean;
+      maxOpens?: number;
+      opensUsed?: number;
+      showRemainingCount?: boolean;
+    };
   };
 }
 

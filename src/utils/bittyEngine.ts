@@ -1,5 +1,6 @@
 import { deflate, inflate } from 'pako';
 import { BittyMetadata } from '../types';
+import { decryptBox } from './bittyCrypto';
 
 export const GZIP_MARKER = 'gz';
 export const BASE64_MARKER = 'base64';
@@ -82,6 +83,45 @@ export async function subtleDecryptData(data: Uint8Array, pass: string): Promise
   return new Uint8Array(plainBuffer);
 }
 
+export function compressContentSync(
+  content: string,
+  options?: {
+    password?: string;
+    mimeType?: string;
+    render?: string;
+    isRawHtml?: boolean;
+  }
+): { compressedUrl: string; originalBytes: number; compressedBytes: number } | null {
+  if (options?.password && options.password.trim().length > 0) {
+    return null;
+  }
+  const encoder = new TextEncoder();
+  const rawBytes = encoder.encode(content);
+  const originalBytes = rawBytes.byteLength;
+
+  const deflated = deflate(rawBytes, { level: 9 });
+  const b64Data = uint8ArrayToBase64(deflated).replace(/=+$/, '');
+  const compressedBytes = b64Data.length;
+
+  let url = '';
+  const mime = options?.mimeType || 'text/html';
+
+  if (options?.render) {
+    url = `data:${mime};render=${options.render};format=gz;base64,${b64Data}`;
+  } else if (options?.isRawHtml) {
+    url = `data:${mime};charset=utf-8;format=gz;base64,${b64Data}`;
+  } else {
+    // Standard short bitty box fragment
+    url = `?${b64Data}`;
+  }
+
+  return {
+    compressedUrl: url,
+    originalBytes,
+    compressedBytes,
+  };
+}
+
 export async function compressContent(
   content: string,
   options?: {
@@ -91,42 +131,22 @@ export async function compressContent(
     isRawHtml?: boolean;
   }
 ): Promise<{ compressedUrl: string; originalBytes: number; compressedBytes: number }> {
+  const syncRes = compressContentSync(content, options);
+  if (syncRes) {
+    return syncRes;
+  }
+
   const encoder = new TextEncoder();
   const rawBytes = encoder.encode(content);
   const originalBytes = rawBytes.byteLength;
 
-  let isEncrypted = false;
-  let b64Data = '';
-
-  if (options?.password && options.password.trim().length > 0) {
-    // 1. Deflate the plaintext first for optimal compression ratio
-    const deflated = deflate(rawBytes, { level: 9 });
-    // 2. Encrypt the compressed bytes using AES-GCM (with random 12-byte IV prepended)
-    const encryptedBytes = await subtleEncryptData(deflated, options.password.trim());
-    // 3. Base64 encode the encrypted binary data
-    b64Data = uint8ArrayToBase64(encryptedBytes).replace(/=+$/, '');
-    isEncrypted = true;
-  } else {
-    // Compress using pako deflate (gzip level 9)
-    const deflated = deflate(rawBytes, { level: 9 });
-    b64Data = uint8ArrayToBase64(deflated).replace(/=+$/, '');
-  }
-
+  const deflated = deflate(rawBytes, { level: 9 });
+  const encryptedBytes = await subtleEncryptData(deflated, options!.password!.trim());
+  const b64Data = uint8ArrayToBase64(encryptedBytes).replace(/=+$/, '');
   const compressedBytes = b64Data.length;
 
-  let url = '';
   const mime = options?.mimeType || 'text/html';
-
-  if (isEncrypted) {
-    url = `data:${mime};charset=utf-8;cipher=aes-gcm;format=gz;base64,${b64Data}`;
-  } else if (options?.render) {
-    url = `data:${mime};render=${options.render};format=gz;base64,${b64Data}`;
-  } else if (options?.isRawHtml) {
-    url = `data:${mime};charset=utf-8;format=gz;base64,${b64Data}`;
-  } else {
-    // Standard short bitty box fragment
-    url = `?${b64Data}`;
-  }
+  const url = `data:${mime};charset=utf-8;cipher=aes-gcm;format=gz;base64,${b64Data}`;
 
   return {
     compressedUrl: url,
@@ -153,7 +173,7 @@ export function parseBittyHash(hash: string): {
       payload = parts.slice(i).join('/');
       break;
     }
-    if (i === 0 && !part.startsWith('d') && !part.startsWith('f') && !part.startsWith('i')) {
+    if (i === 0 && !['d', 'f', 'i', 'tw', 'box'].includes(part)) {
       metadata.title = decodePrettyComponent(part);
     } else if (part === 'd' && parts[i + 1]) {
       metadata.description = decodePrettyComponent(parts[i + 1]);
@@ -165,6 +185,39 @@ export function parseBittyHash(hash: string): {
       try {
         metadata.image = atob(decodeURIComponent(parts[i + 1]));
       } catch {}
+      i++;
+    } else if (part === 'tw' && parts[i + 1]) {
+      try {
+        const rawTw = decodeURIComponent(parts[i + 1]);
+        const [nb, na, sc] = rawTw.split('~');
+        metadata.lockConfig = {
+          ...(metadata.lockConfig || {}),
+          timeWindow: {
+            enabled: true,
+            notBefore: nb && nb !== '_' ? nb : null,
+            notAfter: na && na !== '_' ? na : null,
+            showCountdown: sc !== '0',
+          },
+        };
+      } catch {}
+      i++;
+    } else if (part === 'ol' && parts[i + 1]) {
+      try {
+        const rawOl = decodeURIComponent(parts[i + 1]);
+        const [max, src] = rawOl.split('~');
+        metadata.lockConfig = {
+          ...(metadata.lockConfig || {}),
+          openLimit: {
+            enabled: true,
+            maxOpens: Number(max) || 1,
+            opensUsed: 0,
+            showRemainingCount: src !== '0',
+          },
+        };
+      } catch {}
+      i++;
+    } else if (part === 'box' && parts[i + 1]) {
+      metadata.boxId = decodeURIComponent(parts[i + 1]);
       i++;
     }
   }
@@ -285,6 +338,37 @@ export async function decompressBittyData(
           } catch {}
         }
 
+        // Path 3: PBKDF2 envelope fallback (bittyCrypto encryptBox format)
+        if (!decryptedBytes) {
+          try {
+            const decryptedString = await decryptBox(b64Payload, passwordAttempt.trim());
+            if (decryptedString) {
+              return {
+                content: decryptedString,
+                mimeType,
+                isEncrypted: true,
+                needsPassword: false,
+                render,
+              };
+            }
+          } catch {
+            if (passwordAttempt !== passwordAttempt.trim()) {
+              try {
+                const decryptedString = await decryptBox(b64Payload, passwordAttempt);
+                if (decryptedString) {
+                  return {
+                    content: decryptedString,
+                    mimeType,
+                    isEncrypted: true,
+                    needsPassword: false,
+                    render,
+                  };
+                }
+              } catch {}
+            }
+          }
+        }
+
         if (!decryptedBytes) {
           throw new Error('Authentication failed');
         }
@@ -360,7 +444,7 @@ export function buildBittyUrl(
   metadata: BittyMetadata,
   origin: string = typeof window !== 'undefined' ? window.location.origin : ''
 ): string {
-  const title = metadata.title.trim() || 'Untitled';
+  const title = metadata.title?.trim() || 'Untitled';
   const cleanFragment = compressedFragment.startsWith('#') ? compressedFragment.substring(1) : compressedFragment;
 
   // Build metadata path components inside hash to preserve single-page app routing on any host
@@ -375,6 +459,22 @@ export function buildBittyUrl(
     try {
       metaHash += `/i/${encodeURIComponent(btoa(metadata.image).replace(/=/g, ''))}`;
     } catch {}
+  }
+  if (metadata.boxId) {
+    metaHash += `/box/${encodeURIComponent(metadata.boxId)}`;
+  }
+  if (metadata.lockConfig?.timeWindow?.enabled) {
+    const tw = metadata.lockConfig.timeWindow;
+    const nb = tw.notBefore ? encodeURIComponent(tw.notBefore) : '_';
+    const na = tw.notAfter ? encodeURIComponent(tw.notAfter) : '_';
+    const sc = tw.showCountdown === false ? '0' : '1';
+    metaHash += `/tw/${nb}~${na}~${sc}`;
+  }
+  if (metadata.lockConfig?.openLimit?.enabled) {
+    const ol = metadata.lockConfig.openLimit;
+    const max = ol.maxOpens || 1;
+    const src = ol.showRemainingCount === false ? '0' : '1';
+    metaHash += `/ol/${max}~${src}`;
   }
 
   const finalPayload = (cleanFragment.startsWith('?') || cleanFragment.startsWith('data:'))

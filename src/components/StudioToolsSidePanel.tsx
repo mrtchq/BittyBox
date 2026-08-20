@@ -183,14 +183,14 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
                 <div>
                   <div className="flex items-center gap-2">
                     <h2 className="text-base sm:text-lg font-cyber font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-teal-200 to-fuchsia-300">
-                      <CyberScrambleText text="STUDIO TOOLS & CONTROLS" speed={25} />
+                      <CyberScrambleText text="STUDIO TOOLS & SETTINGS" speed={25} />
                     </h2>
                     <span className="text-[10px] font-mono font-bold bg-cyan-950 text-cyan-300 px-2 py-0.5 rounded-full border border-cyan-500/40">
-                      CONTROL DECK
+                      TOOLS MENU
                     </span>
                   </div>
                   <p className="text-xs text-cyan-300/70 font-mono hidden sm:block">
-                    Full transmission deck, telemetry, export tools &amp; environment settings.
+                    Share your link, change themes, download files, and adjust settings.
                   </p>
                 </div>
               </div>
@@ -215,10 +215,10 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
                 <div className="flex items-center justify-between mb-4 pb-2 border-b border-cyan-500/20">
                   <div className="flex items-center gap-2 text-cyan-300 font-cyber font-bold text-xs uppercase tracking-wider">
                     <Activity className="w-4 h-4 text-cyan-400" />
-                    <span>TRANSMISSION &amp; ZERO-SERVER LINK</span>
+                    <span>SHARE YOUR BITTY LINK</span>
                   </div>
                   <div className="text-[11px] font-mono text-teal-300 bg-teal-950/60 px-2 py-0.5 rounded border border-teal-500/30">
-                    {compressionRatio > 0 ? `${compressionRatio}% COMPRESSED` : 'LIVE PACKED'}
+                    {compressionRatio > 0 ? `${compressionRatio}% SPACE SAVED` : 'READY'}
                   </div>
                 </div>
 
@@ -233,23 +233,23 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
                   }`}
                 >
                   <Copy className="w-4 h-4" />
-                  <span>{isCopied ? 'BITTY URL COPIED TO CLIPBOARD! 🚀' : 'GENERATE & COPY BITTY LINK'}</span>
+                  <span>{isCopied ? 'LINK COPIED TO CLIPBOARD! 🚀' : 'CREATE & COPY SHAREABLE LINK'}</span>
                 </button>
 
                 {/* Telemetry row */}
                 <div className="grid grid-cols-3 gap-2 mt-3 text-center font-mono">
                   <div className="p-2 rounded-lg bg-black/40 border border-cyan-500/20">
-                    <div className="text-[10px] text-cyan-400/70 uppercase">Raw Size</div>
-                    <div className="text-xs font-bold text-cyan-200">{originalBytes} B</div>
+                    <div className="text-[10px] text-cyan-400/70 uppercase">Original Size</div>
+                    <div className="text-xs font-bold text-cyan-200">{originalBytes} chars</div>
                   </div>
                   <div className="p-2 rounded-lg bg-black/40 border border-cyan-500/20">
-                    <div className="text-[10px] text-teal-400/70 uppercase">Packed Size</div>
-                    <div className="text-xs font-bold text-teal-300">{compressedBytes} B</div>
+                    <div className="text-[10px] text-teal-400/70 uppercase">Link Size</div>
+                    <div className="text-xs font-bold text-teal-300">{compressedBytes} chars</div>
                   </div>
                   <div className="p-2 rounded-lg bg-black/40 border border-cyan-500/20">
-                    <div className="text-[10px] text-fuchsia-400/70 uppercase">Cipher</div>
+                    <div className="text-[10px] text-fuchsia-400/70 uppercase">Security</div>
                     <div className="text-xs font-bold text-fuchsia-300">
-                      {metadata.password ? 'AES-256' : 'GZIP'}
+                      {metadata.password ? 'Passcode Locked' : 'Public'}
                     </div>
                   </div>
                 </div>
@@ -268,7 +268,7 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
                     className="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-cyan-950/60 hover:bg-cyan-900 border border-cyan-500/40 text-cyan-200 text-xs font-mono transition cursor-pointer"
                   >
                     <QrCode className="w-4 h-4 text-cyan-400" />
-                    <span>QR HOLOGRAM</span>
+                    <span>QR CODE</span>
                   </button>
 
                   <button
@@ -277,7 +277,7 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
                     className="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-fuchsia-950/60 hover:bg-fuchsia-900 border border-fuchsia-500/40 text-fuchsia-200 text-xs font-mono transition cursor-pointer"
                   >
                     <Share2 className="w-4 h-4 text-fuchsia-400" />
-                    <span>SYSTEM SHARE</span>
+                    <span>SHARE LINK</span>
                   </button>
 
                   <button
@@ -286,7 +286,7 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
                     className="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-teal-950/60 hover:bg-teal-900 border border-teal-500/40 text-teal-200 text-xs font-mono transition cursor-pointer"
                   >
                     <ExternalLink className="w-4 h-4 text-teal-400" />
-                    <span>OPEN TAB</span>
+                    <span>OPEN IN NEW TAB</span>
                   </button>
                 </div>
               </div>
@@ -298,7 +298,7 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
                 <div className="flex items-center justify-between mb-4 pb-2 border-b border-purple-500/20">
                   <div className="flex items-center gap-2 text-fuchsia-300 font-cyber font-bold text-xs uppercase tracking-wider">
                     <FolderArchive className="w-4 h-4 text-fuchsia-400" />
-                    <span>PACKAGING, IMPORT &amp; VAULT SECURITY</span>
+                    <span>DOWNLOAD, IMPORT &amp; PAGE DETAILS</span>
                   </div>
                 </div>
 
@@ -320,11 +320,11 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
                       </div>
                       <div>
                         <div className="font-cyber font-bold text-xs text-fuchsia-200 group-hover:text-cyan-200 flex items-center gap-1.5">
-                          <span>EXPORT TO ZIP</span>
+                          <span>DOWNLOAD AS ZIP</span>
                           {mode === 'simple' && !isPro && <Crown className="w-3 h-3 text-amber-400" />}
                         </div>
                         <p className="text-[10px] text-purple-300/60 font-mono">
-                          Download standalone HTML + README package
+                          Download your page files as a ZIP archive
                         </p>
                       </div>
                     </button>
@@ -341,10 +341,10 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
                       </div>
                       <div>
                         <div className="font-cyber font-bold text-xs text-cyan-200 group-hover:text-cyan-100">
-                          <span>IMPORT LOCAL FILE</span>
+                          <span>OPEN LOCAL FILE</span>
                         </div>
                         <p className="text-[10px] text-cyan-300/60 font-mono">
-                          Load HTML, text, or SVG from disk
+                          Load any HTML, text, or markdown file
                         </p>
                       </div>
                     </button>
@@ -361,11 +361,11 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
                       </div>
                       <div>
                         <div className="font-cyber font-bold text-xs text-teal-200 group-hover:text-teal-100 flex items-center gap-1.5">
-                          <span>SEO &amp; DISCOVERABILITY</span>
+                          <span>SEARCH &amp; SOCIAL PREVIEW</span>
                           {mode === 'simple' && !isPro && <Crown className="w-3 h-3 text-amber-400" />}
                         </div>
                         <p className="text-[10px] text-teal-300/60 font-mono">
-                          Analyze Open Graph tags, titles &amp; metadata
+                          See how your link looks on Google and Twitter
                         </p>
                       </div>
                     </button>
@@ -382,13 +382,13 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
                       </div>
                       <div>
                         <div className="font-cyber font-bold text-xs text-purple-200 group-hover:text-white flex items-center justify-between">
-                          <span>PARAMS &amp; META TAGS</span>
+                          <span>PAGE DETAILS &amp; SETTINGS</span>
                           <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-purple-900/60 text-cyan-300">
                             {showMetadata ? 'EXPANDED' : 'COLLAPSED'}
                           </span>
                         </div>
                         <p className="text-[10px] text-purple-300/60 font-mono">
-                          Configure title, favicon, description &amp; password
+                          Configure title, icon, summary &amp; passcode lock
                         </p>
                       </div>
                     </button>
@@ -403,7 +403,7 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
                 <div className="flex items-center justify-between mb-4 pb-2 border-b border-cyan-500/20">
                   <div className="flex items-center gap-2 text-cyan-300 font-cyber font-bold text-xs uppercase tracking-wider">
                     <Palette className="w-4 h-4 text-cyan-400" />
-                    <span>CYBER WORKSPACE THEMES</span>
+                    <span>WORKSPACE THEMES</span>
                   </div>
                 </div>
 
@@ -517,7 +517,7 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
                 <div className="flex items-center justify-between mb-4 pb-2 border-b border-purple-500/20">
                   <div className="flex items-center gap-2 text-purple-300 font-cyber font-bold text-xs uppercase tracking-wider">
                     <Compass className="w-4 h-4 text-purple-400" />
-                    <span>SYSTEM GUIDES, VAULT &amp; SESSIONS</span>
+                    <span>SAVED LINKS &amp; GUIDES</span>
                   </div>
                 </div>
 
@@ -531,7 +531,7 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
                       className="flex flex-col items-center justify-center p-3 rounded-xl bg-[#0c0422] hover:bg-teal-950/70 border border-teal-500/30 text-center transition cursor-pointer"
                     >
                       <History className="w-5 h-5 text-teal-400 mb-1" />
-                      <span className="font-cyber font-bold text-xs text-teal-200">VAULT HISTORY</span>
+                      <span className="font-cyber font-bold text-xs text-teal-200">SAVED LINKS</span>
                     </button>
                   )}
 
@@ -544,7 +544,7 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
                       className="flex flex-col items-center justify-center p-3 rounded-xl bg-[#0c0422] hover:bg-purple-950/70 border border-purple-500/30 text-center transition cursor-pointer"
                     >
                       <Info className="w-5 h-5 text-purple-300 mb-1" />
-                      <span className="font-cyber font-bold text-xs text-purple-200">SYSTEM SPECS</span>
+                      <span className="font-cyber font-bold text-xs text-purple-200">HELP &amp; ABOUT</span>
                     </button>
                   )}
 
@@ -558,7 +558,7 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
                       className="flex flex-col items-center justify-center p-3 rounded-xl bg-[#0c0422] hover:bg-cyan-950/70 border border-cyan-500/30 text-center transition cursor-pointer"
                     >
                       <Compass className="w-5 h-5 text-cyan-400 mb-1 animate-spin-slow" />
-                      <span className="font-cyber font-bold text-xs text-cyan-200">START TOUR</span>
+                      <span className="font-cyber font-bold text-xs text-cyan-200">HOW IT WORKS</span>
                     </button>
                   )}
 
@@ -588,7 +588,7 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
                     className="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-purple-950/60 hover:bg-purple-900 border border-purple-500/40 text-purple-200 text-xs font-mono transition cursor-pointer"
                   >
                     <RefreshCw className="w-4 h-4 text-purple-300" />
-                    <span>NEW BITTY BOX / RESET</span>
+                    <span>NEW PAGE / RESET</span>
                   </button>
 
                   {onCloseSession && (
@@ -601,7 +601,7 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
                       className="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-amber-950/60 hover:bg-rose-950/80 border border-amber-500/40 hover:border-rose-400 text-amber-300 hover:text-white text-xs font-cyber transition cursor-pointer"
                     >
                       <LogOut className="w-4 h-4 text-amber-400" />
-                      <span>CLOSE ACTIVE SESSION</span>
+                      <span>CLOSE CURRENT PAGE</span>
                     </button>
                   )}
                 </div>

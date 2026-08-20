@@ -9,6 +9,7 @@ interface HoloGenerateButtonProps {
   compressedCount?: number;
   label?: string;
   subLabel?: string;
+  className?: string;
 }
 
 export const HoloGenerateButton: React.FC<HoloGenerateButtonProps> = ({
@@ -16,9 +17,10 @@ export const HoloGenerateButton: React.FC<HoloGenerateButtonProps> = ({
   isLoading = false,
   isCopied = false,
   label = 'GENERATE BOX',
+  className,
 }) => {
   return (
-    <div className="button-container select-none my-6">
+    <div className={`button-container select-none ${className || 'my-6'}`}>
       <div className="button-hexagons">
         <div className="hexagon"></div>
         <div className="hexagon"></div>

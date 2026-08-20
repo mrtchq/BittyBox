@@ -1,6 +1,5 @@
 // Home slide copy — single source of truth for the bittybox.org hero slides.
-// Authored copy lives here, decoupled from layout/animation (built in Steps #7–#8).
-// Each slide is a typed object so the slide builder can map over `homeSlides`.
+// Authored copy lives here, decoupled from layout/animation.
 
 export interface HomeSlideCopy {
   id: string;
@@ -13,104 +12,96 @@ export interface HomeSlideCopy {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Slide 5 — Agentic Voice Lock  (task: Step #6, priority 4)
-// Fully authored below. The concept: a Box that opens only through a live
-// AI-agent voice handshake instead of a static password.
-// ─────────────────────────────────────────────────────────────────────────────
-export const agenticVoiceLockSlide: HomeSlideCopy = {
-  id: "agentic-voice-lock",
-  kicker: "LOCK MODE 05",
-  headline: "Agentic Voice Lock",
-  body:
-    "Stop trusting passwords. Your Box opens only when a trusted agent speaks the unlock — live, in conversation, with the human on the other side. Authentication that sounds like a friend and guards like a vault.",
-  bullets: [
-    "Live agent handshake — zero static secrets to phish or leak",
-    "Verifies voice + intent, not just a string match",
-    "One command to revoke; the Box goes silent to everyone else",
-  ],
-  cta: "Talk your Box open →",
-  metaDescription:
-    "Agentic Voice Lock lets your Bitty Box open only through a live AI-agent voice handshake — no passwords, no static secrets, instant revoke.",
-};
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Slide skeleton — populated by their own copy tasks (Steps #2–#5).
-// Stubs carry only the known headline so the builder has a stable structure;
-// body/bullets/cta are intentionally empty until those tasks land.
-//   Slide 1 — Self-Contained Website in a URL   (Step #2)
-//   Slide 2 — Password Lock                      (Step #3)
-//   Slide 3 — Time-Based Lock                    (Step #4)
-//   Slide 4 — Access Limit Lock                  (Step #5)
+// 4-Step Hero Flow:
+//   Slide 1 — Insert Content (Input Field Composer)
+//   Slide 2 — Password Lock (Optional AES-256 GCM)
+//   Slide 3 — Time-Based Lock (Optional Expiration Window)
+//   Slide 4 — Access Limit Lock (Optional Burn-on-Read / Quota)
 // ─────────────────────────────────────────────────────────────────────────────
 const slideStubs: HomeSlideCopy[] = [
   {
-    id: "self-contained-url",
-    kicker: "WHAT IS IT",
-    headline: "A complete website lives inside its own link.",
+    id: "create-box",
+    kicker: "STEP 01 // INSERT CONTENT",
+    headline: "Enter what you want to share",
     body:
-      "Bitty Box packs an entire micro-site — HTML, CSS, images, even scripts — into its own URL using LZMA compression. There is no server, no hosting, and no database to pay for or patch. Open the link and the page rebuilds itself in your browser, even with no internet connection. Share one link and the whole site travels inside it.",
+      "Type or paste the HTML, CSS, JavaScript, markdown, or plain text you want to pack into a self-contained Bitty Box link. Everything compresses directly into the URL in your browser with zero server hosting. Hit Next to configure security and lock options.",
     bullets: [
-      "LZMA compression shrinks a full page down to a few kilobytes",
-      "No server, no hosting, no database — nothing to manage or leak",
-      "Works offline: the site reconstructs itself right in the browser",
-      "One link carries everything — bittybox.org/#<your-site>",
+      "Full HTML, JS, CSS, or markdown payload",
+      "Instant client-side compression in your browser",
+      "No database, no server hosting required",
+      "Hit Next to configure optional security locks",
     ],
-    cta: "Build a Box →",
+    cta: "Next: Password Lock →",
     metaDescription:
-      "Bitty Box packs a complete website into a single URL with LZMA compression — no server, no hosting, works offline. Share one link and the whole site travels inside it.",
+      "Create a self-contained Bitty Box by inserting HTML, code, markdown, or text. Encoded completely in the URL.",
   },
   {
     id: "password-lock",
-    kicker: "LOCK MODE 02",
-    headline: "Password Lock",
+    kicker: "STEP 02 // PASSCODE LOCK",
+    headline: "Numerical Passcode Lock (Optional)",
     body:
-      "Gate your Box with a password. Bitty Box encrypts your payload in the browser with AES-GCM, and the key is derived from your password using PBKDF2 — right on the recipient's device. The server never sees your password and never stores the key. Zero knowledge, end to end: if you forget it, not even we can open it.",
+      "Optionally protect your Box with a numerical passcode (up to 8 digits). Bitty Box encrypts your payload with AES-256-GCM right in the browser. Zero knowledge, end to end: anyone with the link simply enters your numeric PIN to view.",
     bullets: [
-      "AES-GCM encryption in the browser — your content stays unreadable in transit and at rest",
-      "PBKDF2 key derivation — the password never leaves the recipient's device",
-      "Zero-knowledge by design — the server stores ciphertext, never your key",
+      "1 to 8 digit numerical PIN — fast and easy to unlock",
+      "AES-256-GCM encryption — your content remains sealed",
+      "Zero-knowledge by design — key is derived entirely in-browser",
     ],
-    cta: "Lock a Box →",
+    cta: "Next: Time-Based Lock →",
     metaDescription:
-      "Password Lock gates any Bitty Box behind a password with AES-GCM client-side encryption and PBKDF2 key derivation — zero knowledge, no server ever stores your key.",
+      "Passcode Lock gates any Bitty Box behind a numerical passcode with AES-GCM client-side encryption.",
   },
   {
     id: "time-based-lock",
-    kicker: "LOCK MODE 03",
-    headline: "Time-Based Lock",
+    kicker: "STEP 03 // TIME-BASED LOCK",
+    headline: "Time-Based Lock (Optional)",
     body:
-      "Set the clock on your Box. Tell it exactly when to wake up and when to self-destruct. Before its start time the Box isn't just locked — it isn't there. After its end time it's gone for good, auto-revoked with no cached copy left behind to leak. Perfect for embargoed drops, expiring secrets, and surprise reveals that land right on schedule.",
+      "Optionally set the clock on your Box. Tell it exactly when to wake up and when to self-destruct. Before its start time the Box is inaccessible. After its end time it is gone for good, auto-revoked with no cached copy left behind.",
     bullets: [
-      "Not-before + expires-at — your Box simply does not exist outside its window",
-      "Auto-revoke on schedule — no leftover cache, no manual cleanup, no loose ends",
-      "Pin it to the minute — embargoes, offers, and reveals fire exactly on time",
+      "Not-before + expires-at — your Box exists only in its window",
+      "Auto-revoke on schedule — no leftover cache or manual cleanup",
+      "Pin it to the minute — drops and reveals fire on time",
     ],
-    cta: "Time-lock a Box →",
+    cta: "Next: Access Limits →",
     metaDescription:
-      "Time-Based Lock lets your Bitty Box wake up and self-destruct on a schedule — invisible before not-before, auto-revoked at expires-at, with no cached copy left behind.",
+      "Time-Based Lock lets your Bitty Box wake up and self-destruct on a schedule with no cached copy left behind.",
   },
   {
     id: "access-limit-lock",
-    kicker: "LOCK MODE 04",
-    headline: "Access Limit Lock",
+    kicker: "STEP 04 // ACCESS LIMITS",
+    headline: "Access Limit Lock (Optional)",
     body:
-      "Give your Box a heartbeat. Set exactly how many times it can open — five, fifty, one — and watch the count tick down in plain sight on every visit. When the last open is spent, the Box seals itself for good: no reset, no back door, no second chances. Made for limited drops, one-time reveals, and controlled handoffs where each open should be the very last anyone ever gets.",
+      "Optionally set a hard limit on how many times your Box can open — 1-open burn-on-read, 3 opens, 5 opens, or custom. When the last open is spent, the Box seals itself permanently.",
     bullets: [
-      "Set a hard open cap — five, fifty, or exactly one and done",
-      "Live remaining-opens badge — the count is visible, never hidden",
-      "Tamper-proof by design — the counter can't be reset or skipped",
+      "Set a hard open cap — 1 burn-on-read, 3, 5, or custom opens",
+      "Live remaining-opens badge — count is visible on visit",
+      "Tamper-proof by design — counter cannot be reset or skipped",
     ],
-    cta: "Limit a Box →",
+    cta: "Next: Review & Summary →",
     metaDescription:
-      "Access Limit Lock gives your Bitty Box a hard open cap — it seals for good after its last open, with a live remaining-opens badge and a tamper-proof counter nobody can reset.",
+      "Access Limit Lock gives your Bitty Box a hard open cap — it seals for good after its last open with a tamper-proof counter.",
+  },
+  {
+    id: "summary-launch",
+    kicker: "STEP 05 // REVIEW & GENERATE",
+    headline: "Review & Generate Box",
+    body:
+      "Review your content and security settings below. When you're ready, click Generate Box to compress your webpage into a self-contained Bitty Box URL and open it directly in a new tab.",
+    bullets: [
+      "All content compressed into the shareable URL",
+      "Configured security passcodes and timed gates applied",
+      "Ready to copy and open in a new tab instantly",
+    ],
+    cta: "GENERATE BOX",
+    metaDescription:
+      "Review your Bitty Box configuration and generate your self-contained shareable URL.",
   },
 ];
 
-// Ordered hero deck. Slide 5 is fully authored; the rest fill in as copy lands.
+// Ordered hero deck: 5 sequential configuration steps
 export const homeSlides: HomeSlideCopy[] = [
-  slideStubs[0], // Self-Contained Website in a URL
-  slideStubs[1], // Password Lock
-  slideStubs[2], // Time-Based Lock
-  slideStubs[3], // Access Limit Lock
-  agenticVoiceLockSlide, // Agentic Voice Lock
+  slideStubs[0], // Step 1: Insert Content
+  slideStubs[1], // Step 2: Password Lock
+  slideStubs[2], // Step 3: Time-Based Lock
+  slideStubs[3], // Step 4: Access Limit Lock
+  slideStubs[4], // Step 5: Summary & Generate Box
 ];
