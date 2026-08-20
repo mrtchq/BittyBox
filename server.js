@@ -16,7 +16,7 @@ import {
 } from './lib/account-store.js';
 import { authMiddleware } from './lib/auth-middleware.js';
 import { createBox, getBox, listBoxes, updateLockConfig, incrementOpensUsed, publishBox, unpublishBox, deleteBox, setPasswordLock, setTimeWindowLock, setAccessLimitLock, setSessionLimitLock, setInviteOnlyLock, createTimeWindow, createOpenLimit, createSessionOpenLimit, createInviteOnly, evaluateAndRecord, touchSessionOpens, getSessionOpenCount } from './lib/box-store.js';
-import { evaluatePolicy, createSessionGrant, verifyPassword, createPasswordVerifier } from './lib/policy-evaluator.js';
+import { evaluatePolicy, createSessionGrant, verifySessionGrant, verifyPassword, createPasswordVerifier } from './lib/policy-evaluator.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -535,7 +535,6 @@ app.post('/api/boxes/:id/unlock', async (req, res) => {
       touchSessionOpens(sessionKey);
       incrementOpensUsed(req.params.id);
       const grant = createSessionGrant(req.params.id, sessionKey, 60);
-      activeGrants.set(grant.token, { boxId: req.params.id, sessionKey: grant.sessionKey, expiresAt: grant.expiresAt });
       res.json({
         success: true,
         allowed: true,
@@ -557,22 +556,19 @@ app.post('/api/boxes/:id/unlock', async (req, res) => {
   }
 });
 
-// Payload delivery — only with a valid, unexpired grant token.
+// Payload delivery — only with a valid, unexpired, signed grant token.
 app.get('/api/boxes/:id/payload', (req, res) => {
   try {
     const token = req.query.grant || req.headers['x-grant-token'];
     if (!token) return res.status(401).json({ success: false, error: 'Missing grant token' });
-    const grant = activeGrants.get(token);
-    if (!grant) return res.status(403).json({ success: false, error: 'Invalid grant token' });
-    if (new Date(grant.expiresAt) < new Date()) {
-      activeGrants.delete(token);
-      return res.status(403).json({ success: false, error: 'Grant token expired' });
-    }
+    const grant = verifySessionGrant(token);
+    if (!grant) return res.status(403).json({ success: false, error: 'Invalid or expired grant token' });
     if (grant.boxId !== req.params.id) return res.status(403).json({ success: false, error: 'Grant mismatch' });
     const box = getBox(req.params.id);
     if (!box) return res.status(404).json({ success: false, error: 'Box not found' });
-    // Consume the grant (single use)
-    activeGrants.delete(token);
+    // Note: open-count enforcement happens at unlock (incrementOpensUsed), so a
+    // grant valid within its TTL may be exchanged for the payload more than once
+    // without inflating the open count or bypassing max-opens / one-time limits.
     res.json({
       success: true,
       boxId: box.id,
@@ -590,12 +586,9 @@ function hashSessionKeyForReq(req) {
   return crypto.createHash('sha256').update(ip + '|' + ua).digest('hex');
 }
 
-const activeGrants = new Map();
-// periodic grant cleanup
-setInterval(() => {
-  const now = Date.now();
-  for (const [t, g] of activeGrants) if (new Date(g.expiresAt).getTime() < now) activeGrants.delete(t);
-}, 60_000).unref?.();
+// Session grants are now stateless, HMAC-signed tokens (see
+// lib/policy-evaluator.js createSessionGrant / verifySessionGrant) — no
+// in-memory store or periodic cleanup required.
 
 function publicBoxView(box) {
   return {
@@ -623,6 +616,14 @@ function sanitizeLockConfig(lockConfig) {
 function buildLockScreen(box, evaluation) {
   // Returns metadata the client can use to render the appropriate lock screen.
   const lc = box.lockConfig || {};
+  // Server-authoritative remaining-opens badge (ADR Step #3). The scarcity
+  // value is derived ONLY here from opensUsed persisted on disk — never
+  // computed client-side, so the badge can never be spoofed into overriding
+  // the real open-limit gate.
+  const ol = lc.openLimit && lc.openLimit.enabled ? lc.openLimit : null;
+  const maxOpens = ol ? (ol.maxOpens || 0) : null;
+  const opensUsed = ol ? (ol.opensUsed || 0) : null;
+  const remainingOpens = ol ? Math.max(0, maxOpens - opensUsed) : null;
   return {
     boxId: box.id,
     title: box.title,
@@ -636,6 +637,11 @@ function buildLockScreen(box, evaluation) {
     },
     passwordHint: lc.password?.hint || null,
     message: lockScreenMessage(evaluation.deniedCodes),
+    // ── remaining-opens badge contract ──────────────────────────────────
+    remainingOpens: remainingOpens, // null when no open-limit lock
+    maxOpens: maxOpens,
+    opensUsed: opensUsed,
+    exhausted: ol ? remainingOpens <= 0 : false,
   };
 }
 

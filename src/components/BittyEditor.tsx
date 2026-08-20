@@ -53,6 +53,7 @@ import { CodeEditor } from './CodeEditor';
 import { exportBittyToZip } from '../utils/zipExport';
 import { formatCode } from '../utils/codeFormatter';
 import { PasswordStrengthMeter } from './PasswordStrengthMeter';
+import { TimeLockPanel } from './TimeLockPanel';
 import { TemplateGalleryModal } from './TemplateGalleryModal';
 import { SeoAnalyzerModal } from './SeoAnalyzerModal';
 import { useUndoRedo } from '../hooks/useUndoRedo';
@@ -78,6 +79,9 @@ interface BittyEditorProps {
   onNewSession?: () => void;
   onOpenTemplatesPanel?: () => void;
   onOpenToolsPanel?: () => void;
+  inlinePreviewActive?: boolean;
+  onToggleInlinePreview?: () => void;
+  onExitInlinePreview?: () => void;
   mode?: WorkspaceMode;
   isPro?: boolean;
   isLifetimePro?: boolean;
@@ -134,6 +138,9 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
   onNewSession,
   onOpenTemplatesPanel,
   onOpenToolsPanel,
+  inlinePreviewActive = false,
+  onToggleInlinePreview,
+  onExitInlinePreview,
   mode = 'pro',
   isPro = true,
   isLifetimePro = false,
@@ -538,8 +545,8 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
       {isDraggingFile && (
         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex flex-col items-center justify-center border-4 border-dashed border-cyan-400 m-4 rounded-3xl animate-in fade-in duration-150">
           <UploadCloud className="w-16 h-16 text-cyan-300 animate-bounce mb-4" />
-          <h3 className="font-cyber text-xl font-bold text-cyan-200">DROP FILE TO ENCAPSULATE INTO BITTY BOX</h3>
-          <p className="text-xs font-mono text-purple-200 mt-2">Any file will be compressed directly into a shareable URL fragment.</p>
+          <h3 className="font-cyber text-xl font-bold text-cyan-200">DROP FILE TO LOAD INTO BITTY BOX</h3>
+          <p className="text-xs font-mono text-purple-200 mt-2">Your file will instantly be converted into a shareable link.</p>
         </div>
       )}
 
@@ -556,7 +563,7 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
       {manualSaveToast && (
         <div className="fixed bottom-6 right-6 z-50 bg-teal-950/90 border border-teal-400/60 backdrop-blur-md text-teal-200 px-4 py-2.5 rounded-lg shadow-[0_0_20px_rgba(20,184,166,0.4)] flex items-center gap-2 font-mono text-xs animate-in slide-in-from-bottom-4 duration-200">
           <CheckCircle2 className="w-4 h-4 text-teal-300" />
-          <span>DRAFT MANUALLY SAVED TO SESSION STORAGE (Ctrl+S)</span>
+          <span>DRAFT SAVED (Ctrl+S)</span>
         </div>
       )}
 
@@ -566,7 +573,7 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
           <div className="flex items-center gap-2 overflow-x-auto py-0.5 max-w-full">
             <span className="text-[10px] font-cyber text-cyan-400/80 mr-1 flex items-center gap-1 flex-shrink-0 tracking-wider">
               <Layers className="w-3 h-3 text-cyan-400" />
-              SESSION //
+              PAGE //
             </span>
             <div className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-mono bg-cyan-950/90 border border-cyan-400 text-cyan-200 font-bold shadow-[0_0_10px_rgba(0,242,255,0.3)]">
               <span>{metadata.favicon || '📦'}</span>
@@ -579,7 +586,7 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
               id="editor-new-session-tab-btn"
               onClick={handleNewSessionClick}
               className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono bg-purple-950/50 border border-purple-500/40 text-purple-200 hover:text-white hover:bg-purple-900/60 transition flex-shrink-0 cursor-pointer"
-              title="Multi-session workspace tabs are unlocked in PRO mode"
+              title="Multi-page tabs are unlocked in PRO mode"
             >
               <Plus className="w-3 h-3 text-cyan-400" />
               <span>NEW TAB</span>
@@ -592,7 +599,7 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
 
           <div className="flex items-center gap-2 ml-auto text-[10px] font-mono">
             <span className="px-2 py-0.5 rounded bg-cyan-950/60 border border-cyan-500/30 text-cyan-300">
-              SIMPLE MODE (SINGLE DRAFT)
+              SIMPLE MODE (SINGLE PAGE)
             </span>
           </div>
         </div>
@@ -601,7 +608,7 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
           <div className="flex items-center gap-1.5 overflow-x-auto py-0.5 max-w-full">
             <span className="text-[10px] font-cyber text-cyan-400/80 mr-1 flex items-center gap-1 flex-shrink-0 tracking-wider">
               <Layers className="w-3 h-3 text-cyan-400" />
-              SESSIONS //
+              PAGES //
             </span>
 
             {sessions.map((tab) => {
@@ -615,7 +622,7 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
                       ? 'bg-cyan-950/90 border border-cyan-400 text-cyan-200 font-bold shadow-[0_0_10px_rgba(0,242,255,0.3)]'
                       : 'bg-black/50 border border-cyan-500/20 text-purple-300/70 hover:text-cyan-200 hover:bg-cyan-950/40'
                   }`}
-                  title={`Switch to session: ${tab.title || 'Untitled'}`}
+                  title={`Switch to: ${tab.title || 'Untitled'}`}
                 >
                   <span>{tab.favicon || '📦'}</span>
                   <span className="max-w-[120px] sm:max-w-[160px] truncate">{tab.title || 'Untitled'}</span>
@@ -631,7 +638,7 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
                         onCloseSessionById(tab.id);
                       }}
                       className="p-0.5 rounded hover:bg-rose-950/80 hover:text-rose-300 text-purple-400/50 hover:border hover:border-rose-500/40 transition cursor-pointer flex items-center justify-center ml-1"
-                      title={`Close session "${tab.title || 'Untitled'}"`}
+                      title={`Close "${tab.title || 'Untitled'}"`}
                     >
                       <X className="w-3 h-3" />
                     </button>
@@ -646,7 +653,7 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
                 id="editor-new-session-tab-btn"
                 onClick={handleNewSessionClick}
                 className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-mono bg-purple-950/40 border border-purple-500/30 text-purple-300 hover:text-cyan-200 hover:border-cyan-400/50 hover:bg-cyan-950/30 transition flex-shrink-0 cursor-pointer"
-                title="Open a new micro-app session tab"
+                title="Create a new page tab"
               >
                 <Plus className="w-3 h-3 text-cyan-400" />
                 <span>NEW BOX</span>
@@ -655,7 +662,7 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
           </div>
 
           <div className="flex items-center gap-2 ml-auto text-[10px] font-mono text-purple-300/60">
-            <span>{sessions.length} OPEN {sessions.length === 1 ? 'BOX' : 'BOXES'}</span>
+            <span>{sessions.length} OPEN {sessions.length === 1 ? 'PAGE' : 'PAGES'}</span>
           </div>
         </div>
       )}
@@ -670,6 +677,7 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
       {/* =========================================================================
           BENTO GRID CONTAINER
          ========================================================================= */}
+      {!inlinePreviewActive && (
       <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
 
         {/* -----------------------------------------------------------------------
@@ -686,7 +694,7 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
           <div className="flex items-center justify-between gap-2 mb-4">
             <div className="bento-card-header !mb-0 flex items-center gap-1.5">
               <Zap className="w-3.5 h-3.5 text-cyan-400" />
-              <CyberScrambleText text="SYSTEM PROTOCOL // TRANSMISSION IDENTIFIER" speed={25} />
+              <CyberScrambleText text="PAGE TITLE & SETTINGS" speed={25} />
             </div>
             
             {/* Auto-Save Status Badge & Shortcut Indicators */}
@@ -694,17 +702,17 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
               {lastAutoSavedTime && (
                 <div 
                   onClick={() => performSaveDraft(true)}
-                  title="Click or press Ctrl+S to manually save draft"
+                  title="Click or press Ctrl+S to save your work"
                   className="flex items-center gap-1.5 text-[10px] font-mono text-cyan-400/80 bg-cyan-950/40 hover:bg-cyan-900/60 px-2 py-0.5 rounded border border-cyan-500/20 cursor-pointer transition"
                 >
                   <span className={`w-1.5 h-1.5 rounded-full ${isSaving ? 'bg-amber-400 animate-ping' : 'bg-teal-400'}`} />
-                  <span className="hidden sm:inline">DRAFT:</span>
+                  <span className="hidden sm:inline">SAVED:</span>
                   <span>{lastAutoSavedTime}</span>
                 </div>
               )}
               <div className="text-[10px] font-mono text-cyan-400/60 hidden md:flex items-center gap-1 bg-black/40 px-2 py-0.5 rounded border border-cyan-500/15">
                 <Keyboard className="w-3 h-3 text-cyan-400/70" />
-                <span>Ctrl+Enter: Gen | Ctrl+S: Save</span>
+                <span>Ctrl+Enter: Create Link | Ctrl+S: Save</span>
               </div>
             </div>
           </div>
@@ -721,19 +729,19 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
                   type="text"
                   value={metadata.title}
                   onChange={e => onChangeMetadata({ ...metadata, title: e.target.value })}
-                  placeholder="Untitled Bitty Box"
+                  placeholder="Give your page a title..."
                   className="w-full bg-transparent font-cyber text-2xl sm:text-3xl font-extrabold text-cyan-200 placeholder:text-purple-400/40 focus:outline-none border-b border-transparent focus:border-cyan-400 transition pb-0.5"
                 />
               </div>
 
               <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-purple-300/70 pl-1">
-                <span>PATH SLUG:</span>
+                <span>LINK ADDRESS:</span>
                 <span className="text-cyan-300 font-bold bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-500/30">
                   /{metadata.title ? metadata.title.toLowerCase().replace(/\s+/g, '-') : 'untitled'}/
                 </span>
                 {metadata.language && (
                   <span className="text-[10px] text-teal-300 bg-teal-950/60 px-1.5 py-0.5 rounded border border-teal-500/30 uppercase">
-                    LANG: {metadata.language}
+                    LANGUAGE: {metadata.language}
                   </span>
                 )}
                 {metadata.author && (
@@ -744,165 +752,188 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
                 {metadata.password && (
                   <span className="flex items-center gap-1 text-[10px] text-fuchsia-400 bg-fuchsia-950/80 px-2 py-0.5 rounded border border-fuchsia-500/40">
                     <Shield className="w-3 h-3" />
-                    AES LOCKED
+                    PASSCODE LOCKED
                   </span>
                 )}
               </div>
             </div>
           </div>
 
-          {/* Quick Toolbar Bar */}
+          {/* Quick Toolbar Bar — simplified layman labels */}
           <div className="flex flex-wrap items-center gap-2 pt-4 mt-4 border-t border-cyan-500/15">
-            <button
-              id="bitty-presets-btn"
-              onClick={handleOpenGalleryClick}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-fuchsia-950/70 to-purple-950/70 border border-fuchsia-500/40 text-fuchsia-200 hover:bg-fuchsia-900/50 hover:text-white text-xs font-cyber transition shadow-sm cursor-pointer"
-              title="Browse and load ready-to-use micro-web templates"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-fuchsia-400" />
-              <span>TEMPLATE GALLERY</span>
-              {mode === 'simple' && !isPro && (
-                <span className="text-[9px] font-mono px-1 rounded bg-fuchsia-900 text-amber-300 border border-amber-500/40 flex items-center gap-0.5">
-                  <Crown className="w-2.5 h-2.5 fill-amber-300" />
-                  PRO
-                </span>
-              )}
-            </button>
+            {/* Group: BUILD */}
+            <div className="flex items-center gap-1.5 p-1 rounded-xl bg-black/40 border border-fuchsia-500/20">
+              <button
+                id="bitty-presets-btn"
+                onClick={handleOpenGalleryClick}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-fuchsia-950/70 to-purple-950/70 border border-fuchsia-500/40 text-fuchsia-200 hover:bg-fuchsia-900/50 hover:text-white text-xs font-cyber transition shadow-sm cursor-pointer"
+                title="Browse and load ready-made page templates"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-fuchsia-400" />
+                <span>TEMPLATES</span>
+                {mode === 'simple' && !isPro && (
+                  <span className="text-[9px] font-mono px-1 rounded bg-fuchsia-900 text-amber-300 border border-amber-500/40 flex items-center gap-0.5">
+                    <Crown className="w-2.5 h-2.5 fill-amber-300" />
+                    PRO
+                  </span>
+                )}
+              </button>
 
-            <button
-              id="bitty-seo-btn"
-              onClick={handleOpenSeoClick}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-950/60 border border-cyan-500/40 text-cyan-200 hover:bg-cyan-900/50 hover:text-white text-xs font-mono transition shadow-sm cursor-pointer"
-              title="Open SEO & Discoverability Analyzer Modal"
-            >
-              <Search className="w-3.5 h-3.5 text-cyan-400" />
-              <span>SEO ANALYZER</span>
-              {mode === 'simple' && !isPro && (
-                <span className="text-[9px] font-mono px-1 rounded bg-fuchsia-900 text-amber-300 border border-amber-500/40 flex items-center gap-0.5">
-                  <Crown className="w-2.5 h-2.5 fill-amber-300" />
-                  PRO
-                </span>
-              )}
-            </button>
+              <button
+                id="bitty-seo-btn"
+                onClick={handleOpenSeoClick}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-950/60 border border-cyan-500/40 text-cyan-200 hover:bg-cyan-900/50 hover:text-white text-xs font-mono transition shadow-sm cursor-pointer"
+                title="Preview how your page looks when shared on Google and social media"
+              >
+                <Search className="w-3.5 h-3.5 text-cyan-400" />
+                <span>SEARCH & SOCIAL</span>
+                {mode === 'simple' && !isPro && (
+                  <span className="text-[9px] font-mono px-1 rounded bg-fuchsia-900 text-amber-300 border border-amber-500/40 flex items-center gap-0.5">
+                    <Crown className="w-2.5 h-2.5 fill-amber-300" />
+                    PRO
+                  </span>
+                )}
+              </button>
+            </div>
 
-            {/* Split-View Layout Mode Toggle */}
-            <div className="flex items-center bg-black/60 p-1 rounded-lg border border-cyan-500/30">
+            {/* Group: LAYOUT (segmented) */}
+            <div className="flex items-center gap-0.5 p-1 rounded-xl bg-black/50 border border-cyan-500/25">
               <button
                 type="button"
                 onClick={() => setEditorViewMode('split')}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded text-xs font-mono transition cursor-pointer ${
+                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-mono transition cursor-pointer ${
                   editorViewMode === 'split'
                     ? 'bg-cyan-950 text-cyan-300 border border-cyan-400 font-bold shadow-[0_0_8px_rgba(0,242,255,0.3)]'
                     : 'text-purple-300/70 hover:text-cyan-200'
                 }`}
-                title="Split View: Side-by-Side Code Editor & Live Preview"
+                title="Split View: Editor & Live Preview side by side"
               >
                 <Columns className="w-3 h-3 text-cyan-400" />
-                <span>SPLIT VIEW</span>
+                <span className="hidden sm:inline">SPLIT</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setEditorViewMode('code')}
-                className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-mono transition cursor-pointer ${
+                className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-mono transition cursor-pointer ${
                   editorViewMode === 'code'
                     ? 'bg-cyan-950 text-cyan-300 border border-cyan-400 font-bold shadow-[0_0_8px_rgba(0,242,255,0.3)]'
                     : 'text-purple-300/70 hover:text-cyan-200'
                 }`}
-                title="Code Editor Full Width"
+                title="Editor only"
               >
                 <Code2 className="w-3 h-3 text-cyan-400" />
-                <span>CODE</span>
+                <span className="hidden sm:inline">EDITOR</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setEditorViewMode('preview')}
-                className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-mono transition cursor-pointer ${
+                className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-mono transition cursor-pointer ${
                   editorViewMode === 'preview'
                     ? 'bg-cyan-950 text-cyan-300 border border-cyan-400 font-bold shadow-[0_0_8px_rgba(0,242,255,0.3)]'
                     : 'text-purple-300/70 hover:text-cyan-200'
                 }`}
-                title="Live Preview Stream Full Width"
+                title="Live preview only"
               >
                 <Eye className="w-3 h-3 text-cyan-400" />
-                <span>PREVIEW</span>
+                <span className="hidden sm:inline">PREVIEW</span>
               </button>
             </div>
 
-            <button
-              id="bitty-import-btn"
-              onClick={() => fileInputRef.current?.click()}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-950/50 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-900/40 text-xs font-mono transition cursor-pointer"
-            >
-              <UploadCloud className="w-3.5 h-3.5" />
-              <span>IMPORT FILE</span>
-            </button>
+            {/* Group: EXPORT / IO */}
+            <div className="flex items-center gap-1.5 p-1 rounded-xl bg-black/40 border border-purple-500/20">
+              <button
+                id="bitty-import-btn"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-950/50 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-900/40 text-xs font-mono transition cursor-pointer"
+                title="Open a file from your computer"
+              >
+                <UploadCloud className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">OPEN FILE</span>
+              </button>
 
-            <button
-              id="bitty-export-zip-btn"
-              onClick={handleExportZipClick}
-              disabled={isExportingZip}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-950/50 border border-purple-500/40 text-purple-200 hover:bg-purple-900/50 hover:text-white text-xs font-mono transition shadow-[0_0_10px_rgba(189,0,255,0.2)] cursor-pointer"
-              title="Download standalone index.html & README as ZIP package"
-            >
-              {zipExportSuccess ? (
-                <>
-                  <CheckCircle2 className="w-3.5 h-3.5 text-teal-300" />
-                  <span className="text-teal-300">ZIP DOWNLOADED</span>
-                </>
-              ) : (
-                <>
-                  <FolderArchive className="w-3.5 h-3.5 text-fuchsia-400" />
-                  <span>{isExportingZip ? 'PACKAGING ZIP...' : 'EXPORT TO ZIP'}</span>
-                  {mode === 'simple' && !isPro && (
-                    <span className="text-[9px] font-mono px-1 rounded bg-fuchsia-900 text-amber-300 border border-amber-500/40 flex items-center gap-0.5">
-                      <Crown className="w-2.5 h-2.5 fill-amber-300" />
-                      PRO
-                    </span>
-                  )}
-                </>
+              <button
+                id="bitty-export-zip-btn"
+                onClick={handleExportZipClick}
+                disabled={isExportingZip}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-950/50 border border-purple-500/40 text-purple-200 hover:bg-purple-900/50 hover:text-white text-xs font-mono transition shadow-[0_0_10px_rgba(189,0,255,0.2)] cursor-pointer"
+                title="Download your page files as a ZIP package"
+              >
+                {zipExportSuccess ? (
+                  <>
+                    <CheckCircle2 className="w-3.5 h-3.5 text-teal-300" />
+                    <span className="text-teal-300 hidden sm:inline">DOWNLOADED</span>
+                  </>
+                ) : (
+                  <>
+                    <FolderArchive className="w-3.5 h-3.5 text-fuchsia-400" />
+                    <span className="hidden sm:inline">{isExportingZip ? 'PREPARING...' : 'SAVE ZIP'}</span>
+                    {mode === 'simple' && !isPro && (
+                      <span className="text-[9px] font-mono px-1 rounded bg-fuchsia-900 text-amber-300 border border-amber-500/40 flex items-center gap-0.5">
+                        <Crown className="w-2.5 h-2.5 fill-amber-300" />
+                        PRO
+                      </span>
+                    )}
+                  </>
+                )}
+              </button>
+
+              <button
+                id="bitty-meta-btn"
+                onClick={() => setShowMetadata(!showMetadata)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-950/40 border border-purple-500/30 text-purple-200 hover:bg-purple-900/30 text-xs font-mono transition cursor-pointer"
+                title="Show or hide page details & security settings"
+              >
+                <Sliders className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">DETAILS</span>
+              </button>
+            </div>
+
+            {/* Group: SESSION */}
+            <div className="flex items-center gap-1.5 p-1 rounded-xl bg-black/40 border border-amber-500/15">
+              {onOpenToolsPanel && (
+                <button
+                  id="bitty-tools-panel-btn"
+                  onClick={onOpenToolsPanel}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-950/60 border border-cyan-500/40 text-cyan-200 hover:bg-cyan-900/50 hover:text-white text-xs font-cyber transition shadow-sm cursor-pointer"
+                  title="Open tools menu"
+                >
+                  <Sliders className="w-3.5 h-3.5 text-cyan-400" />
+                  <span className="hidden sm:inline">TOOLS</span>
+                </button>
               )}
-            </button>
 
-            <button
-              id="bitty-meta-btn"
-              onClick={() => setShowMetadata(!showMetadata)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-950/40 border border-purple-500/30 text-purple-200 hover:bg-purple-900/30 text-xs font-mono transition cursor-pointer"
-            >
-              <Sliders className="w-3.5 h-3.5" />
-              <span>PARAMS & META TAGS</span>
-              {showMetadata ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-            </button>
+              {onCloseSession && (
+                <button
+                  id="bitty-close-session-btn"
+                  onClick={onCloseSession}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-950/60 border border-amber-500/40 text-amber-300 hover:bg-rose-950/80 hover:text-white hover:border-rose-400 text-xs font-cyber transition shadow-sm cursor-pointer"
+                  title="Close current page"
+                >
+                  <LogOut className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="hidden sm:inline">CLOSE</span>
+                </button>
+              )}
+            </div>
 
-            {onOpenToolsPanel && (
-              <button
-                id="bitty-tools-panel-btn"
-                onClick={onOpenToolsPanel}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-950/60 border border-cyan-500/40 text-cyan-200 hover:bg-cyan-900/50 hover:text-white text-xs font-cyber transition shadow-sm cursor-pointer"
-                title="Open Studio Tools & Actions Deck Side Panel"
-              >
-                <Sliders className="w-3.5 h-3.5 text-cyan-400" />
-                <span>STUDIO DECK</span>
-              </button>
-            )}
-
-            {/* Close Session Trigger */}
-            {onCloseSession && (
-              <button
-                id="bitty-close-session-btn"
-                onClick={onCloseSession}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-950/60 border border-amber-500/40 text-amber-300 hover:bg-rose-950/80 hover:text-white hover:border-rose-400 text-xs font-cyber transition shadow-sm cursor-pointer"
-                title="Close active editing session (with confirmation warning)"
-              >
-                <LogOut className="w-3.5 h-3.5 text-amber-400" />
-                <span>CLOSE SESSION</span>
-              </button>
-            )}
-
-            <div className="ml-auto text-[11px] font-mono text-cyan-400/60 hidden lg:flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-teal-400 animate-pulse" />
-              <span>ZERO-SERVER CLIENT VM</span>
+            {/* Right: status + exit-preview toggle */}
+            <div className="ml-auto flex items-center gap-2">
+              {inlinePreviewActive && onExitInlinePreview && (
+                <button
+                  id="exit-inline-preview-btn"
+                  onClick={onExitInlinePreview}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-fuchsia-950/70 border border-fuchsia-400/60 text-fuchsia-200 hover:bg-fuchsia-900/60 hover:text-white text-xs font-cyber transition shadow-[0_0_12px_rgba(255,0,222,0.3)] cursor-pointer"
+                  title="Return to the editor"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  <span>EXIT PREVIEW</span>
+                </button>
+              )}
+              <div className="text-[11px] font-mono text-cyan-400/60 hidden lg:flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-teal-400 animate-pulse" />
+                <span>100% PRIVATE // RUNS IN YOUR BROWSER</span>
+              </div>
             </div>
           </div>
         </div>
@@ -920,34 +951,34 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
             <div className="flex items-center justify-between pb-1">
               <div className="bento-card-header !mb-0 flex items-center gap-1.5">
                 <Activity className="w-3.5 h-3.5 text-cyan-400" />
-                <CyberScrambleText text="TELEMETRY & TRANSMISSION STATS" speed={25} />
+                <CyberScrambleText text="LINK SIZE & SUMMARY" speed={25} />
               </div>
             </div>
 
             <div className="space-y-2 mt-3">
               <div className="bento-stat-row">
-                <span className="text-purple-200/70">Compression</span>
+                <span className="text-purple-200/70">Space Saved</span>
                 <span className="bento-stat-val">
                   {compressionRatio > 0 ? `${compressionRatio}%` : '0%'}
                 </span>
               </div>
 
               <div className="bento-stat-row">
-                <span className="text-purple-200/70">Bitty Mode</span>
+                <span className="text-purple-200/70">Privacy & Security</span>
                 <span className="bento-stat-val">
-                  {metadata.password ? 'AES-GCM-256' : 'QUANTUM GZIP'}
+                  {metadata.password ? 'Passcode Locked' : 'Public Link'}
                 </span>
               </div>
 
               <div className="bento-stat-row">
-                <span className="text-purple-200/70">Raw Payload</span>
-                <span className="bento-stat-val">{originalBytes} BYTES</span>
+                <span className="text-purple-200/70">Original Text Size</span>
+                <span className="bento-stat-val">{originalBytes.toLocaleString()} characters</span>
               </div>
 
               <div className="bento-stat-row !border-b-0">
-                <span className="text-purple-200/70">Packed Link Size</span>
+                <span className="text-purple-200/70">Compressed Link Size</span>
                 <span className="bento-stat-val text-fuchsia-300">
-                  {compressedBytes} BYTES
+                  {compressedBytes.toLocaleString()} characters
                 </span>
               </div>
             </div>
@@ -962,17 +993,17 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
                     ? 'bg-teal-950/80 border-teal-400 text-teal-200 shadow-[0_0_15px_rgba(20,184,166,0.5)]'
                     : 'bg-gradient-to-r from-cyan-950/80 via-purple-950/80 to-fuchsia-950/80 border-cyan-500/40 text-cyan-200 hover:text-white hover:border-cyan-300 hover:shadow-[0_0_12px_rgba(0,242,255,0.3)]'
                 }`}
-                title="Copy the full generated Bitty URL directly to your clipboard"
+                title="Copy your shareable Bitty Box link to your clipboard"
               >
                 {statsUrlCopied ? (
                   <>
                     <CheckCircle2 className="w-3.5 h-3.5 text-teal-300 animate-bounce" />
-                    <span>FULL BITTY URL COPIED!</span>
+                    <span>LINK COPIED TO CLIPBOARD!</span>
                   </>
                 ) : (
                   <>
                     <Copy className="w-3.5 h-3.5 text-cyan-400" />
-                    <span>COPY GENERATED URL</span>
+                    <span>COPY SHAREABLE LINK</span>
                   </>
                 )}
               </button>
@@ -984,7 +1015,7 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
             <div className="flex items-center justify-between text-[11px] font-mono mb-1.5">
               <div className="flex items-center gap-1.5 text-cyan-300 font-bold">
                 <HardDrive className="w-3 h-3 text-cyan-400" />
-                <span>URL FRAGMENT CAPACITY:</span>
+                <span>LINK LENGTH CAPACITY:</span>
               </div>
               <span className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
                 isOversized 
@@ -995,14 +1026,14 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
                       ? 'bg-yellow-950 text-yellow-300 border border-yellow-500/40' 
                       : 'bg-teal-950 text-teal-300 border border-teal-500/40'
               }`}>
-                {isOversized ? 'CRITICAL (>8KB)' : isExtended ? 'EXTENDED (2-8KB)' : isNearLimit ? 'WARN (>80%)' : 'OPTIMAL (<2KB)'}
+                {isOversized ? 'TOO LONG (>8KB)' : isExtended ? 'EXTENDED (2-8KB)' : isNearLimit ? 'ALMOST FULL' : 'PERFECT SIZE (<2KB)'}
               </span>
             </div>
 
             {/* Visual Capacity Gauge */}
             <div className="relative w-full h-2.5 bg-black/80 rounded-full overflow-hidden border border-cyan-500/30 p-[1px] shadow-inner">
-              <div className="absolute top-0 bottom-0 left-[25%] w-[1px] bg-cyan-400/40 z-10" title="2,048B Universal Standard" />
-              <div className="absolute top-0 bottom-0 left-[100%] w-[1px] bg-amber-400/40 z-10" title="8,192B Max Browser Threshold" />
+              <div className="absolute top-0 bottom-0 left-[25%] w-[1px] bg-cyan-400/40 z-10" title="Standard 2,000 character limit (Supported everywhere)" />
+              <div className="absolute top-0 bottom-0 left-[100%] w-[1px] bg-amber-400/40 z-10" title="Maximum 8,000 character limit" />
 
               <div 
                 className={`h-full rounded-full transition-all duration-300 ${
@@ -1020,8 +1051,8 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
 
             {/* Numeric Capacity Metrics */}
             <div className="flex items-center justify-between text-[10px] font-mono text-purple-300/70 mt-1">
-              <span>{currentUrlLength} / {isExtended ? `${EXTENDED_URL_LIMIT}B (Ext)` : `${STANDARD_URL_LIMIT}B (Std)`}</span>
-              <span>{isExtended ? `${Math.round((currentUrlLength / EXTENDED_URL_LIMIT) * 100)}% Max` : `${capacityPercent}% Capacity`}</span>
+              <span>{currentUrlLength} / {isExtended ? `${EXTENDED_URL_LIMIT} chars (Extended)` : `${STANDARD_URL_LIMIT} chars (Standard)`}</span>
+              <span>{isExtended ? `${Math.round((currentUrlLength / EXTENDED_URL_LIMIT) * 100)}% of Max` : `${capacityPercent}% used`}</span>
             </div>
           </div>
         </div>
@@ -1039,14 +1070,14 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
             <div className="flex items-center gap-2">
               <div className="bento-card-header !mb-0 flex items-center gap-1.5">
                 <BarChart3 className="w-3.5 h-3.5 text-cyan-400" />
-                <CyberScrambleText text="CODE COMPLEXITY & METRICS DASHBOARD" speed={25} />
+                <CyberScrambleText text="CONTENT SUMMARY & STATS" speed={25} />
               </div>
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono text-purple-300/70">COMPLEXITY PROFILE:</span>
+              <span className="text-[10px] font-mono text-purple-300/70">PAGE PROFILE:</span>
               <span className={`px-2 py-0.5 rounded text-[10px] font-bold border font-mono ${complexityMetrics.complexityBg} ${complexityMetrics.complexityColor}`}>
-                {complexityMetrics.complexityLevel} ({complexityMetrics.complexityScore}/100)
+                {complexityMetrics.complexityLevel === 'MINIMAL' ? 'LIGHTWEIGHT' : complexityMetrics.complexityLevel === 'BALANCED' ? 'STANDARD' : complexityMetrics.complexityLevel === 'MODERATE' ? 'MEDIUM' : 'LARGE'}
               </span>
             </div>
           </div>
@@ -1066,7 +1097,7 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
                 {complexityMetrics.lineCount.toLocaleString()}
               </div>
               <div className="text-[9px] font-mono text-purple-300/60 mt-1 truncate">
-                {complexityMetrics.lineCount > 100 ? 'Dense layout' : 'Compact script'}
+                {complexityMetrics.lineCount > 100 ? 'Detailed page' : 'Short page'}
               </div>
             </div>
 
@@ -1075,15 +1106,15 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
               <div className="flex items-center justify-between text-[11px] font-mono text-cyan-400 mb-1">
                 <span className="flex items-center gap-1">
                   <Binary className="w-3 h-3 text-cyan-400" />
-                  CHARACTERS
+                  LETTERS
                 </span>
-                <span className="text-[9px] text-purple-400">Raw</span>
+                <span className="text-[9px] text-purple-400">Total</span>
               </div>
               <div className="font-cyber text-xl font-bold text-teal-300">
                 {complexityMetrics.charCount.toLocaleString()}
               </div>
               <div className="text-[9px] font-mono text-purple-300/60 mt-1 truncate">
-                {complexityMetrics.nonWhitespaceChars.toLocaleString()} non-space
+                {complexityMetrics.nonWhitespaceChars.toLocaleString()} characters
               </div>
             </div>
 
@@ -1094,13 +1125,13 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
                   <Hash className="w-3 h-3 text-cyan-400" />
                   WORDS
                 </span>
-                <span className="text-[9px] text-purple-400">Tokens</span>
+                <span className="text-[9px] text-purple-400">Count</span>
               </div>
               <div className="font-cyber text-xl font-bold text-fuchsia-300">
                 {complexityMetrics.wordCount.toLocaleString()}
               </div>
               <div className="text-[9px] font-mono text-purple-300/60 mt-1 truncate">
-                Lexical tokens
+                Total words
               </div>
             </div>
 
@@ -1109,15 +1140,15 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
               <div className="flex items-center justify-between text-[11px] font-mono text-cyan-400 mb-1">
                 <span className="flex items-center gap-1">
                   <Layers className="w-3 h-3 text-cyan-400" />
-                  DOM TAGS
+                  ELEMENTS
                 </span>
-                <span className="text-[9px] text-purple-400">Elements</span>
+                <span className="text-[9px] text-purple-400">Blocks</span>
               </div>
               <div className="font-cyber text-xl font-bold text-amber-300">
                 {complexityMetrics.htmlTagsCount.toLocaleString()}
               </div>
               <div className="text-[9px] font-mono text-purple-300/60 mt-1 truncate">
-                HTML nodes
+                Headings & items
               </div>
             </div>
 
@@ -1126,15 +1157,15 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
               <div className="flex items-center justify-between text-[11px] font-mono text-cyan-400 mb-1">
                 <span className="flex items-center gap-1">
                   <Code2 className="w-3 h-3 text-cyan-400" />
-                  EMBEDDED
+                  STYLES
                 </span>
-                <span className="text-[9px] text-purple-400">CSS/JS</span>
+                <span className="text-[9px] text-purple-400">Custom</span>
               </div>
               <div className="font-cyber text-xl font-bold text-purple-300">
                 {complexityMetrics.styleBlocks + complexityMetrics.scriptBlocks}
               </div>
               <div className="text-[9px] font-mono text-purple-300/60 mt-1 truncate">
-                {complexityMetrics.styleBlocks} CSS / {complexityMetrics.scriptBlocks} JS
+                {complexityMetrics.styleBlocks} Styles / {complexityMetrics.scriptBlocks} Scripts
               </div>
             </div>
 
@@ -1143,7 +1174,7 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
               <div className="flex items-center justify-between text-[11px] font-mono text-cyan-400 mb-1">
                 <span className="flex items-center gap-1">
                   <Zap className="w-3 h-3 text-cyan-400" />
-                  DENSITY
+                  SHRINK
                 </span>
                 <span className="text-[9px] text-purple-400">Ratio</span>
               </div>
@@ -1151,7 +1182,7 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
                 {originalBytes > 0 ? (compressedBytes / originalBytes).toFixed(2) : '0.00'}x
               </div>
               <div className="text-[9px] font-mono text-purple-300/60 mt-1 truncate">
-                Bytes per packed char
+                Compression factor
               </div>
             </div>
           </div>
@@ -1169,7 +1200,7 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
 
             <div className="bento-card-header-purple mb-3">
               <Sparkles className="w-3.5 h-3.5 text-fuchsia-400" />
-              Quantum Presets Laboratory // Instant Transmissions
+              Ready-Made Templates // Click to Use
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {TEMPLATE_PRESETS.map(tpl => (
@@ -1208,7 +1239,7 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
 
             <div className="bento-card-header mb-3">
               <Sliders className="w-3.5 h-3.5 text-cyan-400" />
-              Document Metadata, Meta Tags &amp; Cryptography Configuration
+              Page Details &amp; Security Options
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -1216,13 +1247,13 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
               <div>
                 <label className="block text-[11px] font-mono text-cyan-300 mb-1 flex items-center gap-1.5 uppercase">
                   <FileText className="w-3 h-3 text-cyan-400" />
-                  Description (meta description)
+                  Description (Summary for sharing)
                 </label>
                 <input
                   type="text"
                   value={metadata.description || ''}
                   onChange={e => onChangeMetadata({ ...metadata, description: e.target.value })}
-                  placeholder="Meta summary for link embeds..."
+                  placeholder="Brief summary when sharing this link..."
                   className="w-full bg-[#080212] border border-cyan-500/30 rounded-lg px-3 py-2 text-xs text-cyan-100 placeholder:text-purple-400/40 focus:outline-none focus:border-cyan-400 font-mono"
                 />
               </div>
@@ -1231,13 +1262,13 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
               <div>
                 <label className="block text-[11px] font-mono text-cyan-300 mb-1 flex items-center gap-1.5 uppercase">
                   <User className="w-3 h-3 text-cyan-400" />
-                  Author (meta author)
+                  Author (Your name)
                 </label>
                 <input
                   type="text"
                   value={metadata.author || ''}
                   onChange={e => onChangeMetadata({ ...metadata, author: e.target.value })}
-                  placeholder="e.g. Agent Alice / Jane Doe"
+                  placeholder="Your name or organization..."
                   className="w-full bg-[#080212] border border-cyan-500/30 rounded-lg px-3 py-2 text-xs text-cyan-100 placeholder:text-purple-400/40 focus:outline-none focus:border-cyan-400 font-mono"
                 />
               </div>
@@ -1246,13 +1277,13 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
               <div>
                 <label className="block text-[11px] font-mono text-cyan-300 mb-1 flex items-center gap-1.5 uppercase">
                   <Globe className="w-3 h-3 text-cyan-400" />
-                  Language (html lang)
+                  Language
                 </label>
                 <input
                   type="text"
                   value={metadata.language || ''}
                   onChange={e => onChangeMetadata({ ...metadata, language: e.target.value })}
-                  placeholder="en, es, fr, ja, de..."
+                  placeholder="en (English), es (Spanish), fr..."
                   className="w-full bg-[#080212] border border-cyan-500/30 rounded-lg px-3 py-2 text-xs text-cyan-100 placeholder:text-purple-400/40 focus:outline-none focus:border-cyan-400 font-mono"
                 />
               </div>
@@ -1261,13 +1292,13 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
               <div>
                 <label className="block text-[11px] font-mono text-cyan-300 mb-1 flex items-center gap-1.5 uppercase">
                   <LinkIcon className="w-3 h-3 text-cyan-400" />
-                  Canonical URL (rel canonical)
+                  Original Link (Optional)
                 </label>
                 <input
                   type="url"
                   value={metadata.canonicalUrl || ''}
                   onChange={e => onChangeMetadata({ ...metadata, canonicalUrl: e.target.value })}
-                  placeholder="https://example.com/page"
+                  placeholder="https://example.com/original-page"
                   className="w-full bg-[#080212] border border-cyan-500/30 rounded-lg px-3 py-2 text-xs text-cyan-100 placeholder:text-purple-400/40 focus:outline-none focus:border-cyan-400 font-mono"
                 />
               </div>
@@ -1276,13 +1307,13 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
               <div>
                 <label className="block text-[11px] font-mono text-cyan-300 mb-1 flex items-center gap-1.5 uppercase">
                   <Smile className="w-3 h-3 text-cyan-400" />
-                  Favicon / Emoji
+                  Page Icon / Emoji
                 </label>
                 <input
                   type="text"
                   value={metadata.favicon || ''}
                   onChange={e => onChangeMetadata({ ...metadata, favicon: e.target.value })}
-                  placeholder="Emoji (e.g. 🚀, 🕹️, 🍜)..."
+                  placeholder="Choose an icon (e.g. 🚀, 🕹️, 🍜, 📦)..."
                   className="w-full bg-[#080212] border border-cyan-500/30 rounded-lg px-3 py-2 text-xs text-cyan-100 placeholder:text-purple-400/40 focus:outline-none focus:border-cyan-400 font-mono"
                 />
               </div>
@@ -1292,11 +1323,11 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
                 <label className="block text-[11px] font-mono text-cyan-300 mb-1 flex items-center justify-between uppercase">
                   <span className="flex items-center gap-1.5">
                     <ImageIcon className="w-3 h-3 text-cyan-400" />
-                    Social Preview Image URL
+                    Social Share Image URL
                   </span>
                   {metadata.image && (
                     <span className="text-[9px] text-teal-300 font-bold bg-teal-950/80 px-1 rounded border border-teal-500/30">
-                      OG:IMAGE READY
+                      IMAGE READY
                     </span>
                   )}
                 </label>
@@ -1306,7 +1337,7 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
                     type="url"
                     value={metadata.image || ''}
                     onChange={e => onChangeMetadata({ ...metadata, image: e.target.value })}
-                    placeholder="https://images.unsplash.com/... (1200x630px recommended)"
+                    placeholder="https://images.unsplash.com/... (image link)"
                     className="w-full bg-[#080212] border border-cyan-500/30 rounded-lg pl-3 pr-8 py-2 text-xs text-cyan-100 placeholder:text-purple-400/40 focus:outline-none focus:border-cyan-400 font-mono"
                   />
                   {metadata.image && (
@@ -1314,14 +1345,14 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
                       type="button"
                       onClick={() => onChangeMetadata({ ...metadata, image: '' })}
                       className="absolute right-2 top-1/2 -translate-y-1/2 text-purple-400/60 hover:text-rose-300 text-xs font-mono p-1"
-                      title="Clear image URL"
+                      title="Clear image"
                     >
                       ✕
                     </button>
                   )}
                 </div>
                 <p className="text-[10px] font-mono text-purple-300/60 mt-1">
-                  Thumbnail displayed when shared on X, Discord, Slack, LinkedIn, and iMessage.
+                  Preview image shown when sharing your link on social media or messaging apps.
                 </p>
                 {metadata.image && (
                   <div className="mt-2 relative rounded-md border border-cyan-500/30 overflow-hidden bg-black/60 max-h-20 flex items-center justify-center">
@@ -1345,6 +1376,19 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
               isLocked={mode === 'simple' && !isPro}
               onOpenPaywall={onOpenPaywall}
             />
+
+            {/* Time-Lock Window Builder (Step #4) */}
+            <TimeLockPanel
+              config={metadata.lockConfig?.timeWindow}
+              onChangeConfig={cfg =>
+                onChangeMetadata({
+                  ...metadata,
+                  lockConfig: { ...metadata.lockConfig, timeWindow: cfg },
+                })
+              }
+              isLocked={mode === 'simple' && !isPro}
+              onOpenPaywall={onOpenPaywall}
+            />
           </div>
         )}
 
@@ -1363,10 +1407,10 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
               <div className="flex items-center gap-2">
                 <div className="bento-card-header !mb-0">
                   <Code2 className="w-3.5 h-3.5 text-cyan-400" />
-                  Payload Editor
+                  Content Editor
                 </div>
                 <span className="text-[10px] font-mono text-cyan-400/50 hidden sm:inline">
-                  [PRISM SYNTAX ACTIVE]
+                  [READY]
                 </span>
               </div>
 
@@ -1384,7 +1428,7 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
                         ? 'text-cyan-300 hover:text-white hover:bg-cyan-950/80 active:scale-95 cursor-pointer shadow-sm'
                         : 'text-purple-300/30 cursor-not-allowed opacity-40'
                     }`}
-                    title="Undo last change (Ctrl+Z / Cmd+Z)"
+                    title="Undo last change (Ctrl+Z)"
                   >
                     <Undo2 className="w-3.5 h-3.5" />
                     <span className="hidden sm:inline font-bold">UNDO</span>
@@ -1407,7 +1451,7 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
                         ? 'text-cyan-300 hover:text-white hover:bg-cyan-950/80 active:scale-95 cursor-pointer shadow-sm'
                         : 'text-purple-300/30 cursor-not-allowed opacity-40'
                     }`}
-                    title="Redo next change (Ctrl+Y / Cmd+Shift+Z)"
+                    title="Redo (Ctrl+Y)"
                   >
                     <Redo2 className="w-3.5 h-3.5" />
                     <span className="hidden sm:inline font-bold">REDO</span>
@@ -1431,17 +1475,17 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
                       ? 'bg-teal-950/80 border border-teal-400 text-teal-300 shadow-[0_0_10px_rgba(20,184,166,0.4)]'
                       : 'bg-gradient-to-r from-purple-950/80 to-cyan-950/80 hover:from-purple-900/90 hover:to-cyan-900/90 border border-cyan-500/40 text-cyan-200 hover:text-white'
                   }`}
-                  title="Format HTML & CSS cleanly using Prettier (Shift+Alt+F)"
+                  title="Clean up and tidy formatting"
                 >
                   {formatSuccess ? (
                     <>
                       <CheckCircle2 className="w-3.5 h-3.5 text-teal-300" />
-                      <span>FORMATTED!</span>
+                      <span>CLEANED UP!</span>
                     </>
                   ) : (
                     <>
                       <Wand2 className={`w-3.5 h-3.5 text-cyan-300 ${isFormatting ? 'animate-spin' : ''}`} />
-                      <span>{isFormatting ? 'FORMATTING...' : 'FORMAT CODE'}</span>
+                      <span>{isFormatting ? 'CLEANING...' : 'TIDY TEXT'}</span>
                       {mode === 'simple' && !isPro && (
                         <span className="text-[9px] font-mono px-1 rounded bg-fuchsia-900 text-amber-300 border border-amber-500/40 flex items-center gap-0.5">
                           <Crown className="w-2.5 h-2.5 fill-amber-300" />
@@ -1457,37 +1501,37 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
                 <button
                   onClick={() => insertSnippet('<h1>', '</h1>')}
                   className="px-2 py-0.5 rounded bg-purple-950/60 hover:bg-purple-900/80 border border-purple-500/30 text-cyan-300 font-bold transition"
-                  title="Heading 1"
+                  title="Insert Heading"
                 >
-                  H1
+                  Heading
                 </button>
                 <button
                   onClick={() => insertSnippet('<strong>', '</strong>')}
                   className="px-2 py-0.5 rounded bg-purple-950/60 hover:bg-purple-900/80 border border-purple-500/30 text-cyan-300 font-bold transition"
-                  title="Bold"
+                  title="Make text Bold"
                 >
-                  B
+                  Bold
                 </button>
                 <button
                   onClick={() => insertSnippet('<code>', '</code>')}
                   className="px-2 py-0.5 rounded bg-purple-950/60 hover:bg-purple-900/80 border border-purple-500/30 text-cyan-300 transition"
-                  title="Code"
+                  title="Insert Code block"
                 >
-                  &lt;/&gt;
+                  Code
                 </button>
                 <button
-                  onClick={() => insertSnippet('<style>\n  body { background: #050515; color: #00f2ff; }\n</style>\n')}
+                  onClick={() => insertSnippet('<style>\n  body { background: #050515; color: #00f2ff; font-family: sans-serif; }\n</style>\n')}
                   className="px-2 py-0.5 rounded bg-fuchsia-950/60 hover:bg-fuchsia-900/80 border border-fuchsia-500/30 text-fuchsia-300 transition"
-                  title="Inject CSS Style"
+                  title="Add Custom Style (CSS)"
                 >
-                  CSS
+                  Style
                 </button>
                 <button
-                  onClick={() => insertSnippet('<script>\n  console.log("Bitty Box loaded!");\n</script>\n')}
+                  onClick={() => insertSnippet('<script>\n  console.log("Page loaded!");\n</script>\n')}
                   className="px-2 py-0.5 rounded bg-teal-950/60 hover:bg-teal-900/80 border border-teal-500/30 text-teal-300 transition"
-                  title="Inject JS Script"
+                  title="Add Interactivity (JavaScript)"
                 >
-                  JS
+                  Script
                 </button>
               </div>
             </div>
@@ -1499,7 +1543,7 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
                 onChange={handleCodeChange}
                 onUndo={undo}
                 onRedo={redo}
-                placeholder="Type or paste any HTML, text, CSS, JS, or Markdown here... Everything will be compressed and encoded directly into a zero-server URL!"
+                placeholder="Type or paste any text, notes, HTML, or Markdown here... Everything is packed directly into a private shareable link!"
                 className="flex-1"
               />
             </div>
@@ -1520,11 +1564,11 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
               <div className="flex items-center gap-2">
                 <div className="bento-card-header !mb-0">
                   <Eye className="w-3.5 h-3.5 text-cyan-400" />
-                  Live Preview Stream
+                  Live Preview
                 </div>
                 <div className="text-[10px] font-mono text-teal-300 flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
-                  REAL-TIME SYNC
+                  UPDATES LIVE
                 </div>
               </div>
 
@@ -1537,7 +1581,7 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
                     className={`px-2 py-1 rounded text-[11px] flex items-center gap-1 transition ${
                       previewDevice === 'desktop' ? 'bg-cyan-950 text-cyan-300 border border-cyan-500/50' : 'text-purple-300/60 hover:text-cyan-200'
                     }`}
-                    title="Desktop Preview (Full Width)"
+                    title="Desktop View"
                   >
                     <Monitor className="w-3 h-3" />
                     <span className="hidden sm:inline">Desktop</span>
@@ -1548,10 +1592,10 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
                     className={`px-2 py-1 rounded text-[11px] flex items-center gap-1 transition ${
                       previewDevice === 'mobile' ? 'bg-cyan-950 text-cyan-300 border border-cyan-500/50' : 'text-purple-300/60 hover:text-cyan-200'
                     }`}
-                    title="Mobile Preview (375px)"
+                    title="Mobile View"
                   >
                     <Smartphone className="w-3 h-3" />
-                    <span className="hidden sm:inline">Mobile</span>
+                    <span className="hidden sm:inline">Phone</span>
                   </button>
                 </div>
 
@@ -1559,7 +1603,7 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
                   type="button"
                   onClick={() => setPreviewKey(k => k + 1)}
                   className="p-1.5 rounded bg-cyan-950/70 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-900/60 hover:text-white transition"
-                  title="Refresh Live Preview Frame"
+                  title="Refresh Preview"
                 >
                   <RefreshCw className="w-3 h-3" />
                 </button>
@@ -1578,7 +1622,7 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
                 <iframe
                   key={previewKey}
                   srcDoc={previewHtml}
-                  title="Bitty Box Live Preview Stream"
+                  title="Bitty Box Live Preview"
                   className="w-full h-full border-0 absolute inset-0 bg-[#050515]"
                   sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-modals allow-downloads"
                 />
@@ -1610,8 +1654,8 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
             <div className="mt-4 w-full max-w-3xl bg-[#000000]/60 border border-cyan-500/40 rounded p-3 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 animate-in fade-in duration-200 relative">
               <div className="flex-1 min-w-0 text-left">
                 <div className="text-[10px] font-mono text-cyan-400 mb-0.5 uppercase tracking-widest flex items-center gap-2">
-                  <span>TRANSMISSION LINK // ENCAPSULATED URL:</span>
-                  <span className="text-purple-300 text-[9px] font-normal">({currentUrlLength} chars)</span>
+                  <span>YOUR SHAREABLE LINK:</span>
+                  <span className="text-purple-300 text-[9px] font-normal">({currentUrlLength} characters)</span>
                 </div>
                 <div className="text-xs font-mono text-cyan-200 truncate select-all">
                   {bittyUrl}
@@ -1624,6 +1668,71 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
         </div>
 
       </div>
+      )}
+
+      {/* Full-area inline live preview (Viewer nav — no page swap, stays in Studio) */}
+      {inlinePreviewActive && (
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+            <div className="flex items-center gap-2 text-cyan-200 font-cyber text-sm">
+              <Eye className="w-4 h-4 text-cyan-400" />
+              <span>LIVE PREVIEW</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs font-mono">
+              <div className="flex items-center bg-black/70 p-0.5 rounded border border-cyan-500/30">
+                <button
+                  type="button"
+                  onClick={() => setPreviewDevice('desktop')}
+                  className={`px-2 py-1 rounded text-[11px] flex items-center gap-1 transition ${
+                    previewDevice === 'desktop' ? 'bg-cyan-950 text-cyan-300 border border-cyan-500/50' : 'text-purple-300/60 hover:text-cyan-200'
+                  }`}
+                  title="Desktop Preview (Full Width)"
+                >
+                  <Monitor className="w-3 h-3" />
+                  <span className="hidden sm:inline">Desktop</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPreviewDevice('mobile')}
+                  className={`px-2 py-1 rounded text-[11px] flex items-center gap-1 transition ${
+                    previewDevice === 'mobile' ? 'bg-cyan-950 text-cyan-300 border border-cyan-500/50' : 'text-purple-300/60 hover:text-cyan-200'
+                  }`}
+                  title="Mobile Preview (375px)"
+                >
+                  <Smartphone className="w-3 h-3" />
+                  <span className="hidden sm:inline">Mobile</span>
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPreviewKey(k => k + 1)}
+                className="p-1.5 rounded bg-cyan-950/70 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-900/60 hover:text-white transition"
+                title="Refresh Live Preview Frame"
+              >
+                <RefreshCw className="w-3 h-3" />
+              </button>
+            </div>
+          </div>
+
+          <div className="rounded-xl overflow-hidden border border-cyan-500/30 bg-[#050515] shadow-[0_0_30px_rgba(0,242,255,0.15)] min-h-[60vh] flex items-center justify-center p-2">
+            <div
+              className={`h-full transition-all duration-300 relative ${
+                previewDevice === 'mobile'
+                  ? 'w-[375px] max-w-full rounded-2xl border-2 border-cyan-500/40 shadow-[0_0_20px_rgba(0,242,255,0.2)] overflow-hidden'
+                  : 'w-full'
+              }`}
+            >
+              <iframe
+                key={previewKey}
+                srcDoc={previewHtml}
+                title="Bitty Box Live Preview"
+                className="w-full h-[60vh] border-0 absolute inset-0 bg-[#050515]"
+                sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-modals allow-downloads"
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Interactive Template Gallery Modal */}
       <TemplateGalleryModal

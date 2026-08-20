@@ -451,7 +451,6 @@ export function buildMcpServer() {
         if (res.ok) {
           touchSessionOpens(sessionKey);
           const grant = createSessionGrant(args.boxId, sessionKey, 60);
-          activeGrantsMcp.set(grant.token, { boxId: args.boxId, expiresAt: grant.expiresAt });
           return { content: [{ type: 'text', text: JSON.stringify({ allowed: true, grantToken: grant.token, grantExpiresAt: grant.expiresAt }, null, 2) }] };
         }
         return { content: [{ type: 'text', text: JSON.stringify({ allowed: false, deniedCodes: res.deniedCodes, reason: res.reason }, null, 2) }] };
@@ -477,9 +476,7 @@ export function buildMcpServer() {
     }
   );
 
-  // module-level grant store for MCP unlock (mirrors server.js)
   return server;
 }
 
-const activeGrantsMcp = new Map();
 function cryptoRandom() { try { return globalThis.crypto.randomUUID().replace(/-/g, '').slice(0, 16); } catch { return Math.random().toString(36).slice(2); } }

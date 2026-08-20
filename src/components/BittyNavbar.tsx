@@ -26,6 +26,7 @@ import { GRIP_ICON_DATA_URL } from './EdgeGripHandles';
 interface BittyNavbarProps {
   currentView: AppView;
   onViewChange: (view: AppView) => void;
+  onViewerClick?: () => void;
   onOpenQr?: () => void;
   onShare?: () => void;
   onNewBox?: () => void;
@@ -53,6 +54,7 @@ interface BittyNavbarProps {
 export const BittyNavbar: React.FC<BittyNavbarProps> = ({
   currentView,
   onViewChange,
+  onViewerClick,
   onOpenQr,
   onShare,
   onNewBox,
@@ -86,11 +88,15 @@ export const BittyNavbar: React.FC<BittyNavbarProps> = ({
             className="flex items-center gap-2 cursor-pointer select-none"
             onClick={() => onViewChange('editor')}
           >
-            <div className="relative w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-fuchsia-600 via-purple-700 to-cyan-500 p-[1.5px] shadow-[0_0_15px_rgba(0,221,255,0.4)] group">
-              <div className="w-full h-full bg-[#090314] rounded-[7px] flex items-center justify-center">
-                <Box className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-400 group-hover:rotate-12 transition-transform duration-300" />
+            <div className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-cyan-400 via-fuchsia-500 to-indigo-600 p-[2px] shadow-[0_0_20px_rgba(0,242,255,0.45)] group transition-all duration-300 hover:shadow-[0_0_28px_rgba(255,0,222,0.6)]">
+              <div className="w-full h-full bg-[#090314]/90 rounded-[10px] flex items-center justify-center overflow-hidden p-1">
+                <img
+                  src="/bittybox-logo.png"
+                  alt="Bitty Box Logo"
+                  className="w-full h-full object-contain group-hover:scale-115 transition-transform duration-300 drop-shadow-[0_0_8px_rgba(0,242,255,0.7)]"
+                />
               </div>
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-400 to-fuchsia-500 rounded-lg blur opacity-40 group-hover:opacity-80 transition duration-300 -z-10" />
+              <div className="absolute -inset-1 bg-gradient-to-r from-cyan-400 via-fuchsia-500 to-teal-400 rounded-xl blur-sm opacity-50 group-hover:opacity-90 transition duration-300 -z-10 animate-pulse" />
             </div>
             <div>
               <div className="flex items-center gap-1.5 sm:gap-2">
@@ -102,7 +108,7 @@ export const BittyNavbar: React.FC<BittyNavbarProps> = ({
                 </span>
               </div>
               <p className="text-[9px] sm:text-[10px] text-fuchsia-300/70 font-mono hidden md:block">
-                WHOLE WEBPAGES INSIDE A URL
+                WEBPAGES PACKED IN A LINK
               </p>
             </div>
           </div>
@@ -147,7 +153,7 @@ export const BittyNavbar: React.FC<BittyNavbarProps> = ({
 
           <button
             id="nav-preview-btn"
-            onClick={() => onViewChange('viewer')}
+            onClick={() => onViewerClick ? onViewerClick() : onViewChange('viewer')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${
               currentView === 'viewer'
                 ? 'bg-gradient-to-r from-fuchsia-500/20 to-purple-500/20 text-fuchsia-200 border border-fuchsia-400/50 shadow-[0_0_12px_rgba(255,0,222,0.25)]'
@@ -155,7 +161,7 @@ export const BittyNavbar: React.FC<BittyNavbarProps> = ({
             }`}
           >
             <Eye className="w-3.5 h-3.5" />
-            <span>VIEWER</span>
+            <span>PREVIEW</span>
           </button>
 
           <button
@@ -174,7 +180,7 @@ export const BittyNavbar: React.FC<BittyNavbarProps> = ({
             }`}
           >
             <History className="w-3.5 h-3.5" />
-            <span>VAULT</span>
+            <span>SAVED</span>
           </button>
 
           <button
@@ -187,7 +193,7 @@ export const BittyNavbar: React.FC<BittyNavbarProps> = ({
             }`}
           >
             <Info className="w-3.5 h-3.5" />
-            <span>SPECS</span>
+            <span>ABOUT</span>
           </button>
         </nav>
 
@@ -325,7 +331,7 @@ export const BittyNavbar: React.FC<BittyNavbarProps> = ({
             }`}
           >
             <History className="w-3.5 h-3.5 shrink-0" />
-            <span>VAULT</span>
+            <span>SAVED</span>
           </button>
 
           <button
@@ -338,7 +344,7 @@ export const BittyNavbar: React.FC<BittyNavbarProps> = ({
             }`}
           >
             <Info className="w-3.5 h-3.5 shrink-0" />
-            <span>SPECS</span>
+            <span>ABOUT</span>
           </button>
         </nav>
       </div>
