@@ -48,7 +48,7 @@ export const EdgeGripHandles: React.FC<EdgeGripHandlesProps> = ({
           <button
             id="edge-grip-left"
             onClick={onOpenLeft}
-            aria-label="Templates"
+            aria-label="Preview"
             className="group relative flex flex-col items-center justify-center py-4 px-2 rounded-r-2xl bg-gradient-to-r from-[#0d041e] via-[#170836] to-[#230d4e] border-y-2 border-r-2 border-fuchsia-400 text-fuchsia-200 shadow-[0_0_30px_rgba(217,70,239,0.5)] backdrop-blur-xl transition-all duration-300 transform hover:translate-x-1.5 hover:scale-105 active:scale-95 cursor-pointer"
           >
             {/* Ambient Neon Pulse Glow Bar */}
@@ -61,7 +61,7 @@ export const EdgeGripHandles: React.FC<EdgeGripHandlesProps> = ({
 
             {/* Vertical Micro-Label */}
             <div className="mt-2 flex flex-col items-center gap-0.5 text-[10px] font-cyber font-extrabold tracking-widest text-fuchsia-200 group-hover:text-cyan-200">
-              <span className="[writing-mode:vertical-lr] rotate-180 uppercase">TEMPLATES</span>
+              <span className="[writing-mode:vertical-lr] rotate-180 uppercase">PREVIEW</span>
             </div>
           </button>
         </div>
