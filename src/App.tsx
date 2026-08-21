@@ -6,7 +6,7 @@ import { BittyRenderer } from './components/BittyRenderer';
 import { HistoryModal } from './components/HistoryModal';
 import { AboutModal } from './components/AboutModal';
 import { QrModal } from './components/QrModal';
-import { BittyMetadata, BittyHistoryItem, AppView, TemplatePreset, WorkspaceTheme, BittySession } from './types';
+import { BittyMetadata, BittyHistoryItem, AppView, TemplatePreset, WorkspaceTheme, BittySession, SyntaxTheme } from './types';
 import { 
   compressContent, 
   compressContentSync,
@@ -134,6 +134,32 @@ export default function App() {
     } catch {}
     return 'monochrome';
   });
+
+  // Persistent Syntax Theme state for in-editor syntax highlighting
+  const [syntaxTheme, setSyntaxTheme] = useState<SyntaxTheme>(() => {
+    try {
+      const saved = localStorage.getItem('bitty_syntax_theme');
+      if (
+        saved === 'cyber' ||
+        saved === 'matrix' ||
+        saved === 'dracula' ||
+        saved === 'monokai' ||
+        saved === 'nord' ||
+        saved === 'amber' ||
+        saved === 'monochrome'
+      ) {
+        return saved as SyntaxTheme;
+      }
+    } catch {}
+    return 'cyber';
+  });
+
+  // Sync syntax theme with localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('bitty_syntax_theme', syntaxTheme);
+    } catch {}
+  }, [syntaxTheme]);
 
   const [bittyUrl, setBittyUrl] = useState<string>(() => (initialUrl.hash ? window.location.href : ''));
   const [hashFragment, setHashFragment] = useState<string>(() => initialUrl.payload);
@@ -817,6 +843,8 @@ export default function App() {
             isLifetimePro={proStatus.isLifetimePro}
             isTrialActive={proStatus.isTrialActive}
             onOpenPaywall={proStatus.openPaywall}
+            syntaxTheme={syntaxTheme}
+            onSyntaxThemeChange={setSyntaxTheme}
           />
         )}
 
@@ -896,6 +924,8 @@ export default function App() {
         metadata={metadata}
         theme={workspaceTheme}
         onThemeChange={setWorkspaceTheme}
+        syntaxTheme={syntaxTheme}
+        onSyntaxThemeChange={setSyntaxTheme}
         mode={proStatus.mode}
         onModeChange={proStatus.setMode}
         isPro={proStatus.isPro}

@@ -26,9 +26,10 @@ import {
   Info,
   ChevronRight,
   Lock,
-  FileText
+  FileText,
+  Code2
 } from 'lucide-react';
-import { BittyMetadata, BittySession, WorkspaceMode, WorkspaceTheme } from '../types';
+import { BittyMetadata, BittySession, WorkspaceMode, WorkspaceTheme, SyntaxTheme, SYNTAX_THEMES } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
 import { GRIP_ICON_DATA_URL } from './EdgeGripHandles';
 import { CyberScrambleText } from './CyberScrambleText';
@@ -56,6 +57,8 @@ interface StudioToolsSidePanelProps {
   onImportFile?: () => void;
   theme: WorkspaceTheme;
   onThemeChange: (theme: WorkspaceTheme) => void;
+  syntaxTheme: SyntaxTheme;
+  onSyntaxThemeChange: (theme: SyntaxTheme) => void;
   mode: WorkspaceMode;
   onModeChange: (mode: WorkspaceMode) => void;
   isPro: boolean;
@@ -115,6 +118,8 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
   onImportFile,
   theme,
   onThemeChange,
+  syntaxTheme,
+  onSyntaxThemeChange,
   mode,
   onModeChange,
   isPro,
@@ -507,6 +512,59 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
                       </>
                     )}
                   </button>
+                </div>
+              </div>
+
+              {/* =========================================================================
+                  SECTION 3B: SYNTAX HIGHLIGHTING THEMES (CODE EDITOR)
+                 ========================================================================= */}
+              <div className="rounded-2xl bg-gradient-to-b from-[#06152a]/80 to-[#020b18]/80 border border-cyan-500/30 p-4 sm:p-5 shadow-lg">
+                <div className="flex items-center justify-between mb-4 pb-2 border-b border-cyan-500/20">
+                  <div className="flex items-center gap-2 text-cyan-300 font-cyber font-bold text-xs uppercase tracking-wider">
+                    <Code2 className="w-4 h-4 text-cyan-400" />
+                    <span>SYNTAX HIGHLIGHTING THEME</span>
+                  </div>
+                  <span className="text-[10px] font-mono text-cyan-300/80 bg-cyan-950/80 px-2 py-0.5 rounded border border-cyan-500/30">
+                    {SYNTAX_THEMES.find(t => t.id === syntaxTheme)?.name || 'Cyber Neon'}
+                  </span>
+                </div>
+
+                <p className="text-xs text-purple-200/70 font-mono mb-3">
+                  Customize the syntax coloring of the in-browser code editor.
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                  {SYNTAX_THEMES.map(st => {
+                    const isSelected = syntaxTheme === st.id;
+                    return (
+                      <button
+                        key={st.id}
+                        id={`syntax-theme-${st.id}`}
+                        onClick={() => onSyntaxThemeChange(st.id)}
+                        className={`p-3 rounded-xl border text-left transition cursor-pointer flex flex-col justify-between ${
+                          isSelected
+                            ? 'bg-gradient-to-b from-cyan-950/80 to-purple-950/80 border-cyan-400 shadow-[0_0_15px_rgba(0,242,255,0.3)]'
+                            : 'bg-black/40 hover:bg-black/60 border-cyan-500/20 text-purple-200/80 hover:border-cyan-500/50'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1.5">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className="w-3 h-3 rounded-full shadow-[0_0_8px_currentColor]"
+                              style={{ backgroundColor: st.accentColor, color: st.accentColor }}
+                            />
+                            <h4 className="font-cyber font-bold text-xs text-cyan-200">
+                              {st.name}
+                            </h4>
+                          </div>
+                          {isSelected && <Check className="w-3.5 h-3.5 text-cyan-400" />}
+                        </div>
+                        <p className="text-[10px] text-purple-300/60 font-mono line-clamp-2">
+                          {st.desc}
+                        </p>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 

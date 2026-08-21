@@ -1014,12 +1014,20 @@ body {
 }
 
 /* =========================================
-   PRISM CYBER SYNTAX HIGHLIGHTING
+   PRISM SYNTAX HIGHLIGHTING THEMES
    ========================================= */
+
+/* 1. Cyber Neon (Default) */
 .prism-cyber-theme {
   color: #e0f2fe;
 }
-.prism-cyber-theme .token {
+.prism-cyber-theme .token,
+.prism-matrix-theme .token,
+.prism-dracula-theme .token,
+.prism-monokai-theme .token,
+.prism-nord-theme .token,
+.prism-amber-theme .token,
+.prism-monochrome-theme .token {
   font-weight: 400 !important;
   font-style: normal !important;
   text-shadow: none !important;
@@ -1063,6 +1071,275 @@ body {
 .prism-cyber-theme .token.entity,
 .prism-cyber-theme .token.url {
   color: #f43f5e;
+}
+
+/* 2. Matrix Phosphor Theme */
+.prism-matrix-theme {
+  color: #d1fae5;
+}
+.prism-matrix-theme .token.comment,
+.prism-matrix-theme .token.prolog,
+.prism-matrix-theme .token.doctype,
+.prism-matrix-theme .token.cdata {
+  color: #065f46;
+}
+.prism-matrix-theme .token.punctuation {
+  color: #34d399;
+  opacity: 0.85;
+}
+.prism-matrix-theme .token.tag,
+.prism-matrix-theme .token.tag .token.punctuation {
+  color: #10b981;
+}
+.prism-matrix-theme .token.attr-name {
+  color: #a7f3d0;
+}
+.prism-matrix-theme .token.attr-value,
+.prism-matrix-theme .token.string {
+  color: #00ff66;
+}
+.prism-matrix-theme .token.selector,
+.prism-matrix-theme .token.property {
+  color: #6ee7b7;
+}
+.prism-matrix-theme .token.keyword {
+  color: #059669;
+}
+.prism-matrix-theme .token.function {
+  color: #86efac;
+}
+.prism-matrix-theme .token.number,
+.prism-matrix-theme .token.boolean {
+  color: #4ade80;
+}
+.prism-matrix-theme .token.operator,
+.prism-matrix-theme .token.entity,
+.prism-matrix-theme .token.url {
+  color: #22c55e;
+}
+
+/* 3. Dracula Vampire Theme */
+.prism-dracula-theme {
+  color: #f8f8f2;
+}
+.prism-dracula-theme .token.comment,
+.prism-dracula-theme .token.prolog,
+.prism-dracula-theme .token.doctype,
+.prism-dracula-theme .token.cdata {
+  color: #6272a4;
+}
+.prism-dracula-theme .token.punctuation {
+  color: #f8f8f2;
+  opacity: 0.75;
+}
+.prism-dracula-theme .token.tag,
+.prism-dracula-theme .token.tag .token.punctuation {
+  color: #ff79c6;
+}
+.prism-dracula-theme .token.attr-name {
+  color: #50fa7b;
+}
+.prism-dracula-theme .token.attr-value,
+.prism-dracula-theme .token.string {
+  color: #f1fa8c;
+}
+.prism-dracula-theme .token.selector,
+.prism-dracula-theme .token.property {
+  color: #8be9fd;
+}
+.prism-dracula-theme .token.keyword {
+  color: #ff79c6;
+}
+.prism-dracula-theme .token.function {
+  color: #bd93f9;
+}
+.prism-dracula-theme .token.number,
+.prism-dracula-theme .token.boolean {
+  color: #bd93f9;
+}
+.prism-dracula-theme .token.operator,
+.prism-dracula-theme .token.entity,
+.prism-dracula-theme .token.url {
+  color: #ffb86c;
+}
+
+/* 4. Monokai Pro Theme */
+.prism-monokai-theme {
+  color: #fcfcfa;
+}
+.prism-monokai-theme .token.comment,
+.prism-monokai-theme .token.prolog,
+.prism-monokai-theme .token.doctype,
+.prism-monokai-theme .token.cdata {
+  color: #727072;
+}
+.prism-monokai-theme .token.punctuation {
+  color: #939293;
+}
+.prism-monokai-theme .token.tag,
+.prism-monokai-theme .token.tag .token.punctuation {
+  color: #ff6188;
+}
+.prism-monokai-theme .token.attr-name {
+  color: #a9dc76;
+}
+.prism-monokai-theme .token.attr-value,
+.prism-monokai-theme .token.string {
+  color: #ffd866;
+}
+.prism-monokai-theme .token.selector,
+.prism-monokai-theme .token.property {
+  color: #78dce8;
+}
+.prism-monokai-theme .token.keyword {
+  color: #ff6188;
+}
+.prism-monokai-theme .token.function {
+  color: #a9dc76;
+}
+.prism-monokai-theme .token.number,
+.prism-monokai-theme .token.boolean {
+  color: #ab9df2;
+}
+.prism-monokai-theme .token.operator,
+.prism-monokai-theme .token.entity,
+.prism-monokai-theme .token.url {
+  color: #fc9867;
+}
+
+/* 5. Nord Arctic Theme */
+.prism-nord-theme {
+  color: #eceff4;
+}
+.prism-nord-theme .token.comment,
+.prism-nord-theme .token.prolog,
+.prism-nord-theme .token.doctype,
+.prism-nord-theme .token.cdata {
+  color: #4c566a;
+}
+.prism-nord-theme .token.punctuation {
+  color: #81a1c1;
+}
+.prism-nord-theme .token.tag,
+.prism-nord-theme .token.tag .token.punctuation {
+  color: #88c0d0;
+}
+.prism-nord-theme .token.attr-name {
+  color: #8fbcbb;
+}
+.prism-nord-theme .token.attr-value,
+.prism-nord-theme .token.string {
+  color: #a3be8c;
+}
+.prism-nord-theme .token.selector,
+.prism-nord-theme .token.property {
+  color: #81a1c1;
+}
+.prism-nord-theme .token.keyword {
+  color: #81a1c1;
+}
+.prism-nord-theme .token.function {
+  color: #88c0d0;
+}
+.prism-nord-theme .token.number,
+.prism-nord-theme .token.boolean {
+  color: #b48ead;
+}
+.prism-nord-theme .token.operator,
+.prism-nord-theme .token.entity,
+.prism-nord-theme .token.url {
+  color: #ebcb8b;
+}
+
+/* 6. Amber CRT Theme */
+.prism-amber-theme {
+  color: #fef3c7;
+}
+.prism-amber-theme .token.comment,
+.prism-amber-theme .token.prolog,
+.prism-amber-theme .token.doctype,
+.prism-amber-theme .token.cdata {
+  color: #78350f;
+}
+.prism-amber-theme .token.punctuation {
+  color: #d97706;
+}
+.prism-amber-theme .token.tag,
+.prism-amber-theme .token.tag .token.punctuation {
+  color: #fbbf24;
+}
+.prism-amber-theme .token.attr-name {
+  color: #fde68a;
+}
+.prism-amber-theme .token.attr-value,
+.prism-amber-theme .token.string {
+  color: #f59e0b;
+}
+.prism-amber-theme .token.selector,
+.prism-amber-theme .token.property {
+  color: #fcd34d;
+}
+.prism-amber-theme .token.keyword {
+  color: #b45309;
+}
+.prism-amber-theme .token.function {
+  color: #fef08a;
+}
+.prism-amber-theme .token.number,
+.prism-amber-theme .token.boolean {
+  color: #d97706;
+}
+.prism-amber-theme .token.operator,
+.prism-amber-theme .token.entity,
+.prism-amber-theme .token.url {
+  color: #fb923c;
+}
+
+/* 7. Obsidian Monochrome Theme */
+.prism-monochrome-theme {
+  color: #f4f4f5;
+}
+.prism-monochrome-theme .token.comment,
+.prism-monochrome-theme .token.prolog,
+.prism-monochrome-theme .token.doctype,
+.prism-monochrome-theme .token.cdata {
+  color: #52525b;
+}
+.prism-monochrome-theme .token.punctuation {
+  color: #a1a1aa;
+}
+.prism-monochrome-theme .token.tag,
+.prism-monochrome-theme .token.tag .token.punctuation {
+  color: #ffffff;
+  font-weight: 600 !important;
+}
+.prism-monochrome-theme .token.attr-name {
+  color: #d4d4d8;
+}
+.prism-monochrome-theme .token.attr-value,
+.prism-monochrome-theme .token.string {
+  color: #e4e4e7;
+  text-decoration: underline dotted #71717a;
+}
+.prism-monochrome-theme .token.selector,
+.prism-monochrome-theme .token.property {
+  color: #f4f4f5;
+}
+.prism-monochrome-theme .token.keyword {
+  color: #ffffff;
+  font-weight: 600 !important;
+}
+.prism-monochrome-theme .token.function {
+  color: #e4e4e7;
+}
+.prism-monochrome-theme .token.number,
+.prism-monochrome-theme .token.boolean {
+  color: #d4d4d8;
+}
+.prism-monochrome-theme .token.operator,
+.prism-monochrome-theme .token.entity,
+.prism-monochrome-theme .token.url {
+  color: #a1a1aa;
 }
 
 /* =========================================

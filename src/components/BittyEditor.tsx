@@ -45,7 +45,7 @@ import {
   X,
   Crown
 } from 'lucide-react';
-import { BittyMetadata, TemplatePreset, BittySession, WorkspaceMode } from '../types';
+import { BittyMetadata, TemplatePreset, BittySession, WorkspaceMode, SyntaxTheme, SYNTAX_THEMES } from '../types';
 import { TEMPLATE_PRESETS } from '../data/templates';
 import { motion, AnimatePresence } from 'motion/react';
 import { HoloGenerateButton } from './HoloGenerateButton';
@@ -87,6 +87,8 @@ interface BittyEditorProps {
   isLifetimePro?: boolean;
   isTrialActive?: boolean;
   onOpenPaywall?: (featureName?: string) => void;
+  syntaxTheme?: SyntaxTheme;
+  onSyntaxThemeChange?: (theme: SyntaxTheme) => void;
 }
 
 const bentoContainerVariants = {
@@ -146,6 +148,8 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
   isLifetimePro = false,
   isTrialActive = true,
   onOpenPaywall,
+  syntaxTheme = 'cyber',
+  onSyntaxThemeChange,
 }) => {
   const [showMetadata, setShowMetadata] = useState(true);
   const [showTemplates, setShowTemplates] = useState(false);
@@ -1409,9 +1413,61 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
                   <Code2 className="w-3.5 h-3.5 text-cyan-400" />
                   Content Editor
                 </div>
-                <span className="text-[10px] font-mono text-cyan-400/50 hidden sm:inline">
-                  [READY]
-                </span>
+                {/* Syntax Theme Dropdown / Selector Button */}
+                {onSyntaxThemeChange && (
+                  <div className="relative group">
+                    <button
+                      type="button"
+                      id="editor-syntax-theme-badge-btn"
+                      className="text-[10px] font-mono text-cyan-300 bg-cyan-950/70 hover:bg-cyan-900/80 border border-cyan-500/30 px-2 py-0.5 rounded flex items-center gap-1.5 transition cursor-pointer"
+                      title="Click or hover to change code syntax theme"
+                    >
+                      <span
+                        className="w-2 h-2 rounded-full"
+                        style={{
+                          backgroundColor: SYNTAX_THEMES.find(t => t.id === syntaxTheme)?.accentColor || '#00f2ff',
+                        }}
+                      />
+                      <span>THEME: {SYNTAX_THEMES.find(t => t.id === syntaxTheme)?.name.toUpperCase() || 'CYBER'}</span>
+                      <ChevronDown className="w-2.5 h-2.5 text-cyan-400/70" />
+                    </button>
+
+                    <div className="absolute left-0 top-full mt-1 w-48 bg-[#040e1c] border border-cyan-500/40 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] p-1.5 z-50 hidden group-hover:block hover:block animate-in fade-in zoom-in-95 duration-100">
+                      <div className="text-[9px] font-cyber text-cyan-400/70 px-2 py-1 uppercase tracking-wider border-b border-cyan-500/20 mb-1">
+                        SYNTAX THEMES //
+                      </div>
+                      {SYNTAX_THEMES.map(st => {
+                        const isCurrent = syntaxTheme === st.id;
+                        return (
+                          <button
+                            key={st.id}
+                            type="button"
+                            onClick={() => onSyntaxThemeChange(st.id)}
+                            className={`w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-[11px] font-mono text-left transition cursor-pointer ${
+                              isCurrent
+                                ? 'bg-cyan-950/90 text-cyan-200 border border-cyan-400/60 font-bold'
+                                : 'text-purple-300/70 hover:text-cyan-200 hover:bg-cyan-950/40'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span
+                                className="w-2 h-2 rounded-full"
+                                style={{ backgroundColor: st.accentColor }}
+                              />
+                              <span>{st.name}</span>
+                            </div>
+                            {isCurrent && <Check className="w-3 h-3 text-cyan-400" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                {!onSyntaxThemeChange && (
+                  <span className="text-[10px] font-mono text-cyan-400/50 hidden sm:inline">
+                    [READY]
+                  </span>
+                )}
               </div>
 
               {/* Quick Actions: UNDO/REDO, FORMAT CODE BUTTON & HTML/CSS/JS Tag Injectors */}
@@ -1545,6 +1601,7 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
                 onRedo={redo}
                 placeholder="Type or paste any text, notes, HTML, or Markdown here... Everything is packed directly into a private shareable link!"
                 className="flex-1"
+                syntaxTheme={syntaxTheme}
               />
             </div>
           </div>
