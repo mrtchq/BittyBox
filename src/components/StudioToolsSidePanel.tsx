@@ -49,6 +49,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { GRIP_ICON_DATA_URL } from './EdgeGripHandles';
 import { CyberScrambleText } from './CyberScrambleText';
 import { PrismCheckbox } from './PrismCheckbox';
+import { GoogleIcon } from './AccountDashboard';
+import { UserAvatar } from './UserAvatar';
 
 interface StudioToolsSidePanelProps {
   isOpen: boolean;
@@ -124,6 +126,7 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
     user,
     isAuthenticated,
     isLoading,
+    signInWithGoogle,
     login,
     register,
     requestMagicLink,
@@ -138,7 +141,8 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
 
   const [activeTab, setActiveTab] = useState<'account' | 'boxes' | 'keys' | 'credits' | 'mcp' | 'tools'>('account');
 
-  // Auth Form local state
+  // Auth Form local state (Google & Magic Link)
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [authSubmitting, setAuthSubmitting] = useState(false);
@@ -152,6 +156,22 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
       return true;
     }
   });
+
+  // Handle Google Sign In
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+    setAuthMsg(null);
+    try {
+      const ok = await signInWithGoogle();
+      if (!ok && account.error) {
+        setAuthMsg(account.error);
+      }
+    } catch (err: any) {
+      setAuthMsg(err.message || 'Google sign-in error.');
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
 
   // Tracked Boxes Filter
   const [boxSearchQuery, setBoxSearchQuery] = useState('');
@@ -444,6 +464,42 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
 
                       {/* Sign In Form */}
                       <div className="bg-[#06182c]/90 border border-cyan-500/30 rounded-2xl p-5 shadow-xl relative">
+                        {/* Primary Google Sign In Button */}
+                        <div className="mb-4">
+                          <button
+                            id="sidepanel-google-signin-btn"
+                            type="button"
+                            onClick={handleGoogleSignIn}
+                            disabled={googleLoading || authSubmitting}
+                            className="w-full py-2.5 px-4 rounded-xl font-sans font-bold text-xs tracking-wide text-white bg-gradient-to-r from-[#0d1c30] via-[#10243d] to-[#0c1c2e] hover:from-[#132845] hover:to-[#173254] border border-cyan-400/50 hover:border-cyan-300 active:scale-[0.99] transition-all duration-200 shadow-[0_0_20px_rgba(0,242,255,0.2)] cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2.5 group"
+                          >
+                            {googleLoading ? (
+                              <>
+                                <RefreshCw className="w-3.5 h-3.5 text-cyan-300 animate-spin" />
+                                <span className="font-mono text-cyan-200 text-[11px]">AUTHENTICATING...</span>
+                              </>
+                            ) : (
+                              <>
+                                <div className="w-5 h-5 rounded-lg bg-white flex items-center justify-center shrink-0 shadow-md p-0.5 group-hover:scale-105 transition-transform">
+                                  <GoogleIcon className="w-3.5 h-3.5" />
+                                </div>
+                                <span className="text-xs font-bold text-slate-100 group-hover:text-white">
+                                  Sign In with Google
+                                </span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+
+                        {/* Visual Divider */}
+                        <div className="flex items-center gap-2 mb-4">
+                          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent" />
+                          <span className="text-[9px] uppercase font-mono tracking-widest text-cyan-400/60">
+                            OR MAGIC EMAIL
+                          </span>
+                          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent" />
+                        </div>
+
                         {magicLinkSent ? (
                           <div className="p-4 rounded-xl bg-cyan-950/40 border border-cyan-500/40 text-center space-y-3">
                             <div className="w-12 h-12 rounded-xl bg-cyan-500/20 border border-cyan-400/50 mx-auto flex items-center justify-center">
@@ -539,9 +595,13 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
                       {/* Top User Bento Header */}
                       <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-[#06182c]/90 via-[#0a203a]/90 to-[#0c132c]/90 border border-cyan-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
                         <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-500/30 via-purple-500/30 to-fuchsia-500/30 border border-cyan-400/50 flex items-center justify-center text-cyan-200 text-lg font-bold font-cyber shadow-[0_0_15px_rgba(0,242,255,0.25)]">
-                            {user.displayName ? user.displayName.slice(0, 2).toUpperCase() : user.email.slice(0, 2).toUpperCase()}
-                          </div>
+                          <UserAvatar
+                            user={user}
+                            size="lg"
+                            showStatusDot={true}
+                            isOnline={true}
+                            altText={user.displayName || user.email}
+                          />
                           <div>
                             <div className="flex items-center gap-2">
                               <h3 className="text-base font-bold font-cyber text-white">
