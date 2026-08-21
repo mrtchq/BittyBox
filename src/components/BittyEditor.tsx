@@ -164,6 +164,10 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
   const [autoSaveToast, setAutoSaveToast] = useState(false);
   const [manualSaveToast, setManualSaveToast] = useState(false);
 
+  // Favicon quick picker popover state
+  const [showFaviconPicker, setShowFaviconPicker] = useState(false);
+  const POPULAR_FAVICONS = ['📦', '🚀', '⚡', '💻', '🕹️', '📝', '🎨', '🔒', '🌐', '💎', '🔥', '✨', '💡', '🤖', '🎮', '🌟'];
+
   // Guarded PRO Feature Handlers
   const handleFormatCodeClick = () => {
     if (mode === 'simple' && !isPro) {
@@ -687,257 +691,342 @@ export const BittyEditor: React.FC<BittyEditorProps> = ({
         {/* -----------------------------------------------------------------------
             BENTO CELL 1: LOGO & TRANSMISSION IDENTIFIER (Span 8)
            ----------------------------------------------------------------------- */}
-        <div className="bento-card md:col-span-8 p-6 flex flex-col justify-between overflow-hidden">
+        <div className="bento-card md:col-span-8 p-5 sm:p-6 flex flex-col justify-between overflow-visible relative">
           {/* Corner Accents */}
           <div className="bento-corner-accent top-l" />
           <div className="bento-corner-accent top-r" />
           <div className="bento-corner-accent bot-l" />
           <div className="bento-corner-accent bot-r" />
 
-          {/* Top Bar inside cell */}
-          <div className="flex items-center justify-between gap-2 mb-4">
-            <div className="bento-card-header !mb-0 flex items-center gap-1.5">
-              <Zap className="w-3.5 h-3.5 text-cyan-400" />
+          {/* Top Bar inside cell: Section title + Auto-Save Status & Shortcuts */}
+          <div className="flex flex-wrap items-center justify-between gap-2.5 pb-2 mb-2 border-b border-cyan-500/15">
+            <div className="bento-card-header !mb-0 flex items-center gap-2">
+              <Zap className="w-4 h-4 text-cyan-400" />
               <CyberScrambleText text="PAGE TITLE & SETTINGS" speed={25} />
             </div>
             
             {/* Auto-Save Status Badge & Shortcut Indicators */}
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-2 sm:gap-2.5 ml-auto">
               {lastAutoSavedTime && (
-                <div 
+                <button 
+                  type="button"
                   onClick={() => performSaveDraft(true)}
-                  title="Click or press Ctrl+S to save your work"
-                  className="flex items-center gap-1.5 text-[10px] font-mono text-cyan-400/80 bg-cyan-950/40 hover:bg-cyan-900/60 px-2 py-0.5 rounded border border-cyan-500/20 cursor-pointer transition"
+                  title="Click or press Ctrl+S to save draft"
+                  className="flex items-center gap-1.5 text-[10px] font-mono text-cyan-300 bg-cyan-950/70 hover:bg-cyan-900/80 px-2.5 py-1 rounded-lg border border-cyan-500/30 cursor-pointer transition shadow-sm"
                 >
-                  <span className={`w-1.5 h-1.5 rounded-full ${isSaving ? 'bg-amber-400 animate-ping' : 'bg-teal-400'}`} />
-                  <span className="hidden sm:inline">SAVED:</span>
-                  <span>{lastAutoSavedTime}</span>
-                </div>
+                  <span className={`w-1.5 h-1.5 rounded-full ${isSaving ? 'bg-amber-400 animate-ping' : 'bg-teal-400 animate-pulse'}`} />
+                  <span className="font-semibold">{isSaving ? 'SAVING...' : 'SAVED'}</span>
+                  <span className="text-cyan-400/70">({lastAutoSavedTime})</span>
+                </button>
               )}
-              <div className="text-[10px] font-mono text-cyan-400/60 hidden md:flex items-center gap-1 bg-black/40 px-2 py-0.5 rounded border border-cyan-500/15">
-                <Keyboard className="w-3 h-3 text-cyan-400/70" />
-                <span>Ctrl+Enter: Create Link | Ctrl+S: Save</span>
+              <div className="text-[10px] font-mono text-cyan-300/80 hidden lg:flex items-center gap-2 bg-black/60 px-2.5 py-1 rounded-lg border border-cyan-500/20">
+                <Keyboard className="w-3 h-3 text-cyan-400" />
+                <span><strong className="text-cyan-200">Ctrl+Enter</strong> Link</span>
+                <span className="text-cyan-500/40">•</span>
+                <span><strong className="text-cyan-200">Ctrl+S</strong> Save</span>
               </div>
             </div>
           </div>
 
-          {/* Big Bento Logo & Title Input */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 my-2">
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-500/20 via-purple-500/20 to-fuchsia-500/20 border border-cyan-400/40 flex items-center justify-center text-xl flex-shrink-0 shadow-[0_0_15px_rgba(0,242,255,0.2)]">
-                  {metadata.favicon || '📦'}
-                </div>
+          {/* Title Input & Favicon Picker (With ample vertical spacing to prevent font clipping) */}
+          <div className="py-2.5 my-1">
+            <div className="flex items-center gap-3.5 mb-2 relative">
+              {/* Interactive Favicon Box & Popover */}
+              <div className="relative">
+                <button
+                  type="button"
+                  id="favicon-picker-trigger-btn"
+                  onClick={() => setShowFaviconPicker(!showFaviconPicker)}
+                  className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-cyan-950/80 via-purple-950/80 to-fuchsia-950/80 border border-cyan-400/50 hover:border-cyan-300 flex items-center justify-center text-2xl flex-shrink-0 shadow-[0_0_15px_rgba(0,242,255,0.25)] hover:shadow-[0_0_20px_rgba(0,242,255,0.4)] transition cursor-pointer group"
+                  title="Click to pick a custom page icon"
+                >
+                  <span>{metadata.favicon || '📦'}</span>
+                </button>
+
+                {/* Quick Emoji Picker Popover */}
+                {showFaviconPicker && (
+                  <div className="absolute left-0 top-full mt-2 w-64 p-3 bg-[#040916] border border-cyan-400/60 rounded-2xl shadow-[0_15px_35px_rgba(0,0,0,0.9)] z-50 animate-in fade-in zoom-in-95 duration-100">
+                    <div className="flex items-center justify-between text-[10px] font-cyber text-cyan-300 mb-2 uppercase tracking-wider pb-1 border-b border-cyan-500/20">
+                      <span>SELECT ICON //</span>
+                      <button
+                        type="button"
+                        onClick={() => setShowFaviconPicker(false)}
+                        className="text-purple-400/60 hover:text-rose-400 font-mono text-xs cursor-pointer"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-4 gap-1.5 mb-2">
+                      {POPULAR_FAVICONS.map(emoji => (
+                        <button
+                          key={emoji}
+                          type="button"
+                          onClick={() => {
+                            onChangeMetadata({ ...metadata, favicon: emoji });
+                            setShowFaviconPicker(false);
+                          }}
+                          className="w-11 h-11 flex items-center justify-center text-xl rounded-lg bg-black/40 hover:bg-cyan-950/80 border border-cyan-500/20 hover:border-cyan-400 transition cursor-pointer"
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="pt-2 border-t border-cyan-500/20">
+                      <label className="block text-[9px] font-mono text-cyan-400/70 mb-1">
+                        OR TYPE CUSTOM EMOJI:
+                      </label>
+                      <input
+                        type="text"
+                        value={metadata.favicon || ''}
+                        onChange={e => onChangeMetadata({ ...metadata, favicon: e.target.value })}
+                        placeholder="e.g. 🛸"
+                        maxLength={4}
+                        className="w-full bg-[#080212] border border-cyan-500/30 rounded px-2 py-1 text-xs text-cyan-200 text-center font-mono focus:outline-none focus:border-cyan-400"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Title Input: Generous line-height & padding preventing any character descender cut-off */}
+              <div className="flex-1 min-w-0">
                 <input
                   id="doc-title-input"
                   type="text"
                   value={metadata.title}
                   onChange={e => onChangeMetadata({ ...metadata, title: e.target.value })}
-                  placeholder="Give your page a title..."
-                  className="w-full bg-transparent font-cyber text-2xl sm:text-3xl font-extrabold text-cyan-200 placeholder:text-purple-400/40 focus:outline-none border-b border-transparent focus:border-cyan-400 transition pb-0.5"
+                  placeholder="Give your webpage a title..."
+                  className="w-full bg-transparent font-cyber text-2xl sm:text-3xl font-extrabold text-cyan-200 placeholder:text-purple-400/40 focus:outline-none border-b-2 border-transparent focus:border-cyan-400 transition py-1 leading-normal overflow-visible"
                 />
               </div>
+            </div>
 
-              <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-purple-300/70 pl-1">
-                <span>LINK ADDRESS:</span>
-                <span className="text-cyan-300 font-bold bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-500/30">
-                  /{metadata.title ? metadata.title.toLowerCase().replace(/\s+/g, '-') : 'untitled'}/
+            {/* Link Address Slug & Metadata Pills Bar */}
+            <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-purple-300/80 pl-1 pt-1">
+              <span className="text-cyan-400/80 font-bold">LINK ADDRESS:</span>
+              <span className="text-cyan-300 font-bold bg-cyan-950/70 px-2.5 py-0.5 rounded-md border border-cyan-500/30 shadow-inner">
+                /{metadata.title ? metadata.title.toLowerCase().replace(/\s+/g, '-') : 'untitled'}/
+              </span>
+              {metadata.language && (
+                <span className="text-[10px] text-teal-300 bg-teal-950/70 px-2 py-0.5 rounded-md border border-teal-500/30 uppercase font-semibold">
+                  LANG: {metadata.language}
                 </span>
-                {metadata.language && (
-                  <span className="text-[10px] text-teal-300 bg-teal-950/60 px-1.5 py-0.5 rounded border border-teal-500/30 uppercase">
-                    LANGUAGE: {metadata.language}
-                  </span>
-                )}
-                {metadata.author && (
-                  <span className="text-[10px] text-purple-300 bg-purple-950/60 px-1.5 py-0.5 rounded border border-purple-500/30">
-                    BY: {metadata.author}
-                  </span>
-                )}
-                {metadata.password && (
-                  <span className="flex items-center gap-1 text-[10px] text-fuchsia-400 bg-fuchsia-950/80 px-2 py-0.5 rounded border border-fuchsia-500/40">
-                    <Shield className="w-3 h-3" />
-                    PASSCODE LOCKED
-                  </span>
-                )}
-              </div>
+              )}
+              {metadata.author && (
+                <span className="text-[10px] text-purple-300 bg-purple-950/70 px-2 py-0.5 rounded-md border border-purple-500/30 font-semibold">
+                  BY: {metadata.author}
+                </span>
+              )}
+              {metadata.password && (
+                <span className="flex items-center gap-1 text-[10px] text-fuchsia-300 bg-fuchsia-950/80 px-2 py-0.5 rounded-md border border-fuchsia-500/40 font-semibold">
+                  <Shield className="w-3 h-3 text-fuchsia-400" />
+                  PASSCODE LOCKED
+                </span>
+              )}
+              {metadata.lockConfig?.timeWindow?.enabled && (
+                <span className="flex items-center gap-1 text-[10px] text-amber-300 bg-amber-950/80 px-2 py-0.5 rounded-md border border-amber-500/40 font-semibold">
+                  <Clock className="w-3 h-3 text-amber-400" />
+                  TIME LOCKED
+                </span>
+              )}
             </div>
           </div>
 
-          {/* Quick Toolbar Bar — simplified layman labels */}
-          <div className="flex flex-wrap items-center gap-2 pt-4 mt-4 border-t border-cyan-500/15">
-            {/* Group: BUILD */}
-            <div className="flex items-center gap-1.5 p-1 rounded-xl bg-black/40 border border-fuchsia-500/20">
-              <button
-                id="bitty-presets-btn"
-                onClick={handleOpenGalleryClick}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-fuchsia-950/70 to-purple-950/70 border border-fuchsia-500/40 text-fuchsia-200 hover:bg-fuchsia-900/50 hover:text-white text-xs font-cyber transition shadow-sm cursor-pointer"
-                title="Browse and load ready-made page templates"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-fuchsia-400" />
-                <span>TEMPLATES</span>
-                {mode === 'simple' && !isPro && (
-                  <span className="text-[9px] font-mono px-1 rounded bg-fuchsia-900 text-amber-300 border border-amber-500/40 flex items-center gap-0.5">
-                    <Crown className="w-2.5 h-2.5 fill-amber-300" />
-                    PRO
-                  </span>
-                )}
-              </button>
+          {/* =========================================================================
+              REORGANIZED & CLEAN ACTION TOOLBAR (Clean Groups & Visual Hierarchy)
+             ========================================================================= */}
+          <div className="pt-3.5 mt-3 border-t border-cyan-500/20 flex flex-col gap-2.5">
+            <div className="flex flex-wrap items-center justify-between gap-2.5">
+              
+              {/* Left Action Clusters */}
+              <div className="flex flex-wrap items-center gap-2">
+                {/* CLUSTER 1: VIEW MODES (Segmented Pill Switcher) */}
+                <div className="inline-flex items-center p-0.5 rounded-xl bg-black/60 border border-cyan-500/30 shadow-inner">
+                  <button
+                    type="button"
+                    onClick={() => setEditorViewMode('split')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono transition cursor-pointer ${
+                      editorViewMode === 'split'
+                        ? 'bg-cyan-950 text-cyan-200 border border-cyan-400 font-bold shadow-[0_0_10px_rgba(0,242,255,0.35)]'
+                        : 'text-purple-300/70 hover:text-cyan-200 hover:bg-cyan-950/30'
+                    }`}
+                    title="Split View: Code editor and live preview side-by-side"
+                  >
+                    <Columns className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>SPLIT</span>
+                  </button>
 
-              <button
-                id="bitty-seo-btn"
-                onClick={handleOpenSeoClick}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-950/60 border border-cyan-500/40 text-cyan-200 hover:bg-cyan-900/50 hover:text-white text-xs font-mono transition shadow-sm cursor-pointer"
-                title="Preview how your page looks when shared on Google and social media"
-              >
-                <Search className="w-3.5 h-3.5 text-cyan-400" />
-                <span>SEARCH & SOCIAL</span>
-                {mode === 'simple' && !isPro && (
-                  <span className="text-[9px] font-mono px-1 rounded bg-fuchsia-900 text-amber-300 border border-amber-500/40 flex items-center gap-0.5">
-                    <Crown className="w-2.5 h-2.5 fill-amber-300" />
-                    PRO
-                  </span>
-                )}
-              </button>
-            </div>
+                  <button
+                    type="button"
+                    onClick={() => setEditorViewMode('code')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono transition cursor-pointer ${
+                      editorViewMode === 'code'
+                        ? 'bg-cyan-950 text-cyan-200 border border-cyan-400 font-bold shadow-[0_0_10px_rgba(0,242,255,0.35)]'
+                        : 'text-purple-300/70 hover:text-cyan-200 hover:bg-cyan-950/30'
+                    }`}
+                    title="Editor only view"
+                  >
+                    <Code2 className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>EDITOR</span>
+                  </button>
 
-            {/* Group: LAYOUT (segmented) */}
-            <div className="flex items-center gap-0.5 p-1 rounded-xl bg-black/50 border border-cyan-500/25">
-              <button
-                type="button"
-                onClick={() => setEditorViewMode('split')}
-                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-mono transition cursor-pointer ${
-                  editorViewMode === 'split'
-                    ? 'bg-cyan-950 text-cyan-300 border border-cyan-400 font-bold shadow-[0_0_8px_rgba(0,242,255,0.3)]'
-                    : 'text-purple-300/70 hover:text-cyan-200'
-                }`}
-                title="Split View: Editor & Live Preview side by side"
-              >
-                <Columns className="w-3 h-3 text-cyan-400" />
-                <span className="hidden sm:inline">SPLIT</span>
-              </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditorViewMode('preview')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono transition cursor-pointer ${
+                      editorViewMode === 'preview'
+                        ? 'bg-cyan-950 text-cyan-200 border border-cyan-400 font-bold shadow-[0_0_10px_rgba(0,242,255,0.35)]'
+                        : 'text-purple-300/70 hover:text-cyan-200 hover:bg-cyan-950/30'
+                    }`}
+                    title="Live preview only view"
+                  >
+                    <Eye className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>PREVIEW</span>
+                  </button>
+                </div>
 
-              <button
-                type="button"
-                onClick={() => setEditorViewMode('code')}
-                className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-mono transition cursor-pointer ${
-                  editorViewMode === 'code'
-                    ? 'bg-cyan-950 text-cyan-300 border border-cyan-400 font-bold shadow-[0_0_8px_rgba(0,242,255,0.3)]'
-                    : 'text-purple-300/70 hover:text-cyan-200'
-                }`}
-                title="Editor only"
-              >
-                <Code2 className="w-3 h-3 text-cyan-400" />
-                <span className="hidden sm:inline">EDITOR</span>
-              </button>
+                {/* Vertical Divider */}
+                <div className="hidden sm:block w-px h-6 bg-cyan-500/25 mx-0.5" />
 
-              <button
-                type="button"
-                onClick={() => setEditorViewMode('preview')}
-                className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-mono transition cursor-pointer ${
-                  editorViewMode === 'preview'
-                    ? 'bg-cyan-950 text-cyan-300 border border-cyan-400 font-bold shadow-[0_0_8px_rgba(0,242,255,0.3)]'
-                    : 'text-purple-300/70 hover:text-cyan-200'
-                }`}
-                title="Live preview only"
-              >
-                <Eye className="w-3 h-3 text-cyan-400" />
-                <span className="hidden sm:inline">PREVIEW</span>
-              </button>
-            </div>
-
-            {/* Group: EXPORT / IO */}
-            <div className="flex items-center gap-1.5 p-1 rounded-xl bg-black/40 border border-purple-500/20">
-              <button
-                id="bitty-import-btn"
-                onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-950/50 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-900/40 text-xs font-mono transition cursor-pointer"
-                title="Open a file from your computer"
-              >
-                <UploadCloud className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">OPEN FILE</span>
-              </button>
-
-              <button
-                id="bitty-export-zip-btn"
-                onClick={handleExportZipClick}
-                disabled={isExportingZip}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-950/50 border border-purple-500/40 text-purple-200 hover:bg-purple-900/50 hover:text-white text-xs font-mono transition shadow-[0_0_10px_rgba(189,0,255,0.2)] cursor-pointer"
-                title="Download your page files as a ZIP package"
-              >
-                {zipExportSuccess ? (
-                  <>
-                    <CheckCircle2 className="w-3.5 h-3.5 text-teal-300" />
-                    <span className="text-teal-300 hidden sm:inline">DOWNLOADED</span>
-                  </>
-                ) : (
-                  <>
-                    <FolderArchive className="w-3.5 h-3.5 text-fuchsia-400" />
-                    <span className="hidden sm:inline">{isExportingZip ? 'PREPARING...' : 'SAVE ZIP'}</span>
+                {/* CLUSTER 2: TEMPLATES & SEARCH */}
+                <div className="inline-flex items-center gap-1.5 p-0.5 rounded-xl bg-black/40 border border-fuchsia-500/25">
+                  <button
+                    id="bitty-presets-btn"
+                    onClick={handleOpenGalleryClick}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-fuchsia-950/80 to-purple-950/80 border border-fuchsia-500/40 text-fuchsia-200 hover:bg-fuchsia-900/60 hover:text-white hover:border-fuchsia-400 text-xs font-cyber transition shadow-sm cursor-pointer"
+                    title="Browse and load ready-made page templates"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-fuchsia-400" />
+                    <span>TEMPLATES</span>
                     {mode === 'simple' && !isPro && (
                       <span className="text-[9px] font-mono px-1 rounded bg-fuchsia-900 text-amber-300 border border-amber-500/40 flex items-center gap-0.5">
                         <Crown className="w-2.5 h-2.5 fill-amber-300" />
                         PRO
                       </span>
                     )}
-                  </>
-                )}
-              </button>
+                  </button>
 
-              <button
-                id="bitty-meta-btn"
-                onClick={() => setShowMetadata(!showMetadata)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-950/40 border border-purple-500/30 text-purple-200 hover:bg-purple-900/30 text-xs font-mono transition cursor-pointer"
-                title="Show or hide page details & security settings"
-              >
-                <Sliders className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">DETAILS</span>
-              </button>
-            </div>
+                  <button
+                    id="bitty-seo-btn"
+                    onClick={handleOpenSeoClick}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-950/50 border border-purple-500/30 text-purple-200 hover:bg-purple-900/60 hover:text-white text-xs font-mono transition shadow-sm cursor-pointer"
+                    title="Preview search engine snippet and social media card"
+                  >
+                    <Search className="w-3.5 h-3.5 text-purple-400" />
+                    <span>SEARCH &amp; SOCIAL</span>
+                    {mode === 'simple' && !isPro && (
+                      <span className="text-[9px] font-mono px-1 rounded bg-fuchsia-900 text-amber-300 border border-amber-500/40 flex items-center gap-0.5">
+                        <Crown className="w-2.5 h-2.5 fill-amber-300" />
+                        PRO
+                      </span>
+                    )}
+                  </button>
+                </div>
 
-            {/* Group: SESSION */}
-            <div className="flex items-center gap-1.5 p-1 rounded-xl bg-black/40 border border-amber-500/15">
-              {onOpenToolsPanel && (
-                <button
-                  id="bitty-tools-panel-btn"
-                  onClick={onOpenToolsPanel}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-950/60 border border-cyan-500/40 text-cyan-200 hover:bg-cyan-900/50 hover:text-white text-xs font-cyber transition shadow-sm cursor-pointer"
-                  title="Open tools menu"
-                >
-                  <Sliders className="w-3.5 h-3.5 text-cyan-400" />
-                  <span className="hidden sm:inline">TOOLS</span>
-                </button>
-              )}
+                {/* Vertical Divider */}
+                <div className="hidden md:block w-px h-6 bg-cyan-500/25 mx-0.5" />
 
-              {onCloseSession && (
-                <button
-                  id="bitty-close-session-btn"
-                  onClick={onCloseSession}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-950/60 border border-amber-500/40 text-amber-300 hover:bg-rose-950/80 hover:text-white hover:border-rose-400 text-xs font-cyber transition shadow-sm cursor-pointer"
-                  title="Close current page"
-                >
-                  <LogOut className="w-3.5 h-3.5 text-amber-400" />
-                  <span className="hidden sm:inline">CLOSE</span>
-                </button>
-              )}
-            </div>
+                {/* CLUSTER 3: FILE I/O & SETTINGS DRAWER */}
+                <div className="inline-flex items-center gap-1.5 p-0.5 rounded-xl bg-black/40 border border-cyan-500/25">
+                  <button
+                    id="bitty-import-btn"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-950/60 border border-cyan-500/30 text-cyan-200 hover:bg-cyan-900/50 hover:text-white text-xs font-mono transition cursor-pointer"
+                    title="Open a file from your computer (HTML, Markdown, Text, Image)"
+                  >
+                    <UploadCloud className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>OPEN FILE</span>
+                  </button>
 
-            {/* Right: status + exit-preview toggle */}
-            <div className="ml-auto flex items-center gap-2">
-              {inlinePreviewActive && onExitInlinePreview && (
-                <button
-                  id="exit-inline-preview-btn"
-                  onClick={onExitInlinePreview}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-fuchsia-950/70 border border-fuchsia-400/60 text-fuchsia-200 hover:bg-fuchsia-900/60 hover:text-white text-xs font-cyber transition shadow-[0_0_12px_rgba(255,0,222,0.3)] cursor-pointer"
-                  title="Return to the editor"
-                >
-                  <X className="w-3.5 h-3.5" />
-                  <span>EXIT PREVIEW</span>
-                </button>
-              )}
-              <div className="text-[11px] font-mono text-cyan-400/60 hidden lg:flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-teal-400 animate-pulse" />
-                <span>100% PRIVATE // RUNS IN YOUR BROWSER</span>
+                  <button
+                    id="bitty-export-zip-btn"
+                    onClick={handleExportZipClick}
+                    disabled={isExportingZip}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-950/60 border border-purple-500/40 text-purple-200 hover:bg-purple-900/60 hover:text-white text-xs font-mono transition shadow-[0_0_10px_rgba(189,0,255,0.2)] cursor-pointer"
+                    title="Download complete webpage archive as a ZIP file"
+                  >
+                    {zipExportSuccess ? (
+                      <>
+                        <CheckCircle2 className="w-3.5 h-3.5 text-teal-300" />
+                        <span className="text-teal-300">SAVED</span>
+                      </>
+                    ) : (
+                      <>
+                        <FolderArchive className="w-3.5 h-3.5 text-fuchsia-400" />
+                        <span>{isExportingZip ? 'PACKING...' : 'SAVE ZIP'}</span>
+                        {mode === 'simple' && !isPro && (
+                          <span className="text-[9px] font-mono px-1 rounded bg-fuchsia-900 text-amber-300 border border-amber-500/40 flex items-center gap-0.5">
+                            <Crown className="w-2.5 h-2.5 fill-amber-300" />
+                            PRO
+                          </span>
+                        )}
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    id="bitty-meta-btn"
+                    onClick={() => setShowMetadata(!showMetadata)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono transition cursor-pointer ${
+                      showMetadata
+                        ? 'bg-cyan-950 text-cyan-200 border border-cyan-400 shadow-[0_0_10px_rgba(0,242,255,0.3)] font-bold'
+                        : 'bg-purple-950/40 border border-purple-500/30 text-purple-200 hover:bg-purple-900/40 hover:text-white'
+                    }`}
+                    title="Show or hide page details & security options (Password, Time-Lock, Meta Tags)"
+                  >
+                    <Sliders className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>DETAILS</span>
+                  </button>
+                </div>
               </div>
+
+              {/* Right Side Utility & Exit Actions */}
+              <div className="flex items-center gap-2 ml-auto">
+                {onOpenToolsPanel && (
+                  <button
+                    id="bitty-tools-panel-btn"
+                    onClick={onOpenToolsPanel}
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-cyan-950/70 border border-cyan-400/60 text-cyan-200 hover:bg-cyan-900/60 hover:text-white text-xs font-cyber transition shadow-[0_0_12px_rgba(0,242,255,0.2)] cursor-pointer"
+                    title="Open studio tools and configuration panel"
+                  >
+                    <Sliders className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>TOOLS</span>
+                  </button>
+                )}
+
+                {onCloseSession && (
+                  <button
+                    id="bitty-close-session-btn"
+                    onClick={onCloseSession}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-950/60 border border-amber-500/40 text-amber-300 hover:bg-rose-950/80 hover:text-white hover:border-rose-400 text-xs font-cyber transition shadow-sm cursor-pointer"
+                    title="Close current page tab"
+                  >
+                    <LogOut className="w-3.5 h-3.5 text-amber-400" />
+                    <span>CLOSE</span>
+                  </button>
+                )}
+
+                {inlinePreviewActive && onExitInlinePreview && (
+                  <button
+                    id="exit-inline-preview-btn"
+                    onClick={onExitInlinePreview}
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-fuchsia-950/80 border border-fuchsia-400 text-fuchsia-200 hover:bg-fuchsia-900 hover:text-white text-xs font-cyber transition shadow-[0_0_15px_rgba(255,0,222,0.4)] cursor-pointer"
+                    title="Return to the editor view"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                    <span>EXIT PREVIEW</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Bottom Status Tag */}
+            <div className="flex items-center justify-between text-[10px] font-mono text-purple-300/60 pt-1">
+              <div className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
+                <span>100% IN-URL // ZERO SERVERS // PRIVATE BY DESIGN</span>
+              </div>
+              <span className="hidden sm:inline text-cyan-400/50">BITTY BOX V2.0</span>
             </div>
           </div>
         </div>
