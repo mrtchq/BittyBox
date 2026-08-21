@@ -3,7 +3,6 @@ import Prism from 'prismjs';
 import 'prismjs/components/prism-markup';
 import 'prismjs/components/prism-css';
 import 'prismjs/components/prism-javascript';
-import { SyntaxTheme, SYNTAX_THEMES } from '../types';
 
 interface CodeEditorProps {
   value: string;
@@ -12,18 +11,7 @@ interface CodeEditorProps {
   onRedo?: () => void;
   placeholder?: string;
   className?: string;
-  syntaxTheme?: SyntaxTheme;
 }
-
-const THEME_METRICS: Record<SyntaxTheme, { caret: string; color: string; selectionClass: string }> = {
-  cyber: { caret: '#00f2ff', color: '#e0f2fe', selectionClass: 'selection:bg-cyan-500/30' },
-  matrix: { caret: '#00ff66', color: '#d1fae5', selectionClass: 'selection:bg-emerald-500/30' },
-  dracula: { caret: '#ff79c6', color: '#f8f8f2', selectionClass: 'selection:bg-fuchsia-500/30' },
-  monokai: { caret: '#ffd866', color: '#fcfcfa', selectionClass: 'selection:bg-amber-500/30' },
-  nord: { caret: '#88c0d0', color: '#eceff4', selectionClass: 'selection:bg-sky-500/30' },
-  amber: { caret: '#ffb000', color: '#fef3c7', selectionClass: 'selection:bg-amber-500/30' },
-  monochrome: { caret: '#ffffff', color: '#f4f4f5', selectionClass: 'selection:bg-zinc-500/40' },
-};
 
 export const CodeEditor: React.FC<CodeEditorProps> = ({
   value,
@@ -32,15 +20,10 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
   onRedo,
   placeholder,
   className = '',
-  syntaxTheme = 'cyber',
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const preRef = useRef<HTMLPreElement | null>(null);
   const [highlightedHtml, setHighlightedHtml] = useState<string>('');
-
-  const activeThemeMeta = THEME_METRICS[syntaxTheme] || THEME_METRICS.cyber;
-  const themeObj = SYNTAX_THEMES.find(t => t.id === syntaxTheme);
-  const themeCssClass = themeObj ? themeObj.cssClass : 'prism-cyber-theme';
 
   // Update highlighted syntax whenever value changes
   useEffect(() => {
@@ -135,11 +118,11 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
       <pre
         ref={preRef}
         aria-hidden="true"
-        className={`absolute inset-0 overflow-hidden pointer-events-none select-none z-0 ${themeCssClass}`}
+        className="absolute inset-0 overflow-hidden pointer-events-none select-none z-0 prism-cyber-theme"
         style={{
           ...sharedEditorStyle,
           background: 'transparent',
-          color: activeThemeMeta.color,
+          color: '#e0f2fe',
         }}
       >
         <code
@@ -178,12 +161,12 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
         autoCapitalize="off"
         autoComplete="off"
         autoCorrect="off"
-        className={`relative z-10 w-full h-full min-h-[340px] resize-none focus:outline-none cyber-scrollbar overflow-auto selection:text-transparent ${activeThemeMeta.selectionClass}`}
+        className="relative z-10 w-full h-full min-h-[340px] resize-none focus:outline-none cyber-scrollbar overflow-auto selection:bg-cyan-500/30 selection:text-transparent"
         style={{
           ...sharedEditorStyle,
           color: 'transparent',
           WebkitTextFillColor: 'transparent',
-          caretColor: activeThemeMeta.caret,
+          caretColor: '#00f2ff',
           background: 'transparent',
           outline: 'none',
         }}

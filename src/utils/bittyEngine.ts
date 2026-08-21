@@ -159,9 +159,20 @@ export function parseBittyHash(hash: string): {
   payload: string;
   metadata: Partial<BittyMetadata>;
 } {
-  let cleanHash = hash;
+  let cleanHash = hash || '';
   if (cleanHash.startsWith('#')) cleanHash = cleanHash.substring(1);
   if (cleanHash.startsWith('/')) cleanHash = cleanHash.substring(1);
+
+  // Ignore internal app routes & auth tokens
+  if (
+    cleanHash.startsWith('auth') ||
+    cleanHash.startsWith('studio') ||
+    cleanHash.startsWith('account') ||
+    cleanHash.startsWith('edit') ||
+    cleanHash.includes('token=')
+  ) {
+    return { payload: '', metadata: {} };
+  }
 
   const parts = cleanHash.split('/');
   const metadata: Partial<BittyMetadata> = {};
@@ -173,7 +184,7 @@ export function parseBittyHash(hash: string): {
       payload = parts.slice(i).join('/');
       break;
     }
-    if (i === 0 && !['d', 'f', 'i', 'tw', 'box'].includes(part)) {
+    if (i === 0 && !['d', 'f', 'i', 'tw', 'ol', 'box'].includes(part)) {
       metadata.title = decodePrettyComponent(part);
     } else if (part === 'd' && parts[i + 1]) {
       metadata.description = decodePrettyComponent(parts[i + 1]);
@@ -504,6 +515,6 @@ export function getRenderedHtml(content: string, metadata?: Partial<BittyMetadat
   }
   const lang = metadata?.language || 'en';
   const title = metadata?.title || 'Bitty Box';
-  return `<!DOCTYPE html><html lang="${lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${title}</title><style>body{margin:0 auto;padding:1.5rem;max-width:40em;font-family:-apple-system,BlinkMacSystemFont,sans-serif;line-height:1.6;}</style></head><body>${content}</body></html>`;
+  return `<!DOCTYPE html><html lang="${lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${title}</title><style>body{margin:0 auto;padding:1.5rem;max-width:40em;font-family:-apple-system,BlinkMacSystemFont,sans-serif;line-height:1.6;background:#000000;color:#ffffff;}</style></head><body>${content}</body></html>`;
 }
 

@@ -6,7 +6,7 @@ import { BittyRenderer } from './components/BittyRenderer';
 import { HistoryModal } from './components/HistoryModal';
 import { AboutModal } from './components/AboutModal';
 import { QrModal } from './components/QrModal';
-import { BittyMetadata, BittyHistoryItem, AppView, TemplatePreset, WorkspaceTheme, BittySession, SyntaxTheme } from './types';
+import { BittyMetadata, BittyHistoryItem, AppView, TemplatePreset, WorkspaceTheme, BittySession } from './types';
 import { 
   compressContent, 
   compressContentSync,
@@ -20,7 +20,11 @@ import { TEMPLATE_PRESETS } from './data/templates';
 import { createBittyTour } from './components/OnboardingTour';
 import { ConfirmCloseSessionModal } from './components/ConfirmCloseSessionModal';
 import { AnimatedSplash } from './components/AnimatedSplash';
+import { CyberScrambleText } from './components/CyberScrambleText';
+import { Zap, RefreshCw } from 'lucide-react';
 import { useProStatus } from './hooks/useProStatus';
+import { useAccount } from './hooks/useAccount';
+import { AccountDashboard } from './components/AccountDashboard';
 import { ProPaywallModal } from './components/ProPaywallModal';
 import { EdgeGripHandles } from './components/EdgeGripHandles';
 import { TemplatesSidePanel } from './components/TemplatesSidePanel';
@@ -36,8 +40,8 @@ const DEFAULT_STARTER_HTML = `<!DOCTYPE html>
   <title>Welcome</title>
   <style>
     body {
-      background: #0a0a0c;
-      color: #e4e4e7;
+      background: #000000;
+      color: #ffffff;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       display: flex;
       align-items: center;
@@ -48,28 +52,28 @@ const DEFAULT_STARTER_HTML = `<!DOCTYPE html>
       box-sizing: border-box;
     }
     .card {
-      background: #18181b;
-      border: 1px solid #27272a;
+      background: #0a0a0a;
+      border: 1px solid #222222;
       border-radius: 12px;
       padding: 2.5rem;
       max-width: 500px;
       text-align: center;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
     }
     h1 {
-      color: #38bdf8;
+      color: #ffffff;
       font-size: 1.8rem;
       margin-top: 0;
       margin-bottom: 0.75rem;
     }
     p {
-      color: #a1a1aa;
+      color: #ffffff;
       line-height: 1.6;
       margin-bottom: 1.5rem;
     }
     button {
-      background: #0284c7;
-      color: #ffffff;
+      background: #ffffff;
+      color: #000000;
       border: none;
       padding: 0.75rem 1.5rem;
       border-radius: 8px;
@@ -79,7 +83,7 @@ const DEFAULT_STARTER_HTML = `<!DOCTYPE html>
       transition: background 0.2s;
     }
     button:hover {
-      background: #0369a1;
+      background: #e4e4e7;
     }
   </style>
 </head>
@@ -93,19 +97,26 @@ const DEFAULT_STARTER_HTML = `<!DOCTYPE html>
 </html>`;
 
 function getInitialUrlState() {
-  if (typeof window === 'undefined') return { hash: '', payload: '', metadata: null, isViewer: false };
-  const hash = window.location.hash;
+  if (typeof window === 'undefined') return { hash: '', payload: '', metadata: null, isViewer: false, isAuth: false };
+  const hash = window.location.hash || '';
+  const search = window.location.search || '';
+  if (hash.includes('#/auth/verify') || hash.includes('token=') || search.includes('token=')) {
+    return { hash, payload: '', metadata: null, isViewer: false, isAuth: true };
+  }
   if (hash && hash.length > 2 && hash !== '#/edit' && hash !== '#edit' && hash !== '#/studio' && hash !== '#/' && hash !== '#') {
     const { payload, metadata } = parseBittyHash(hash);
-    return { hash, payload, metadata, isViewer: Boolean(payload) };
+    return { hash, payload, metadata, isViewer: Boolean(payload), isAuth: false };
   }
-  return { hash: '', payload: '', metadata: null, isViewer: false };
+  return { hash: '', payload: '', metadata: null, isViewer: false, isAuth: false };
 }
 
 export default function App() {
   const proStatus = useProStatus();
   const initialUrl = useMemo(() => getInitialUrlState(), []);
-  const [currentView, setCurrentView] = useState<AppView>(() => (initialUrl.isViewer ? 'viewer' : 'editor'));
+  const [currentView, setCurrentView] = useState<AppView>(() => {
+    if (initialUrl.isAuth) return 'account';
+    return initialUrl.isViewer ? 'viewer' : 'editor';
+  });
   const [inlinePreviewActive, setInlinePreviewActive] = useState<boolean>(false);
   const [content, setContent] = useState<string>(() => (initialUrl.isViewer ? '' : DEFAULT_STARTER_HTML));
   const [metadata, setMetadata] = useState<BittyMetadata>(() => {
@@ -125,6 +136,7 @@ export default function App() {
   const [currentSessionId, setCurrentSessionId] = useState<string>('sess-starter');
 
   // Persistent Workspace Theme state ('synthwave' | 'monochrome' | 'matrix')
+  const account = useAccount();
   const [workspaceTheme, setWorkspaceTheme] = useState<WorkspaceTheme>(() => {
     try {
       const saved = localStorage.getItem('bitty_workspace_theme');
@@ -134,32 +146,6 @@ export default function App() {
     } catch {}
     return 'monochrome';
   });
-
-  // Persistent Syntax Theme state for in-editor syntax highlighting
-  const [syntaxTheme, setSyntaxTheme] = useState<SyntaxTheme>(() => {
-    try {
-      const saved = localStorage.getItem('bitty_syntax_theme');
-      if (
-        saved === 'cyber' ||
-        saved === 'matrix' ||
-        saved === 'dracula' ||
-        saved === 'monokai' ||
-        saved === 'nord' ||
-        saved === 'amber' ||
-        saved === 'monochrome'
-      ) {
-        return saved as SyntaxTheme;
-      }
-    } catch {}
-    return 'cyber';
-  });
-
-  // Sync syntax theme with localStorage
-  useEffect(() => {
-    try {
-      localStorage.setItem('bitty_syntax_theme', syntaxTheme);
-    } catch {}
-  }, [syntaxTheme]);
 
   const [bittyUrl, setBittyUrl] = useState<string>(() => (initialUrl.hash ? window.location.href : ''));
   const [hashFragment, setHashFragment] = useState<string>(() => initialUrl.payload);
@@ -200,9 +186,10 @@ export default function App() {
   }, []);
 
   const [showSplash, setShowSplash] = useState<boolean>(() => {
-    if (initialUrl.isViewer) return false;
+    if (initialUrl.isViewer || initialUrl.isAuth) return false;
     return true;
   });
+  const [isVerifyingMagic, setIsVerifyingMagic] = useState<boolean>(() => Boolean(initialUrl.isAuth));
 
   // Apply workspace theme to document root & sync with localStorage
   useEffect(() => {
@@ -211,6 +198,36 @@ export default function App() {
       localStorage.setItem('bitty_workspace_theme', workspaceTheme);
     } catch {}
   }, [workspaceTheme]);
+
+  // Magic Link verification handler on URL mount
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const hash = window.location.hash || '';
+    const search = window.location.search || '';
+    let token: string | null = null;
+
+    if (hash.includes('token=')) {
+      const match = hash.match(/token=([a-zA-Z0-9_\-]+)/);
+      if (match) token = match[1];
+    } else if (search.includes('token=')) {
+      const params = new URLSearchParams(search);
+      token = params.get('token');
+    }
+
+    if (token) {
+      setIsVerifyingMagic(true);
+      setShowSplash(false);
+      account.verifyMagicLink(token).then(success => {
+        setIsVerifyingMagic(false);
+        if (success) {
+          setShowSplash(true);
+          window.history.replaceState(null, '', window.location.pathname);
+        }
+      }).catch(() => {
+        setIsVerifyingMagic(false);
+      });
+    }
+  }, []);
 
   // Load history & initialize sessions on mount
   useEffect(() => {
@@ -501,10 +518,27 @@ export default function App() {
   // Read URL on mount or hashchange
   useEffect(() => {
     const handleUrlChange = () => {
-      const hash = window.location.hash;
+      const hash = window.location.hash || '';
+      const search = window.location.search || '';
 
-      if (hash && hash.length > 2 && hash !== '#/edit' && hash !== '#edit' && hash !== '#/studio') {
-        // We have a data URL to view!
+      if (hash.includes('auth/verify') || hash.includes('token=') || search.includes('token=')) {
+        setShowSplash(false);
+        setCurrentView('account');
+        return;
+      }
+
+      if (hash === '#/studio' || hash === '#/account') {
+        setShowSplash(true);
+        return;
+      }
+
+      if (hash === '#/edit' || hash === '#edit') {
+        setCurrentView('editor');
+        return;
+      }
+
+      if (hash && hash.length > 2) {
+        // Check if there is a valid data payload to view
         const { payload, metadata: parsedMeta } = parseBittyHash(hash);
 
         if (payload) {
@@ -528,8 +562,6 @@ export default function App() {
           });
           setCurrentView('viewer');
         }
-      } else if (hash === '#/edit' || hash === '#edit') {
-        setCurrentView('editor');
       }
     };
 
@@ -566,21 +598,21 @@ export default function App() {
 
     let updatedMetadata = { ...metadata };
     if (metadata.lockConfig?.openLimit?.enabled && !metadata.boxId) {
+      const generatedBoxId = `bbx_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 7)}`;
+      updatedMetadata.boxId = generatedBoxId;
+      setMetadata(updatedMetadata);
       try {
-        const res = await fetch('/api/boxes', {
+        await fetch('/api/boxes', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            id: generatedBoxId,
+            boxId: generatedBoxId,
             title: metadata.title || 'Bitty Box',
             bittyUrl: compressedUrl,
             lockConfig: metadata.lockConfig,
           }),
         });
-        const data = await res.json();
-        if (data.boxId) {
-          updatedMetadata.boxId = data.boxId;
-          setMetadata(updatedMetadata);
-        }
       } catch {}
     }
 
@@ -619,6 +651,23 @@ export default function App() {
       createdAt: Date.now(),
       encrypted: !!metadata.password,
     });
+
+    // Auto-record to authenticated User Account Log
+    if (account.isAuthenticated) {
+      account.recordCreatedBox({
+        title: metadata.title || 'Untitled Bitty Box',
+        url: fullUrl,
+        format: 'html',
+        byteSize: orig,
+        compressedSize: comp,
+        encrypted: !!metadata.password,
+        locks: {
+          password: !!metadata.password,
+          timeWindow: !!metadata.lockConfig?.timeWindow?.enabled,
+          accessLimit: !!metadata.lockConfig?.openLimit?.enabled,
+        },
+      });
+    }
   };
 
   // Switch to preset template and create a new session
@@ -751,6 +800,28 @@ export default function App() {
     setCurrentView('editor');
   };
 
+  if (isVerifyingMagic) {
+    return (
+      <div className="fixed inset-0 w-screen h-screen bg-[#050515] flex items-center justify-center p-4 z-50 font-sans">
+        <div className="text-center p-8 flex flex-col items-center max-w-sm bento-card border-cyan-500/40 rounded-2xl relative shadow-[0_0_50px_rgba(0,242,255,0.25)]">
+          <div className="bento-corner-accent top-l" />
+          <div className="bento-corner-accent top-r" />
+          <div className="bento-corner-accent bot-l" />
+          <div className="bento-corner-accent bot-r" />
+          <div className="w-14 h-14 rounded-2xl bg-cyan-950 border border-cyan-500/50 flex items-center justify-center mb-4 shadow-[0_0_25px_rgba(0,242,255,0.4)]">
+            <Zap className="w-7 h-7 text-cyan-400 animate-pulse" />
+          </div>
+          <h4 className="font-cyber text-sm text-cyan-300 tracking-wider">
+            <CyberScrambleText text="AUTHENTICATING MAGIC LINK..." speed={20} />
+          </h4>
+          <p className="text-xs font-mono text-cyan-300/70 mt-2">
+            Validating cryptographic token & establishing secure session
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   if (showSplash) {
     return <AnimatedSplash onComplete={() => setShowSplash(false)} />;
   }
@@ -789,7 +860,6 @@ export default function App() {
       <BittyNavbar
         currentView={currentView}
         onViewChange={setCurrentView}
-        onViewerClick={onToggleInlinePreview}
         onOpenQr={() => setIsQrOpen(true)}
         onShare={handleShare}
         onNewBox={handleNewBox}
@@ -807,44 +877,19 @@ export default function App() {
         mode={proStatus.mode}
         onModeChange={proStatus.setMode}
         isPro={proStatus.isPro}
-        isLifetimePro={proStatus.isLifetimePro}
-        isTrialActive={proStatus.isTrialActive}
-        trialTimeRemaining={proStatus.trialTimeRemaining}
         onOpenPaywall={proStatus.openPaywall}
       />
 
       {/* Main Content Body */}
       <main className="flex-1 relative z-10">
-        {currentView === 'editor' && (
-          <BittyEditor
-            content={content}
-            onChangeContent={handleContentChange}
-            metadata={metadata}
-            onChangeMetadata={handleMetadataChange}
-            onGenerate={handleGenerate}
-            bittyUrl={bittyUrl}
-            originalBytes={originalBytes}
-            compressedBytes={compressedBytes}
-            isCopied={isCopied}
-            onSelectTemplate={handleSelectTemplate}
-            onCloseSession={handleRequestCloseSession}
-            sessions={sessions}
-            currentSessionId={currentSessionId}
-            onSwitchSession={handleSwitchSession}
-            onCloseSessionById={handleCloseSessionById}
-            onNewSession={handleNewBox}
-            onOpenTemplatesPanel={() => setIsLeftTemplatesPanelOpen(true)}
-            onOpenToolsPanel={() => setIsRightToolsPanelOpen(true)}
-            inlinePreviewActive={inlinePreviewActive}
-            onToggleInlinePreview={() => setInlinePreviewActive(prev => !prev)}
-            onExitInlinePreview={() => setInlinePreviewActive(false)}
-            mode={proStatus.mode}
-            isPro={proStatus.isPro}
-            isLifetimePro={proStatus.isLifetimePro}
-            isTrialActive={proStatus.isTrialActive}
-            onOpenPaywall={proStatus.openPaywall}
-            syntaxTheme={syntaxTheme}
-            onSyntaxThemeChange={setSyntaxTheme}
+        {(currentView === 'editor' || currentView === 'account') && (
+          <AccountDashboard
+            account={account}
+            onNavigateToSlide01={() => setShowSplash(true)}
+            onOpenQr={(url) => {
+              setBittyUrl(url);
+              setIsQrOpen(true);
+            }}
           />
         )}
 
@@ -924,14 +969,9 @@ export default function App() {
         metadata={metadata}
         theme={workspaceTheme}
         onThemeChange={setWorkspaceTheme}
-        syntaxTheme={syntaxTheme}
-        onSyntaxThemeChange={setSyntaxTheme}
         mode={proStatus.mode}
         onModeChange={proStatus.setMode}
         isPro={proStatus.isPro}
-        isLifetimePro={proStatus.isLifetimePro}
-        isTrialActive={proStatus.isTrialActive}
-        trialTimeRemaining={proStatus.trialTimeRemaining}
         onOpenPaywall={proStatus.openPaywall}
         onOpenHistory={() => setCurrentView('history')}
         onOpenSpecs={() => setCurrentView('about')}
@@ -966,13 +1006,8 @@ export default function App() {
         isOpen={proStatus.isPaywallOpen}
         onClose={proStatus.closePaywall}
         isPro={proStatus.isPro}
-        isLifetimePro={proStatus.isLifetimePro}
-        isTrialActive={proStatus.isTrialActive}
-        trialTimeRemaining={proStatus.trialTimeRemaining}
         paywallFeature={proStatus.paywallFeature}
         onUnlockLifetime={proStatus.unlockLifetimePro}
-        onResetTrial={proStatus.resetTrial}
-        onExpireTrialForDemo={proStatus.expireTrialForDemo}
         onSwitchToPro={() => proStatus.setMode('pro')}
       />
     </div>

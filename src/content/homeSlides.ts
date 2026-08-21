@@ -81,19 +81,14 @@ const slideStubs: HomeSlideCopy[] = [
       "Access Limit Lock gives your Bitty Box a hard open cap — it seals for good after its last open with a tamper-proof counter.",
   },
   {
-    id: "summary-launch",
-    kicker: "STEP 05 // REVIEW & GENERATE",
-    headline: "Review & Generate Box",
-    body:
-      "Review your content and security settings below. When you're ready, click Generate Box to compress your webpage into a self-contained Bitty Box URL and open it directly in a new tab.",
-    bullets: [
-      "All content compressed into the shareable URL",
-      "Configured security passcodes and timed gates applied",
-      "Ready to copy and open in a new tab instantly",
-    ],
+    id: "preview-launch",
+    kicker: "STEP 05 // ESTIMATED CREDITS",
+    headline: "ESTIMATED CREDITS",
+    body: "",
+    bullets: [],
     cta: "GENERATE BOX",
     metaDescription:
-      "Review your Bitty Box configuration and generate your self-contained shareable URL.",
+      "Calculate credit cost and generate your self-contained Bitty Box URL.",
   },
 ];
 
