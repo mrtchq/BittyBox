@@ -135,6 +135,10 @@ export default function App() {
   const [sessions, setSessions] = useState<BittySession[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string>('sess-starter');
 
+  // Session save state (tracks when session was last persisted to browser storage)
+  const [lastSavedTimestamp, setLastSavedTimestamp] = useState<number>(() => Date.now());
+  const [isSavingSession, setIsSavingSession] = useState<boolean>(false);
+
   // Persistent Workspace Theme state ('synthwave' | 'monochrome' | 'matrix')
   const account = useAccount();
   const [workspaceTheme, setWorkspaceTheme] = useState<WorkspaceTheme>(() => {
@@ -261,6 +265,9 @@ export default function App() {
         setCurrentSessionId(activeSess.id);
         setContent(activeSess.content);
         setMetadata(activeSess.metadata);
+        if (activeSess.savedAt) {
+          setLastSavedTimestamp(activeSess.savedAt);
+        }
       }
     } else {
       // Check autosaved session draft fallback
@@ -326,6 +333,8 @@ export default function App() {
   // Sync content updates with active session
   const handleContentChange = useCallback((newContent: string) => {
     setContent(newContent);
+    const now = Date.now();
+    setIsSavingSession(true);
     setSessions(prev => {
       const idx = prev.findIndex(s => s.id === currentSessionId);
       if (idx >= 0) {
@@ -333,7 +342,7 @@ export default function App() {
         updated[idx] = {
           ...updated[idx],
           content: newContent,
-          savedAt: Date.now(),
+          savedAt: now,
         };
         try {
           localStorage.setItem('bitty_multi_sessions', JSON.stringify(updated));
@@ -342,11 +351,16 @@ export default function App() {
       }
       return prev;
     });
+    setLastSavedTimestamp(now);
+    const saveTimer = setTimeout(() => setIsSavingSession(false), 250);
+    return () => clearTimeout(saveTimer);
   }, [currentSessionId]);
 
   // Sync metadata updates with active session
   const handleMetadataChange = useCallback((newMetadata: BittyMetadata) => {
     setMetadata(newMetadata);
+    const now = Date.now();
+    setIsSavingSession(true);
     setSessions(prev => {
       const idx = prev.findIndex(s => s.id === currentSessionId);
       if (idx >= 0) {
@@ -356,7 +370,7 @@ export default function App() {
           title: newMetadata.title || 'Untitled',
           favicon: newMetadata.favicon || '📦',
           metadata: newMetadata,
-          savedAt: Date.now(),
+          savedAt: now,
         };
         try {
           localStorage.setItem('bitty_multi_sessions', JSON.stringify(updated));
@@ -365,7 +379,41 @@ export default function App() {
       }
       return prev;
     });
+    setLastSavedTimestamp(now);
+    const saveTimer = setTimeout(() => setIsSavingSession(false), 250);
+    return () => clearTimeout(saveTimer);
   }, [currentSessionId]);
+
+  // Manual Force Save Handler
+  const handleManualSaveSession = useCallback(() => {
+    setIsSavingSession(true);
+    const now = Date.now();
+    setSessions(prev => {
+      const idx = prev.findIndex(s => s.id === currentSessionId);
+      if (idx >= 0) {
+        const updated = [...prev];
+        updated[idx] = {
+          ...updated[idx],
+          content,
+          metadata,
+          savedAt: now,
+        };
+        try {
+          localStorage.setItem('bitty_multi_sessions', JSON.stringify(updated));
+          sessionStorage.setItem('bitty_box_autosave', JSON.stringify({
+            id: currentSessionId,
+            content,
+            metadata,
+            savedAt: now,
+          }));
+        } catch {}
+        return updated;
+      }
+      return prev;
+    });
+    setLastSavedTimestamp(now);
+    setTimeout(() => setIsSavingSession(false), 300);
+  }, [content, metadata, currentSessionId]);
 
   // Switch to another session
   const handleSwitchSession = useCallback((sessionId: string) => {
@@ -374,6 +422,9 @@ export default function App() {
       setCurrentSessionId(target.id);
       setContent(target.content);
       setMetadata(target.metadata);
+      if (target.savedAt) {
+        setLastSavedTimestamp(target.savedAt);
+      }
       try {
         sessionStorage.setItem('bitty_box_autosave', JSON.stringify({
           id: target.id,
@@ -878,6 +929,12 @@ export default function App() {
         onModeChange={proStatus.setMode}
         isPro={proStatus.isPro}
         onOpenPaywall={proStatus.openPaywall}
+        lastSavedAt={lastSavedTimestamp}
+        isSaving={isSavingSession}
+        activeSessionTitle={metadata.title || 'My Webpage'}
+        onManualSave={handleManualSaveSession}
+        user={account.user}
+        isAuthenticated={account.isAuthenticated}
       />
 
       {/* Main Content Body */}

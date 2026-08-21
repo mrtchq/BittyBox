@@ -21,8 +21,10 @@ import {
   User,
   Coins
 } from 'lucide-react';
-import { AppView, WorkspaceTheme, WorkspaceMode } from '../types';
+import { AppView, WorkspaceTheme, WorkspaceMode, BittyUser } from '../types';
 import { GRIP_ICON_DATA_URL } from './EdgeGripHandles';
+import { SessionSaveIndicator } from './SessionSaveIndicator';
+import { UserAvatar } from './UserAvatar';
 
 interface BittyNavbarProps {
   currentView: AppView;
@@ -49,6 +51,14 @@ interface BittyNavbarProps {
   isTrialActive?: boolean;
   trialTimeRemaining?: any;
   onOpenPaywall: (featureName?: string) => void;
+  // Session Save Status props
+  lastSavedAt?: number | null;
+  isSaving?: boolean;
+  activeSessionTitle?: string;
+  onManualSave?: () => void;
+  // User Profile Account props
+  user?: BittyUser | null;
+  isAuthenticated?: boolean;
 }
 
 export const BittyNavbar: React.FC<BittyNavbarProps> = ({
@@ -74,6 +84,12 @@ export const BittyNavbar: React.FC<BittyNavbarProps> = ({
   isTrialActive,
   trialTimeRemaining,
   onOpenPaywall,
+  lastSavedAt,
+  isSaving,
+  activeSessionTitle,
+  onManualSave,
+  user,
+  isAuthenticated,
 }) => {
   return (
     <header className="sticky top-0 z-40 w-full backdrop-blur-xl bg-[#0a0316]/90 border-b border-cyan-500/20 shadow-[0_4px_30px_rgba(0,0,0,0.6)]">
@@ -183,8 +199,16 @@ export const BittyNavbar: React.FC<BittyNavbarProps> = ({
           </button>
         </nav>
 
-        {/* Right Section: Mode Switcher + 24h Pass + Tools Deck Trigger */}
+        {/* Right Section: Session Save Status + Mode Switcher + 24h Pass + Tools Deck Trigger */}
         <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* Real-time Session Browser Storage Save Indicator */}
+          <SessionSaveIndicator
+            lastSavedAt={lastSavedAt}
+            isSaving={isSaving}
+            activeSessionTitle={activeSessionTitle}
+            onManualSave={onManualSave}
+          />
+
           {/* Mode Switcher Toggle Pill */}
           <div className="flex items-center bg-[#050212] p-0.5 sm:p-1 rounded-xl border border-fuchsia-500/30 shadow-inner">
             <button
@@ -254,6 +278,30 @@ export const BittyNavbar: React.FC<BittyNavbarProps> = ({
               <span className="hidden md:inline font-cyber font-bold">TOOLS</span>
             </button>
           )}
+
+          {/* User Profile Avatar Top-Right Trigger */}
+          <button
+            id="nav-user-profile-btn"
+            onClick={() => onViewChange('account')}
+            title={
+              user?.email
+                ? `${user.displayName || 'Google Account'} (${user.email}) • View Account`
+                : 'Account & Authentication'
+            }
+            className={`relative p-0.5 rounded-xl transition-all duration-200 cursor-pointer flex items-center justify-center ${
+              currentView === 'account'
+                ? 'ring-2 ring-cyan-400 ring-offset-2 ring-offset-[#0a0316] shadow-[0_0_16px_rgba(0,242,255,0.6)]'
+                : 'hover:ring-1 hover:ring-cyan-400/60'
+            }`}
+          >
+            <UserAvatar
+              user={user}
+              size="sm"
+              showStatusDot={true}
+              isOnline={isAuthenticated ?? !!user}
+              altText={user?.displayName || user?.email || 'User Account'}
+            />
+          </button>
         </div>
       </div>
 
