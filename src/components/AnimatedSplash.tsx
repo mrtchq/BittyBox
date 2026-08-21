@@ -107,6 +107,7 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
 
   // Configuration state across the 5 slides
   const [boxContent, setBoxContent] = useState<string>(DEFAULT_STARTER_CODE);
+  const [slide01Mode, setSlide01Mode] = useState<'code' | 'preview'>('code');
   const [boxTitle, setBoxTitle] = useState<string>('My Bitty Box');
   const [passwordEnabled, setPasswordEnabled] = useState<boolean>(false);
   const [passwordValue, setPasswordValue] = useState<string>('');
@@ -706,7 +707,7 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
                   onClick={e => e.stopPropagation()}
                 >
                   {/* =========================================================
-                      SLIDE 1 (Index 0): TEXT INPUT / COMPOSER FIELD
+                      SLIDE 1 (Index 0): TEXT INPUT / COMPOSER FIELD & PREVIEW
                       ========================================================= */}
                   {currentSlide === 0 && (
                     <div className="w-full bg-[#050314]/90 border border-cyan-500/40 rounded-xl p-3 sm:p-3.5 shadow-[0_0_25px_rgba(0,242,255,0.15)] font-mono flex flex-col justify-between h-full min-h-[220px] md:min-h-[260px]">
@@ -715,20 +716,74 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
                           <Code className="w-3.5 h-3.5 text-cyan-400" />
                           <span>INSERT CONTENT</span>
                         </div>
-                        <span className="text-[10px] text-cyan-300 bg-cyan-950/80 border border-cyan-500/40 px-2 py-0.5 rounded font-bold">
-                          {boxContent.length} BYTES
-                        </span>
+
+                        <div className="flex items-center gap-2">
+                          {/* Code vs. Preview Toggle Switch */}
+                          <div className="flex items-center bg-black/60 p-0.5 rounded-lg border border-cyan-500/30">
+                            <button
+                              type="button"
+                              id="slide01-code-toggle-btn"
+                              onClick={() => setSlide01Mode('code')}
+                              className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold transition cursor-pointer ${
+                                slide01Mode === 'code'
+                                  ? 'bg-cyan-950 text-cyan-200 border border-cyan-400 shadow-sm'
+                                  : 'text-purple-300/60 hover:text-cyan-200'
+                              }`}
+                            >
+                              <Code className="w-3 h-3" />
+                              <span>Code</span>
+                            </button>
+                            <button
+                              type="button"
+                              id="slide01-preview-toggle-btn"
+                              onClick={() => setSlide01Mode('preview')}
+                              className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold transition cursor-pointer ${
+                                slide01Mode === 'preview'
+                                  ? 'bg-cyan-950 text-cyan-200 border border-cyan-400 shadow-sm'
+                                  : 'text-purple-300/60 hover:text-cyan-200'
+                              }`}
+                            >
+                              <Eye className="w-3 h-3" />
+                              <span>Preview</span>
+                            </button>
+                          </div>
+
+                          <span className="text-[10px] text-cyan-300 bg-cyan-950/80 border border-cyan-500/40 px-2 py-0.5 rounded font-bold">
+                            {boxContent.length} BYTES
+                          </span>
+                        </div>
                       </div>
 
-                      <textarea
-                        value={boxContent}
-                        onChange={e => setBoxContent(e.target.value)}
-                        onFocus={() => setIsAutoPlay(false)}
-                        onPointerDown={e => e.stopPropagation()}
-                        aria-label="Content for your Bitty Box"
-                        placeholder="Paste HTML or type the content for your new Bitty Box…"
-                        className="w-full flex-1 min-h-[110px] sm:min-h-[130px] md:min-h-[140px] resize-none rounded-lg border border-cyan-400/30 bg-[#02010a] p-2.5 text-xs leading-5 text-cyan-100 placeholder:text-cyan-400/40 outline-none transition focus:border-cyan-300 focus:ring-1 focus:ring-cyan-500/30 font-mono"
-                      />
+                      {slide01Mode === 'code' ? (
+                        <textarea
+                          value={boxContent}
+                          onChange={e => setBoxContent(e.target.value)}
+                          onFocus={() => setIsAutoPlay(false)}
+                          onPointerDown={e => e.stopPropagation()}
+                          aria-label="Content for your Bitty Box"
+                          placeholder="Paste HTML or type the content for your new Bitty Box…"
+                          className="w-full flex-1 min-h-[110px] sm:min-h-[130px] md:min-h-[140px] resize-none rounded-lg border border-cyan-400/30 bg-[#02010a] p-2.5 text-xs leading-5 text-cyan-100 placeholder:text-cyan-400/40 outline-none transition focus:border-cyan-300 focus:ring-1 focus:ring-cyan-500/30 font-mono"
+                        />
+                      ) : (
+                        <div className="w-full flex-1 min-h-[110px] sm:min-h-[130px] md:min-h-[140px] rounded-lg border border-cyan-400/30 bg-[#02010a] overflow-hidden flex flex-col shadow-inner relative">
+                          <div className="flex items-center justify-between px-2.5 py-1 bg-[#050518] border-b border-cyan-500/20 text-[9px] font-mono text-cyan-400/80">
+                            <div className="flex items-center gap-1.5">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                              <span>LIVE PREVIEW STREAM</span>
+                            </div>
+                            <span className="text-[8px] text-purple-300/60 uppercase">SANDBOXED // 100% IN-URL</span>
+                          </div>
+                          <iframe
+                            title="Slide 01 Code Preview"
+                            srcDoc={getRenderedHtml(boxContent.trim() || '<div style="font-family:sans-serif;color:#00f2ff;background:#050515;padding:1.5rem;text-align:center;"><em>Type HTML in Code mode to preview</em></div>', {
+                              title: 'Preview',
+                              language: 'en',
+                            })}
+                            sandbox="allow-scripts allow-same-origin allow-forms"
+                            className="w-full flex-1 border-0 bg-transparent min-h-[100px]"
+                          />
+                        </div>
+                      )}
 
                       <div className="flex flex-wrap items-center justify-between gap-1.5 mt-2 pt-2 border-t border-cyan-500/20 text-xs">
                         <div className="flex items-center gap-1.5">
@@ -736,27 +791,39 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
                           <button
                             type="button"
                             onClick={() => setBoxContent(DEFAULT_STARTER_CODE)}
-                            className="px-2 py-0.5 rounded bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 text-[10px] hover:bg-cyan-900 transition-colors"
+                            className="px-2 py-0.5 rounded bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 text-[10px] hover:bg-cyan-900 transition-colors cursor-pointer"
                           >
                             Starter Box
                           </button>
                           <button
                             type="button"
                             onClick={() => setBoxContent('<h1>Secret Note</h1>\n<p>Only visible to those with the link.</p>')}
-                            className="px-2 py-0.5 rounded bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 text-[10px] hover:bg-cyan-900 transition-colors"
+                            className="px-2 py-0.5 rounded bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 text-[10px] hover:bg-cyan-900 transition-colors cursor-pointer"
                           >
                             Note
                           </button>
                         </div>
-                        {boxContent && (
-                          <button
-                            type="button"
-                            onClick={() => setBoxContent('')}
-                            className="text-[10px] text-cyan-400/60 hover:text-rose-400 transition-colors"
-                          >
-                            Clear
-                          </button>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {slide01Mode === 'preview' && (
+                            <button
+                              type="button"
+                              onClick={() => setSlide01Mode('code')}
+                              className="text-[10px] text-cyan-300 hover:text-cyan-100 flex items-center gap-1 cursor-pointer transition-colors"
+                            >
+                              <Code className="w-3 h-3" />
+                              <span>Edit Code</span>
+                            </button>
+                          )}
+                          {boxContent && (
+                            <button
+                              type="button"
+                              onClick={() => setBoxContent('')}
+                              className="text-[10px] text-cyan-400/60 hover:text-rose-400 transition-colors cursor-pointer"
+                            >
+                              Clear
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   )}
