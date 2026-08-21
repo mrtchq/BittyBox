@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Sparkles,
@@ -26,12 +26,23 @@ import {
   Eye,
   EyeOff,
   Copy,
-  Check
+  Check,
+  Coins,
+  RotateCcw
 } from 'lucide-react';
 import { CyberScrambleText } from './CyberScrambleText';
+import { EdgeGripHandles } from './EdgeGripHandles';
+import { TemplatesSidePanel } from './TemplatesSidePanel';
+import { StudioToolsSidePanel } from './StudioToolsSidePanel';
+import { QrModal } from './QrModal';
+import { TemplatePreset } from '../types';
+import { exportBittyToZip } from '../utils/zipExport';
+
 import { HoloGenerateButton } from './HoloGenerateButton';
+import { HoloToggle } from './HoloToggle';
 import { homeSlides } from '../content/homeSlides';
-import { buildBittyUrl, compressContent, getRenderedHtml } from '../utils/bittyEngine';
+import { buildBittyUrl, compressContent, compressContentSync, getRenderedHtml } from '../utils/bittyEngine';
+import { useAccount } from '../hooks/useAccount';
 import { BittyMetadata } from '../types';
 
 interface AnimatedSplashProps {
@@ -107,11 +118,12 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
 
   // Configuration state across the 5 slides
   const [boxContent, setBoxContent] = useState<string>(DEFAULT_STARTER_CODE);
-  const [slide01Mode, setSlide01Mode] = useState<'code' | 'preview'>('code');
   const [boxTitle, setBoxTitle] = useState<string>('My Bitty Box');
   const [passwordEnabled, setPasswordEnabled] = useState<boolean>(false);
   const [passwordValue, setPasswordValue] = useState<string>('');
   const [showPassword, setShowPassword] = useState<boolean>(false);
+
+  const [slide1ViewMode, setSlide1ViewMode] = useState<'text' | 'split' | 'preview'>('text');
 
   const [timeLockEnabled, setTimeLockEnabled] = useState<boolean>(false);
   const [timeExpiryHours, setTimeExpiryHours] = useState<number>(24);
@@ -123,6 +135,25 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
 
   const [generatedUrl, setGeneratedUrl] = useState<string>('');
   const [isCopied, setIsCopied] = useState<boolean>(false);
+  const [isLeftTemplatesPanelOpen, setIsLeftTemplatesPanelOpen] = useState<boolean>(false);
+  const [isRightToolsPanelOpen, setIsRightToolsPanelOpen] = useState<boolean>(false);
+  const [isQrModalOpen, setIsQrModalOpen] = useState<boolean>(false);
+  const [qrModalUrl, setQrModalUrl] = useState<string>('');
+  const account = useAccount();
+
+  const { user, isAuthenticated } = useAccount();
+
+  const isPasscodeActive = Boolean(passwordEnabled && passwordValue.trim().length > 0);
+  const isTimeLockActive = Boolean(timeLockEnabled);
+  const isAccessLimitActive = Boolean(accessLimitEnabled);
+
+  const calculatedCreditCost = useMemo(() => {
+    let cost = 1; // Base Generation Cost
+    if (isPasscodeActive) cost += 1;
+    if (isTimeLockActive) cost += 1;
+    if (isAccessLimitActive) cost += 1;
+    return cost;
+  }, [isPasscodeActive, isTimeLockActive, isAccessLimitActive]);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -221,10 +252,10 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
       icon: <Gauge className="w-6 h-6 text-emerald-300" />,
     },
     {
-      category: 'SUMMARY & LAUNCH',
-      tag: '05 // REVIEW & GENERATE',
+      category: 'CREDIT COST',
+      tag: '05 // ESTIMATED CREDITS',
       accentColor: 'cyan',
-      icon: <Sparkles className="w-6 h-6 text-cyan-300" />,
+      icon: <Coins className="w-6 h-6 text-amber-300" />,
     },
   ];
 
@@ -279,109 +310,289 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
     }, 2600);
   }, [onComplete, playWarpSound]);
 
+  // Rendered preview HTML for Slide 05 Preview Window
+  const slidePreviewHtml = useMemo(() => {
+    const source = boxContent.trim() || DEFAULT_STARTER_CODE;
+    return addTimeOfDayTheme(getRenderedHtml(source, {
+      title: boxTitle || 'Bitty Box',
+      language: 'en',
+    }));
+  }, [boxContent, boxTitle]);
+
+  // Pre-generate / sync URL continuously so it is immediately available on click
+  const [readyUrl, setReadyUrl] = useState<string>('');
+
+  useEffect(() => {
+    let isCancelled = false;
+    const generatePreviewUrl = async () => {
+      try {
+        const source = boxContent.trim() || DEFAULT_STARTER_CODE;
+        const html = addTimeOfDayTheme(getRenderedHtml(source, {
+          title: boxTitle || 'Bitty Box',
+          language: 'en',
+        }));
+
+        const pass = passwordEnabled && passwordValue.trim() ? passwordValue.trim() : undefined;
+
+        let compressedFragment = '';
+        if (!pass) {
+          const syncRes = compressContentSync(html, { mimeType: 'text/html', isRawHtml: true });
+          if (syncRes) {
+            compressedFragment = syncRes.compressedUrl;
+          }
+        }
+        if (!compressedFragment) {
+          const encoded = await compressContent(html, {
+            password: pass,
+            mimeType: 'text/html',
+            isRawHtml: true,
+          });
+          if (encoded) {
+            compressedFragment = encoded.compressedUrl;
+          }
+        }
+
+        if (isCancelled || !compressedFragment) return;
+
+        const meta: BittyMetadata = {
+          title: boxTitle || 'Bitty Box',
+          description: 'A self-contained webpage living entirely in a URL',
+          favicon: '📦',
+          includeMetadata: true,
+        };
+
+        if (timeLockEnabled) {
+          meta.lockConfig = {
+            timeWindow: {
+              enabled: true,
+              notBefore: null,
+              notAfter: new Date(Date.now() + timeExpiryHours * 3600 * 1000).toISOString(),
+              showCountdown: showTimeCountdown,
+            },
+          };
+        }
+
+        if (accessLimitEnabled) {
+          meta.lockConfig = {
+            ...(meta.lockConfig || {}),
+            openLimit: {
+              enabled: true,
+              maxOpens: accessLimitMaxOpens,
+              opensUsed: 0,
+              showRemainingCount: showRemainingAccessCount,
+            },
+          };
+        }
+
+        const fullUrl = buildBittyUrl(compressedFragment, meta);
+        if (!isCancelled) {
+          setReadyUrl(fullUrl);
+        }
+      } catch {}
+    };
+
+    generatePreviewUrl();
+    return () => {
+      isCancelled = true;
+    };
+  }, [boxContent, boxTitle, passwordEnabled, passwordValue, timeLockEnabled, timeExpiryHours, showTimeCountdown, accessLimitEnabled, accessLimitMaxOpens, showRemainingAccessCount]);
+
+  // Start Over / Reset All State
+  const handleStartOver = useCallback(() => {
+    setBoxContent(DEFAULT_STARTER_CODE);
+    setBoxTitle('My Bitty Box');
+    setSlide1ViewMode('text');
+    setPasswordEnabled(false);
+    setPasswordValue('');
+    setShowPassword(false);
+    setTimeLockEnabled(false);
+    setTimeExpiryHours(6);
+    setShowTimeCountdown(true);
+    setAccessLimitEnabled(false);
+    setAccessLimitMaxOpens(1);
+    setShowRemainingAccessCount(true);
+    setReadyUrl('');
+    setGeneratedUrl('');
+    setIsCopied(false);
+    setCurrentSlide(0);
+  }, []);
+
   // Generate Bitty Box with all active lock configurations
   const handleGenerateFinal = useCallback(async () => {
     const source = boxContent.trim() || DEFAULT_STARTER_CODE;
+    const html = addTimeOfDayTheme(getRenderedHtml(source, {
+      title: boxTitle || 'Bitty Box',
+      language: 'en',
+    }));
 
-    // 1. Open new tab synchronously in direct user click gesture to prevent browser popup blocking
-    let newTab: Window | null = null;
+    const pass = passwordEnabled && passwordValue.trim() ? passwordValue.trim() : undefined;
+    const uniqueBoxId = `bbx_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 7)}`;
+
+    let compressedFragment = '';
+    if (!pass) {
+      try {
+        const syncRes = compressContentSync(html, { mimeType: 'text/html', isRawHtml: true });
+        if (syncRes) {
+          compressedFragment = syncRes.compressedUrl;
+        }
+      } catch {}
+    }
+
+    if (!compressedFragment) {
+      try {
+        const encoded = await compressContent(html, {
+          password: pass,
+          mimeType: 'text/html',
+          isRawHtml: true,
+        });
+        if (encoded) {
+          compressedFragment = encoded.compressedUrl;
+        }
+      } catch (err) {
+        console.error('Compression failed:', err);
+      }
+    }
+
+    if (!compressedFragment) return;
+
+    const meta: BittyMetadata = {
+      title: boxTitle || 'Bitty Box',
+      description: 'A self-contained webpage living entirely in a URL',
+      favicon: '📦',
+      includeMetadata: true,
+      boxId: (accessLimitEnabled || timeLockEnabled) ? uniqueBoxId : undefined,
+    };
+
+    if (timeLockEnabled) {
+      meta.lockConfig = {
+        timeWindow: {
+          enabled: true,
+          notBefore: null,
+          notAfter: new Date(Date.now() + timeExpiryHours * 3600 * 1000).toISOString(),
+          showCountdown: showTimeCountdown,
+        },
+      };
+    }
+
+    if (accessLimitEnabled) {
+      meta.lockConfig = {
+        ...(meta.lockConfig || {}),
+        openLimit: {
+          enabled: true,
+          maxOpens: accessLimitMaxOpens,
+          opensUsed: 0,
+          showRemainingCount: showRemainingAccessCount,
+        },
+      };
+    }
+
+    const longUrl = buildBittyUrl(compressedFragment, meta);
+    if (!longUrl) return;
+
+    setGeneratedUrl(longUrl);
+
+    // 2. Open new tab directly with the target URL in direct user gesture context
+    let tabOpened = false;
     try {
-      newTab = window.open('', '_blank');
+      const openedWin = window.open(longUrl, '_blank', 'noopener,noreferrer');
+      if (openedWin) {
+        tabOpened = true;
+      }
     } catch {}
 
-    try {
-      const html = addTimeOfDayTheme(getRenderedHtml(source, {
-        title: boxTitle || 'Bitty Box',
-        language: 'en',
-      }));
-
-      const pass = passwordEnabled && passwordValue.trim() ? passwordValue.trim() : undefined;
-
-      const encoded = await compressContent(html, {
-        password: pass,
-        mimeType: 'text/html',
-        isRawHtml: true,
-      });
-
-      if (!encoded) {
-        if (newTab) newTab.close();
-        return;
-      }
-
-      const meta: BittyMetadata = {
-        title: boxTitle || 'Bitty Box',
-        description: 'A self-contained webpage living entirely in a URL',
-        favicon: '📦',
-        includeMetadata: true,
-      };
-
-      if (timeLockEnabled) {
-        meta.lockConfig = {
-          timeWindow: {
-            enabled: true,
-            notBefore: null,
-            notAfter: new Date(Date.now() + timeExpiryHours * 3600 * 1000).toISOString(),
-            showCountdown: showTimeCountdown,
-          },
-        };
-      }
-
-      if (accessLimitEnabled) {
-        meta.lockConfig = {
-          ...(meta.lockConfig || {}),
-          openLimit: {
-            enabled: true,
-            maxOpens: accessLimitMaxOpens,
-            opensUsed: 0,
-            showRemainingCount: showRemainingAccessCount,
-          },
-        };
-        try {
-          const res = await fetch('/api/boxes', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              title: boxTitle || 'Bitty Box',
-              bittyUrl: encoded.compressedUrl,
-              lockConfig: {
-                openLimit: {
-                  enabled: true,
-                  maxOpens: accessLimitMaxOpens,
-                  opensUsed: 0,
-                  showRemainingCount: showRemainingAccessCount,
-                },
-                timeWindow: timeLockEnabled ? meta.lockConfig?.timeWindow : null,
-              },
-            }),
-          });
-          const data = await res.json();
-          if (data.boxId) {
-            meta.boxId = data.boxId;
-          }
-        } catch {
-          // Client-side fallback
-        }
-      }
-
-      const longUrl = buildBittyUrl(encoded.compressedUrl, meta);
-      setGeneratedUrl(longUrl);
-
+    if (!tabOpened) {
       try {
-        await navigator.clipboard.writeText(longUrl);
-        setIsCopied(true);
-        setTimeout(() => setIsCopied(false), 3500);
+        const link = document.createElement('a');
+        link.href = longUrl;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        tabOpened = true;
       } catch {}
-
-      if (newTab && !newTab.closed) {
-        newTab.location.href = longUrl;
-      } else {
-        window.open(longUrl, '_blank', 'noopener,noreferrer');
-      }
-    } catch (err) {
-      console.error('Failed to generate Bitty Box:', err);
-      if (newTab) newTab.close();
     }
-  }, [boxContent, boxTitle, passwordEnabled, passwordValue, timeLockEnabled, timeExpiryHours, showTimeCountdown, accessLimitEnabled, accessLimitMaxOpens, showRemainingAccessCount]);
+
+    // 3. Copy to clipboard
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(longUrl);
+      } else {
+        const textArea = document.createElement('textarea');
+        textArea.value = longUrl;
+        textArea.style.position = 'fixed';
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+      }
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 3500);
+    } catch {}
+
+    // 4. Background registration if access limit is configured
+    if (accessLimitEnabled && longUrl) {
+      try {
+        await fetch('/api/boxes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: uniqueBoxId,
+            boxId: uniqueBoxId,
+            title: boxTitle || 'Bitty Box',
+            bittyUrl: compressedFragment || longUrl,
+            lockConfig: {
+              openLimit: {
+                enabled: true,
+                maxOpens: accessLimitMaxOpens,
+                opensUsed: 0,
+                showRemainingCount: showRemainingAccessCount,
+              },
+              timeWindow: timeLockEnabled
+                ? {
+                    enabled: true,
+                    notBefore: null,
+                    notAfter: new Date(Date.now() + timeExpiryHours * 3600 * 1000).toISOString(),
+                    showCountdown: showTimeCountdown,
+                  }
+                : null,
+            },
+          }),
+        });
+      } catch {
+        // Fallback gracefully
+      }
+    }
+
+    // 5. Automatically save to logged-in user's account log
+    try {
+      const sid = localStorage.getItem('bitty_session_id');
+      if (sid && longUrl) {
+        await fetch('/api/accounts/links', {
+          method: 'POST',
+          headers: {
+            'X-Session-Id': sid,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            title: boxTitle || 'Bitty Box',
+            url: longUrl,
+            format: 'html',
+            byteSize: boxContent.length,
+            encrypted: Boolean(passwordEnabled && passwordValue),
+            cost: calculatedCreditCost,
+            locks: {
+              password: Boolean(passwordEnabled && passwordValue),
+              timeWindow: Boolean(timeLockEnabled),
+              accessLimit: Boolean(accessLimitEnabled),
+            },
+          }),
+        });
+      }
+    } catch {}
+  }, [readyUrl, boxContent, boxTitle, passwordEnabled, passwordValue, timeLockEnabled, timeExpiryHours, showTimeCountdown, accessLimitEnabled, accessLimitMaxOpens, showRemainingAccessCount, calculatedCreditCost]);
 
   // Auto-play timer
   useEffect(() => {
@@ -617,7 +828,7 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
           <span className="text-cyan-400/60">0{slides.length}</span>
         </div>
 
-        {/* Controls: Audio Toggle, Enter Studio */}
+        {/* Controls: Audio Toggle, Sign In / Account */}
         <div className="flex items-center gap-2 sm:gap-2.5">
           <button
             onClick={() => {
@@ -636,10 +847,11 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
           </button>
 
           <button
-            onClick={handleLaunch}
-            className="px-3 py-1 rounded-lg bg-gradient-to-r from-fuchsia-950/90 to-purple-950/90 border border-fuchsia-500/60 hover:border-fuchsia-400 text-fuchsia-200 font-mono text-xs tracking-wider flex items-center gap-1.5 shadow-[0_0_12px_rgba(189,0,255,0.25)] transition-all hover:scale-105 active:scale-95 group"
+            onClick={() => setIsRightToolsPanelOpen(true)}
+            className="px-3 py-1 rounded-lg bg-gradient-to-r from-fuchsia-950/90 to-purple-950/90 border border-fuchsia-500/60 hover:border-fuchsia-400 text-fuchsia-200 font-mono text-xs tracking-wider flex items-center gap-1.5 shadow-[0_0_12px_rgba(189,0,255,0.25)] transition-all hover:scale-105 active:scale-95 group cursor-pointer"
+            title={isAuthenticated || user ? 'Account & Tools' : 'Create Account / Sign In'}
           >
-            <span>ENTER STUDIO</span>
+            <span>{isAuthenticated || user ? 'ACCOUNT' : 'CREATE ACCOUNT'}</span>
             <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform text-fuchsia-300" />
           </button>
         </div>
@@ -647,13 +859,7 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
 
       {/* Main Interactive Carousel Area */}
       <main className="relative z-10 flex-1 flex items-center justify-center w-full px-3 sm:px-6 py-2 max-w-5xl lg:max-w-6xl mx-auto min-h-0 overflow-y-auto">
-        <button
-          onClick={prevSlide}
-          className="hidden md:flex absolute left-2 lg:left-0 z-30 p-2.5 rounded-full bg-[#08051e]/80 border border-cyan-500/40 text-cyan-300 hover:text-white hover:border-cyan-300 hover:bg-cyan-950/90 shadow-[0_0_15px_rgba(0,242,255,0.25)] transition-all transform hover:scale-110 active:scale-95 backdrop-blur-md"
-          aria-label="Previous slide"
-        >
-          <ChevronLeft className="w-5 h-5" />
-        </button>
+
 
         <div className="w-full flex items-center justify-center [perspective:1200px] my-auto">
           <AnimatePresence initial={false} custom={direction} mode="wait">
@@ -707,54 +913,58 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
                   onClick={e => e.stopPropagation()}
                 >
                   {/* =========================================================
-                      SLIDE 1 (Index 0): TEXT INPUT / COMPOSER FIELD & PREVIEW
+                      SLIDE 1 (Index 0): TEXT INPUT / COMPOSER FIELD (TEXT / SPLIT / PREVIEW)
                       ========================================================= */}
                   {currentSlide === 0 && (
                     <div className="w-full bg-[#050314]/90 border border-cyan-500/40 rounded-xl p-3 sm:p-3.5 shadow-[0_0_25px_rgba(0,242,255,0.15)] font-mono flex flex-col justify-between h-full min-h-[220px] md:min-h-[260px]">
-                      <div className="flex items-center justify-between border-b border-cyan-500/20 pb-2 mb-2">
-                        <div className="flex items-center gap-1.5 text-cyan-300 text-xs font-bold">
-                          <Code className="w-3.5 h-3.5 text-cyan-400" />
-                          <span>INSERT CONTENT</span>
+                      {/* Top Bar: Mode Tabs (TEXT / SPLIT / PREVIEW) and Bytes Counter */}
+                      <div className="flex items-center justify-between border-b border-cyan-500/20 pb-2 mb-2 gap-2">
+                        <div className="flex items-center gap-1 bg-black/60 border border-cyan-500/30 rounded-lg p-0.5 text-[10px] font-mono">
+                          <button
+                            type="button"
+                            onClick={() => setSlide1ViewMode('text')}
+                            className={`px-2.5 py-1 rounded transition-all font-bold cursor-pointer ${
+                              slide1ViewMode === 'text'
+                                ? 'bg-cyan-950 text-cyan-200 border border-cyan-400/60 shadow-[0_0_8px_rgba(0,242,255,0.3)]'
+                                : 'text-cyan-400/60 hover:text-cyan-200'
+                            }`}
+                            title="Code / Text Editor only"
+                          >
+                            TEXT
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setSlide1ViewMode('split')}
+                            className={`px-2.5 py-1 rounded transition-all font-bold cursor-pointer ${
+                              slide1ViewMode === 'split'
+                                ? 'bg-cyan-950 text-cyan-200 border border-cyan-400/60 shadow-[0_0_8px_rgba(0,242,255,0.3)]'
+                                : 'text-cyan-400/60 hover:text-cyan-200'
+                            }`}
+                            title="Split View: Editor and Rendered Preview side-by-side"
+                          >
+                            SPLIT
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setSlide1ViewMode('preview')}
+                            className={`px-2.5 py-1 rounded transition-all font-bold cursor-pointer ${
+                              slide1ViewMode === 'preview'
+                                ? 'bg-cyan-950 text-cyan-200 border border-cyan-400/60 shadow-[0_0_8px_rgba(0,242,255,0.3)]'
+                                : 'text-cyan-400/60 hover:text-cyan-200'
+                            }`}
+                            title="Live Rendered Output from the TEXT tab"
+                          >
+                            PREVIEW
+                          </button>
                         </div>
 
-                        <div className="flex items-center gap-2">
-                          {/* Code vs. Preview Toggle Switch */}
-                          <div className="flex items-center bg-black/60 p-0.5 rounded-lg border border-cyan-500/30">
-                            <button
-                              type="button"
-                              id="slide01-code-toggle-btn"
-                              onClick={() => setSlide01Mode('code')}
-                              className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold transition cursor-pointer ${
-                                slide01Mode === 'code'
-                                  ? 'bg-cyan-950 text-cyan-200 border border-cyan-400 shadow-sm'
-                                  : 'text-purple-300/60 hover:text-cyan-200'
-                              }`}
-                            >
-                              <Code className="w-3 h-3" />
-                              <span>Code</span>
-                            </button>
-                            <button
-                              type="button"
-                              id="slide01-preview-toggle-btn"
-                              onClick={() => setSlide01Mode('preview')}
-                              className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold transition cursor-pointer ${
-                                slide01Mode === 'preview'
-                                  ? 'bg-cyan-950 text-cyan-200 border border-cyan-400 shadow-sm'
-                                  : 'text-purple-300/60 hover:text-cyan-200'
-                              }`}
-                            >
-                              <Eye className="w-3 h-3" />
-                              <span>Preview</span>
-                            </button>
-                          </div>
-
-                          <span className="text-[10px] text-cyan-300 bg-cyan-950/80 border border-cyan-500/40 px-2 py-0.5 rounded font-bold">
-                            {boxContent.length} BYTES
-                          </span>
-                        </div>
+                        <span className="text-[10px] text-cyan-300 bg-cyan-950/80 border border-cyan-500/40 px-2 py-0.5 rounded font-bold shrink-0">
+                          {boxContent.length} BYTES
+                        </span>
                       </div>
 
-                      {slide01Mode === 'code' ? (
+                      {/* View Modes Content */}
+                      {(slide1ViewMode === 'text' || slide1ViewMode === 'split') && (
                         <textarea
                           value={boxContent}
                           onChange={e => setBoxContent(e.target.value)}
@@ -764,23 +974,15 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
                           placeholder="Paste HTML or type the content for your new Bitty Box…"
                           className="w-full flex-1 min-h-[110px] sm:min-h-[130px] md:min-h-[140px] resize-none rounded-lg border border-cyan-400/30 bg-[#02010a] p-2.5 text-xs leading-5 text-cyan-100 placeholder:text-cyan-400/40 outline-none transition focus:border-cyan-300 focus:ring-1 focus:ring-cyan-500/30 font-mono"
                         />
-                      ) : (
-                        <div className="w-full flex-1 min-h-[110px] sm:min-h-[130px] md:min-h-[140px] rounded-lg border border-cyan-400/30 bg-[#02010a] overflow-hidden flex flex-col shadow-inner relative">
-                          <div className="flex items-center justify-between px-2.5 py-1 bg-[#050518] border-b border-cyan-500/20 text-[9px] font-mono text-cyan-400/80">
-                            <div className="flex items-center gap-1.5">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                              <span>LIVE PREVIEW STREAM</span>
-                            </div>
-                            <span className="text-[8px] text-purple-300/60 uppercase">SANDBOXED // 100% IN-URL</span>
-                          </div>
+                      )}
+
+                      {slide1ViewMode === 'preview' && (
+                        <div className="w-full flex-1 min-h-[110px] sm:min-h-[130px] md:min-h-[140px] relative bg-[#000000] rounded-lg border border-cyan-500/30 overflow-hidden shadow-inner">
                           <iframe
-                            title="Slide 01 Code Preview"
-                            srcDoc={getRenderedHtml(boxContent.trim() || '<div style="font-family:sans-serif;color:#00f2ff;background:#050515;padding:1.5rem;text-align:center;"><em>Type HTML in Code mode to preview</em></div>', {
-                              title: 'Preview',
-                              language: 'en',
-                            })}
-                            sandbox="allow-scripts allow-same-origin allow-forms"
-                            className="w-full flex-1 border-0 bg-transparent min-h-[100px]"
+                            srcDoc={slidePreviewHtml}
+                            title="Live Rendered Output Preview"
+                            className="w-full h-full border-0 absolute inset-0 bg-[#000000]"
+                            sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-modals allow-downloads"
                           />
                         </div>
                       )}
@@ -791,39 +993,27 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
                           <button
                             type="button"
                             onClick={() => setBoxContent(DEFAULT_STARTER_CODE)}
-                            className="px-2 py-0.5 rounded bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 text-[10px] hover:bg-cyan-900 transition-colors cursor-pointer"
+                            className="px-2 py-0.5 rounded bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 text-[10px] hover:bg-cyan-900 transition-colors"
                           >
                             Starter Box
                           </button>
                           <button
                             type="button"
                             onClick={() => setBoxContent('<h1>Secret Note</h1>\n<p>Only visible to those with the link.</p>')}
-                            className="px-2 py-0.5 rounded bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 text-[10px] hover:bg-cyan-900 transition-colors cursor-pointer"
+                            className="px-2 py-0.5 rounded bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 text-[10px] hover:bg-cyan-900 transition-colors"
                           >
                             Note
                           </button>
                         </div>
-                        <div className="flex items-center gap-2">
-                          {slide01Mode === 'preview' && (
-                            <button
-                              type="button"
-                              onClick={() => setSlide01Mode('code')}
-                              className="text-[10px] text-cyan-300 hover:text-cyan-100 flex items-center gap-1 cursor-pointer transition-colors"
-                            >
-                              <Code className="w-3 h-3" />
-                              <span>Edit Code</span>
-                            </button>
-                          )}
-                          {boxContent && (
-                            <button
-                              type="button"
-                              onClick={() => setBoxContent('')}
-                              className="text-[10px] text-cyan-400/60 hover:text-rose-400 transition-colors cursor-pointer"
-                            >
-                              Clear
-                            </button>
-                          )}
-                        </div>
+                        {boxContent && (
+                          <button
+                            type="button"
+                            onClick={() => setBoxContent('')}
+                            className="text-[10px] text-cyan-400/60 hover:text-rose-400 transition-colors"
+                          >
+                            Clear
+                          </button>
+                        )}
                       </div>
                     </div>
                   )}
@@ -973,18 +1163,6 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
                             ))}
                           </div>
 
-                          <label className="flex items-center gap-2 pt-1 text-[11px] text-amber-200 cursor-pointer select-none">
-                            <input
-                              type="checkbox"
-                              checked={showTimeCountdown}
-                              onChange={e => setShowTimeCountdown(e.target.checked)}
-                              className="w-3.5 h-3.5 rounded border border-amber-500/50 bg-[#02010a] text-amber-500 accent-amber-400 focus:ring-1 focus:ring-amber-400"
-                            />
-                            <span className="font-mono text-[10px] sm:text-[11px] text-amber-200/90">
-                              Show live countdown timer to viewers
-                            </span>
-                          </label>
-
                           <div className="flex items-center gap-1.5 text-[10px] text-amber-300/80 pt-0.5">
                             <Timer className="w-3 h-3 text-amber-400 shrink-0" />
                             <span className="truncate">AUTO-DECAY // SELF-DESTRUCTS AFTER DURATION</span>
@@ -1049,18 +1227,6 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
                             ))}
                           </div>
 
-                          <label className="flex items-center gap-2 pt-1 text-[11px] text-emerald-200 cursor-pointer select-none">
-                            <input
-                              type="checkbox"
-                              checked={showRemainingAccessCount}
-                              onChange={e => setShowRemainingAccessCount(e.target.checked)}
-                              className="w-3.5 h-3.5 rounded border border-emerald-500/50 bg-[#02010a] text-emerald-500 accent-emerald-400 focus:ring-1 focus:ring-emerald-400"
-                            />
-                            <span className="font-mono text-[10px] sm:text-[11px] text-emerald-200/90">
-                              Show remaining unlocks counter to viewers
-                            </span>
-                          </label>
-
                           <div className="flex items-center gap-1.5 text-[10px] text-emerald-300/80 pt-0.5">
                             <Flame className="w-3 h-3 text-emerald-400 shrink-0" />
                             <span className="truncate">TAMPER-PROOF COUNTER // SEALS PERMANENTLY</span>
@@ -1083,96 +1249,92 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
                   )}
 
                   {/* =========================================================
-                      SLIDE 5 (Index 4): FINAL CONFIGURATION SUMMARY
+                      SLIDE 5 (Index 4): CONFIGURED LOCKS SUMMARY
                       ========================================================= */}
                   {currentSlide === 4 && (
                     <div className="w-full bg-[#050314]/90 border border-cyan-500/40 rounded-xl p-3 sm:p-3.5 shadow-[0_0_25px_rgba(0,242,255,0.2)] font-mono text-left flex flex-col justify-between h-full min-h-[220px] md:min-h-[260px]">
                       <div className="flex items-center justify-between border-b border-cyan-500/20 pb-2 mb-2">
-                        <div className="flex items-center gap-1.5 text-cyan-300 text-xs font-bold">
-                          <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-                          <span>CONFIGURATION SUMMARY</span>
+                        <div className="flex items-center gap-1.5 text-cyan-300 text-xs font-bold font-cyber">
+                          <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
+                          <span>CONFIGURED LOCKS</span>
                         </div>
                         <span className="text-[9px] text-cyan-400 bg-cyan-950/80 border border-cyan-500/40 px-2 py-0.5 rounded-full font-bold">
-                          READY TO PACK
+                          {boxContent.length} BYTES
                         </span>
                       </div>
 
-                      {/* 2x2 Compact Summary Cards Grid */}
-                      <div className="grid grid-cols-2 gap-2 text-xs">
-                        {/* 1. Content */}
-                        <div className="p-2 rounded-lg bg-[#08031a] border border-cyan-500/30 flex flex-col justify-between">
-                          <div className="flex items-center justify-between gap-1">
-                            <span className="font-bold text-cyan-300 text-[10px]">CONTENT</span>
-                            <span className="text-[9px] px-1.5 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-500/30">
-                              {boxContent.length} B
-                            </span>
-                          </div>
-                          <div className="text-[10px] text-cyan-300/70 truncate mt-1">
-                            {boxContent.trim() ? (boxContent.slice(0, 24) + '…') : 'Default Starter'}
-                          </div>
-                        </div>
-
-                        {/* 2. Passcode */}
-                        <div className={`p-2 rounded-lg border flex flex-col justify-between ${
+                      {/* Lock Status Items */}
+                      <div className="space-y-2 text-xs flex-1 flex flex-col justify-around">
+                        {/* 1. Passcode Lock */}
+                        <div className={`p-2 sm:p-2.5 rounded-lg border flex items-center justify-between gap-2 transition-colors ${
                           passwordEnabled && passwordValue.trim()
-                            ? 'bg-fuchsia-950/30 border-fuchsia-500/40'
-                            : 'bg-[#08031a] border-zinc-800'
+                            ? 'bg-fuchsia-950/40 border-fuchsia-500/50 text-fuchsia-200'
+                            : 'bg-[#08031a]/60 border-zinc-800/80 text-zinc-500'
                         }`}>
-                          <div className="flex items-center justify-between gap-1">
-                            <span className={`font-bold text-[10px] ${passwordEnabled && passwordValue.trim() ? 'text-fuchsia-300' : 'text-zinc-400'}`}>PASSCODE</span>
-                            <span className={`text-[9px] px-1.5 py-0.5 rounded border ${
-                              passwordEnabled && passwordValue.trim()
-                                ? 'bg-fuchsia-950 text-fuchsia-300 border-fuchsia-500/50'
-                                : 'bg-zinc-900 text-zinc-500 border-zinc-800'
-                            }`}>
-                              {passwordEnabled && passwordValue.trim() ? 'LOCKED' : 'OFF'}
-                            </span>
+                          <div className="flex items-center gap-2 min-w-0">
+                            <Key className={`w-4 h-4 shrink-0 ${passwordEnabled && passwordValue.trim() ? 'text-fuchsia-400' : 'text-zinc-600'}`} />
+                            <div className="min-w-0">
+                              <div className="font-bold text-[11px] truncate">PASSCODE LOCK</div>
+                              <div className="text-[10px] opacity-80 truncate">
+                                {passwordEnabled && passwordValue.trim() ? `${passwordValue.length}-Digit PIN (AES-256-GCM)` : 'Disabled'}
+                              </div>
+                            </div>
                           </div>
-                          <div className="text-[10px] text-zinc-400/80 truncate mt-1">
-                            {passwordEnabled && passwordValue.trim() ? `${passwordValue.length}-Digit PIN` : 'Public URL'}
-                          </div>
+                          <span className={`text-[10px] font-bold px-2 sm:px-2.5 py-0.5 rounded border shrink-0 ${
+                            passwordEnabled && passwordValue.trim()
+                              ? 'bg-fuchsia-950 text-fuchsia-300 border-fuchsia-500 shadow-[0_0_10px_rgba(217,70,239,0.5)]'
+                              : 'bg-zinc-900 text-zinc-600 border-zinc-800'
+                          }`}>
+                            {passwordEnabled && passwordValue.trim() ? 'ON' : 'OFF'}
+                          </span>
                         </div>
 
-                        {/* 3. Timed Lock */}
-                        <div className={`p-2 rounded-lg border flex flex-col justify-between ${
+                        {/* 2. Timed Lock */}
+                        <div className={`p-2 sm:p-2.5 rounded-lg border flex items-center justify-between gap-2 transition-colors ${
                           timeLockEnabled
-                            ? 'bg-amber-950/30 border-amber-500/40'
-                            : 'bg-[#08031a] border-zinc-800'
+                            ? 'bg-amber-950/40 border-amber-500/50 text-amber-200'
+                            : 'bg-[#08031a]/60 border-zinc-800/80 text-zinc-500'
                         }`}>
-                          <div className="flex items-center justify-between gap-1">
-                            <span className={`font-bold text-[10px] ${timeLockEnabled ? 'text-amber-300' : 'text-zinc-400'}`}>EXPIRY</span>
-                            <span className={`text-[9px] px-1.5 py-0.5 rounded border ${
-                              timeLockEnabled
-                                ? 'bg-amber-950 text-amber-300 border-amber-500/50'
-                                : 'bg-zinc-900 text-zinc-500 border-zinc-800'
-                            }`}>
-                              {timeLockEnabled ? `${timeExpiryHours === 168 ? '7d' : `${timeExpiryHours}h`}` : 'OFF'}
-                            </span>
+                          <div className="flex items-center gap-2 min-w-0">
+                            <Clock className={`w-4 h-4 shrink-0 ${timeLockEnabled ? 'text-amber-400' : 'text-zinc-600'}`} />
+                            <div className="min-w-0">
+                              <div className="font-bold text-[11px] truncate">TIME-BASED LOCK</div>
+                              <div className="text-[10px] opacity-80 truncate">
+                                {timeLockEnabled ? `Expires after ${timeExpiryHours === 168 ? '7 Days' : `${timeExpiryHours}h`}` : 'Disabled'}
+                              </div>
+                            </div>
                           </div>
-                          <div className="text-[10px] text-zinc-400/80 truncate mt-1">
-                            {timeLockEnabled ? (showTimeCountdown ? 'With Timer' : 'Hidden') : 'Indefinite'}
-                          </div>
+                          <span className={`text-[10px] font-bold px-2 sm:px-2.5 py-0.5 rounded border shrink-0 ${
+                            timeLockEnabled
+                              ? 'bg-amber-950 text-amber-300 border-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.5)]'
+                              : 'bg-zinc-900 text-zinc-600 border-zinc-800'
+                          }`}>
+                            {timeLockEnabled ? 'ON' : 'OFF'}
+                          </span>
                         </div>
 
-                        {/* 4. Access Limit */}
-                        <div className={`p-2 rounded-lg border flex flex-col justify-between ${
+                        {/* 3. Access Limit Lock */}
+                        <div className={`p-2 sm:p-2.5 rounded-lg border flex items-center justify-between gap-2 transition-colors ${
                           accessLimitEnabled
-                            ? 'bg-emerald-950/30 border-emerald-500/40'
-                            : 'bg-[#08031a] border-zinc-800'
+                            ? 'bg-emerald-950/40 border-emerald-500/50 text-emerald-200'
+                            : 'bg-[#08031a]/60 border-zinc-800/80 text-zinc-500'
                         }`}>
-                          <div className="flex items-center justify-between gap-1">
-                            <span className={`font-bold text-[10px] ${accessLimitEnabled ? 'text-emerald-300' : 'text-zinc-400'}`}>QUOTA</span>
-                            <span className={`text-[9px] px-1.5 py-0.5 rounded border ${
-                              accessLimitEnabled
-                                ? 'bg-emerald-950 text-emerald-300 border-emerald-500/50'
-                                : 'bg-zinc-900 text-zinc-500 border-zinc-800'
-                            }`}>
-                              {accessLimitEnabled ? `${accessLimitMaxOpens}` : 'OFF'}
-                            </span>
+                          <div className="flex items-center gap-2 min-w-0">
+                            <Gauge className={`w-4 h-4 shrink-0 ${accessLimitEnabled ? 'text-emerald-400' : 'text-zinc-600'}`} />
+                            <div className="min-w-0">
+                              <div className="font-bold text-[11px] truncate">ACCESS LIMIT LOCK</div>
+                              <div className="text-[10px] opacity-80 truncate">
+                                {accessLimitEnabled ? (accessLimitMaxOpens === 1 ? '1 Open (Burn on Read)' : `${accessLimitMaxOpens} Opens Allowed`) : 'Disabled'}
+                              </div>
+                            </div>
                           </div>
-                          <div className="text-[10px] text-zinc-400/80 truncate mt-1">
-                            {accessLimitEnabled ? `${accessLimitMaxOpens === 1 ? 'Burn on Read' : `${accessLimitMaxOpens} Opens`}` : 'Unlimited'}
-                          </div>
+                          <span className={`text-[10px] font-bold px-2 sm:px-2.5 py-0.5 rounded border shrink-0 ${
+                            accessLimitEnabled
+                              ? 'bg-emerald-950 text-emerald-300 border-emerald-500 shadow-[0_0_10px_rgba(0,255,150,0.5)]'
+                              : 'bg-zinc-900 text-zinc-600 border-zinc-800'
+                          }`}>
+                            {accessLimitEnabled ? 'ON' : 'OFF'}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -1183,53 +1345,237 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
                     RIGHT COLUMN (md:col-span-6): Slide Info & Actions
                     ───────────────────────────────────────────────────────────── */}
                 <div className="md:col-span-6 flex flex-col justify-between space-y-3 sm:space-y-4">
-                  {/* Slide Top Metadata Tag */}
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-400/40 text-cyan-300 font-mono text-[10px] sm:text-[11px] tracking-wider shadow-[0_0_12px_rgba(0,242,255,0.2)]">
-                      <Radio className="w-3 h-3 text-emerald-400 animate-pulse" />
-                      <CyberScrambleText text={activeSlideData.tag} speed={20} />
-                    </div>
-                    <div className="text-[10px] font-mono text-cyan-400/60 uppercase tracking-widest">
-                      <CyberScrambleText text={activeSlideData.category} speed={15} />
-                    </div>
-                  </div>
-
-                  {/* Slide Headline & Description */}
-                  <div className="space-y-1.5 text-left">
-                    <h2 className="text-base sm:text-lg md:text-xl font-extrabold font-mono tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-cyan-200 via-teal-100 to-fuchsia-300 leading-tight">
-                      <CyberScrambleText text={activeSlideData.title} speed={18} />
-                      <span
-                        className={`block text-sm sm:text-base md:text-lg mt-0.5 ${
-                          activeSlideData.accentColor === 'fuchsia'
-                            ? 'text-fuchsia-400 drop-shadow-[0_0_12px_rgba(217,70,239,0.8)]'
-                            : activeSlideData.accentColor === 'emerald'
-                            ? 'text-emerald-300 drop-shadow-[0_0_12px_rgba(0,255,204,0.8)]'
-                            : activeSlideData.accentColor === 'amber'
-                            ? 'text-amber-300 drop-shadow-[0_0_12px_rgba(245,158,11,0.8)]'
-                            : 'text-cyan-300 drop-shadow-[0_0_12px_rgba(0,242,255,0.8)]'
-                        }`}
-                      >
-                        <CyberScrambleText text={activeSlideData.highlight} speed={22} delay={150} />
-                      </span>
-                    </h2>
-
-                    <p className="text-[11px] sm:text-xs text-cyan-200/80 font-mono leading-relaxed line-clamp-3 md:line-clamp-4">
-                      {activeSlideData.description}
-                    </p>
-                  </div>
-
-                  {/* Feature Bullets */}
-                  <div className="space-y-1.5 text-left">
-                    {activeSlideData.bullets.slice(0, 3).map((bullet) => (
-                      <div
-                        key={bullet}
-                        className="flex items-start gap-1.5 rounded-md border border-cyan-500/20 bg-cyan-950/20 px-2 py-1 text-[10px] sm:text-[11px] font-mono leading-tight text-cyan-100/90"
-                      >
-                        <CheckCircle2 className="mt-0.5 h-3 w-3 shrink-0 text-emerald-300" />
-                        <span>{bullet}</span>
+                  {/* Slide 01 SPLIT Mode: Live Preview Window completely takes over right side */}
+                  {currentSlide === 0 && slide1ViewMode === 'split' ? (
+                    <div className="flex-1 w-full bg-[#050314]/90 border border-cyan-500/40 rounded-xl overflow-hidden shadow-[0_0_25px_rgba(0,242,255,0.2)] flex flex-col min-h-[220px] md:min-h-[260px] font-mono">
+                      <div className="flex items-center justify-between px-3 py-1.5 bg-[#09051f] border-b border-cyan-500/25 text-[10px] text-cyan-300">
+                        <div className="flex items-center gap-1.5 font-bold">
+                          <Eye className="w-3.5 h-3.5 text-cyan-400" />
+                          <CyberScrambleText text="PREVIEW" speed={20} />
+                        </div>
+                        <div className="flex items-center gap-1.5 text-[9px] text-emerald-400 font-bold">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                          <span>LIVE RENDERED OUTPUT</span>
+                        </div>
                       </div>
-                    ))}
-                  </div>
+                      <div className="flex-1 w-full relative min-h-[160px] sm:min-h-[190px] bg-[#000000]">
+                        <iframe
+                          srcDoc={slidePreviewHtml}
+                          title="Slide 01 Live Rendered Output Preview"
+                          className="w-full h-full border-0 absolute inset-0 bg-[#000000]"
+                          sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-modals allow-downloads"
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Slide Top Metadata Tag */}
+                      <div className="flex items-center justify-between gap-2 min-h-[32px]">
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-400/40 text-cyan-300 font-mono text-[10px] sm:text-[11px] tracking-wider shadow-[0_0_12px_rgba(0,242,255,0.2)]">
+                          <Radio className="w-3 h-3 text-emerald-400 animate-pulse" />
+                          <CyberScrambleText text={activeSlideData.tag} speed={20} />
+                        </div>
+                        {currentSlide === 1 ? (
+                          <div className="flex items-center justify-end scale-[0.52] sm:scale-[0.58] origin-right -my-3 -mr-1">
+                            <HoloToggle
+                              id="holo-toggle-slide-02"
+                              checked={passwordEnabled}
+                              onChange={setPasswordEnabled}
+                            />
+                          </div>
+                        ) : currentSlide === 2 ? (
+                          <div className="flex items-center justify-end scale-[0.52] sm:scale-[0.58] origin-right -my-3 -mr-1">
+                            <HoloToggle
+                              id="holo-toggle-slide-03"
+                              checked={timeLockEnabled}
+                              onChange={setTimeLockEnabled}
+                            />
+                          </div>
+                        ) : currentSlide === 3 ? (
+                          <div className="flex items-center justify-end scale-[0.52] sm:scale-[0.58] origin-right -my-3 -mr-1">
+                            <HoloToggle
+                              id="holo-toggle-slide-04"
+                              checked={accessLimitEnabled}
+                              onChange={setAccessLimitEnabled}
+                            />
+                          </div>
+                        ) : currentSlide === 4 ? (
+                          <button
+                            type="button"
+                            onClick={handleStartOver}
+                            className="px-2.5 py-1 rounded-lg bg-rose-950/70 hover:bg-rose-900/90 border border-rose-500/50 hover:border-rose-400 text-rose-300 hover:text-white text-[10px] sm:text-[11px] font-mono font-bold flex items-center gap-1.5 transition-all shadow-[0_0_12px_rgba(244,63,94,0.3)] cursor-pointer"
+                            title="Reset all settings and start over fresh"
+                          >
+                            <RotateCcw className="w-3.5 h-3.5" />
+                            <span>START OVER</span>
+                          </button>
+                        ) : (
+                          <div className="text-[10px] font-mono text-cyan-400/60 uppercase tracking-widest">
+                            <CyberScrambleText text={activeSlideData.category} speed={15} />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Slide Headline & Description (Only on slides 1-4) */}
+                      {currentSlide !== 4 && (
+                        <div className="space-y-1.5 text-left">
+                          <h2 className="text-base sm:text-lg md:text-xl font-extrabold font-mono tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-cyan-200 via-teal-100 to-fuchsia-300 leading-tight">
+                            <CyberScrambleText text={activeSlideData.title} speed={18} />
+                            <span
+                              className={`block text-sm sm:text-base md:text-lg mt-0.5 ${
+                                activeSlideData.accentColor === 'fuchsia'
+                                  ? 'text-fuchsia-400 drop-shadow-[0_0_12px_rgba(217,70,239,0.8)]'
+                                  : activeSlideData.accentColor === 'emerald'
+                                  ? 'text-emerald-300 drop-shadow-[0_0_12px_rgba(0,255,204,0.8)]'
+                                  : activeSlideData.accentColor === 'amber'
+                                  ? 'text-amber-300 drop-shadow-[0_0_12px_rgba(245,158,11,0.8)]'
+                                  : 'text-cyan-300 drop-shadow-[0_0_12px_rgba(0,242,255,0.8)]'
+                              }`}
+                            >
+                              <CyberScrambleText text={activeSlideData.highlight} speed={22} delay={150} />
+                            </span>
+                          </h2>
+
+                          <p className="text-[11px] sm:text-xs text-cyan-200/80 font-mono leading-relaxed line-clamp-3 md:line-clamp-4">
+                            {activeSlideData.description}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Feature Bullets (Only on slides 1-4) */}
+                      {currentSlide !== 4 && activeSlideData.bullets.length > 0 && (
+                        <div className="space-y-1.5 text-left">
+                          {activeSlideData.bullets.slice(0, 3).map((bullet) => (
+                            <div
+                              key={bullet}
+                              className="flex items-start gap-1.5 rounded-md border border-cyan-500/20 bg-cyan-950/20 px-2 py-1 text-[10px] sm:text-[11px] font-mono leading-tight text-cyan-100/90"
+                            >
+                              <CheckCircle2 className="mt-0.5 h-3 w-3 shrink-0 text-emerald-300" />
+                              <span>{bullet}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Slide 05: Dynamic Credit Cost Calculation Box */}
+                      {currentSlide === 4 && (
+                        <div className="flex-1 w-full bg-[#050314]/95 border border-cyan-500/40 rounded-xl overflow-hidden shadow-[0_0_25px_rgba(0,242,255,0.2)] flex flex-col justify-between p-3 font-mono relative group min-h-[140px] sm:min-h-[160px]">
+                          {/* Ambient glow and cyber scanlines */}
+                          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(0,242,255,0.12),transparent_70%)] pointer-events-none" />
+                          <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_50%,rgba(0,0,0,0.35)_51%)] bg-[length:100%_4px] pointer-events-none opacity-30" />
+
+                          {/* Header */}
+                          <div className="flex items-center justify-between border-b border-cyan-500/20 pb-2 relative z-10">
+                            <div className="flex items-center gap-1.5 text-cyan-300 text-xs font-bold font-cyber">
+                              <Coins className="w-3.5 h-3.5 text-amber-400 animate-bounce" />
+                              <CyberScrambleText text="ESTIMATED GENERATION COST" speed={20} />
+                            </div>
+                            <div className="flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full bg-cyan-950/90 border border-cyan-400/40 text-cyan-300 shadow-[0_0_8px_rgba(0,242,255,0.3)]">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                              <span>LIVE QUOTA</span>
+                            </div>
+                          </div>
+
+                          {/* Hero Animated Total Cost Display */}
+                          <div className="my-1.5 py-1.5 sm:py-2 px-3 rounded-lg bg-[#08041d]/90 border border-cyan-500/30 flex items-center justify-between gap-2 relative z-10 shadow-inner">
+                            <div className="min-w-0">
+                              <div className="text-[10px] text-cyan-400/90 uppercase tracking-wider font-bold">
+                                REQUIRED CREDITS
+                              </div>
+                              <div className="text-[10px] text-zinc-400 truncate">
+                                {isPasscodeActive || isTimeLockActive || isAccessLimitActive
+                                  ? `Base (1) + ${[isPasscodeActive && 'PIN (+1)', isTimeLockActive && 'Time (+1)', isAccessLimitActive && 'Quota (+1)'].filter(Boolean).join(' + ')}`
+                                  : 'Standard URL Payload (No Locks)'}
+                              </div>
+                            </div>
+
+                            <div className="flex items-baseline gap-1.5 shrink-0">
+                              <motion.span
+                                key={calculatedCreditCost}
+                                initial={{ scale: 1.35, opacity: 0.5, y: -2 }}
+                                animate={{ scale: 1, opacity: 1, y: 0 }}
+                                transition={{ type: 'spring', stiffness: 500, damping: 15 }}
+                                className="text-2xl sm:text-3xl font-black font-cyber text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-amber-300 to-fuchsia-300 drop-shadow-[0_0_12px_rgba(0,242,255,0.7)]"
+                              >
+                                {calculatedCreditCost}
+                              </motion.span>
+                              <span className="text-[10px] sm:text-[11px] font-bold text-amber-300 tracking-wider">
+                                {calculatedCreditCost === 1 ? 'CREDIT' : 'CREDITS'}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Itemized Cost Breakdown Grid */}
+                          <div className="grid grid-cols-2 gap-1.5 text-[10px] relative z-10">
+                            {/* Base Payload */}
+                            <div className="p-1.5 rounded bg-cyan-950/40 border border-cyan-500/30 text-cyan-200 flex items-center justify-between">
+                              <span className="truncate flex items-center gap-1">
+                                <Code className="w-3 h-3 text-cyan-400 shrink-0" />
+                                Base Payload
+                              </span>
+                              <span className="font-bold text-cyan-300 shrink-0">1 CR</span>
+                            </div>
+
+                            {/* Passcode Lock */}
+                            <div className={`p-1.5 rounded border flex items-center justify-between transition-all duration-200 ${
+                              isPasscodeActive
+                                ? 'bg-fuchsia-950/40 border-fuchsia-500/50 text-fuchsia-200 shadow-[0_0_8px_rgba(217,70,239,0.3)]'
+                                : 'bg-black/30 border-zinc-800/80 text-zinc-600'
+                            }`}>
+                              <span className="truncate flex items-center gap-1">
+                                <Key className={`w-3 h-3 shrink-0 ${isPasscodeActive ? 'text-fuchsia-400' : 'text-zinc-600'}`} />
+                                PIN Lock
+                              </span>
+                              <span className={`font-bold shrink-0 ${isPasscodeActive ? 'text-fuchsia-300' : 'text-zinc-600'}`}>
+                                {isPasscodeActive ? '+1 CR' : '0 CR'}
+                              </span>
+                            </div>
+
+                            {/* Time-Based Lock */}
+                            <div className={`p-1.5 rounded border flex items-center justify-between transition-all duration-200 ${
+                              isTimeLockActive
+                                ? 'bg-amber-950/40 border-amber-500/50 text-amber-200 shadow-[0_0_8px_rgba(245,158,11,0.3)]'
+                                : 'bg-black/30 border-zinc-800/80 text-zinc-600'
+                            }`}>
+                              <span className="truncate flex items-center gap-1">
+                                <Clock className={`w-3 h-3 shrink-0 ${isTimeLockActive ? 'text-amber-400' : 'text-zinc-600'}`} />
+                                Time Lock
+                              </span>
+                              <span className={`font-bold shrink-0 ${isTimeLockActive ? 'text-amber-300' : 'text-zinc-600'}`}>
+                                {isTimeLockActive ? '+1 CR' : '0 CR'}
+                              </span>
+                            </div>
+
+                            {/* Access Limit Lock */}
+                            <div className={`p-1.5 rounded border flex items-center justify-between transition-all duration-200 ${
+                              isAccessLimitActive
+                                ? 'bg-emerald-950/40 border-emerald-500/50 text-emerald-200 shadow-[0_0_8px_rgba(0,255,204,0.3)]'
+                                : 'bg-black/30 border-zinc-800/80 text-zinc-600'
+                            }`}>
+                              <span className="truncate flex items-center gap-1">
+                                <Gauge className={`w-3 h-3 shrink-0 ${isAccessLimitActive ? 'text-emerald-400' : 'text-zinc-600'}`} />
+                                Quota Lock
+                              </span>
+                              <span className={`font-bold shrink-0 ${isAccessLimitActive ? 'text-emerald-300' : 'text-zinc-600'}`}>
+                                {isAccessLimitActive ? '+1 CR' : '0 CR'}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Account Balance & Auto-Deduct Footer */}
+                          <div className="mt-1.5 pt-1.5 border-t border-cyan-500/20 flex items-center justify-between text-[10px] text-cyan-400/80 relative z-10">
+                            <div className="flex items-center gap-1 truncate">
+                              <Zap className="w-3 h-3 text-amber-400 shrink-0" />
+                              <span>{user ? `Balance: ${user.credits} CR` : '100 Free Starter Credits'}</span>
+                            </div>
+                            <span className="text-emerald-400 font-bold shrink-0">
+                              {user ? `After: ${Math.max(0, (user.credits || 0) - calculatedCreditCost)} CR` : 'Zero Server Cost'}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
 
                   {/* Action Buttons Bar */}
                   <div
@@ -1286,13 +1632,7 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
           </AnimatePresence>
         </div>
 
-        <button
-          onClick={nextSlide}
-          className="hidden md:flex absolute right-2 lg:right-0 z-30 p-2.5 rounded-full bg-[#08051e]/80 border border-cyan-500/40 text-cyan-300 hover:text-white hover:border-cyan-300 hover:bg-cyan-950/90 shadow-[0_0_15px_rgba(0,242,255,0.25)] transition-all transform hover:scale-110 active:scale-95 backdrop-blur-md"
-          aria-label="Next slide"
-        >
-          <ChevronRight className="w-5 h-5" />
-        </button>
+
       </main>
 
       {/* Bottom Horizontal Carousel Indicators */}
@@ -1326,6 +1666,72 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
           <span>ZERO STORAGE // 100% IN-URL</span>
         </div>
       </footer>
+
+      {/* Edge Grip Handles on Center Far Left (TEMPLATES) & Center Far Right (TOOLS) */}
+      <EdgeGripHandles
+        onOpenLeft={() => setIsLeftTemplatesPanelOpen(true)}
+        onOpenRight={() => setIsRightToolsPanelOpen(true)}
+        isLeftOpen={isLeftTemplatesPanelOpen}
+        isRightOpen={isRightToolsPanelOpen}
+      />
+
+      {/* Templates Side Panel (Sliding from Left) */}
+      <TemplatesSidePanel
+        isOpen={isLeftTemplatesPanelOpen}
+        onClose={() => setIsLeftTemplatesPanelOpen(false)}
+        onSelectTemplate={(tpl: TemplatePreset) => {
+          setBoxContent(tpl.content);
+          setBoxTitle(tpl.title);
+          setCurrentSlide(0);
+          setIsLeftTemplatesPanelOpen(false);
+        }}
+        currentContentLength={boxContent.length}
+      />
+
+      {/* Studio Tools & Account Side Panel (Sliding from Right) */}
+      <StudioToolsSidePanel
+        isOpen={isRightToolsPanelOpen}
+        onClose={() => setIsRightToolsPanelOpen(false)}
+        account={account}
+        bittyUrl={generatedUrl}
+        originalBytes={boxContent.length}
+        compressedBytes={generatedUrl.length}
+        isCopied={isCopied}
+        onOpenQr={(url) => {
+          setQrModalUrl(url || generatedUrl);
+          setIsQrModalOpen(true);
+        }}
+        onShare={() => {
+          if (navigator.share && generatedUrl) {
+            navigator.share({ title: boxTitle, url: generatedUrl }).catch(() => {});
+          }
+        }}
+        onPreviewInTab={() => {
+          if (generatedUrl) window.open(generatedUrl, '_blank');
+        }}
+        onExportZip={() => {
+          exportBittyToZip(boxContent, { title: boxTitle }, generatedUrl);
+        }}
+        onNewBox={() => {
+          setBoxContent('<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="utf-8">\n  <title>New Box</title>\n</head>\n<body>\n  <h1>Hello Bitty Box</h1>\n</body>\n</html>');
+          setBoxTitle('My Bitty Box');
+          setCurrentSlide(0);
+        }}
+        onNavigateToSlide01={() => {
+          setCurrentSlide(0);
+          setIsRightToolsPanelOpen(false);
+        }}
+      />
+
+      {/* QR Code Modal */}
+      {isQrModalOpen && (
+        <QrModal
+          url={qrModalUrl || generatedUrl || window.location.href}
+          title={boxTitle}
+          onClose={() => setIsQrModalOpen(false)}
+        />
+      )}
+
 
       {/* Warp Transition Overlay */}
       <AnimatePresence>

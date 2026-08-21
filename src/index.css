@@ -1014,20 +1014,12 @@ body {
 }
 
 /* =========================================
-   PRISM SYNTAX HIGHLIGHTING THEMES
+   PRISM CYBER SYNTAX HIGHLIGHTING
    ========================================= */
-
-/* 1. Cyber Neon (Default) */
 .prism-cyber-theme {
   color: #e0f2fe;
 }
-.prism-cyber-theme .token,
-.prism-matrix-theme .token,
-.prism-dracula-theme .token,
-.prism-monokai-theme .token,
-.prism-nord-theme .token,
-.prism-amber-theme .token,
-.prism-monochrome-theme .token {
+.prism-cyber-theme .token {
   font-weight: 400 !important;
   font-style: normal !important;
   text-shadow: none !important;
@@ -1071,275 +1063,6 @@ body {
 .prism-cyber-theme .token.entity,
 .prism-cyber-theme .token.url {
   color: #f43f5e;
-}
-
-/* 2. Matrix Phosphor Theme */
-.prism-matrix-theme {
-  color: #d1fae5;
-}
-.prism-matrix-theme .token.comment,
-.prism-matrix-theme .token.prolog,
-.prism-matrix-theme .token.doctype,
-.prism-matrix-theme .token.cdata {
-  color: #065f46;
-}
-.prism-matrix-theme .token.punctuation {
-  color: #34d399;
-  opacity: 0.85;
-}
-.prism-matrix-theme .token.tag,
-.prism-matrix-theme .token.tag .token.punctuation {
-  color: #10b981;
-}
-.prism-matrix-theme .token.attr-name {
-  color: #a7f3d0;
-}
-.prism-matrix-theme .token.attr-value,
-.prism-matrix-theme .token.string {
-  color: #00ff66;
-}
-.prism-matrix-theme .token.selector,
-.prism-matrix-theme .token.property {
-  color: #6ee7b7;
-}
-.prism-matrix-theme .token.keyword {
-  color: #059669;
-}
-.prism-matrix-theme .token.function {
-  color: #86efac;
-}
-.prism-matrix-theme .token.number,
-.prism-matrix-theme .token.boolean {
-  color: #4ade80;
-}
-.prism-matrix-theme .token.operator,
-.prism-matrix-theme .token.entity,
-.prism-matrix-theme .token.url {
-  color: #22c55e;
-}
-
-/* 3. Dracula Vampire Theme */
-.prism-dracula-theme {
-  color: #f8f8f2;
-}
-.prism-dracula-theme .token.comment,
-.prism-dracula-theme .token.prolog,
-.prism-dracula-theme .token.doctype,
-.prism-dracula-theme .token.cdata {
-  color: #6272a4;
-}
-.prism-dracula-theme .token.punctuation {
-  color: #f8f8f2;
-  opacity: 0.75;
-}
-.prism-dracula-theme .token.tag,
-.prism-dracula-theme .token.tag .token.punctuation {
-  color: #ff79c6;
-}
-.prism-dracula-theme .token.attr-name {
-  color: #50fa7b;
-}
-.prism-dracula-theme .token.attr-value,
-.prism-dracula-theme .token.string {
-  color: #f1fa8c;
-}
-.prism-dracula-theme .token.selector,
-.prism-dracula-theme .token.property {
-  color: #8be9fd;
-}
-.prism-dracula-theme .token.keyword {
-  color: #ff79c6;
-}
-.prism-dracula-theme .token.function {
-  color: #bd93f9;
-}
-.prism-dracula-theme .token.number,
-.prism-dracula-theme .token.boolean {
-  color: #bd93f9;
-}
-.prism-dracula-theme .token.operator,
-.prism-dracula-theme .token.entity,
-.prism-dracula-theme .token.url {
-  color: #ffb86c;
-}
-
-/* 4. Monokai Pro Theme */
-.prism-monokai-theme {
-  color: #fcfcfa;
-}
-.prism-monokai-theme .token.comment,
-.prism-monokai-theme .token.prolog,
-.prism-monokai-theme .token.doctype,
-.prism-monokai-theme .token.cdata {
-  color: #727072;
-}
-.prism-monokai-theme .token.punctuation {
-  color: #939293;
-}
-.prism-monokai-theme .token.tag,
-.prism-monokai-theme .token.tag .token.punctuation {
-  color: #ff6188;
-}
-.prism-monokai-theme .token.attr-name {
-  color: #a9dc76;
-}
-.prism-monokai-theme .token.attr-value,
-.prism-monokai-theme .token.string {
-  color: #ffd866;
-}
-.prism-monokai-theme .token.selector,
-.prism-monokai-theme .token.property {
-  color: #78dce8;
-}
-.prism-monokai-theme .token.keyword {
-  color: #ff6188;
-}
-.prism-monokai-theme .token.function {
-  color: #a9dc76;
-}
-.prism-monokai-theme .token.number,
-.prism-monokai-theme .token.boolean {
-  color: #ab9df2;
-}
-.prism-monokai-theme .token.operator,
-.prism-monokai-theme .token.entity,
-.prism-monokai-theme .token.url {
-  color: #fc9867;
-}
-
-/* 5. Nord Arctic Theme */
-.prism-nord-theme {
-  color: #eceff4;
-}
-.prism-nord-theme .token.comment,
-.prism-nord-theme .token.prolog,
-.prism-nord-theme .token.doctype,
-.prism-nord-theme .token.cdata {
-  color: #4c566a;
-}
-.prism-nord-theme .token.punctuation {
-  color: #81a1c1;
-}
-.prism-nord-theme .token.tag,
-.prism-nord-theme .token.tag .token.punctuation {
-  color: #88c0d0;
-}
-.prism-nord-theme .token.attr-name {
-  color: #8fbcbb;
-}
-.prism-nord-theme .token.attr-value,
-.prism-nord-theme .token.string {
-  color: #a3be8c;
-}
-.prism-nord-theme .token.selector,
-.prism-nord-theme .token.property {
-  color: #81a1c1;
-}
-.prism-nord-theme .token.keyword {
-  color: #81a1c1;
-}
-.prism-nord-theme .token.function {
-  color: #88c0d0;
-}
-.prism-nord-theme .token.number,
-.prism-nord-theme .token.boolean {
-  color: #b48ead;
-}
-.prism-nord-theme .token.operator,
-.prism-nord-theme .token.entity,
-.prism-nord-theme .token.url {
-  color: #ebcb8b;
-}
-
-/* 6. Amber CRT Theme */
-.prism-amber-theme {
-  color: #fef3c7;
-}
-.prism-amber-theme .token.comment,
-.prism-amber-theme .token.prolog,
-.prism-amber-theme .token.doctype,
-.prism-amber-theme .token.cdata {
-  color: #78350f;
-}
-.prism-amber-theme .token.punctuation {
-  color: #d97706;
-}
-.prism-amber-theme .token.tag,
-.prism-amber-theme .token.tag .token.punctuation {
-  color: #fbbf24;
-}
-.prism-amber-theme .token.attr-name {
-  color: #fde68a;
-}
-.prism-amber-theme .token.attr-value,
-.prism-amber-theme .token.string {
-  color: #f59e0b;
-}
-.prism-amber-theme .token.selector,
-.prism-amber-theme .token.property {
-  color: #fcd34d;
-}
-.prism-amber-theme .token.keyword {
-  color: #b45309;
-}
-.prism-amber-theme .token.function {
-  color: #fef08a;
-}
-.prism-amber-theme .token.number,
-.prism-amber-theme .token.boolean {
-  color: #d97706;
-}
-.prism-amber-theme .token.operator,
-.prism-amber-theme .token.entity,
-.prism-amber-theme .token.url {
-  color: #fb923c;
-}
-
-/* 7. Obsidian Monochrome Theme */
-.prism-monochrome-theme {
-  color: #f4f4f5;
-}
-.prism-monochrome-theme .token.comment,
-.prism-monochrome-theme .token.prolog,
-.prism-monochrome-theme .token.doctype,
-.prism-monochrome-theme .token.cdata {
-  color: #52525b;
-}
-.prism-monochrome-theme .token.punctuation {
-  color: #a1a1aa;
-}
-.prism-monochrome-theme .token.tag,
-.prism-monochrome-theme .token.tag .token.punctuation {
-  color: #ffffff;
-  font-weight: 600 !important;
-}
-.prism-monochrome-theme .token.attr-name {
-  color: #d4d4d8;
-}
-.prism-monochrome-theme .token.attr-value,
-.prism-monochrome-theme .token.string {
-  color: #e4e4e7;
-  text-decoration: underline dotted #71717a;
-}
-.prism-monochrome-theme .token.selector,
-.prism-monochrome-theme .token.property {
-  color: #f4f4f5;
-}
-.prism-monochrome-theme .token.keyword {
-  color: #ffffff;
-  font-weight: 600 !important;
-}
-.prism-monochrome-theme .token.function {
-  color: #e4e4e7;
-}
-.prism-monochrome-theme .token.number,
-.prism-monochrome-theme .token.boolean {
-  color: #d4d4d8;
-}
-.prism-monochrome-theme .token.operator,
-.prism-monochrome-theme .token.entity,
-.prism-monochrome-theme .token.url {
-  color: #a1a1aa;
 }
 
 /* =========================================
@@ -2018,7 +1741,7 @@ body {
 }
 
 /* =========================================
-   BITTY BOX LOCK / UNLOCK — Step #3 polish
+   BITTY BOX LOCK / UNLOCK â€” Step #3 polish
    ========================================= */
 
 /* Shake the passcode input on a wrong submitted passcode */
@@ -2056,3 +1779,1168 @@ body {
   }
 }
 
+/* =========================================
+   CYBER HOLOGRAPHIC ANIMATED TOGGLE SYSTEM
+   ========================================= */
+
+.toggle-container {
+  position: relative;
+  width: 150px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  perspective: 800px;
+  z-index: 5;
+}
+
+.toggle-wrap {
+  position: relative;
+  width: 100%;
+  height: 60px;
+  transform-style: preserve-3d;
+}
+
+.toggle-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-track {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 30, 60, 0.4);
+  border-radius: 30px;
+  cursor: pointer;
+  box-shadow:
+    0 0 15px rgba(0, 80, 255, 0.2),
+    inset 0 0 10px rgba(0, 0, 0, 0.8);
+  overflow: hidden;
+  backdrop-filter: blur(5px);
+  transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+  border: 1px solid rgba(0, 150, 255, 0.3);
+}
+
+.toggle-track::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(
+      ellipse at center,
+      rgba(0, 80, 255, 0.1) 0%,
+      rgba(0, 0, 0, 0) 70%
+    ),
+    linear-gradient(90deg, rgba(0, 60, 120, 0.1) 0%, rgba(0, 30, 60, 0.2) 100%);
+  opacity: 0.6;
+  transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.toggle-track::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  right: 2px;
+  height: 10px;
+  background: linear-gradient(
+    90deg,
+    rgba(0, 170, 255, 0.3) 0%,
+    rgba(0, 80, 255, 0.1) 100%
+  );
+  border-radius: 30px 30px 0 0;
+  opacity: 0.7;
+  filter: blur(1px);
+}
+
+.track-lines {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  transform: translateY(-50%);
+  overflow: hidden;
+}
+
+.track-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(0, 150, 255, 0.3) 0px,
+    rgba(0, 150, 255, 0.3) 5px,
+    transparent 5px,
+    transparent 15px
+  );
+  animation: track-line-move 3s linear infinite;
+}
+
+@keyframes track-line-move {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(20px);
+  }
+}
+
+.toggle-thumb {
+  position: absolute;
+  width: 54px;
+  height: 54px;
+  left: 3px;
+  top: 3px;
+  background: radial-gradient(
+    circle,
+    rgba(10, 40, 90, 0.9) 0%,
+    rgba(0, 20, 50, 0.8) 100%
+  );
+  border-radius: 50%;
+  box-shadow:
+    0 2px 15px rgba(0, 0, 0, 0.5),
+    inset 0 0 15px rgba(0, 150, 255, 0.5);
+  transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+  z-index: 2;
+  border: 1px solid rgba(0, 170, 255, 0.6);
+  overflow: hidden;
+  transform-style: preserve-3d;
+}
+
+.thumb-core {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(
+    circle,
+    rgba(0, 180, 255, 0.6) 0%,
+    rgba(0, 50, 120, 0.2) 100%
+  );
+  border-radius: 50%;
+  box-shadow: 0 0 20px rgba(0, 150, 255, 0.5);
+  opacity: 0.9;
+  transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.thumb-inner {
+  position: absolute;
+  width: 25px;
+  height: 25px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.8) 0%,
+    rgba(100, 200, 255, 0.5) 100%
+  );
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(100, 200, 255, 0.7);
+  opacity: 0.7;
+  transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+  animation: pulse 2s infinite alternate;
+}
+
+.thumb-scan {
+  position: absolute;
+  width: 100%;
+  height: 5px;
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 150, 255, 0.5) 20%,
+    rgba(255, 255, 255, 0.8) 50%,
+    rgba(0, 150, 255, 0.5) 80%,
+    rgba(0, 0, 0, 0) 100%
+  );
+  top: 0;
+  left: 0;
+  filter: blur(1px);
+  animation: thumb-scan 2s linear infinite;
+  opacity: 0.7;
+}
+
+@keyframes thumb-scan {
+  0% {
+    top: -5px;
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.7;
+  }
+  80% {
+    opacity: 0.7;
+  }
+  100% {
+    top: 54px;
+    opacity: 0;
+  }
+}
+
+.thumb-particles {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  overflow: hidden;
+}
+
+.thumb-particle {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  background: rgba(100, 200, 255, 0.8);
+  border-radius: 50%;
+  box-shadow: 0 0 5px rgba(100, 200, 255, 0.8);
+  animation: thumb-particle-float 3s infinite ease-out;
+  opacity: 0;
+}
+
+.thumb-particle:nth-child(1) {
+  top: 70%;
+  left: 30%;
+  animation-delay: 0.2s;
+}
+
+.thumb-particle:nth-child(2) {
+  top: 60%;
+  left: 60%;
+  animation-delay: 0.6s;
+}
+
+.thumb-particle:nth-child(3) {
+  top: 50%;
+  left: 40%;
+  animation-delay: 1s;
+}
+
+.thumb-particle:nth-child(4) {
+  top: 40%;
+  left: 70%;
+  animation-delay: 1.4s;
+}
+
+.thumb-particle:nth-child(5) {
+  top: 80%;
+  left: 50%;
+  animation-delay: 1.8s;
+}
+
+@keyframes thumb-particle-float {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(-30px) scale(0);
+    opacity: 0;
+  }
+}
+
+.toggle-data {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+.data-text {
+  position: absolute;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: all 0.5s ease;
+  font-family: "Orbitron", "JetBrains Mono", monospace;
+}
+
+.data-text.off {
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 1;
+  color: rgba(0, 150, 255, 0.6);
+  text-shadow: 0 0 5px rgba(0, 100, 255, 0.4);
+}
+
+.data-text.on {
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+  color: rgba(0, 255, 150, 0.6);
+  text-shadow: 0 0 5px rgba(0, 255, 100, 0.4);
+}
+
+.status-indicator {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(0, 180, 255, 0.8) 0%,
+    rgba(0, 80, 200, 0.4) 100%
+  );
+  box-shadow: 0 0 10px rgba(0, 150, 255, 0.5);
+  animation: blink 2s infinite alternate;
+  transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.status-indicator.off {
+  top: 25px;
+  right: 15px;
+}
+
+.status-indicator.on {
+  top: 25px;
+  left: 15px;
+  opacity: 0;
+  background: radial-gradient(
+    circle,
+    rgba(0, 255, 150, 0.8) 0%,
+    rgba(0, 200, 80, 0.4) 100%
+  );
+  box-shadow: 0 0 10px rgba(0, 255, 150, 0.5);
+}
+
+.energy-rings {
+  position: absolute;
+  width: 54px;
+  height: 54px;
+  left: 3px;
+  top: 3px;
+  pointer-events: none;
+  z-index: 1;
+  transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.energy-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 2px solid transparent;
+  opacity: 0;
+}
+
+.energy-ring:nth-child(1) {
+  width: 50px;
+  height: 50px;
+  border-top-color: rgba(0, 150, 255, 0.5);
+  border-right-color: rgba(0, 150, 255, 0.3);
+  animation: spin 3s linear infinite;
+}
+
+.energy-ring:nth-child(2) {
+  width: 40px;
+  height: 40px;
+  border-bottom-color: rgba(0, 150, 255, 0.5);
+  border-left-color: rgba(0, 150, 255, 0.3);
+  animation: spin 2s linear infinite reverse;
+}
+
+.energy-ring:nth-child(3) {
+  width: 30px;
+  height: 30px;
+  border-left-color: rgba(0, 150, 255, 0.5);
+  border-top-color: rgba(0, 150, 255, 0.3);
+  animation: spin 1.5s linear infinite;
+}
+
+.interface-lines {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.interface-line {
+  position: absolute;
+  background: rgba(0, 150, 255, 0.3);
+  transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.interface-line:nth-child(1) {
+  width: 15px;
+  height: 1px;
+  bottom: -5px;
+  left: 20px;
+}
+
+.interface-line:nth-child(2) {
+  width: 1px;
+  height: 8px;
+  bottom: -12px;
+  left: 35px;
+}
+
+.interface-line:nth-child(3) {
+  width: 25px;
+  height: 1px;
+  bottom: -12px;
+  left: 35px;
+}
+
+.interface-line:nth-child(4) {
+  width: 15px;
+  height: 1px;
+  bottom: -5px;
+  right: 20px;
+}
+
+.interface-line:nth-child(5) {
+  width: 1px;
+  height: 8px;
+  bottom: -12px;
+  right: 35px;
+}
+
+.interface-line:nth-child(6) {
+  width: 25px;
+  height: 1px;
+  bottom: -12px;
+  right: 10px;
+}
+
+.toggle-reflection {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0) 40%
+  );
+  border-radius: 30px;
+  pointer-events: none;
+}
+
+.toggle-label {
+  position: relative;
+  margin-top: 20px;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-align: center;
+  color: rgba(0, 150, 255, 0.7);
+  text-shadow: 0 0 10px rgba(0, 100, 255, 0.5);
+  transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.toggle-track .holo-glow,
+.toggle-holo-glow {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 30px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(0, 150, 255, 0.2) 0%,
+    rgba(0, 0, 0, 0) 70%
+  );
+  filter: blur(10px);
+  opacity: 0.5;
+  transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+  z-index: 0;
+}
+
+.toggle-input:checked + .toggle-track {
+  background: rgba(0, 60, 30, 0.4);
+  border-color: rgba(0, 255, 150, 0.3);
+  box-shadow:
+    0 0 15px rgba(0, 255, 150, 0.2),
+    inset 0 0 10px rgba(0, 0, 0, 0.8);
+}
+
+.toggle-input:checked + .toggle-track::before {
+  background: radial-gradient(
+      ellipse at center,
+      rgba(0, 255, 150, 0.1) 0%,
+      rgba(0, 0, 0, 0) 70%
+    ),
+    linear-gradient(90deg, rgba(0, 120, 60, 0.1) 0%, rgba(0, 60, 30, 0.2) 100%);
+}
+
+.toggle-input:checked + .toggle-track::after {
+  background: linear-gradient(
+    90deg,
+    rgba(0, 255, 150, 0.3) 0%,
+    rgba(0, 160, 80, 0.1) 100%
+  );
+}
+
+.toggle-input:checked + .toggle-track .track-line {
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(0, 255, 150, 0.3) 0px,
+    rgba(0, 255, 150, 0.3) 5px,
+    transparent 5px,
+    transparent 15px
+  );
+  animation-direction: reverse;
+}
+
+.toggle-input:checked + .toggle-track .toggle-thumb {
+  left: calc(100% - 57px);
+  background: radial-gradient(
+    circle,
+    rgba(10, 90, 40, 0.9) 0%,
+    rgba(0, 50, 20, 0.8) 100%
+  );
+  border-color: rgba(0, 255, 150, 0.6);
+  box-shadow:
+    0 2px 15px rgba(0, 0, 0, 0.5),
+    inset 0 0 15px rgba(0, 255, 150, 0.5);
+}
+
+.toggle-input:checked + .toggle-track .thumb-core {
+  background: radial-gradient(
+    circle,
+    rgba(0, 255, 150, 0.6) 0%,
+    rgba(0, 120, 50, 0.2) 100%
+  );
+  box-shadow: 0 0 20px rgba(0, 255, 150, 0.5);
+}
+
+.toggle-input:checked + .toggle-track .thumb-inner {
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.8) 0%,
+    rgba(100, 255, 200, 0.5) 100%
+  );
+  box-shadow: 0 0 10px rgba(100, 255, 200, 0.7);
+}
+
+.toggle-input:checked + .toggle-track .thumb-scan {
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 255, 150, 0.5) 20%,
+    rgba(255, 255, 255, 0.8) 50%,
+    rgba(0, 255, 150, 0.5) 80%,
+    rgba(0, 0, 0, 0) 100%
+  );
+}
+
+.toggle-input:checked + .toggle-track .thumb-particle {
+  background: rgba(100, 255, 200, 0.8);
+  box-shadow: 0 0 5px rgba(100, 255, 200, 0.8);
+}
+
+.toggle-input:checked + .toggle-track .data-text.off {
+  opacity: 0;
+}
+
+.toggle-input:checked + .toggle-track .data-text.on {
+  opacity: 1;
+}
+
+.toggle-input:checked + .toggle-track .status-indicator.off {
+  opacity: 0;
+}
+
+.toggle-input:checked + .toggle-track .status-indicator.on {
+  opacity: 1;
+}
+
+.toggle-input:checked + .toggle-track .energy-rings {
+  left: calc(100% - 57px);
+}
+
+.toggle-input:checked + .toggle-track .energy-ring {
+  opacity: 1;
+}
+
+.toggle-input:checked + .toggle-track .energy-ring:nth-child(1) {
+  border-top-color: rgba(0, 255, 150, 0.5);
+  border-right-color: rgba(0, 255, 150, 0.3);
+}
+
+.toggle-input:checked + .toggle-track .energy-ring:nth-child(2) {
+  border-bottom-color: rgba(0, 255, 150, 0.5);
+  border-left-color: rgba(0, 255, 150, 0.3);
+}
+
+.toggle-input:checked + .toggle-track .energy-ring:nth-child(3) {
+  border-left-color: rgba(0, 255, 150, 0.5);
+  border-top-color: rgba(0, 255, 150, 0.3);
+}
+
+.toggle-input:checked + .toggle-track .interface-line {
+  background: rgba(0, 255, 150, 0.3);
+}
+
+.toggle-input:checked ~ .toggle-label {
+  color: rgba(0, 255, 150, 0.7);
+  text-shadow: 0 0 10px rgba(0, 255, 150, 0.5);
+}
+
+.toggle-input:checked + .toggle-track .holo-glow,
+.toggle-input:checked + .toggle-track .toggle-holo-glow {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(0, 255, 150, 0.2) 0%,
+    rgba(0, 0, 0, 0) 70%
+  );
+}
+
+.toggle-input:hover + .toggle-track {
+  box-shadow:
+    0 0 20px rgba(0, 150, 255, 0.3),
+    inset 0 0 10px rgba(0, 0, 0, 0.8);
+}
+
+.toggle-input:checked:hover + .toggle-track {
+  box-shadow:
+    0 0 20px rgba(0, 255, 150, 0.3),
+    inset 0 0 10px rgba(0, 0, 0, 0.8);
+}
+
+
+
+
+/*
+  Prism Checkbox
+  Pure HTML + CSS
+  No JavaScript or external assets required
+*/
+
+.prism-checkbox {
+  --checkbox-size: 34px;
+  --checkbox-color: #63ffd2;
+  --checkbox-secondary: #7c6cff;
+  --checkbox-text: #eaf2ff;
+  --checkbox-muted: #8490a8;
+  --checkbox-surface: #0a0e18;
+
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 13px;
+  min-height: 46px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.prism-checkbox *,
+.prism-checkbox *::before,
+.prism-checkbox *::after {
+  box-sizing: border-box;
+}
+
+/* Hide the native checkbox while keeping it accessible */
+
+.prism-checkbox__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+
+/* Main checkbox */
+
+.prism-checkbox__box {
+  position: relative;
+  display: grid;
+  flex: 0 0 auto;
+  width: var(--checkbox-size);
+  height: var(--checkbox-size);
+  place-items: center;
+  overflow: visible;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  color: var(--checkbox-color);
+  background: radial-gradient(
+      circle at 30% 22%,
+      rgba(255, 255, 255, 0.12),
+      transparent 36%
+    ),
+    linear-gradient(145deg, #151b2a, var(--checkbox-surface) 64%);
+  box-shadow:
+    0 8px 18px rgba(0, 0, 0, 0.3),
+    inset 0 1px 1px rgba(255, 255, 255, 0.1),
+    inset 0 -3px 7px rgba(0, 0, 0, 0.55);
+  isolation: isolate;
+  transition:
+    border-color 350ms ease,
+    background 350ms ease,
+    box-shadow 350ms ease,
+    transform 180ms ease;
+}
+
+.prism-checkbox__box::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  z-index: -2;
+  border-radius: inherit;
+  background: conic-gradient(
+    from 0deg,
+    transparent,
+    rgba(99, 255, 210, 0.8),
+    transparent 35%,
+    rgba(124, 108, 255, 0.8),
+    transparent 70%
+  );
+  opacity: 0;
+  filter: blur(5px);
+  transition: opacity 350ms ease;
+}
+
+.prism-checkbox__box::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  z-index: 0;
+  border: 1px solid rgba(255, 255, 255, 0.035);
+  border-radius: 7px;
+  pointer-events: none;
+}
+
+/* Decorative grid */
+
+.prism-checkbox__grid {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  opacity: 0.12;
+  background-image: linear-gradient(
+      rgba(255, 255, 255, 0.15) 1px,
+      transparent 1px
+    ),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.15) 1px, transparent 1px);
+  background-size: 8px 8px;
+  transition:
+    opacity 350ms ease,
+    transform 500ms ease;
+}
+
+/* Inner glow */
+
+.prism-checkbox__glow {
+  position: absolute;
+  inset: 5px;
+  z-index: 1;
+  border-radius: 6px;
+  background: radial-gradient(
+    circle,
+    rgba(99, 255, 210, 0.48),
+    rgba(124, 108, 255, 0.18) 48%,
+    transparent 75%
+  );
+  opacity: 0;
+  filter: blur(4px);
+  transform: scale(0.4);
+  transition:
+    opacity 350ms ease,
+    transform 450ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Check icon */
+
+.prism-checkbox__check {
+  position: relative;
+  z-index: 3;
+  width: 22px;
+  height: 22px;
+  overflow: visible;
+  filter: drop-shadow(0 0 4px var(--checkbox-color))
+    drop-shadow(0 0 9px rgba(99, 255, 210, 0.6));
+  transform: scale(0.55) rotate(-12deg);
+  opacity: 0;
+  transition:
+    opacity 220ms ease,
+    transform 450ms cubic-bezier(0.2, 1.4, 0.3, 1);
+}
+
+.prism-checkbox__check path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 22;
+  stroke-dashoffset: 22;
+  transition: stroke-dashoffset 450ms ease 90ms;
+}
+
+/* Text */
+
+.prism-checkbox__content {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+
+.prism-checkbox__label {
+  color: var(--checkbox-text);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: 0.01em;
+  transition:
+    color 300ms ease,
+    text-shadow 300ms ease;
+}
+
+.prism-checkbox__description {
+  color: var(--checkbox-muted);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.25;
+  transition: color 300ms ease;
+}
+
+/* Particle effects */
+
+.prism-checkbox__particle {
+  position: absolute;
+  z-index: 5;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--checkbox-color);
+  box-shadow:
+    0 0 5px var(--checkbox-color),
+    0 0 10px var(--checkbox-color);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.prism-checkbox__particle--1 {
+  top: 3px;
+  left: 50%;
+}
+
+.prism-checkbox__particle--2 {
+  top: 7px;
+  right: 2px;
+}
+
+.prism-checkbox__particle--3 {
+  right: 3px;
+  bottom: 6px;
+}
+
+.prism-checkbox__particle--4 {
+  bottom: 2px;
+  left: 45%;
+}
+
+.prism-checkbox__particle--5 {
+  bottom: 7px;
+  left: 2px;
+}
+
+.prism-checkbox__particle--6 {
+  top: 7px;
+  left: 2px;
+}
+
+/* Hover */
+
+.prism-checkbox:hover .prism-checkbox__box {
+  border-color: rgba(99, 255, 210, 0.35);
+  transform: translateY(-1px);
+}
+
+.prism-checkbox:hover .prism-checkbox__label {
+  color: #ffffff;
+}
+
+/* Pressed */
+
+.prism-checkbox:active .prism-checkbox__box {
+  transform: translateY(0) scale(0.92);
+}
+
+/* Checked state */
+
+.prism-checkbox__input:checked + .prism-checkbox__box {
+  border-color: rgba(99, 255, 210, 0.75);
+  background: radial-gradient(
+      circle at 50% 50%,
+      rgba(99, 255, 210, 0.2),
+      transparent 65%
+    ),
+    linear-gradient(145deg, #122b28, #071512 70%);
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.32),
+    0 0 13px rgba(99, 255, 210, 0.38),
+    0 0 26px rgba(124, 108, 255, 0.16),
+    inset 0 1px 1px rgba(255, 255, 255, 0.13),
+    inset 0 -3px 8px rgba(0, 0, 0, 0.5);
+  animation: prism-checkbox-pop 420ms ease;
+}
+
+.prism-checkbox__input:checked + .prism-checkbox__box::before {
+  opacity: 0.75;
+  animation: prism-checkbox-border-spin 3s linear infinite;
+}
+
+.prism-checkbox__input:checked + .prism-checkbox__box .prism-checkbox__grid {
+  opacity: 0.22;
+  transform: scale(1.15) rotate(8deg);
+}
+
+.prism-checkbox__input:checked + .prism-checkbox__box .prism-checkbox__glow {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.prism-checkbox__input:checked + .prism-checkbox__box .prism-checkbox__check {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+}
+
+.prism-checkbox__input:checked
+  + .prism-checkbox__box
+  .prism-checkbox__check
+  path {
+  stroke-dashoffset: 0;
+}
+
+.prism-checkbox__input:checked
+  ~ .prism-checkbox__content
+  .prism-checkbox__label {
+  color: var(--checkbox-color);
+  text-shadow: 0 0 12px rgba(99, 255, 210, 0.28);
+}
+
+.prism-checkbox__input:checked
+  ~ .prism-checkbox__content
+  .prism-checkbox__description {
+  color: #9eabbd;
+}
+
+.prism-checkbox__input:checked
+  + .prism-checkbox__box
+  .prism-checkbox__particle {
+  animation: prism-checkbox-particle 620ms ease-out;
+}
+
+.prism-checkbox__input:checked
+  + .prism-checkbox__box
+  .prism-checkbox__particle--2 {
+  animation-delay: 40ms;
+}
+
+.prism-checkbox__input:checked
+  + .prism-checkbox__box
+  .prism-checkbox__particle--3 {
+  animation-delay: 80ms;
+}
+
+.prism-checkbox__input:checked
+  + .prism-checkbox__box
+  .prism-checkbox__particle--4 {
+  animation-delay: 120ms;
+}
+
+.prism-checkbox__input:checked
+  + .prism-checkbox__box
+  .prism-checkbox__particle--5 {
+  animation-delay: 160ms;
+}
+
+.prism-checkbox__input:checked
+  + .prism-checkbox__box
+  .prism-checkbox__particle--6 {
+  animation-delay: 200ms;
+}
+
+/* Keyboard accessibility */
+
+.prism-checkbox__input:focus-visible + .prism-checkbox__box {
+  outline: 3px solid rgba(99, 255, 210, 0.4);
+  outline-offset: 5px;
+}
+
+/* Disabled state */
+
+.prism-checkbox:has(.prism-checkbox__input:disabled) {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.prism-checkbox__input:disabled + .prism-checkbox__box {
+  filter: grayscale(0.85);
+}
+
+/* Checkbox-only version */
+
+.prism-checkbox--icon-only {
+  min-height: var(--checkbox-size);
+  gap: 0;
+}
+
+.prism-checkbox--icon-only .prism-checkbox__content {
+  display: none;
+}
+
+/* Small size */
+
+.prism-checkbox--small {
+  --checkbox-size: 26px;
+  gap: 10px;
+}
+
+.prism-checkbox--small .prism-checkbox__box {
+  border-radius: 8px;
+}
+
+.prism-checkbox--small .prism-checkbox__check {
+  width: 17px;
+  height: 17px;
+}
+
+.prism-checkbox--small .prism-checkbox__label {
+  font-size: 12px;
+}
+
+.prism-checkbox--small .prism-checkbox__description {
+  font-size: 10px;
+}
+
+/* Large size */
+
+.prism-checkbox--large {
+  --checkbox-size: 44px;
+  gap: 16px;
+}
+
+.prism-checkbox--large .prism-checkbox__box {
+  border-radius: 13px;
+}
+
+.prism-checkbox--large .prism-checkbox__check {
+  width: 28px;
+  height: 28px;
+}
+
+.prism-checkbox--large .prism-checkbox__label {
+  font-size: 16px;
+}
+
+.prism-checkbox--large .prism-checkbox__description {
+  font-size: 12px;
+}
+
+/* Animations */
+
+@keyframes prism-checkbox-pop {
+  0% {
+    transform: scale(0.82);
+  }
+
+  55% {
+    transform: scale(1.12);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes prism-checkbox-border-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes prism-checkbox-particle {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0);
+  }
+
+  35% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1.25);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(
+        calc((var(--particle-x, 1)) * 8px),
+        calc((var(--particle-y, -1)) * 8px)
+      )
+      scale(0);
+  }
+}
+
+.prism-checkbox__particle--1 {
+  --particle-x: 0;
+  --particle-y: -1;
+}
+
+.prism-checkbox__particle--2 {
+  --particle-x: 1;
+  --particle-y: -1;
+}
+
+.prism-checkbox__particle--3 {
+  --particle-x: 1;
+  --particle-y: 1;
+}
+
+.prism-checkbox__particle--4 {
+  --particle-x: 0;
+  --particle-y: 1;
+}
+
+.prism-checkbox__particle--5 {
+  --particle-x: -1;
+  --particle-y: 1;
+}
+
+.prism-checkbox__particle--6 {
+  --particle-x: -1;
+  --particle-y: -1;
+}
+
+/* Reduced motion */
+
+@media (prefers-reduced-motion: reduce) {
+  .prism-checkbox *,
+  .prism-checkbox *::before,
+  .prism-checkbox *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+}

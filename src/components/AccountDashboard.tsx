@@ -1,0 +1,1127 @@
+import React, { useState } from 'react';
+import {
+  User,
+  Key,
+  Coins,
+  History,
+  Bot,
+  Copy,
+  Check,
+  ExternalLink,
+  Trash2,
+  Plus,
+  Shield,
+  Clock,
+  Flame,
+  Zap,
+  Lock,
+  Sparkles,
+  RefreshCw,
+  LogOut,
+  Terminal,
+  Radio,
+  CheckCircle2,
+  AlertTriangle,
+  Info,
+  Code,
+  Layers,
+  Search,
+  SlidersHorizontal,
+  Crown,
+  Share2,
+  QrCode,
+  Mail,
+  Send,
+  Inbox
+} from 'lucide-react';
+import { BittyUser, ApiKeyMeta, TrackedBittyBox } from '../types';
+import { UseAccountResult } from '../hooks/useAccount';
+import { CyberScrambleText } from './CyberScrambleText';
+import { PrismCheckbox } from './PrismCheckbox';
+import { ShieldCheck } from 'lucide-react';
+
+interface AccountDashboardProps {
+  account: UseAccountResult;
+  onNavigateToSlide01?: () => void;
+  onOpenQr?: (url: string) => void;
+}
+
+export const AccountDashboard: React.FC<AccountDashboardProps> = ({
+  account,
+  onNavigateToSlide01,
+  onOpenQr,
+}) => {
+  const {
+    user,
+    isAuthenticated,
+    isLoading,
+    error,
+    login,
+    register,
+    logout,
+    refreshUser,
+    generateApiKey,
+    revokeApiKey,
+    testApiKey,
+    purchaseCredits,
+    deleteTrackedBox,
+  } = account;
+
+  // Navigation tab inside Account Dashboard
+  const [activeTab, setActiveTab] = useState<'boxes' | 'keys' | 'credits' | 'mcp'>('boxes');
+
+  // Auth form states (Pure Magic Link)
+  const [email, setEmail] = useState('');
+  const [trustDeviceOnLogin, setTrustDeviceOnLogin] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('bitty_device_trusted') !== 'false';
+    } catch {
+      return true;
+    }
+  });
+  const [displayName, setDisplayName] = useState('');
+  const [authSubmitting, setAuthSubmitting] = useState(false);
+  const [authMsg, setAuthMsg] = useState<string | null>(null);
+  const [magicLinkSent, setMagicLinkSent] = useState(false);
+  const [magicSentEmail, setMagicSentEmail] = useState('');
+
+  // Key creation state
+  const [isCreatingKey, setIsCreatingKey] = useState(false);
+  const [newKeyLabel, setNewKeyLabel] = useState('My AI Agent Key');
+  const [newKeyScopes, setNewKeyScopes] = useState<string[]>(['links:create', 'links:read', 'mcp:access']);
+  const [revealedKey, setRevealedKey] = useState<{ rawKey: string; key: ApiKeyMeta } | null>(null);
+  const [isCopiedRawKey, setIsCopiedRawKey] = useState(false);
+
+  // Key testing state
+  const [testKeyInput, setTestKeyInput] = useState('');
+  const [testKeyResult, setTestKeyResult] = useState<any>(null);
+  const [isTestingKey, setIsTestingKey] = useState(false);
+
+  // Box search & filter
+  const [boxSearchQuery, setBoxSearchQuery] = useState('');
+  const [copiedBoxId, setCopiedBoxId] = useState<string | null>(null);
+
+  // Credit purchasing state
+  const [purchasingPkg, setPurchasingPkg] = useState<string | null>(null);
+  const [purchaseSuccessMsg, setPurchaseSuccessMsg] = useState<string | null>(null);
+
+  // Handle Magic Link Submission
+  const handleMagicLinkSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim() || !email.includes('@')) {
+      setAuthMsg('Please enter a valid email address.');
+      return;
+    }
+    setAuthSubmitting(true);
+    setAuthMsg(null);
+
+    const res = await account.requestMagicLink(email.trim(), displayName.trim(), trustDeviceOnLogin);
+    setAuthSubmitting(false);
+
+    if (res.success) {
+      setMagicLinkSent(true);
+      setMagicSentEmail(email.trim());
+    } else {
+      setAuthMsg(res.error || 'Failed to dispatch magic link. Please check your email.');
+    }
+  };
+
+  // Handle Key Generation
+  const handleGenerateKey = async () => {
+    setIsCreatingKey(true);
+    const created = await generateApiKey(newKeyLabel, newKeyScopes);
+    setIsCreatingKey(false);
+    if (created) {
+      setRevealedKey(created);
+      setNewKeyLabel('New Key');
+    }
+  };
+
+  // Handle Key Copy
+  const handleCopyRawKey = () => {
+    if (revealedKey?.rawKey) {
+      navigator.clipboard.writeText(revealedKey.rawKey);
+      setIsCopiedRawKey(true);
+      setTimeout(() => setIsCopiedRawKey(false), 2500);
+    }
+  };
+
+  // Handle Box URL Copy
+  const handleCopyBoxUrl = (box: TrackedBittyBox) => {
+    navigator.clipboard.writeText(box.url);
+    setCopiedBoxId(box.id);
+    setTimeout(() => setCopiedBoxId(null), 2500);
+  };
+
+  // Handle Test Key
+  const handleRunTestKey = async () => {
+    if (!testKeyInput.trim()) return;
+    setIsTestingKey(true);
+    const res = await testApiKey(testKeyInput.trim());
+    setTestKeyResult(res);
+    setIsTestingKey(false);
+  };
+
+  // Handle Credit Refill
+  const handleBuyCredits = async (packageId: string, amount: number, costCents: number) => {
+    setPurchasingPkg(packageId);
+    setPurchaseSuccessMsg(null);
+    const success = await purchaseCredits(packageId, amount, costCents);
+    setPurchasingPkg(null);
+    if (success) {
+      setPurchaseSuccessMsg(`Successfully added ${amount} Credits to your account!`);
+      setTimeout(() => setPurchaseSuccessMsg(null), 4000);
+    }
+  };
+
+  // Filtered Boxes
+  const filteredBoxes = (user?.links || []).filter(box => {
+    if (!boxSearchQuery.trim()) return true;
+    const query = boxSearchQuery.toLowerCase();
+    return (
+      (box.title && box.title.toLowerCase().includes(query)) ||
+      (box.format && box.format.toLowerCase().includes(query)) ||
+      box.url.toLowerCase().includes(query)
+    );
+  });
+
+  // =========================================================================
+  // VIEW: NOT AUTHENTICATED -> SIGN IN / REGISTER CARD
+  // =========================================================================
+  if (!isAuthenticated || !user) {
+    return (
+      <div className="min-h-[calc(100vh-4rem)] bg-[#04010d] text-cyan-100 font-sans py-8 px-4 sm:px-6 relative overflow-hidden flex items-center justify-center">
+        {/* Ambient Glows */}
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[550px] h-[550px] bg-gradient-to-tr from-cyan-600/10 via-fuchsia-600/10 to-transparent rounded-full blur-3xl pointer-events-none" />
+
+        <div className="w-full max-w-lg relative z-10">
+          {/* Brand Header */}
+          <div className="text-center mb-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/80 border border-cyan-400/40 text-cyan-300 font-mono text-xs mb-3 shadow-[0_0_15px_rgba(0,242,255,0.25)]">
+              <User className="w-3.5 h-3.5 text-cyan-400" />
+              <span>BITTY ACCOUNT NETWORK</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold font-cyber tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-fuchsia-300 to-teal-200">
+              BUILDER AUTHENTICATION
+            </h1>
+            <p className="text-xs sm:text-sm text-cyan-300/70 font-mono mt-1.5 max-w-md mx-auto">
+              Passwordless magic sign-in, API keys, and autonomous agent credit balance.
+            </p>
+          </div>
+
+          {/* Bonus Perks Banner */}
+          <div className="mb-5 p-3 sm:p-3.5 rounded-xl bg-gradient-to-r from-cyan-950/70 via-purple-950/60 to-fuchsia-950/70 border border-cyan-500/30 flex items-center justify-between gap-3 shadow-[0_0_20px_rgba(0,242,255,0.12)]">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-400/50 flex items-center justify-center text-cyan-300">
+                <Coins className="w-4 h-4 text-cyan-300 animate-pulse" />
+              </div>
+              <div>
+                <div className="text-xs font-bold text-cyan-200 font-cyber">100 FREE STARTER CREDITS</div>
+                <div className="text-[10px] text-cyan-300/70 font-mono">Instant balance granted upon registration</div>
+              </div>
+            </div>
+            <span className="text-[10px] uppercase font-mono font-bold bg-cyan-900/60 border border-cyan-400/40 px-2 py-0.5 rounded text-cyan-300">
+              FREE TIER
+            </span>
+          </div>
+
+          {/* Form Card */}
+          <div className="bg-[#08031a]/90 backdrop-blur-xl border border-cyan-500/30 rounded-2xl p-5 sm:p-7 shadow-[0_0_35px_rgba(0,242,255,0.15)] font-mono relative">
+            {magicLinkSent ? (
+              <div className="p-6 rounded-xl bg-cyan-950/40 border border-cyan-500/40 text-center space-y-4 animate-in zoom-in-95 duration-200">
+                <div className="w-14 h-14 rounded-2xl bg-cyan-500/20 border border-cyan-400/50 mx-auto flex items-center justify-center shadow-[0_0_25px_rgba(0,242,255,0.4)]">
+                  <Mail className="w-7 h-7 text-cyan-300 animate-bounce" />
+                </div>
+                <div>
+                  <h3 className="font-cyber text-base font-bold text-white tracking-wide">
+                    <CyberScrambleText text="TRANSMISSION DISPATCHED" speed={20} />
+                  </h3>
+                  <p className="text-xs text-cyan-200 font-mono mt-1.5 break-all">
+                    Sent to: <span className="font-bold text-cyan-300">{magicSentEmail}</span>
+                  </p>
+                  <p className="text-[11px] text-cyan-300/70 mt-2 leading-relaxed">
+                    Check your email inbox and click the magic link to instantly access your account.
+                    The link is single-use and expires in 15 minutes.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMagicLinkSent(false);
+                    setAuthMsg(null);
+                  }}
+                  className="w-full py-2.5 rounded-xl border border-cyan-500/30 text-cyan-300 text-xs font-mono hover:bg-cyan-900/40 transition cursor-pointer"
+                >
+                  SEND TO A DIFFERENT EMAIL
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleMagicLinkSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-[11px] font-bold text-cyan-300 mb-1">
+                    YOUR EMAIL ADDRESS:
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="email"
+                      required
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      placeholder="developer@yourdomain.com"
+                      className="w-full bg-[#02010c] border border-cyan-500/30 rounded-lg pl-9 pr-3 py-2.5 text-xs text-cyan-100 placeholder:text-cyan-500/40 outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/50 transition font-mono"
+                    />
+                    <Mail className="w-4 h-4 text-cyan-400/60 absolute left-3 top-1/2 -translate-y-1/2" />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-cyan-300 mb-1">
+                    CALLSIGN / DISPLAY NAME (OPTIONAL):
+                  </label>
+                  <input
+                    type="text"
+                    value={displayName}
+                    onChange={e => setDisplayName(e.target.value)}
+                    placeholder="e.g. Cypher_01, Alex Developer"
+                    className="w-full bg-[#02010c] border border-cyan-500/30 rounded-lg px-3 py-2 text-xs text-cyan-100 placeholder:text-cyan-500/40 outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/50 transition font-mono"
+                  />
+                </div>
+
+                {authMsg && (
+                  <div className="p-2.5 rounded-lg bg-rose-950/60 border border-rose-500/40 text-rose-300 text-xs flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+                    <span>{authMsg}</span>
+                  </div>
+                )}
+
+                
+                <div className="py-1.5">
+                  <PrismCheckbox
+                    checked={trustDeviceOnLogin}
+                    onChange={(checked) => {
+                      setTrustDeviceOnLogin(checked);
+                      try {
+                        localStorage.setItem('bitty_device_trusted', String(checked));
+                      } catch {}
+                    }}
+                    label="Trust this device for 30 days"
+                    description="Stay signed in without having to authenticate on this device."
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={authSubmitting}
+                  className="w-full py-3 rounded-xl font-cyber font-bold text-xs tracking-wider text-black bg-gradient-to-r from-cyan-400 via-teal-300 to-emerald-400 hover:brightness-110 active:scale-[0.99] transition shadow-[0_0_25px_rgba(0,242,255,0.4)] cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {authSubmitting ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      <span>DISPATCHING MAGIC LINK...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4" />
+                      <span>SEND MAGIC SIGN-IN LINK</span>
+                    </>
+                  )}
+                </button>
+                <div className="text-[10px] text-cyan-400/60 text-center font-mono">
+                  ⚡ Instant access via email • No password required
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // VIEW: AUTHENTICATED -> COMPLETE ACCOUNT MANAGEMENT DASHBOARD
+  // =========================================================================
+  return (
+    <div className="min-h-[calc(100vh-4rem)] bg-[#04010d] text-cyan-100 font-sans py-6 sm:py-8 px-3 sm:px-6 relative overflow-hidden">
+      {/* Background Neon Elements */}
+      <div className="max-w-7xl mx-auto space-y-6 relative z-10">
+        
+        {/* =========================================================================
+            TOP PROFILE & SYSTEM STATS BENTO HEADER
+           ========================================================================= */}
+        <div className="bg-[#08031a]/90 backdrop-blur-xl border border-cyan-500/30 rounded-2xl p-4 sm:p-6 shadow-[0_0_30px_rgba(0,242,255,0.15)] font-mono">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-cyan-500/20 pb-4 mb-4">
+            {/* User Details */}
+            <div className="flex items-center gap-3.5">
+              <div className="relative w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-400 via-fuchsia-500 to-indigo-600 p-[2px] shadow-[0_0_15px_rgba(0,242,255,0.4)] shrink-0">
+                <div className="w-full h-full bg-[#070214] rounded-[10px] flex items-center justify-center text-xl">
+                  {user.avatar || '⚡'}
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h1 className="font-cyber font-bold text-lg sm:text-xl text-cyan-200">
+                    {user.displayName || 'Bitty Builder'}
+                  </h1>
+                  <span className="text-[10px] uppercase font-mono font-bold bg-cyan-950 border border-cyan-400/40 text-cyan-300 px-2 py-0.5 rounded shadow-sm">
+                    {user.tier || 'PRO BUILDER'}
+                  </span>
+                  <span className="text-[10px] font-mono text-cyan-400/60 hidden sm:inline">
+                    ID: {user.id}
+                  </span>
+                </div>
+                <div className="text-xs text-cyan-300/70 font-mono mt-0.5 flex items-center gap-2">
+                  <span>{user.email}</span>
+                  <span>•</span>
+                  <span>Member since {new Date(user.joinedDate).toLocaleDateString()}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Actions (Create Box, Sign Out) */}
+            <div className="flex items-center gap-2 self-start md:self-auto">
+              {onNavigateToSlide01 && (
+                <button
+                  type="button"
+                  onClick={onNavigateToSlide01}
+                  className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-cyan-500/20 to-teal-500/20 border border-cyan-400/50 text-cyan-200 hover:text-white text-xs font-cyber flex items-center gap-1.5 transition cursor-pointer shadow-sm"
+                >
+                  <Plus className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>CREATE NEW BOX</span>
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={logout}
+                className="px-3 py-1.5 rounded-lg bg-rose-950/50 border border-rose-500/40 text-rose-300 hover:bg-rose-900/60 text-xs font-mono flex items-center gap-1.5 transition cursor-pointer"
+                title="Sign out of this session"
+              >
+                <LogOut className="w-3.5 h-3.5 text-rose-400" />
+                <span className="hidden sm:inline">SIGN OUT</span>
+              </button>
+            </div>
+          </div>
+
+          {/* High-Level Stat Counters */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {/* Stat 1: Credits Balance */}
+            <div className="p-3 rounded-xl bg-[#04010e] border border-cyan-500/25 flex flex-col justify-between">
+              <div className="text-[10px] text-cyan-400/70 font-bold uppercase flex items-center justify-between">
+                <span>CREDITS BALANCE</span>
+                <Coins className="w-3.5 h-3.5 text-cyan-400" />
+              </div>
+              <div className="text-xl sm:text-2xl font-bold font-cyber text-cyan-200 mt-1">
+                {user.credits} <span className="text-xs font-mono text-cyan-400/60 font-normal">PTS</span>
+              </div>
+              <div className="text-[10px] text-emerald-400 mt-0.5">
+                {user.creditsUsedTotal} credits used total
+              </div>
+            </div>
+
+            {/* Stat 2: Tracked Bitty Boxes */}
+            <div className="p-3 rounded-xl bg-[#04010e] border border-fuchsia-500/25 flex flex-col justify-between">
+              <div className="text-[10px] text-fuchsia-400/70 font-bold uppercase flex items-center justify-between">
+                <span>TRACKED BOXES</span>
+                <History className="w-3.5 h-3.5 text-fuchsia-400" />
+              </div>
+              <div className="text-xl sm:text-2xl font-bold font-cyber text-fuchsia-200 mt-1">
+                {(user.links || []).length}
+              </div>
+              <div className="text-[10px] text-fuchsia-400/70 mt-0.5">
+                Auto-saved upon generation
+              </div>
+            </div>
+
+            {/* Stat 3: Active API Keys */}
+            <div className="p-3 rounded-xl bg-[#04010e] border border-amber-500/25 flex flex-col justify-between">
+              <div className="text-[10px] text-amber-400/70 font-bold uppercase flex items-center justify-between">
+                <span>ACTIVE API KEYS</span>
+                <Key className="w-3.5 h-3.5 text-amber-400" />
+              </div>
+              <div className="text-xl sm:text-2xl font-bold font-cyber text-amber-200 mt-1">
+                {(user.apiKeys || []).length}
+              </div>
+              <div className="text-[10px] text-amber-400/70 mt-0.5">
+                REST & MCP server enabled
+              </div>
+            </div>
+
+            {/* Stat 4: Programmatic Usage */}
+            <div className="p-3 rounded-xl bg-[#04010e] border border-teal-500/25 flex flex-col justify-between">
+              <div className="text-[10px] text-teal-400/70 font-bold uppercase flex items-center justify-between">
+                <span>MCP & API CALLS</span>
+                <Bot className="w-3.5 h-3.5 text-teal-400" />
+              </div>
+              <div className="text-xl sm:text-2xl font-bold font-cyber text-teal-200 mt-1">
+                {(user.creditsMcpUsed || 0) + (user.creditsApiUsed || 0)}
+              </div>
+              <div className="text-[10px] text-teal-400/70 mt-0.5">
+                AI autonomous tools calls
+              </div>
+            </div>
+          </div>
+        </div>
+
+        
+
+
+        {/* =========================================================================
+            MAIN SEGMENTED TAB NAVIGATION (BOXES | API KEYS | CREDITS & BILLING | MCP)
+           ========================================================================= */}
+        <div className="flex items-center gap-1.5 p-1 bg-[#08031a]/90 border border-cyan-500/30 rounded-xl overflow-x-auto font-mono text-xs">
+          <button
+            type="button"
+            onClick={() => setActiveTab('boxes')}
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-lg font-bold transition-all cursor-pointer shrink-0 ${
+              activeTab === 'boxes'
+                ? 'bg-gradient-to-r from-cyan-950 to-teal-950 text-cyan-200 border border-cyan-400/50 shadow-[0_0_12px_rgba(0,242,255,0.25)]'
+                : 'text-cyan-400/60 hover:text-cyan-200 hover:bg-cyan-950/40'
+            }`}
+          >
+            <History className="w-3.5 h-3.5 text-cyan-400" />
+            <span>TRACKED BITTY BOXES ({(user.links || []).length})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('keys')}
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-lg font-bold transition-all cursor-pointer shrink-0 ${
+              activeTab === 'keys'
+                ? 'bg-gradient-to-r from-amber-950 to-yellow-950 text-amber-200 border border-amber-400/50 shadow-[0_0_12px_rgba(245,158,11,0.25)]'
+                : 'text-amber-400/60 hover:text-amber-200 hover:bg-amber-950/40'
+            }`}
+          >
+            <Key className="w-3.5 h-3.5 text-amber-400" />
+            <span>API KEYS ({(user.apiKeys || []).length})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('credits')}
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-lg font-bold transition-all cursor-pointer shrink-0 ${
+              activeTab === 'credits'
+                ? 'bg-gradient-to-r from-emerald-950 to-teal-950 text-emerald-200 border border-emerald-400/50 shadow-[0_0_12px_rgba(0,255,150,0.25)]'
+                : 'text-emerald-400/60 hover:text-emerald-200 hover:bg-emerald-950/40'
+            }`}
+          >
+            <Coins className="w-3.5 h-3.5 text-emerald-400" />
+            <span>CREDITS & REFILLS ({user.credits})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('mcp')}
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-lg font-bold transition-all cursor-pointer shrink-0 ${
+              activeTab === 'mcp'
+                ? 'bg-gradient-to-r from-fuchsia-950 to-purple-950 text-fuchsia-200 border border-fuchsia-400/50 shadow-[0_0_12px_rgba(189,0,255,0.25)]'
+                : 'text-fuchsia-400/60 hover:text-fuchsia-200 hover:bg-fuchsia-950/40'
+            }`}
+          >
+            <Bot className="w-3.5 h-3.5 text-fuchsia-400" />
+            <span>MCP SERVER CONFIG</span>
+          </button>
+        </div>
+
+        {/* =========================================================================
+            TAB 1: TRACKED BITTY BOXES LOG
+           ========================================================================= */}
+        {activeTab === 'boxes' && (
+          <div className="bg-[#08031a]/90 backdrop-blur-xl border border-cyan-500/30 rounded-2xl p-4 sm:p-6 shadow-[0_0_25px_rgba(0,242,255,0.12)] font-mono space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-cyan-500/20 pb-3">
+              <div>
+                <h2 className="text-base sm:text-lg font-cyber font-bold text-cyan-200 flex items-center gap-2">
+                  <History className="w-4 h-4 text-cyan-400" />
+                  <span>DEDICATED ACCOUNT BOXES LOG</span>
+                </h2>
+                <p className="text-xs text-cyan-300/70 mt-0.5">
+                  Bitty Boxes generated while signed in are automatically logged here with instant 1-click sharing.
+                </p>
+              </div>
+
+              {/* Search Bar */}
+              <div className="relative w-full sm:w-64">
+                <Search className="w-3.5 h-3.5 text-cyan-400/60 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={boxSearchQuery}
+                  onChange={e => setBoxSearchQuery(e.target.value)}
+                  placeholder="Filter by title / format..."
+                  className="w-full bg-[#02010c] border border-cyan-500/30 rounded-lg pl-8 pr-3 py-1.5 text-xs text-cyan-100 placeholder:text-cyan-500/40 outline-none focus:border-cyan-400 transition"
+                />
+              </div>
+            </div>
+
+            {/* Boxes List */}
+            {filteredBoxes.length === 0 ? (
+              <div className="py-12 text-center text-cyan-400/60 space-y-3">
+                <History className="w-10 h-10 mx-auto text-cyan-500/30 animate-pulse" />
+                <div className="text-sm font-cyber text-cyan-300">NO TRACKED BITTY BOXES FOUND</div>
+                <p className="text-xs text-cyan-400/70 max-w-sm mx-auto">
+                  {boxSearchQuery
+                    ? 'No boxes matched your search query.'
+                    : 'Create a Bitty Box on Slide 05 while logged in, and it will appear here automatically!'}
+                </p>
+                {onNavigateToSlide01 && (
+                  <button
+                    type="button"
+                    onClick={onNavigateToSlide01}
+                    className="px-4 py-2 rounded-xl bg-cyan-500/20 border border-cyan-400/40 text-cyan-200 text-xs font-bold font-cyber hover:bg-cyan-500/30 transition cursor-pointer"
+                  >
+                    + CREATE YOUR FIRST BOX
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {filteredBoxes.map(box => (
+                  <div
+                    key={box.id}
+                    className="p-3.5 rounded-xl bg-[#03010b] border border-cyan-500/25 hover:border-cyan-400/50 transition flex flex-col justify-between gap-2 shadow-inner group"
+                  >
+                    <div>
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="font-bold text-xs text-cyan-200 line-clamp-1 group-hover:text-cyan-100">
+                          {box.title || 'Untitled Bitty Box'}
+                        </div>
+                        <span className="text-[9px] uppercase font-mono font-bold px-1.5 py-0.5 rounded bg-cyan-950 border border-cyan-500/40 text-cyan-300 shrink-0">
+                          {box.format || 'HTML'}
+                        </span>
+                      </div>
+
+                      {/* URL Preview */}
+                      <div className="text-[10px] text-cyan-400/60 font-mono truncate mt-1 bg-black/50 p-1.5 rounded border border-cyan-500/15">
+                        {box.url}
+                      </div>
+
+                      {/* Metadata row: Date, Size, Locks */}
+                      <div className="flex items-center gap-2 mt-2 text-[10px] text-cyan-300/70 flex-wrap">
+                        <span>{new Date(box.createdAt).toLocaleDateString()}</span>
+                        {box.stats?.rawLength && (
+                          <>
+                            <span>•</span>
+                            <span>{box.stats.rawLength} Bytes</span>
+                          </>
+                        )}
+                        {box.locks?.password && (
+                          <span className="inline-flex items-center gap-1 text-fuchsia-300 bg-fuchsia-950/60 border border-fuchsia-500/30 px-1.5 py-0.2 rounded">
+                            <Lock className="w-2.5 h-2.5 text-fuchsia-400" /> Passcode
+                          </span>
+                        )}
+                        {box.locks?.timeWindow && (
+                          <span className="inline-flex items-center gap-1 text-amber-300 bg-amber-950/60 border border-amber-500/30 px-1.5 py-0.2 rounded">
+                            <Clock className="w-2.5 h-2.5 text-amber-400" /> Expiry
+                          </span>
+                        )}
+                        {box.locks?.accessLimit && (
+                          <span className="inline-flex items-center gap-1 text-emerald-300 bg-emerald-950/60 border border-emerald-500/30 px-1.5 py-0.2 rounded">
+                            <Flame className="w-2.5 h-2.5 text-emerald-400" /> Quota
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Card Actions */}
+                    <div className="flex items-center justify-between gap-1 pt-2 border-t border-cyan-500/15 text-xs">
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => handleCopyBoxUrl(box)}
+                          className="px-2.5 py-1 rounded bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 hover:bg-cyan-900 text-[10px] font-bold flex items-center gap-1 transition cursor-pointer"
+                          title="Copy full URL"
+                        >
+                          {copiedBoxId === box.id ? (
+                            <>
+                              <Check className="w-3 h-3 text-emerald-400" />
+                              <span className="text-emerald-300">COPIED</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3 h-3 text-cyan-400" />
+                              <span>COPY LINK</span>
+                            </>
+                          )}
+                        </button>
+
+                        <a
+                          href={box.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-2.5 py-1 rounded bg-purple-950/80 border border-purple-500/40 text-purple-300 hover:bg-purple-900 text-[10px] font-bold flex items-center gap-1 transition cursor-pointer"
+                        >
+                          <ExternalLink className="w-3 h-3 text-purple-400" />
+                          <span>OPEN</span>
+                        </a>
+
+                        {onOpenQr && (
+                          <button
+                            type="button"
+                            onClick={() => onOpenQr(box.url)}
+                            className="p-1 rounded bg-cyan-950/60 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-900 text-[10px] transition cursor-pointer"
+                            title="Show QR Code"
+                          >
+                            <QrCode className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => deleteTrackedBox(box.id)}
+                        className="p-1 rounded text-cyan-400/50 hover:text-rose-400 transition cursor-pointer"
+                        title="Delete from log"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* =========================================================================
+            TAB 2: API KEYS GENERATOR & MANAGEMENT
+           ========================================================================= */}
+        {activeTab === 'keys' && (
+          <div className="space-y-4 font-mono">
+            {/* Key Reveal Dialog (if freshly generated) */}
+            {revealedKey && (
+              <div className="p-4 rounded-2xl bg-amber-950/80 border-2 border-amber-400/80 shadow-[0_0_30px_rgba(245,158,11,0.3)] space-y-3 animate-in fade-in duration-300">
+                <div className="flex items-center gap-2 text-amber-200 font-cyber font-bold text-sm">
+                  <AlertTriangle className="w-4 h-4 text-amber-400 animate-pulse shrink-0" />
+                  <span>SAVE YOUR NEW API KEY SECURELY</span>
+                </div>
+                <p className="text-xs text-amber-300/80">
+                  Please copy this key now. For your security, this secret token will never be displayed again.
+                </p>
+                <div className="flex items-center gap-2 bg-black/80 p-2.5 rounded-xl border border-amber-500/40">
+                  <code className="text-xs text-amber-200 font-mono break-all flex-1 select-all">
+                    {revealedKey.rawKey}
+                  </code>
+                  <button
+                    type="button"
+                    onClick={handleCopyRawKey}
+                    className="px-3 py-1.5 rounded-lg bg-amber-400 text-black font-cyber font-bold text-xs flex items-center gap-1.5 shrink-0 hover:bg-amber-300 transition cursor-pointer"
+                  >
+                    {isCopiedRawKey ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-black" />
+                        <span>COPIED</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5 text-black" />
+                        <span>COPY KEY</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setRevealedKey(null)}
+                    className="text-[11px] text-amber-300/70 hover:text-amber-200 underline cursor-pointer"
+                  >
+                    I have saved my key safely &rarr; Dismiss
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Keys Table & Generator Card */}
+            <div className="bg-[#08031a]/90 backdrop-blur-xl border border-amber-500/30 rounded-2xl p-4 sm:p-6 shadow-[0_0_25px_rgba(245,158,11,0.12)] space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-amber-500/20 pb-3">
+                <div>
+                  <h2 className="text-base sm:text-lg font-cyber font-bold text-amber-200 flex items-center gap-2">
+                    <Key className="w-4 h-4 text-amber-400" />
+                    <span>API & MCP ACCESS KEYS</span>
+                  </h2>
+                  <p className="text-xs text-amber-300/70 mt-0.5">
+                    Generate developer keys to authenticate against the REST API and Streamable HTTP MCP Server.
+                  </p>
+                </div>
+
+                {/* Generate New Key Inline Form */}
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={newKeyLabel}
+                    onChange={e => setNewKeyLabel(e.target.value)}
+                    placeholder="Key Label (e.g. Claude MCP)"
+                    className="bg-[#02010c] border border-amber-500/40 rounded-lg px-3 py-1.5 text-xs text-amber-100 placeholder:text-amber-500/40 outline-none focus:border-amber-300 transition w-44"
+                  />
+                  <button
+                    type="button"
+                    disabled={isCreatingKey}
+                    onClick={handleGenerateKey}
+                    className="px-3 py-1.5 rounded-lg bg-amber-400 text-black font-cyber font-bold text-xs hover:bg-amber-300 transition cursor-pointer flex items-center gap-1 shrink-0 disabled:opacity-50"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>GENERATE KEY</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Existing Keys List */}
+              {(user.apiKeys || []).length === 0 ? (
+                <div className="py-10 text-center text-amber-400/60 space-y-2">
+                  <Key className="w-8 h-8 mx-auto text-amber-500/30" />
+                  <div className="text-sm font-cyber text-amber-300">NO API KEYS GENERATED YET</div>
+                  <p className="text-xs text-amber-400/70 max-w-sm mx-auto">
+                    Create an API key above to connect Claude Desktop, Cursor, or your backend scripts to Bitty Box.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {(user.apiKeys || []).map(k => (
+                    <div
+                      key={k.id}
+                      className="p-3 rounded-xl bg-[#03010b] border border-amber-500/25 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                    >
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-xs text-amber-200">{k.label}</span>
+                          <span className="text-[10px] text-amber-400/60 bg-amber-950/60 border border-amber-500/30 px-1.5 py-0.2 rounded">
+                            {k.prefix}
+                          </span>
+                        </div>
+                        <div className="text-[10px] text-amber-300/60 mt-1 flex items-center gap-2 flex-wrap">
+                          <span>Created {new Date(k.createdAt).toLocaleDateString()}</span>
+                          <span>•</span>
+                          <span>{k.requestCount || 0} Requests</span>
+                          {k.lastUsedAt && (
+                            <>
+                              <span>•</span>
+                              <span>Last active {new Date(k.lastUsedAt).toLocaleDateString()}</span>
+                            </>
+                          )}
+                          <span>•</span>
+                          <span className="text-amber-400">Scopes: {(k.scopes || []).join(', ')}</span>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => revokeApiKey(k.id)}
+                        className="px-2.5 py-1 rounded bg-rose-950/60 border border-rose-500/40 text-rose-300 hover:bg-rose-900 text-[10px] font-bold self-start sm:self-center transition cursor-pointer flex items-center gap-1"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        <span>REVOKE</span>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Interactive Key Tester */}
+            <div className="bg-[#08031a]/90 backdrop-blur-xl border border-cyan-500/30 rounded-2xl p-4 sm:p-6 shadow-inner space-y-3">
+              <div className="flex items-center gap-2 text-cyan-200 font-cyber font-bold text-sm">
+                <Terminal className="w-4 h-4 text-cyan-400" />
+                <span>LIVE API KEY VALIDATOR</span>
+              </div>
+              <p className="text-xs text-cyan-300/70">
+                Paste any Bitty Box API Key (`bb_live_...`) to test connection, scope permissions, and remaining credits.
+              </p>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={testKeyInput}
+                  onChange={e => setTestKeyInput(e.target.value)}
+                  placeholder="Paste bb_live_... key to test"
+                  className="flex-1 bg-[#02010c] border border-cyan-500/40 rounded-lg px-3 py-1.5 text-xs text-cyan-100 placeholder:text-cyan-500/40 outline-none focus:border-cyan-300 transition"
+                />
+                <button
+                  type="button"
+                  disabled={isTestingKey || !testKeyInput.trim()}
+                  onClick={handleRunTestKey}
+                  className="px-3.5 py-1.5 rounded-lg bg-cyan-400 text-black font-cyber font-bold text-xs hover:bg-cyan-300 transition cursor-pointer disabled:opacity-50"
+                >
+                  {isTestingKey ? 'TESTING...' : 'TEST KEY'}
+                </button>
+              </div>
+
+              {testKeyResult && (
+                <div
+                  className={`p-3 rounded-xl border text-xs ${
+                    testKeyResult.valid
+                      ? 'bg-emerald-950/60 border-emerald-500/50 text-emerald-200'
+                      : 'bg-rose-950/60 border-rose-500/50 text-rose-200'
+                  }`}
+                >
+                  {testKeyResult.valid ? (
+                    <div className="space-y-1">
+                      <div className="font-bold flex items-center gap-1.5 text-emerald-300">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                        <span>API KEY IS VALID & ACTIVE</span>
+                      </div>
+                      <div className="text-[11px] opacity-90">
+                        Account: {testKeyResult.user?.displayName} ({testKeyResult.user?.email}) • Credits: {testKeyResult.user?.credits}
+                      </div>
+                      <div className="text-[10px] opacity-75">
+                        Key Label: {testKeyResult.key?.label} • Scopes: {(testKeyResult.key?.scopes || []).join(', ')}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-rose-300">
+                      <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+                      <span>{testKeyResult.error || 'Invalid or revoked API key'}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* =========================================================================
+            TAB 3: CREDITS BALANCE & REFILL PACKAGES
+           ========================================================================= */}
+        {activeTab === 'credits' && (
+          <div className="space-y-4 font-mono">
+            {purchaseSuccessMsg && (
+              <div className="p-3.5 rounded-xl bg-emerald-950/80 border border-emerald-400 text-emerald-200 text-xs font-bold flex items-center gap-2 shadow-[0_0_20px_rgba(0,255,150,0.3)] animate-in fade-in">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>{purchaseSuccessMsg}</span>
+              </div>
+            )}
+
+            <div className="bg-[#08031a]/90 backdrop-blur-xl border border-emerald-500/30 rounded-2xl p-4 sm:p-6 shadow-[0_0_25px_rgba(0,255,150,0.12)] space-y-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-emerald-500/20 pb-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-base sm:text-lg font-cyber font-bold text-emerald-200 flex items-center gap-2">
+                      <Coins className="w-4 h-4 text-emerald-400" />
+                      <span>CREDITS BALANCE & USAGE METER</span>
+                    </h2>
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-400/50 text-emerald-300 text-[10px] font-mono font-bold flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                      <span>CREEM.IO CUSTOMER CREDITS</span>
+                    </span>
+                  </div>
+                  <p className="text-xs text-emerald-300/70 mt-1">
+                    Credits are issued, incremented, and decremented via Creem.io Customer Credits ledger on every generated Bitty Box, REST API creation, or MCP tool call.
+                  </p>
+                </div>
+
+                <div className="flex flex-col items-end gap-1">
+                  <div className="px-3.5 py-1.5 rounded-xl bg-emerald-950 border border-emerald-400/60 text-emerald-200 font-cyber font-bold text-sm shadow-[0_0_12px_rgba(0,255,150,0.3)]">
+                    {user.credits} CREDITS AVAILABLE
+                  </div>
+                  {user.creemCreditAccountId && (
+                    <div className="text-[10px] font-mono text-emerald-400/60">
+                      CCA: {user.creemCreditAccountId}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Usage Breakdown Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="p-3 rounded-xl bg-[#03010b] border border-cyan-500/25 space-y-1">
+                  <div className="text-[10px] text-cyan-400/70 font-bold uppercase">HUMAN BROWSER USAGE</div>
+                  <div className="text-xl font-bold font-cyber text-cyan-200">
+                    {user.creditsHumanUsed || 0}
+                  </div>
+                  <div className="text-[10px] text-cyan-400/60">Boxes generated via UI</div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-[#03010b] border border-amber-500/25 space-y-1">
+                  <div className="text-[10px] text-amber-400/70 font-bold uppercase">REST API CALLS</div>
+                  <div className="text-xl font-bold font-cyber text-amber-200">
+                    {user.creditsApiUsed || 0}
+                  </div>
+                  <div className="text-[10px] text-amber-400/60">Programmatic API endpoint hits</div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-[#03010b] border border-fuchsia-500/25 space-y-1">
+                  <div className="text-[10px] text-fuchsia-400/70 font-bold uppercase">MCP SERVER CALLS</div>
+                  <div className="text-xl font-bold font-cyber text-fuchsia-200">
+                    {user.creditsMcpUsed || 0}
+                  </div>
+                  <div className="text-[10px] text-fuchsia-400/60">Autonomous AI Agent Tool Invocations</div>
+                </div>
+              </div>
+
+              {/* Credit Top-Up Packages */}
+              <div className="space-y-3 pt-2">
+                <div className="text-xs font-bold text-emerald-300 font-cyber">OFFICIAL CREEM.IO MEMBERSHIP & TOP-UP PLANS:</div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Pack 1: Bitty Box PRO Monthly Membership */}
+                  <div className="p-4 rounded-xl bg-gradient-to-b from-[#0e0422] to-[#04010e] border-2 border-amber-400 shadow-[0_0_25px_rgba(245,158,11,0.25)] flex flex-col justify-between space-y-3 relative">
+                    <div className="absolute -top-2.5 right-3 bg-amber-400 text-black text-[9px] font-cyber font-extrabold px-2.5 py-0.5 rounded-full uppercase shadow-md">
+                      RECOMMENDED
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-amber-200 font-cyber flex items-center gap-1.5">
+                          <Crown className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                          BITTY BOX PRO
+                        </span>
+                        <span className="text-[10px] font-mono bg-amber-950 px-2 py-0.5 rounded text-amber-300 border border-amber-500/50">
+                          $7.00 / mo
+                        </span>
+                      </div>
+                      <div className="text-2xl font-extrabold font-cyber text-white mt-2">
+                        2,500 <span className="text-xs font-normal text-amber-300/80 font-mono">CREDITS / MONTH</span>
+                      </div>
+                      <p className="text-[11px] text-zinc-300 mt-1 leading-relaxed">
+                        Full PRO membership: 2,500 recurring monthly credits, unlimited AES-256 encryption, time locks, visit quotas, and priority MCP server agent tools.
+                      </p>
+                    </div>
+
+                    <a
+                      href="https://creem.io/test/product/prod_3VNhmfcHL0GaJPU5KTLV1q"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full py-2.5 rounded-lg bg-gradient-to-r from-amber-400 via-amber-300 to-amber-400 text-black font-cyber font-bold text-xs tracking-wider flex items-center justify-center gap-1.5 transition shadow-[0_0_15px_rgba(245,158,11,0.4)] hover:brightness-110 active:scale-[0.99]"
+                    >
+                      <span>SUBSCRIBE TO PRO ($7/MO)</span>
+                      <ExternalLink className="w-3.5 h-3.5 text-black" />
+                    </a>
+                  </div>
+
+                  {/* Pack 2: 1,000 Perpetual Credits */}
+                  <div className="p-4 rounded-xl bg-[#03010b] border border-cyan-500/40 hover:border-cyan-300 transition flex flex-col justify-between space-y-3 shadow-inner">
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-cyan-200 font-cyber flex items-center gap-1.5">
+                          <Coins className="w-3.5 h-3.5 text-cyan-400" />
+                          1,000 CREDITS TOP-UP
+                        </span>
+                        <span className="text-[10px] font-mono bg-cyan-950 px-2 py-0.5 rounded text-cyan-300 border border-cyan-500/40">
+                          $9.00 ONE-TIME
+                        </span>
+                      </div>
+                      <div className="text-2xl font-extrabold font-cyber text-cyan-300 mt-2">
+                        1,000 <span className="text-xs font-normal text-cyan-400/70 font-mono">PERPETUAL CREDITS</span>
+                      </div>
+                      <p className="text-[11px] text-cyan-300/70 mt-1 leading-relaxed">
+                        One-time top-up: 1,000 perpetual credits for publishing boxes, capsules, and LLM agent tool calls. Credits never expire.
+                      </p>
+                    </div>
+
+                    <a
+                      href="https://creem.io/test/product/prod_7PSpGGc91G9rDu80HY2AQ0"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full py-2.5 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/60 text-cyan-200 font-cyber font-bold text-xs tracking-wider flex items-center justify-center gap-1.5 transition active:scale-[0.99]"
+                    >
+                      <span>BUY 1,000 CREDITS ($9.00)</span>
+                      <ExternalLink className="w-3.5 h-3.5 text-cyan-300" />
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+              {/* Transactions Log */}
+              <div className="space-y-2 pt-3 border-t border-emerald-500/20">
+                <div className="text-xs font-bold text-emerald-300 font-cyber">CREDIT TRANSACTION HISTORY:</div>
+                <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                  {(user.transactions || []).map(t => (
+                    <div
+                      key={t.id}
+                      className="p-2 rounded-lg bg-[#02010c] border border-emerald-500/20 text-[11px] flex items-center justify-between gap-2"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`font-bold px-1.5 py-0.2 rounded text-[9px] uppercase ${
+                            t.type === 'purchase'
+                              ? 'bg-emerald-950 text-emerald-300 border border-emerald-500/40'
+                              : 'bg-cyan-950 text-cyan-300 border border-cyan-500/40'
+                          }`}
+                        >
+                          {t.type}
+                        </span>
+                        <span className="text-emerald-100">{t.description}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-[10px] text-emerald-400/60 shrink-0">
+                        <span className="font-bold text-emerald-300">+{t.amount} PTS</span>
+                        <span>•</span>
+                        <span>{new Date(t.createdAt).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* =========================================================================
+            TAB 4: MCP SERVER CONFIGURATION
+           ========================================================================= */}
+        {activeTab === 'mcp' && (
+          <div className="bg-[#08031a]/90 backdrop-blur-xl border border-fuchsia-500/30 rounded-2xl p-4 sm:p-6 shadow-[0_0_25px_rgba(189,0,255,0.12)] font-mono space-y-4">
+            <div className="border-b border-fuchsia-500/20 pb-3">
+              <h2 className="text-base sm:text-lg font-cyber font-bold text-fuchsia-200 flex items-center gap-2">
+                <Bot className="w-4 h-4 text-fuchsia-400" />
+                <span>MODEL CONTEXT PROTOCOL (MCP) INTEGRATION</span>
+              </h2>
+              <p className="text-xs text-fuchsia-300/70 mt-0.5">
+                Connect Claude Desktop, Cursor, Antigravity, and AI Agents to Bitty Box via Streamable HTTP.
+              </p>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-black/60 border border-fuchsia-500/30 space-y-2">
+              <div className="text-xs font-bold text-fuchsia-300">MCP SERVER ENDPOINT:</div>
+              <div className="flex items-center gap-2 bg-[#02010c] p-2 rounded-lg border border-fuchsia-500/20">
+                <code className="text-xs text-cyan-200 font-mono flex-1 select-all">
+                  https://bittybox.org/mcp
+                </code>
+                <button
+                  type="button"
+                  onClick={() => navigator.clipboard.writeText('https://bittybox.org/mcp')}
+                  className="px-2.5 py-1 rounded bg-fuchsia-950 border border-fuchsia-500/40 text-fuchsia-200 text-[10px] font-bold hover:bg-fuchsia-900 cursor-pointer"
+                >
+                  COPY URL
+                </button>
+              </div>
+            </div>
+
+            {/* Claude Desktop Config Snippet */}
+            <div className="p-3.5 rounded-xl bg-black/60 border border-fuchsia-500/30 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-fuchsia-300 font-cyber">CLAUDE DESKTOP CONFIG:</span>
+                <span className="text-[10px] text-fuchsia-400/60">claude_desktop_config.json</span>
+              </div>
+              <pre className="text-[11px] text-cyan-200 bg-[#02010c] p-3 rounded-lg border border-fuchsia-500/20 overflow-x-auto select-all leading-5">
+{`{
+  "mcpServers": {
+    "bittybox": {
+      "url": "https://bittybox.org/mcp",
+      "headers": {
+        "Authorization": "Bearer ${user.apiKeys?.[0]?.prefix ? 'YOUR_API_KEY' : 'YOUR_API_KEY'}"
+      }
+    }
+  }
+}`}
+              </pre>
+            </div>
+
+            {/* Available MCP Tools */}
+            <div className="space-y-2 pt-2">
+              <div className="text-xs font-bold text-fuchsia-300 font-cyber">EXPOSED MCP TOOLS:</div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                <div className="p-2.5 rounded-lg bg-[#02010c] border border-fuchsia-500/20 space-y-1">
+                  <div className="font-bold text-cyan-200">create_bitty_link</div>
+                  <div className="text-[10px] text-fuchsia-300/70">
+                    Creates universal compressed browser links for any HTML, markdown, code, or data.
+                  </div>
+                </div>
+                <div className="p-2.5 rounded-lg bg-[#02010c] border border-fuchsia-500/20 space-y-1">
+                  <div className="font-bold text-cyan-200">create_code_bitty_link</div>
+                  <div className="text-[10px] text-fuchsia-300/70">
+                    Creates syntax-highlighted code viewers with line numbers, copy, and themes.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+      </div>
+    </div>
+  );
+};

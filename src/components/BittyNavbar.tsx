@@ -17,16 +17,16 @@ import {
   ExternalLink,
   RefreshCw,
   Compass,
-  LogOut
+  LogOut,
+  User,
+  Coins
 } from 'lucide-react';
 import { AppView, WorkspaceTheme, WorkspaceMode } from '../types';
-import { TrialTimeRemaining } from '../hooks/useProStatus';
 import { GRIP_ICON_DATA_URL } from './EdgeGripHandles';
 
 interface BittyNavbarProps {
   currentView: AppView;
   onViewChange: (view: AppView) => void;
-  onViewerClick?: () => void;
   onOpenQr?: () => void;
   onShare?: () => void;
   onNewBox?: () => void;
@@ -45,16 +45,15 @@ interface BittyNavbarProps {
   mode: WorkspaceMode;
   onModeChange: (mode: WorkspaceMode) => void;
   isPro: boolean;
-  isLifetimePro: boolean;
-  isTrialActive: boolean;
-  trialTimeRemaining: TrialTimeRemaining;
+  isLifetimePro?: boolean;
+  isTrialActive?: boolean;
+  trialTimeRemaining?: any;
   onOpenPaywall: (featureName?: string) => void;
 }
 
 export const BittyNavbar: React.FC<BittyNavbarProps> = ({
   currentView,
   onViewChange,
-  onViewerClick,
   onOpenQr,
   onShare,
   onNewBox,
@@ -142,26 +141,13 @@ export const BittyNavbar: React.FC<BittyNavbarProps> = ({
             id="nav-editor-btn"
             onClick={() => onViewChange('editor')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${
-              currentView === 'editor'
+              currentView === 'editor' || currentView === 'account'
                 ? 'bg-gradient-to-r from-cyan-500/20 to-teal-500/20 text-cyan-200 border border-cyan-400/50 shadow-[0_0_12px_rgba(0,221,255,0.25)]'
                 : 'text-purple-200/70 hover:text-cyan-200 hover:bg-purple-900/30'
             }`}
           >
-            <Code className="w-3.5 h-3.5" />
-            <span>STUDIO</span>
-          </button>
-
-          <button
-            id="nav-preview-btn"
-            onClick={() => onViewerClick ? onViewerClick() : onViewChange('viewer')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${
-              currentView === 'viewer'
-                ? 'bg-gradient-to-r from-fuchsia-500/20 to-purple-500/20 text-fuchsia-200 border border-fuchsia-400/50 shadow-[0_0_12px_rgba(255,0,222,0.25)]'
-                : 'text-purple-200/70 hover:text-fuchsia-200 hover:bg-purple-900/30'
-            }`}
-          >
-            <Eye className="w-3.5 h-3.5" />
-            <span>PREVIEW</span>
+            <User className="w-3.5 h-3.5 text-cyan-400" />
+            <span>ACCOUNT</span>
           </button>
 
           <button
@@ -233,38 +219,25 @@ export const BittyNavbar: React.FC<BittyNavbarProps> = ({
             </button>
           </div>
 
-          {/* 24h Trial / Lifetime Status Pill */}
+          {/* PRO Upgrade / Membership Status Pill */}
           <button
             onClick={() => onOpenPaywall()}
-            className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-lg font-mono text-[10px] tracking-wide border transition shadow-sm cursor-pointer ${
-              isLifetimePro
-                ? 'bg-amber-950/80 border-amber-500/50 text-amber-300 shadow-[0_0_10px_rgba(245,158,11,0.3)]'
-                : isTrialActive
-                ? 'bg-fuchsia-950/80 border-fuchsia-500/50 text-fuchsia-300 shadow-[0_0_10px_rgba(189,0,255,0.3)]'
-                : 'bg-rose-950/80 border-rose-500/50 text-rose-300 animate-pulse'
+            className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 rounded-lg font-mono text-[10px] sm:text-[11px] tracking-wide border transition shadow-sm cursor-pointer ${
+              isPro
+                ? 'bg-amber-950/80 border-amber-500/50 text-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.3)]'
+                : 'bg-gradient-to-r from-amber-950/70 to-fuchsia-950/70 border-amber-500/50 text-amber-200 hover:border-amber-400 hover:text-white shadow-[0_0_10px_rgba(245,158,11,0.2)]'
             }`}
-            title="Click to view PRO features or license management"
+            title="Click to manage Bitty Box PRO membership"
           >
-            {isLifetimePro ? (
+            {isPro ? (
               <>
-                <Crown className="w-3 h-3 text-amber-400 fill-amber-400" />
-                <span className="font-bold hidden xs:inline">LIFETIME</span>
-                <span className="font-bold xs:hidden">PRO</span>
-              </>
-            ) : isTrialActive ? (
-              <>
-                <Zap className="w-3 h-3 text-fuchsia-400 animate-bounce shrink-0" />
-                <span className="hidden sm:inline">
-                  24H PASS: <strong className="text-cyan-200">{trialTimeRemaining.hours}h {trialTimeRemaining.minutes}m</strong>
-                </span>
-                <span className="sm:hidden font-bold">
-                  {trialTimeRemaining.hours}h {trialTimeRemaining.minutes}m
-                </span>
+                <Crown className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                <span className="font-bold">PRO ACTIVE</span>
               </>
             ) : (
               <>
-                <Lock className="w-3 h-3 text-rose-400 shrink-0" />
-                <span className="font-bold">UPGRADE</span>
+                <Crown className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                <span className="font-bold">UPGRADE &bull; $7/mo</span>
               </>
             )}
           </button>
@@ -288,31 +261,18 @@ export const BittyNavbar: React.FC<BittyNavbarProps> = ({
           ROW 2: MOBILE VIEW NAVIGATION (Streamlined & Clean, No Clutter)
          ========================================================================= */}
       <div className="lg:hidden w-full border-t border-cyan-500/15 bg-[#070213]/95 px-3 py-1.5 flex items-center justify-between gap-1 shadow-inner">
-        <nav className="grid grid-cols-4 gap-1 w-full bg-purple-950/50 p-1 rounded-xl border border-purple-500/25">
+        <nav className="grid grid-cols-3 gap-1 w-full bg-purple-950/50 p-1 rounded-xl border border-purple-500/25">
           <button
             id="mobile-nav-editor-btn"
             onClick={() => onViewChange('editor')}
             className={`flex items-center justify-center gap-1 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${
-              currentView === 'editor'
+              currentView === 'editor' || currentView === 'account'
                 ? 'bg-gradient-to-r from-cyan-500/25 to-teal-500/25 text-cyan-200 border border-cyan-400/60 shadow-[0_0_10px_rgba(0,221,255,0.3)]'
                 : 'text-purple-200/70 hover:text-cyan-200'
             }`}
           >
-            <Code className="w-3.5 h-3.5 shrink-0" />
-            <span>STUDIO</span>
-          </button>
-
-          <button
-            id="mobile-nav-preview-btn"
-            onClick={() => onViewChange('viewer')}
-            className={`flex items-center justify-center gap-1 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${
-              currentView === 'viewer'
-                ? 'bg-gradient-to-r from-fuchsia-500/25 to-purple-500/25 text-fuchsia-200 border border-fuchsia-400/60 shadow-[0_0_10px_rgba(255,0,222,0.3)]'
-                : 'text-purple-200/70 hover:text-fuchsia-200'
-            }`}
-          >
-            <Eye className="w-3.5 h-3.5 shrink-0" />
-            <span>VIEW</span>
+            <User className="w-3.5 h-3.5 shrink-0" />
+            <span>ACCOUNT</span>
           </button>
 
           <button

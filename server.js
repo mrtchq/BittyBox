@@ -8,12 +8,28 @@ import { renderApiDocsPage } from './lib/api-docs-page.js';
 import {
   getDefaultUser,
   getOrCreateUser,
+  registerUser,
+  authenticateUser,
   getUser,
+  createSession,
+  destroySession,
+  getSession,
+  updateSessionTrust,
   createApiKey,
   revokeApiKey,
   validateApiKey,
-  recordLinkCreation
+  recordLinkCreation,
+  deleteUserLink,
+  purchaseCredits,
+  deductCredits,
+  createMagicToken,
+  verifyMagicToken,
+  sanitizeUser,
+  syncUserCreditsWithCreem,
+  getUserCreemEntries
 } from './lib/account-store.js';
+import { sendMagicLinkEmail } from './lib/resend-client.js';
+import { triggerN8nWebhook } from './lib/n8n-client.js';
 import { authMiddleware } from './lib/auth-middleware.js';
 import { createBox, getBox, listBoxes, updateLockConfig, incrementOpensUsed, publishBox, unpublishBox, deleteBox, setPasswordLock, setTimeWindowLock, setAccessLimitLock, setSessionLimitLock, setInviteOnlyLock, createTimeWindow, createOpenLimit, createSessionOpenLimit, createInviteOnly, evaluateAndRecord, touchSessionOpens, getSessionOpenCount } from './lib/box-store.js';
 import { evaluatePolicy, createSessionGrant, verifySessionGrant, verifyPassword, createPasswordVerifier } from './lib/policy-evaluator.js';
@@ -76,12 +92,216 @@ app.get(['/api/docs', '/api/bitty/docs'], (_req, res) => {
 });
 
 // ==========================================
-// Accounts & API Key Endpoints
+// Accounts, Auth, Keys & Credits Endpoints
 // ==========================================
-app.get('/api/accounts/me', (req, res) => {
+app.get('/api/accounts/me', async (req, res) => {
   try {
-    const user = req.user || getDefaultUser();
-    res.json({ success: true, user });
+    if (!req.user) {
+      return res.status(401).json({ success: false, error: 'Not authenticated. Provide X-Session-Id header.' });
+    }
+    await syncUserCreditsWithCreem(req.user);
+    const session = req.sessionId ? getSession(req.sessionId) : null;
+    res.json({ success: true, user: sanitizeUser(req.user), trusted: session ? Boolean(session.trusted) : Boolean(req.user.settings?.trustThisDevice), sessionExpiresAt: session ? session.expiresAt : req.user.settings?.deviceTrustExpiresAt });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/accounts/register', async (req, res) => {
+  try {
+    const { email, displayName, password, trustDevice } = req.body || {};
+    if (!email) {
+      return res.status(400).json({ success: false, error: 'Email is required' });
+    }
+    const user = await registerUser(email, displayName, password);
+    const isTrusted = trustDevice !== false;
+    const durationHours = isTrusted ? 720 : 24;
+    const sessionId = createSession(user.id, durationHours);
+    if (user) {
+      if (!user.settings) user.settings = {};
+      user.settings.trustThisDevice = isTrusted;
+      user.settings.deviceTrustExpiresAt = new Date(Date.now() + durationHours * 60 * 60 * 1000).toISOString();
+    }
+    res.json({ success: true, user: sanitizeUser(user), sessionId, trusted: isTrusted, expiresAt: user?.settings?.deviceTrustExpiresAt });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+
+app.post('/api/accounts/trust-device', (req, res) => {
+  try {
+    if (!req.user || !req.sessionId) {
+      return res.status(401).json({ success: false, error: 'Authentication required. Provide X-Session-Id header.' });
+    }
+    const { trusted, durationDays } = req.body || {};
+    const isTrusted = trusted !== false;
+    const result = updateSessionTrust(req.sessionId, isTrusted, durationDays || 30);
+    if (!result) {
+      return res.status(404).json({ success: false, error: 'Active session not found' });
+    }
+    res.json({
+      success: true,
+      trusted: result.trusted,
+      expiresAt: result.expiresAt,
+      user: result.user
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/accounts/login', async (req, res) => {
+  try {
+    const { email, displayName, password, trustDevice } = req.body || {};
+    if (!email) {
+      return res.status(400).json({ success: false, error: 'Email is required' });
+    }
+    const user = await authenticateUser(email, password || '');
+    if (displayName && (!user.displayName || user.displayName === 'Builder')) {
+      user.displayName = displayName.trim();
+    }
+    const isTrusted = trustDevice !== false;
+    const durationHours = isTrusted ? 720 : 24;
+    const sessionId = createSession(user.id, durationHours);
+    if (user) {
+      if (!user.settings) user.settings = {};
+      user.settings.trustThisDevice = isTrusted;
+      user.settings.deviceTrustExpiresAt = new Date(Date.now() + durationHours * 60 * 60 * 1000).toISOString();
+    }
+    res.json({ success: true, user: sanitizeUser(user), sessionId, trusted: isTrusted, expiresAt: user?.settings?.deviceTrustExpiresAt });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/accounts/magic/request', async (req, res) => {
+  try {
+    const { email, displayName, trustDevice } = req.body || {};
+    if (!email || typeof email !== 'string' || !email.includes('@')) {
+      return res.status(400).json({ success: false, error: 'A valid email address is required.' });
+    }
+
+    const magic = createMagicToken(email, displayName, trustDevice !== false);
+
+    // Construct magic link
+    const host = req.headers['x-forwarded-host'] || req.headers.host || 'bittybox.org';
+    const proto = req.headers['x-forwarded-proto'] || 'https';
+    const baseUrl = `${proto}://${host}`;
+    const magicLink = `${baseUrl}/#/auth/verify?token=${magic.token}`;
+
+    // Send email via Resend
+    const emailResult = await sendMagicLinkEmail({
+      to: magic.email,
+      displayName: displayName || '',
+      magicLink,
+    });
+
+    // Notify n8n instance via webhook in background
+    triggerN8nWebhook('/webhook/bittybox-magic-link', {
+      event: 'account.magic_link_requested',
+      email: magic.email,
+      displayName: displayName || '',
+      token: magic.token,
+      magicLink,
+      expiresAt: magic.expiresAt,
+      timestamp: new Date().toISOString()
+    }).catch(err => {
+      console.warn('[n8n] magic-link webhook notification:', err.message);
+    });
+
+    if (!emailResult.success) {
+      console.error('[resend] Email send failed:', emailResult.error);
+      return res.status(500).json({
+        success: false,
+        error: `Failed to deliver magic link email: ${emailResult.error}`
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Magic link dispatched to your email address.',
+      email: magic.email,
+      expiresAt: magic.expiresAt
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/accounts/magic/verify', async (req, res) => {
+  try {
+    const { token } = req.body || {};
+    if (!token || typeof token !== 'string') {
+      return res.status(400).json({ success: false, error: 'Magic link token is required.' });
+    }
+
+    const result = await verifyMagicToken(token);
+
+    // Notify n8n instance in background
+    triggerN8nWebhook('/webhook/bittybox-magic-link', {
+      event: 'account.magic_link_verified',
+      userId: result.user.id,
+      email: result.user.email,
+      displayName: result.user.displayName,
+      timestamp: new Date().toISOString()
+    }).catch(() => {});
+
+    res.json({
+      success: true,
+      user: result.user,
+      sessionId: result.sessionId,
+      message: 'Successfully authenticated via magic link.'
+    });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/accounts/logout', (req, res) => {
+  try {
+    const sessionId = req.headers['x-session-id'] || req.body?.sessionId;
+    if (sessionId) {
+      destroySession(sessionId);
+    }
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/accounts/links', async (req, res) => {
+  try {
+    const user = req.user;
+    if (!user) {
+      return res.status(401).json({ success: false, error: 'Authentication required to save box to account' });
+    }
+    const linkData = req.body || {};
+    recordLinkCreation(user.id, linkData);
+    let cost = 1;
+    if (typeof linkData.cost === 'number' && linkData.cost >= 1) {
+      cost = Math.floor(linkData.cost);
+    } else if (linkData.locks) {
+      if (linkData.locks.password) cost += 1;
+      if (linkData.locks.timeWindow) cost += 1;
+      if (linkData.locks.accessLimit) cost += 1;
+    }
+    await deductCredits(user.id, cost, 'human', `Generated Box: ${linkData.title || 'Bitty Box'}`);
+    res.json({ success: true, user: sanitizeUser(user) });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.delete('/api/accounts/links/:id', (req, res) => {
+  try {
+    const user = req.user;
+    if (!user) {
+      return res.status(401).json({ success: false, error: 'Authentication required' });
+    }
+    const linkId = req.params.id;
+    const deleted = deleteUserLink(user.id, linkId);
+    res.json({ success: deleted, linkId, user: sanitizeUser(user) });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -89,10 +309,13 @@ app.get('/api/accounts/me', (req, res) => {
 
 app.post('/api/accounts/keys', (req, res) => {
   try {
-    const user = req.user || getDefaultUser();
+    const user = req.user;
+    if (!user) {
+      return res.status(401).json({ success: false, error: 'Authentication required to generate API key' });
+    }
     const { label, scopes } = req.body || {};
     const key = createApiKey(user.id, label, scopes);
-    res.json({ success: true, key });
+    res.json({ success: true, key, user: sanitizeUser(user) });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -100,10 +323,13 @@ app.post('/api/accounts/keys', (req, res) => {
 
 app.delete('/api/accounts/keys/:id', (req, res) => {
   try {
-    const user = req.user || getDefaultUser();
+    const user = req.user;
+    if (!user) {
+      return res.status(401).json({ success: false, error: 'Authentication required' });
+    }
     const keyId = req.params.id;
     const revoked = revokeApiKey(user.id, keyId);
-    res.json({ success: revoked, keyId });
+    res.json({ success: revoked, keyId, user: sanitizeUser(user) });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -121,13 +347,15 @@ app.post('/api/accounts/keys/test', (req, res) => {
           id: validation.user.id,
           displayName: validation.user.displayName,
           email: validation.user.email,
-          tier: validation.user.tier
+          tier: validation.user.tier,
+          credits: validation.user.credits
         },
         key: {
           id: validation.keyMeta.id,
           label: validation.keyMeta.label,
           prefix: validation.keyMeta.prefix,
-          scopes: validation.keyMeta.scopes
+          scopes: validation.keyMeta.scopes,
+          requestCount: validation.keyMeta.requestCount
         }
       });
     } else {
@@ -142,14 +370,50 @@ app.post('/api/accounts/keys/test', (req, res) => {
   }
 });
 
-app.post('/api/accounts/login', (req, res) => {
+app.post('/api/accounts/credits/purchase', async (req, res) => {
   try {
-    const { email, displayName } = req.body || {};
-    if (!email) {
-      return res.status(400).json({ success: false, error: 'Email is required' });
+    const user = req.user;
+    if (!user) {
+      return res.status(401).json({ success: false, error: 'Authentication required to purchase credits' });
     }
-    const user = getOrCreateUser(email, displayName);
-    res.json({ success: true, user });
+    const { packageId, amount, costCents } = req.body || {};
+    let creditsToAdd = 100;
+    let cost = costCents || 500;
+
+    if (packageId === 'starter' || amount === 100) {
+      creditsToAdd = 100;
+      cost = 500; // $5.00
+    } else if (packageId === 'pro' || amount === 500) {
+      creditsToAdd = 500;
+      cost = 2000; // $20.00
+    } else if (packageId === 'studio' || amount === 2500) {
+      creditsToAdd = 2500;
+      cost = 5000; // $50.00
+    } else if (amount) {
+      creditsToAdd = parseInt(amount, 10) || 100;
+    }
+
+    const result = await purchaseCredits(user.id, packageId, creditsToAdd, cost);
+    res.json({ success: true, ...result, user: sanitizeUser(user) });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/accounts/credits/ledger', async (req, res) => {
+  try {
+    const user = req.user;
+    if (!user) {
+      return res.status(401).json({ success: false, error: 'Authentication required to view credit ledger' });
+    }
+    const entries = await getUserCreemEntries(user.id);
+    res.json({
+      success: true,
+      creemCustomerId: user.creemCustomerId,
+      creemCreditAccountId: user.creemCreditAccountId,
+      balance: user.credits,
+      entries
+    });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -354,11 +618,12 @@ app.get('/api/boxes', (req, res) => {
 app.post('/api/boxes', async (req, res) => {
   try {
     const user = req.user || getDefaultUser();
-    const { title, description, bittyUrl, bittyRelativeUrl, bittyId, htmlSha256, payloadSha256, lockConfig } = req.body || {};
+    const { id, boxId, title, description, bittyUrl, bittyRelativeUrl, bittyId, htmlSha256, payloadSha256, lockConfig } = req.body || {};
     if (!bittyUrl && !bittyRelativeUrl && !bittyId) {
       return res.status(400).json({ success: false, error: 'Provide bittyUrl, bittyRelativeUrl, or bittyId.' });
     }
     const box = createBox({
+      id: id || boxId,
       title, description, bittyUrl, bittyRelativeUrl, bittyId, htmlSha256, payloadSha256,
       createdBy: { type: 'api', userId: user.id || null, keyId: req.keyMeta?.id || null },
       lockConfig: lockConfig || undefined,
@@ -511,6 +776,30 @@ app.delete('/api/boxes/:id', (req, res) => {
 
 // ─── Public lock-enforcement gate ────────────────────────────────────────────
 
+// Public status endpoint for boxes (safe to call by visitors without consuming quota)
+app.get('/api/boxes/:id/status', (req, res) => {
+  try {
+    const box = getBox(req.params.id);
+    if (!box) return res.status(404).json({ success: false, error: 'Box not found' });
+    const maxOpens = box.lockConfig?.openLimit?.maxOpens;
+    const opensUsed = box.lockConfig?.openLimit?.opensUsed || 0;
+    const remainingOpens = maxOpens != null ? Math.max(0, maxOpens - opensUsed) : null;
+    res.json({
+      success: true,
+      boxId: box.id,
+      title: box.title,
+      lockConfig: sanitizeLockConfig(box.lockConfig),
+      maxOpens,
+      opensUsed,
+      remainingOpens,
+      isExpired: box.lockConfig?.timeWindow?.notAfter ? new Date() > new Date(box.lockConfig.timeWindow.notAfter) : false,
+      isPending: box.lockConfig?.timeWindow?.notBefore ? new Date() < new Date(box.lockConfig.timeWindow.notBefore) : false,
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // Unlock attempt — evaluates the lock and, on success, issues a short-lived
 // session grant that can be exchanged for the payload delivery.
 app.post('/api/boxes/:id/unlock', async (req, res) => {
@@ -534,18 +823,28 @@ app.post('/api/boxes/:id/unlock', async (req, res) => {
     if (result.ok) {
       touchSessionOpens(sessionKey);
       incrementOpensUsed(req.params.id);
+      const updatedBox = getBox(req.params.id);
+      const maxOpens = updatedBox?.lockConfig?.openLimit?.maxOpens;
+      const opensUsed = updatedBox?.lockConfig?.openLimit?.opensUsed || 0;
+      const remainingOpens = maxOpens != null ? Math.max(0, maxOpens - opensUsed) : null;
+
       const grant = createSessionGrant(req.params.id, sessionKey, 60);
       res.json({
         success: true,
         allowed: true,
+        remainingOpens,
         sessionKey: grant.sessionKey,
         grantToken: grant.token,
         grantExpiresAt: grant.expiresAt,
       });
     } else {
+      const maxOpens = box.lockConfig?.openLimit?.maxOpens;
+      const opensUsed = box.lockConfig?.openLimit?.opensUsed || 0;
+      const remainingOpens = maxOpens != null ? Math.max(0, maxOpens - opensUsed) : 0;
       res.status(403).json({
         success: true,
         allowed: false,
+        remainingOpens,
         reason: result.reason,
         deniedCodes: result.deniedCodes,
         lockScreen: buildLockScreen(box, result),

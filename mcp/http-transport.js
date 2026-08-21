@@ -1,5 +1,6 @@
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import { buildMcpServer } from './mcp-server.js';
+import { validateApiKey, deductCredits } from '../lib/account-store.js';
 
 /**
  * Handle incoming MCP Streamable HTTP requests on Express
@@ -12,6 +13,16 @@ export async function handleMcpHttpRequest(req, res) {
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
+  }
+
+  // Check and deduct credits for authenticated MCP requests
+  const authHeader = req.headers['authorization'] || '';
+  const apiKey = req.headers['x-api-key'] || (authHeader.startsWith('Bearer ') ? authHeader.substring(7).trim() : '');
+  if (apiKey && apiKey.startsWith('bb_live_')) {
+    const val = validateApiKey(apiKey);
+    if (val.valid && val.user) {
+      deductCredits(val.user.id, 1, 'mcp');
+    }
   }
 
   // Construct Web-standard Request from Express req

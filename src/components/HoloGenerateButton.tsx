@@ -30,15 +30,6 @@ export const HoloGenerateButton: React.FC<HoloGenerateButtonProps> = ({
         <div className="hexagon"></div>
       </div>
 
-      <div className="digital-glyphs">
-        <div className="digital-glyph">BITTYBOX.ORG // SELF-CONTAINED</div>
-        <div className="digital-glyph">URL.ENCODE(HTML + CSS + JS)</div>
-        <div className="digital-glyph">
-          01000010 01001001 01010100 01010100 01011001
-        </div>
-        <div className="digital-glyph">SITE EMBEDDED IN URL</div>
-      </div>
-
       <button
         id="holo-generate-btn"
         className="holo-button"

@@ -7,7 +7,11 @@ import {
   AlertTriangle, 
   RefreshCw,
   Clock,
-  Timer
+  Timer,
+  Flame,
+  Shield,
+  Zap,
+  X
 } from 'lucide-react';
 import { BittyMetadata } from '../types';
 import { decompressBittyData, getRenderedHtml } from '../utils/bittyEngine';
@@ -30,7 +34,15 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
   activeContent,
   onEdit,
 }) => {
-  const effectiveHash = hashFragment || (typeof window !== 'undefined' ? window.location.hash : '');
+  const effectiveHash = React.useMemo(() => {
+    if (hashFragment) return hashFragment;
+    if (typeof window === 'undefined') return '';
+    const h = window.location.hash || '';
+    if (h.includes('auth/') || h.includes('token=') || h === '#/studio' || h === '#/edit' || h === '#/account') {
+      return '';
+    }
+    return h;
+  }, [hashFragment]);
   const isEncryptedFragment = Boolean(
     effectiveHash &&
     (effectiveHash.includes('cipher=') ||
@@ -38,8 +50,66 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
      decodeURIComponent(effectiveHash).includes('cipher='))
   );
 
+  // Time-window configuration & live ticking hook
+  const twConfig = metadata?.lockConfig?.timeWindow ?? null;
+  const twEnabled = Boolean(twConfig && twConfig.enabled && (twConfig.notBefore || twConfig.notAfter));
+  const showCountdown = twConfig?.showCountdown !== false;
+  const tw = useTimeWindow(twEnabled ? twConfig : null);
+  const twBlocked = twEnabled && (tw.status === 'PENDING' || tw.status === 'EXPIRED');
+
+  // Access-limit quota configuration
+  const olConfig = metadata?.lockConfig?.openLimit ?? null;
+  const olEnabled = Boolean(olConfig && olConfig.enabled) || Boolean(metadata?.boxId);
+  const maxOpens = olConfig?.maxOpens || 1;
+
+  // Active lock state
+  const hasLock = Boolean(twEnabled || olEnabled || isEncryptedFragment);
+  const [isUnlocked, setIsUnlocked] = useState<boolean>(() => !hasLock);
+  const [isHudDismissed, setIsHudDismissed] = useState<boolean>(false);
+
+  // Stable storage key for quota tracking per URL payload / box ID
+  const quotaStorageKey = React.useMemo(() => {
+    if (metadata?.boxId) return `bitty_quota_box_${metadata.boxId}`;
+    let h = 0;
+    for (let i = 0; i < effectiveHash.length; i++) {
+      h = ((h << 5) - h) + effectiveHash.charCodeAt(i);
+      h |= 0;
+    }
+    return `bitty_quota_hash_${Math.abs(h)}`;
+  }, [effectiveHash, metadata?.boxId]);
+
+  const [localOpensUsed, setLocalOpensUsed] = useState<number>(() => {
+    if (!olEnabled) return 0;
+    try {
+      const stored = localStorage.getItem(quotaStorageKey);
+      return stored !== null ? parseInt(stored, 10) || 0 : 0;
+    } catch {
+      return 0;
+    }
+  });
+
+  const [remainingOpens, setRemainingOpens] = useState<number | null>(() => {
+    if (!olEnabled) return null;
+    try {
+      const stored = localStorage.getItem(quotaStorageKey);
+      const used = stored !== null ? parseInt(stored, 10) || 0 : 0;
+      return Math.max(0, maxOpens - used);
+    } catch {}
+    return maxOpens;
+  });
+
+  const [quotaBlocked, setQuotaBlocked] = useState<boolean>(() => {
+    if (!olEnabled) return false;
+    try {
+      const stored = localStorage.getItem(quotaStorageKey);
+      const used = stored !== null ? parseInt(stored, 10) || 0 : 0;
+      return used >= maxOpens;
+    } catch {
+      return false;
+    }
+  });
+
   const [content, setContent] = useState<string>(() => {
-    // Only use activeContent if there is NO hash fragment to load
     if (!effectiveHash && activeContent && activeContent.trim()) {
       return activeContent;
     }
@@ -53,14 +123,11 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
   const [isLoading, setIsLoading] = useState<boolean>(() => {
     return Boolean(effectiveHash && effectiveHash.trim() && !isEncryptedFragment);
   });
-  // Step #3 polish: shake on wrong passcode + fade-out on successful unlock
   const [shake, setShake] = useState<boolean>(false);
   const [unlocking, setUnlocking] = useState<boolean>(false);
 
   const [isCheckingQuota, setIsCheckingQuota] = useState<boolean>(() => Boolean(metadata?.boxId));
-  const [quotaBlocked, setQuotaBlocked] = useState<boolean>(false);
   const [quotaReason, setQuotaReason] = useState<string | null>(null);
-  const [remainingOpens, setRemainingOpens] = useState<number | null>(null);
 
   const loadData = async (passcode?: string) => {
     const targetHash = hashFragment || (typeof window !== 'undefined' ? window.location.hash : '');
@@ -86,7 +153,6 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
         setContent('');
         setError(result.error);
         if (passcode) {
-          // a submitted passcode failed → shake the input (re-triggers each attempt)
           setShake(false);
           requestAnimationFrame(() => requestAnimationFrame(() => setShake(true)));
         }
@@ -106,15 +172,26 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
 
     setIsEncrypted(result.isEncrypted);
     setContent(result.content);
-    if (needsPassword) {
-      // was locked → play a smooth fade-out on the overlay, then unmount
+
+    // If passcode was submitted, consume quota and unlock
+    if (passcode) {
+      if (olEnabled) {
+        const newUsed = localOpensUsed + 1;
+        try {
+          localStorage.setItem(quotaStorageKey, String(newUsed));
+          setLocalOpensUsed(newUsed);
+          setRemainingOpens(Math.max(0, maxOpens - newUsed));
+        } catch {}
+      }
       setUnlocking(true);
       window.setTimeout(() => {
         setNeedsPassword(false);
+        setIsUnlocked(true);
         setUnlocking(false);
       }, 320);
-    } else {
-      setNeedsPassword(false);
+    } else if (!hasLock) {
+      // Unlocked immediately ONLY when there are no locks
+      setIsUnlocked(true);
     }
   };
 
@@ -134,6 +211,7 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
     loadData(passwordInput.trim());
   };
 
+  // Check box quota status from server if boxId is present
   useEffect(() => {
     if (!metadata?.boxId) {
       setIsCheckingQuota(false);
@@ -142,26 +220,23 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
 
     let isMounted = true;
     setIsCheckingQuota(true);
-    const checkQuota = async () => {
+    const checkQuotaStatus = async () => {
       try {
-        const res = await fetch(`/api/boxes/${metadata.boxId}/unlock`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({}),
-        });
+        const res = await fetch(`/api/boxes/${metadata.boxId}/status`);
+        if (!res.ok) {
+          if (isMounted) setIsCheckingQuota(false);
+          return;
+        }
         const data = await res.json();
         if (!isMounted) return;
 
         setIsCheckingQuota(false);
-        if (!res.ok || data.allowed === false) {
-          setQuotaBlocked(true);
-          const msg = data.deniedCodes?.includes('open_limit_reached')
-            ? 'This Bitty Box has reached its maximum allowable opens and is permanently sealed.'
-            : (data.reason || 'Access denied for this Box.');
-          setQuotaReason(msg);
-        } else {
-          if (data.remainingOpens !== undefined) {
-            setRemainingOpens(data.remainingOpens);
+        if (data.remainingOpens !== undefined && data.remainingOpens !== null) {
+          setRemainingOpens(data.remainingOpens);
+          // Only block if total opensUsed actually reached or exceeded maxOpens on server
+          if (data.remainingOpens <= 0 && typeof data.maxOpens === 'number' && (data.opensUsed || 0) >= data.maxOpens) {
+            setQuotaBlocked(true);
+            setQuotaReason('This Bitty Box has reached its maximum allowable opens and is permanently sealed.');
           }
         }
       } catch {
@@ -169,22 +244,63 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
       }
     };
 
-    checkQuota();
+    checkQuotaStatus();
     return () => { isMounted = false; };
   }, [metadata?.boxId]);
 
-  // ── Time-window lock (Step #3) ──────────────────────────────────────────────
-  // Server stays authoritative; this only surfaces the live countdown and
-  // blocks the unlock UI before `not_before` / after `expires_at`. Evaluated
-  // FIRST per the cross-cutting rule — if inert/expired, downstream gates
-  // (password etc.) are never shown.
-  const twConfig = metadata?.lockConfig?.timeWindow ?? null;
-  const twEnabled = !!(twConfig && twConfig.enabled);
-  const showCountdown = twConfig?.showCountdown !== false;
-  const showRemainingCount = metadata?.lockConfig?.openLimit?.showRemainingCount !== false;
-  const tw = useTimeWindow(twEnabled ? twConfig : null);
-  const twBlocked = twEnabled && (tw.status === 'PENDING' || tw.status === 'EXPIRED');
+  // Unlocking for non-password protected boxes with Time Lock or Access Limit
+  const handleUnlockAndEnter = async () => {
+    if (olEnabled) {
+      const currentUsed = localOpensUsed;
+      if (currentUsed >= maxOpens) {
+        setQuotaBlocked(true);
+        setQuotaReason('This Bitty Box has reached its maximum allowable opens and is permanently sealed.');
+        return;
+      }
 
+      if (metadata?.boxId) {
+        try {
+          const res = await fetch(`/api/boxes/${metadata.boxId}/unlock`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({}),
+          });
+          if (res.status === 403) {
+            const data = await res.json().catch(() => ({}));
+            setQuotaBlocked(true);
+            setQuotaReason(data.reason || 'This Bitty Box has reached its maximum allowable opens and is permanently sealed.');
+            return;
+          }
+          if (res.ok) {
+            const data = await res.json().catch(() => ({}));
+            if (data.allowed === false) {
+              setQuotaBlocked(true);
+              setQuotaReason(data.reason || 'This Bitty Box has reached its maximum allowable opens and is permanently sealed.');
+              return;
+            }
+            if (data.remainingOpens !== undefined) {
+              setRemainingOpens(data.remainingOpens);
+            }
+          }
+        } catch {}
+      }
+
+      const newUsed = currentUsed + 1;
+      try {
+        localStorage.setItem(quotaStorageKey, String(newUsed));
+        setLocalOpensUsed(newUsed);
+        setRemainingOpens(Math.max(0, maxOpens - newUsed));
+      } catch {}
+    }
+
+    setUnlocking(true);
+    window.setTimeout(() => {
+      setIsUnlocked(true);
+      setUnlocking(false);
+    }, 320);
+  };
+
+  // ── 1. Expired or Pending Time-Window Screen ───────────────────────────────
   if (twBlocked) {
     const expired = tw.status === 'EXPIRED';
     return (
@@ -208,21 +324,21 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
             </h3>
             <p className="text-xs text-purple-200/80 font-mono mt-1">
               {expired
-                ? 'This time-limited link has auto-revoked and is no longer available.'
+                ? 'This time-limited link has auto-revoked and is permanently unavailable.'
                 : 'This link is scheduled. It is not yet unlocked — check back when the timer reaches zero.'}
             </p>
           </div>
 
           {!expired && showCountdown && (
-            <div className="mb-4">
-              <div className="text-center text-[10px] font-mono text-fuchsia-300 uppercase tracking-widest mb-2">
-                Unlocks in
+            <div className="mb-4 bg-black/50 border border-fuchsia-500/30 rounded-xl p-4">
+              <div className="text-center text-[10px] font-mono text-fuchsia-300 uppercase tracking-widest mb-1.5">
+                Unlocks In
               </div>
               <div className="text-center font-cyber text-2xl text-white tracking-[0.15em] tabular-nums">
                 {tw.remainingLabel ?? '00 : 00 : 00 : 00'}
               </div>
-              <div className="text-center text-[10px] font-mono text-purple-300/60 mt-1">
-                DD : HH : MM : SS
+              <div className="text-center text-[9px] font-mono text-purple-300/60 mt-1">
+                DAYS : HOURS : MINS : SECS
               </div>
             </div>
           )}
@@ -240,7 +356,7 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
     );
   }
 
-  // ── Access Quota Limit Gate ───────────────────────────────────────────────
+  // ── 2. Access Quota Limit Exhausted Screen ──────────────────────────────────
   if (quotaBlocked) {
     return (
       <div className="fixed inset-0 w-screen h-screen bg-[#050515] flex items-center justify-center p-4 z-50 overflow-hidden font-sans">
@@ -252,14 +368,18 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
 
           <div className="text-center mb-6">
             <div className="w-12 h-12 rounded-xl bg-rose-950 border border-rose-500/50 mx-auto flex items-center justify-center mb-3 shadow-[0_0_20px_rgba(244,63,94,0.4)]">
-              <AlertTriangle className="w-6 h-6 text-rose-400 animate-pulse" />
+              <Flame className="w-6 h-6 text-rose-400 animate-pulse" />
             </div>
             <h3 className="font-cyber text-lg font-bold text-white tracking-wide">
               <CyberScrambleText text="ACCESS LIMIT EXHAUSTED" speed={25} />
             </h3>
-            <p className="text-xs text-rose-200/80 font-mono mt-2">
+            <p className="text-xs text-rose-200/80 font-mono mt-2 leading-relaxed">
               {quotaReason || 'This Bitty Box was configured with a strict allowable open quota and has burned.'}
             </p>
+          </div>
+
+          <div className="bg-black/50 border border-rose-500/30 rounded-xl p-3.5 mb-5 text-center font-mono text-[11px] text-rose-300">
+            <span className="font-bold">0 VISITS REMAINING</span> • BOX PERMANENTLY SEALED
           </div>
 
           {onEdit && (
@@ -275,127 +395,186 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
     );
   }
 
-  // ── Access Quota Checking Loader ─────────────────────────────────────────
+  // ── 3. Access Quota Checking Loader ─────────────────────────────────────────
   if (isCheckingQuota) {
     return (
       <div className="fixed inset-0 w-screen h-screen bg-[#050515] flex items-center justify-center p-4 z-50 font-sans">
         <div className="text-center p-8 flex flex-col items-center">
           <RefreshCw className="w-10 h-10 text-emerald-400 animate-spin mb-4" />
           <h4 className="font-cyber text-sm text-emerald-300 tracking-wider">VERIFYING ACCESS QUOTA...</h4>
-          <p className="text-xs font-mono text-emerald-300/70 mt-2">Checking session limit</p>
+          <p className="text-xs font-mono text-emerald-300/70 mt-2">Checking allowable session limit</p>
         </div>
       </div>
     );
   }
 
-  // Compute final HTML for the iframe - 100% identical to the live preview
-  let finalHtml = '';
-  if (!needsPassword && !isEncrypted && content) {
-    finalHtml = getRenderedHtml(content, metadata);
-  } else if (!needsPassword && isEncrypted && content) {
-    finalHtml = getRenderedHtml(content, metadata);
-  }
+  // ── 4. Protected Lock Splash Screen (Time Lock / Access Limit / Passcode) ────
+  if (!isUnlocked && hasLock) {
+    const formattedExpiry = twConfig?.notAfter
+      ? new Date(twConfig.notAfter).toLocaleString(undefined, {
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+      : null;
 
-  // If password is required to decrypt
-  if (needsPassword || (isEncrypted && !content)) {
     return (
-      <div className={`fixed inset-0 w-screen h-screen bg-[#050515] flex items-center justify-center p-4 z-50 overflow-hidden font-sans ${unlocking ? 'bitty-fade-out' : ''}`}>
-        <div className="w-full max-w-md p-6 bento-card-purple shadow-[0_0_50px_rgba(255,0,222,0.3)] relative animate-in zoom-in-95 duration-200">
-          <div className="bento-corner-accent top-l bento-corner-accent-purple" />
-          <div className="bento-corner-accent top-r bento-corner-accent-purple" />
-          <div className="bento-corner-accent bot-l bento-corner-accent-purple" />
-          <div className="bento-corner-accent bot-r bento-corner-accent-purple" />
+      <div className={`fixed inset-0 w-screen h-screen bg-[#050515] flex items-center justify-center p-4 z-50 overflow-y-auto font-sans ${unlocking ? 'bitty-fade-out' : ''}`}>
+        <div className="w-full max-w-lg p-5 sm:p-7 bg-[#090620]/90 border border-cyan-500/40 rounded-2xl shadow-[0_0_60px_rgba(0,242,255,0.25),inset_0_0_30px_rgba(0,242,255,0.06)] backdrop-blur-2xl relative animate-in zoom-in-95 duration-200 font-mono">
+          {/* Bento Corner Accents */}
+          <div className="absolute top-2 left-2 w-3 h-3 border-t-2 border-l-2 border-cyan-400 pointer-events-none" />
+          <div className="absolute top-2 right-2 w-3 h-3 border-t-2 border-r-2 border-cyan-400 pointer-events-none" />
+          <div className="absolute bottom-2 left-2 w-3 h-3 border-b-2 border-l-2 border-cyan-400 pointer-events-none" />
+          <div className="absolute bottom-2 right-2 w-3 h-3 border-b-2 border-r-2 border-cyan-400 pointer-events-none" />
 
-          <div className="text-center mb-6">
-            <div className="w-12 h-12 rounded-xl bg-fuchsia-950 border border-fuchsia-500/50 mx-auto flex items-center justify-center mb-3 shadow-[0_0_20px_rgba(255,0,222,0.4)]">
-              <Key className="w-6 h-6 text-fuchsia-400 animate-pulse" />
+          {/* Header */}
+          <div className="text-center mb-5">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/80 border border-cyan-400/40 text-cyan-300 text-xs mb-3 shadow-[0_0_15px_rgba(0,242,255,0.3)]">
+              <Shield className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+              <span>PROTECTED BITTY BOX</span>
             </div>
-            <h3 className="font-cyber text-lg font-bold text-white tracking-wide">
-              <CyberScrambleText text="PASSCODE PROTECTED BOX" speed={25} />
-            </h3>
-            <p className="text-xs text-purple-200/80 font-mono mt-1">
-              This Bitty Box is locked. Enter the numerical passcode (up to 8 digits) to view.
+
+            <h2 className="text-xl sm:text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-200 via-teal-100 to-fuchsia-300 tracking-wide">
+              <CyberScrambleText text={metadata.title || 'UNTITLED BITTY BOX'} speed={20} />
+            </h2>
+            <p className="text-xs text-cyan-300/70 mt-1">
+              Guarded by active security & self-destruct mechanisms.
             </p>
-            
-            <div className="flex flex-wrap items-center justify-center gap-2 mt-3">
-              {twEnabled && showCountdown && tw.status === 'OPEN' && tw.remainingLabel && (
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-fuchsia-950/70 border border-fuchsia-500/40">
-                  <Timer className="w-3.5 h-3.5 text-fuchsia-300" />
-                  <span className="text-[10px] font-mono text-fuchsia-200 uppercase tracking-wider">
-                    {tw.boundary === 'expires' ? 'Locks in' : 'Burns in'} {tw.remainingLabel}
-                  </span>
-                </div>
-              )}
-              {showRemainingCount && remainingOpens !== null && (
-                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-950/70 border border-emerald-500/40">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="text-[10px] font-mono text-emerald-300 uppercase tracking-wider font-bold">
-                    {remainingOpens} {remainingOpens === 1 ? 'Open' : 'Opens'} Remaining
-                  </span>
-                </div>
-              )}
-            </div>
           </div>
 
-          {error && (
-            <div className="mb-4 p-3 rounded-lg bg-rose-950/80 border border-rose-500/50 text-rose-300 text-xs font-mono flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-              <span>{error}</span>
+          {/* Lock Status Badges Grid */}
+          <div className="space-y-3 mb-6">
+            {/* Time Lock Card */}
+            {twEnabled && (
+              <div className="p-3.5 sm:p-4 rounded-xl bg-fuchsia-950/40 border border-fuchsia-500/40 shadow-[0_0_20px_rgba(217,70,239,0.15)] flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-fuchsia-300 text-xs font-bold uppercase tracking-wider">
+                    <Clock className="w-4 h-4 text-fuchsia-400 animate-pulse" />
+                    <span>TIME-LIMITED ACCESS</span>
+                  </div>
+                  {formattedExpiry && (
+                    <span className="text-[10px] text-fuchsia-300/70">
+                      Expires: {formattedExpiry}
+                    </span>
+                  )}
+                </div>
+
+                <div className="bg-black/60 border border-fuchsia-500/30 rounded-lg p-2.5 text-center">
+                  <div className="text-[10px] text-fuchsia-300 uppercase tracking-widest mb-1">
+                    Auto-Destructs In
+                  </div>
+                  <div className="text-xl sm:text-2xl font-cyber text-white tracking-[0.18em] tabular-nums">
+                    {tw.remainingLabel || '00 : 00 : 00 : 00'}
+                  </div>
+                  <div className="text-[9px] text-fuchsia-300/60 mt-0.5">
+                    DAYS : HOURS : MINS : SECS
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Access Limit Card */}
+            {olEnabled && (
+              <div className="p-3.5 sm:p-4 rounded-xl bg-amber-950/40 border border-amber-500/40 shadow-[0_0_20px_rgba(245,158,11,0.15)] flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-amber-300 text-xs font-bold uppercase tracking-wider">
+                    <Flame className="w-4 h-4 text-amber-400 animate-pulse" />
+                    <span>ACCESS QUOTA LIMITED</span>
+                  </div>
+                  <span className="text-[10px] text-amber-300/80 font-bold">
+                    BURN ON READ
+                  </span>
+                </div>
+
+                <div className="bg-black/60 border border-amber-500/30 rounded-lg p-3 text-center">
+                  <div className="text-lg sm:text-xl font-cyber text-amber-200 tracking-wider font-bold">
+                    {remainingOpens !== null ? remainingOpens : maxOpens} OF {maxOpens} VISITS REMAINING
+                  </div>
+                  <div className="text-[10px] text-amber-300/70 mt-1">
+                    This transmission permanently seals when allowable open quota is exhausted.
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Passcode Form or Direct Enter Button */}
+          {needsPassword || (isEncrypted && !content) ? (
+            <form onSubmit={handlePasswordSubmit} className="space-y-4">
+              {error && (
+                <div className="p-3 rounded-lg bg-rose-950/80 border border-rose-500/50 text-rose-300 text-xs flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                  <span>{error}</span>
+                </div>
+              )}
+
+              <div>
+                <div className="flex items-center justify-between text-[11px] text-fuchsia-300 mb-1.5 uppercase tracking-wider">
+                  <span>NUMERICAL PASSCODE</span>
+                  <span className="text-fuchsia-400/80 text-[10px]">{passwordInput.length} / 8 DIGITS</span>
+                </div>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={8}
+                    value={passwordInput}
+                    onChange={e => {
+                      const numbersOnly = e.target.value.replace(/\D/g, '').slice(0, 8);
+                      setPasswordInput(numbersOnly);
+                      if (error) setError(null);
+                    }}
+                    placeholder="Enter 1-8 digit passcode..."
+                    autoFocus
+                    className={`w-full bg-[#090314] border border-fuchsia-500/40 rounded-xl pl-4 pr-11 py-3 text-center text-lg tracking-[0.25em] text-white placeholder:text-purple-400/40 placeholder:text-xs placeholder:tracking-normal focus:outline-none focus:border-fuchsia-400 focus:ring-1 focus:ring-fuchsia-400 ${shake ? 'bitty-shake' : ''}`}
+                    onAnimationEnd={() => setShake(false)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-purple-400 hover:text-fuchsia-300 transition cursor-pointer"
+                    title={showPassword ? 'Hide passcode' : 'Show passcode'}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading || !passwordInput.trim()}
+                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-fuchsia-600 via-purple-600 to-cyan-600 disabled:opacity-50 text-white font-cyber text-xs tracking-widest shadow-[0_0_25px_rgba(255,0,222,0.4)] hover:scale-[1.01] active:scale-[0.99] transition cursor-pointer flex items-center justify-center gap-2"
+              >
+                {isLoading ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>AUTHENTICATING PASSCODE...</span>
+                  </>
+                ) : (
+                  <>
+                    <Key className="w-4 h-4" />
+                    <span>UNLOCK TRANSMISSION</span>
+                  </>
+                )}
+              </button>
+            </form>
+          ) : (
+            <div className="space-y-3">
+              <button
+                type="button"
+                onClick={handleUnlockAndEnter}
+                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 via-teal-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-black font-extrabold text-xs tracking-widest shadow-[0_0_30px_rgba(0,242,255,0.5)] hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer flex items-center justify-center gap-2 font-mono"
+              >
+                <Zap className="w-4 h-4 text-black fill-black" />
+                <span>ENTER & VIEW BITTY BOX</span>
+              </button>
+              <div className="text-center text-[10px] text-cyan-300/60">
+                {olEnabled ? 'Consumes 1 allowable open on entry.' : 'Click to render self-contained transmission.'}
+              </div>
             </div>
           )}
-
-          <form onSubmit={handlePasswordSubmit} className="space-y-4">
-            <div>
-              <div className="flex items-center justify-between text-[11px] font-mono text-fuchsia-300 mb-1.5 uppercase tracking-wider">
-                <span>NUMERICAL PASSCODE</span>
-                <span className="text-fuchsia-400/80 text-[10px]">{passwordInput.length} / 8 DIGITS</span>
-              </div>
-              <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  maxLength={8}
-                  value={passwordInput}
-                  onChange={e => {
-                    const numbersOnly = e.target.value.replace(/\D/g, '').slice(0, 8);
-                    setPasswordInput(numbersOnly);
-                    if (error) setError(null);
-                  }}
-                  placeholder="Enter 1-8 digit passcode..."
-                  autoFocus
-                  className={`w-full bg-[#090314] border border-fuchsia-500/40 rounded-xl pl-4 pr-11 py-3 text-center text-lg tracking-[0.25em] text-white placeholder:text-purple-400/40 placeholder:text-xs placeholder:tracking-normal focus:outline-none focus:border-fuchsia-400 focus:ring-1 focus:ring-fuchsia-400 font-mono ${shake ? 'bitty-shake' : ''}`}
-                  onAnimationEnd={() => setShake(false)}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-purple-400 hover:text-fuchsia-300 transition cursor-pointer"
-                  title={showPassword ? 'Hide passcode' : 'Show passcode'}
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading || !passwordInput.trim()}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-fuchsia-600 to-purple-600 disabled:opacity-50 text-white font-cyber text-xs tracking-wider shadow-[0_0_20px_rgba(255,0,222,0.4)] hover:scale-[1.02] active:scale-[0.98] transition cursor-pointer flex items-center justify-center gap-2"
-            >
-              {isLoading ? (
-                <>
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                  <span>AUTHENTICATING PASSCODE...</span>
-                </>
-              ) : (
-                <>
-                  <Key className="w-4 h-4" />
-                  <span>UNLOCK TRANSMISSION</span>
-                </>
-              )}
-            </button>
-          </form>
         </div>
       </div>
     );
@@ -440,13 +619,49 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
     );
   }
 
-  // Render ONLY the pure live preview output in a 100% full-screen iframe with zero Bittybox UI
+  // Compute final HTML for the iframe
+  const finalHtml = getRenderedHtml(content || '', metadata);
+
+  // ── 5. Rendered Live Content with Floating Lock HUD (Top-Right) ───────────
   return (
-    <iframe
-      srcDoc={finalHtml}
-      title={metadata.title || 'Bitty Box'}
-      className="fixed inset-0 w-screen h-screen border-0 m-0 p-0 block bg-transparent z-50"
-      sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-modals allow-downloads"
-    />
+    <div className="fixed inset-0 w-screen h-screen overflow-hidden bg-black">
+      {/* Floating Collapsible Lock Status HUD Pill */}
+      {hasLock && !isHudDismissed && (
+        <div className="fixed top-3 right-3 z-[60] max-w-[90vw] flex items-center gap-2 bg-[#050314]/90 border border-cyan-500/40 rounded-full px-3 py-1.5 shadow-[0_0_20px_rgba(0,0,0,0.8),0_0_10px_rgba(0,242,255,0.2)] backdrop-blur-xl font-mono text-[10px] text-cyan-100 animate-in fade-in slide-in-from-top-2 duration-300">
+          {twEnabled && (
+            <div className="flex items-center gap-1 text-fuchsia-300 font-bold">
+              <Clock className="w-3 h-3 text-fuchsia-400 animate-pulse" />
+              <span>{tw.remainingLabel || 'AUTO-DESTRUCT ACTIVE'}</span>
+            </div>
+          )}
+
+          {twEnabled && olEnabled && <span className="text-cyan-500/40">|</span>}
+
+          {olEnabled && (
+            <div className="flex items-center gap-1 text-amber-300 font-bold">
+              <Flame className="w-3 h-3 text-amber-400" />
+              <span>{remainingOpens !== null ? `${remainingOpens} Opens Left` : 'Active Quota'}</span>
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={() => setIsHudDismissed(true)}
+            className="text-cyan-400/50 hover:text-cyan-200 ml-1 cursor-pointer transition-colors p-0.5"
+            title="Dismiss Lock HUD"
+          >
+            <X className="w-3 h-3" />
+          </button>
+        </div>
+      )}
+
+      {/* Sandboxed Iframe with Rendered Output */}
+      <iframe
+        srcDoc={finalHtml}
+        title={metadata.title || 'Bitty Box'}
+        className="w-full h-full border-0 m-0 p-0 block bg-black"
+        sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-modals allow-downloads"
+      />
+    </div>
   );
 };
