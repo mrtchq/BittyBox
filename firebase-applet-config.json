@@ -1,12 +1,12 @@
 {
-  "projectId": "rosy-cache-478313-a2",
-  "appId": "1:801547964838:web:0a8b40ed9a2a97a6903f67",
-  "apiKey": "AIzaSyDwfAaVHzBJLbq15O2DTu21w7Ks4VZNXoE",
-  "authDomain": "rosy-cache-478313-a2.firebaseapp.com",
-  "firestoreDatabaseId": "ai-studio-bittybox-5bad099e-51ec-4b17-87fd-5b481f42d6aa",
-  "storageBucket": "rosy-cache-478313-a2.firebasestorage.app",
-  "messagingSenderId": "801547964838",
+  "projectId": "YOUR_FIREBASE_PROJECT_ID",
+  "appId": "YOUR_FIREBASE_WEB_APP_ID",
+  "apiKey": "YOUR_FIREBASE_WEB_API_KEY",
+  "authDomain": "YOUR_FIREBASE_PROJECT.firebaseapp.com",
+  "firestoreDatabaseId": "(default)",
+  "storageBucket": "YOUR_FIREBASE_PROJECT.firebasestorage.app",
+  "messagingSenderId": "YOUR_FIREBASE_MESSAGING_SENDER_ID",
   "measurementId": "",
-  "oAuthClientId": "801547964838-tu6tvan5oc7gf71po1l1n790oiullsbs.apps.googleusercontent.com",
+  "oAuthClientId": "",
   "recaptchaSiteKey": ""
 }
