@@ -1536,9 +1536,8 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
                       {currentSlide !== 4 && (
                         <div className="space-y-1.5 text-left">
                           <h2 className="text-base sm:text-lg md:text-xl font-extrabold font-mono tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-cyan-200 via-teal-100 to-fuchsia-300 leading-tight">
-                            <CyberScrambleText text={activeSlideData.title} speed={18} />
                             <span
-                              className={`block text-sm sm:text-base md:text-lg mt-0.5 ${
+                              className={`block text-sm sm:text-base md:text-lg ${
                                 activeSlideData.accentColor === 'fuchsia'
                                   ? 'text-fuchsia-400 drop-shadow-[0_0_12px_rgba(217,70,239,0.8)]'
                                   : activeSlideData.accentColor === 'emerald'
