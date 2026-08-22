@@ -49,7 +49,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { GRIP_ICON_DATA_URL } from './EdgeGripHandles';
 import { CyberScrambleText } from './CyberScrambleText';
 import { PrismCheckbox } from './PrismCheckbox';
-import { GoogleIcon } from './AccountDashboard';
+import { AccountDashboard, GoogleIcon } from './AccountDashboard';
 import { UserAvatar } from './UserAvatar';
 
 interface StudioToolsSidePanelProps {
@@ -410,10 +410,20 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
             {/* Panel Body */}
             <div className="flex-1 overflow-y-auto p-4 sm:p-6 cyber-scrollbar space-y-6">
 
-              {/* =========================================================================
-                  TAB 1: ACCOUNT (AUTHENTICATED PROFILE OR SIGN-IN FORM)
-                 ========================================================================= */}
               {activeTab === 'account' && (
+                <div className="-m-4 sm:-m-6">
+                  <AccountDashboard
+                    account={account}
+                    onNavigateToSlide01={onNavigateToSlide01 || onReplaySplash || (() => {})}
+                    onOpenQr={onOpenQr}
+                  />
+                </div>
+              )}
+
+              {/* =========================================================================
+                  TAB 1: ACCOUNT (LEGACY PANEL ACCOUNT - disabled; official AccountDashboard renders above)
+                 ========================================================================= */}
+              {false && activeTab === 'account' && (
                 <div>
                   {!isAuthenticated ? (
                     <div className="max-w-md mx-auto space-y-4 font-mono">
