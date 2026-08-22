@@ -261,7 +261,7 @@ export const BittyNavbar: React.FC<BittyNavbarProps> = ({
             ) : (
               <>
                 <Crown className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-                <span className="font-bold">UPGRADE &bull; $7/mo</span>
+                <span className="font-bold">UPGRADE &bull; $9/mo</span>
               </>
             )}
           </button>

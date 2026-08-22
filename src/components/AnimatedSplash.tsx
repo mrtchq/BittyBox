@@ -166,10 +166,10 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
   }, [timeLockEnabled, timeLockMode, timeExpiryHours, timeDelayHours, timeOpenAt, timeLockAt, hybridRevealMode, hybridSelfDestructHours]);
 
   const calculatedCreditCost = useMemo(() => {
-    let cost = 1; // Base Generation Cost
-    if (isPasscodeActive) cost += 1;
-    if (isTimeLockActive) cost += 1;
-    if (isAccessLimitActive) cost += 1;
+    let cost = 0;
+    if (isPasscodeActive) cost += 5;
+    if (isTimeLockActive) cost += 10;
+    if (isAccessLimitActive) cost += 10;
     return cost;
   }, [isPasscodeActive, isTimeLockActive, isAccessLimitActive]);
 
@@ -1621,8 +1621,8 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
                               </div>
                               <div className="text-[10px] text-zinc-400 truncate">
                                 {isPasscodeActive || isTimeLockActive || isAccessLimitActive
-                                  ? `Base (1) + ${[isPasscodeActive && 'PIN (+1)', isTimeLockActive && 'Time (+1)', isAccessLimitActive && 'Quota (+1)'].filter(Boolean).join(' + ')}`
-                                  : 'Standard URL Payload (No Locks)'}
+                                  ? `${[isPasscodeActive && 'PIN (+5)', isTimeLockActive && (timeLockMode === 'hybrid' ? 'Reveal+Decay (+10)' : 'Time (+10)'), isAccessLimitActive && 'Quota (+10)'].filter(Boolean).join(' + ')}`
+                                  : 'Standard URL Payload (Free Forever &bull; No Locks)'}
                               </div>
                             </div>
 
@@ -1648,9 +1648,9 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
                             <div className="p-1.5 rounded bg-cyan-950/40 border border-cyan-500/30 text-cyan-200 flex items-center justify-between">
                               <span className="truncate flex items-center gap-1">
                                 <Code className="w-3 h-3 text-cyan-400 shrink-0" />
-                                Base Payload
+                                Base Builder
                               </span>
-                              <span className="font-bold text-cyan-300 shrink-0">1 CR</span>
+                              <span className="font-bold text-emerald-400 shrink-0">FREE (0 CR)</span>
                             </div>
 
                             {/* Passcode Lock */}
@@ -1661,25 +1661,29 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
                             }`}>
                               <span className="truncate flex items-center gap-1">
                                 <Key className={`w-3 h-3 shrink-0 ${isPasscodeActive ? 'text-fuchsia-400' : 'text-zinc-600'}`} />
-                                PIN Lock
+                                Passcode PIN
                               </span>
                               <span className={`font-bold shrink-0 ${isPasscodeActive ? 'text-fuchsia-300' : 'text-zinc-600'}`}>
-                                {isPasscodeActive ? '+1 CR' : '0 CR'}
+                                {isPasscodeActive ? '+5 CR' : '0 CR'}
                               </span>
                             </div>
 
-                            {/* Time-Based Lock */}
+                            {/* Time-Based Lock / Reveal + Decay */}
                             <div className={`p-1.5 rounded border flex items-center justify-between transition-all duration-200 ${
                               isTimeLockActive
                                 ? 'bg-amber-950/40 border-amber-500/50 text-amber-200 shadow-[0_0_8px_rgba(245,158,11,0.3)]'
                                 : 'bg-black/30 border-zinc-800/80 text-zinc-600'
                             }`}>
                               <span className="truncate flex items-center gap-1">
-                                <Clock className={`w-3 h-3 shrink-0 ${isTimeLockActive ? 'text-amber-400' : 'text-zinc-600'}`} />
-                                Time Lock
+                                {timeLockMode === 'hybrid' ? (
+                                  <Flame className={`w-3 h-3 shrink-0 ${isTimeLockActive ? 'text-rose-400' : 'text-zinc-600'}`} />
+                                ) : (
+                                  <Clock className={`w-3 h-3 shrink-0 ${isTimeLockActive ? 'text-amber-400' : 'text-zinc-600'}`} />
+                                )}
+                                {timeLockMode === 'hybrid' ? 'Reveal+Decay' : 'Time Lock'}
                               </span>
                               <span className={`font-bold shrink-0 ${isTimeLockActive ? 'text-amber-300' : 'text-zinc-600'}`}>
-                                {isTimeLockActive ? '+1 CR' : '0 CR'}
+                                {isTimeLockActive ? '+10 CR' : '0 CR'}
                               </span>
                             </div>
 
@@ -1691,10 +1695,10 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
                             }`}>
                               <span className="truncate flex items-center gap-1">
                                 <Gauge className={`w-3 h-3 shrink-0 ${isAccessLimitActive ? 'text-emerald-400' : 'text-zinc-600'}`} />
-                                Quota Lock
+                                Visitor Quota
                               </span>
                               <span className={`font-bold shrink-0 ${isAccessLimitActive ? 'text-emerald-300' : 'text-zinc-600'}`}>
-                                {isAccessLimitActive ? '+1 CR' : '0 CR'}
+                                {isAccessLimitActive ? '+10 CR' : '0 CR'}
                               </span>
                             </div>
                           </div>
@@ -1703,10 +1707,10 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
                           <div className="mt-1.5 pt-1.5 border-t border-cyan-500/20 flex items-center justify-between text-[10px] text-cyan-400/80 relative z-10">
                             <div className="flex items-center gap-1 truncate">
                               <Zap className="w-3 h-3 text-amber-400 shrink-0" />
-                              <span>{user ? `Balance: ${user.credits} CR` : '100 Free Starter Credits'}</span>
+                              <span>{user ? `Balance: ${user.credits} CR` : 'Unlimited Free with No Locks'}</span>
                             </div>
                             <span className="text-emerald-400 font-bold shrink-0">
-                              {user ? `After: ${Math.max(0, (user.credits || 0) - calculatedCreditCost)} CR` : 'Zero Server Cost'}
+                              {user ? `After: ${Math.max(0, (user.credits || 0) - calculatedCreditCost)} CR` : 'PRO ($9/mo) = 0 CR'}
                             </span>
                           </div>
                         </div>

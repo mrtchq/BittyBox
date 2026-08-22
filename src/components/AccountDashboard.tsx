@@ -991,14 +991,43 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
                 </div>
               </div>
 
-              {/* Credit Top-Up Packages */}
+              {/* Membership Plans Overview */}
               <div className="space-y-3 pt-2">
-                <div className="text-xs font-bold text-emerald-300 font-cyber">MEMBERSHIP & TOP-UP PLANS:</div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Pack 1: Bitty Box PRO Monthly Membership */}
-                  <div className="p-4 rounded-xl bg-gradient-to-b from-[#0e0422] to-[#04010e] border-2 border-amber-400 shadow-[0_0_25px_rgba(245,158,11,0.25)] flex flex-col justify-between space-y-3 relative">
+                <div className="text-xs font-bold text-emerald-300 font-cyber flex items-center justify-between">
+                  <span>MEMBERSHIP TIERS:</span>
+                  <span className="text-[10px] text-amber-300/80">FREE &bull; PRO ($9/MO) &bull; ULTRA ($29/MO)</span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+                  {/* Tier 1: FREE */}
+                  <div className="p-4 rounded-xl bg-[#03010b] border border-cyan-500/30 flex flex-col justify-between space-y-3">
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-cyan-200 font-cyber">FREE TIER</span>
+                        <span className="text-[9px] font-mono bg-cyan-950 px-2 py-0.5 rounded text-cyan-300 border border-cyan-500/40">
+                          $0 / FOREVER
+                        </span>
+                      </div>
+                      <div className="text-xl font-extrabold font-cyber text-white mt-1">
+                        UNLIMITED BOXES
+                      </div>
+                      <p className="text-[11px] text-zinc-300 mt-1 leading-relaxed">
+                        Unlimited Bitty Boxes, basic builder, and default themes with zero server storage.
+                      </p>
+                      <div className="mt-3 pt-2 border-t border-cyan-500/20 text-[10px] text-zinc-400 space-y-1">
+                        <div>&bull; No access locks included</div>
+                        <div>&bull; Use add-on credits for locks</div>
+                      </div>
+                    </div>
+                    <div className="py-2 text-center text-[10px] text-cyan-400/80 bg-cyan-950/40 rounded border border-cyan-500/30 font-mono">
+                      CURRENT BASE ACCESS
+                    </div>
+                  </div>
+
+                  {/* Tier 2: PRO */}
+                  <div className="p-4 rounded-xl bg-gradient-to-b from-[#14062e] via-[#09031c] to-[#050112] border-2 border-amber-400 shadow-[0_0_25px_rgba(245,158,11,0.25)] flex flex-col justify-between space-y-3 relative">
                     <div className="absolute -top-2.5 right-3 bg-amber-400 text-black text-[9px] font-cyber font-extrabold px-2.5 py-0.5 rounded-full uppercase shadow-md">
-                      RECOMMENDED
+                      ⭐ RECOMMENDED
                     </div>
                     <div>
                       <div className="flex items-center justify-between">
@@ -1006,46 +1035,123 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
                           <Crown className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
                           BITTY BOX PRO
                         </span>
-                        <span className="text-[10px] font-mono bg-amber-950 px-2 py-0.5 rounded text-amber-300 border border-amber-500/50">
-                          $25.00 / mo
+                        <span className="text-[9px] font-mono bg-amber-950 px-2 py-0.5 rounded text-amber-300 border border-amber-500/50">
+                          $9/MO &bull; $79/YR
                         </span>
                       </div>
-                      <div className="text-2xl font-extrabold font-cyber text-white mt-2">
-                        10,000 <span className="text-xs font-normal text-amber-300/80 font-mono">CREDITS / MONTH</span>
+                      <div className="text-xl font-extrabold font-cyber text-white mt-1">
+                        ALL CURRENT LOCKS
                       </div>
-                      <p className="text-[11px] text-zinc-300 mt-1 leading-relaxed">
-                        Full PRO membership: 10,000 recurring monthly credits, unlimited AES-256 encryption, time locks, visit quotas, and priority MCP server agent tools.
+                      <p className="text-[11px] text-amber-100/90 mt-1 leading-relaxed">
+                        Passcode (numeric), Time Locks (Duration, Delay, Date Schedule), Reveal + Decay, Visitor Quota, and premium themes.
                       </p>
+                      <div className="mt-2 pt-2 border-t border-amber-500/30 text-[10px] text-amber-200/90 space-y-0.5">
+                        <div className="text-emerald-300 font-bold">&bull; Unlimited lock generation with 0 credits</div>
+                        <div>&bull; Basic views &amp; unlock event telemetry</div>
+                      </div>
                     </div>
 
-                    <a
-                      href="https://creem.io/product/prod_3dVHhedrXPaGmitx9VecS3"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full py-2.5 rounded-lg bg-gradient-to-r from-amber-400 via-amber-300 to-amber-400 text-black font-cyber font-bold text-xs tracking-wider flex items-center justify-center gap-1.5 transition shadow-[0_0_15px_rgba(245,158,11,0.4)] hover:brightness-110 active:scale-[0.99]"
-                    >
-                      <span>SUBSCRIBE TO PRO ($25/MO)</span>
-                      <ExternalLink className="w-3.5 h-3.5 text-black" />
-                    </a>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <a
+                        href="https://creem.io/product/prod_3dVHhedrXPaGmitx9VecS3"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="py-2 rounded-lg bg-gradient-to-r from-amber-400 via-amber-300 to-amber-400 text-black font-cyber font-bold text-[10px] tracking-wider flex items-center justify-center gap-1 transition shadow-sm hover:brightness-110"
+                      >
+                        <span>$9 / MO</span>
+                        <ExternalLink className="w-3 h-3 text-black" />
+                      </a>
+                      <a
+                        href="https://creem.io/product/prod_3dVHhedrXPaGmitx9VecS3?interval=annual"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="py-2 rounded-lg bg-amber-950 border border-amber-400/60 text-amber-200 font-cyber font-bold text-[10px] tracking-wider flex items-center justify-center gap-1 transition hover:bg-amber-900"
+                        title="Save 27% with annual billing"
+                      >
+                        <span>$79 / YR</span>
+                        <ExternalLink className="w-3 h-3 text-amber-300" />
+                      </a>
+                    </div>
                   </div>
 
-                  {/* Pack 2: 1,000 Perpetual Credits */}
+                  {/* Tier 3: ULTRA (FUTURE) */}
+                  <div className="p-4 rounded-xl bg-[#03010b] border border-fuchsia-500/40 flex flex-col justify-between space-y-3 opacity-90 hover:opacity-100 transition">
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-fuchsia-200 font-cyber flex items-center gap-1.5">
+                          <Zap className="w-3.5 h-3.5 text-fuchsia-400" />
+                          ULTRA TIER
+                        </span>
+                        <span className="text-[9px] font-mono bg-fuchsia-950 px-2 py-0.5 rounded text-fuchsia-300 border border-fuchsia-500/40">
+                          $29/MO &bull; $249/YR
+                        </span>
+                      </div>
+                      <div className="text-xl font-extrabold font-cyber text-fuchsia-300 mt-1">
+                        CHAINS &amp; LOGIC
+                      </div>
+                      <p className="text-[11px] text-zinc-300 mt-1 leading-relaxed">
+                        Agent-native workflow powerhouse: multi-box chains, conditional logic, OAuth identity access, and agent triggers.
+                      </p>
+                      <div className="mt-2 pt-2 border-t border-fuchsia-500/20 text-[10px] text-fuchsia-300/70 space-y-0.5">
+                        <div>&bull; Version history &amp; snapshots</div>
+                        <div>&bull; Team collaboration &amp; vaults</div>
+                      </div>
+                    </div>
+
+                    <div className="py-2 text-center text-[10px] text-fuchsia-300 font-mono bg-fuchsia-950/40 rounded border border-fuchsia-500/30">
+                      🚀 PLANNED FUTURE TIER
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Lock Credit Costs Reference Bar */}
+              <div className="p-3.5 rounded-xl bg-[#03010b] border border-cyan-500/30 space-y-2">
+                <div className="text-xs font-bold text-cyan-300 uppercase tracking-wider flex items-center justify-between">
+                  <span>PAY-AS-YOU-GO LOCK CREDIT COSTS:</span>
+                  <span className="text-[10px] text-emerald-400">CREDITS NEVER EXPIRE</span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                  <div className="p-2 rounded bg-black/60 border border-cyan-500/20 flex items-center justify-between">
+                    <span className="text-zinc-300 text-[11px]">Passcode (PIN)</span>
+                    <span className="font-bold text-fuchsia-400">5 CR</span>
+                  </div>
+                  <div className="p-2 rounded bg-black/60 border border-cyan-500/20 flex items-center justify-between">
+                    <span className="text-zinc-300 text-[11px]">Time-Based Locks</span>
+                    <span className="font-bold text-amber-400">10 CR</span>
+                  </div>
+                  <div className="p-2 rounded bg-black/60 border border-cyan-500/20 flex items-center justify-between">
+                    <span className="text-zinc-300 text-[11px]">Reveal + Decay</span>
+                    <span className="font-bold text-rose-400">10 CR</span>
+                  </div>
+                  <div className="p-2 rounded bg-black/60 border border-cyan-500/20 flex items-center justify-between">
+                    <span className="text-zinc-300 text-[11px]">Visitor Quota</span>
+                    <span className="font-bold text-emerald-400">10 CR</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Credit Top-Up Packages */}
+              <div className="space-y-3 pt-2">
+                <div className="text-xs font-bold text-emerald-300 font-cyber">CREDIT REFILL PACKAGES:</div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                  {/* Pack 1: 50 Credits */}
                   <div className="p-4 rounded-xl bg-[#03010b] border border-cyan-500/40 hover:border-cyan-300 transition flex flex-col justify-between space-y-3 shadow-inner">
                     <div>
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-cyan-200 font-cyber flex items-center gap-1.5">
                           <Coins className="w-3.5 h-3.5 text-cyan-400" />
-                          1,000 CREDITS TOP-UP
+                          50 CREDITS
                         </span>
                         <span className="text-[10px] font-mono bg-cyan-950 px-2 py-0.5 rounded text-cyan-300 border border-cyan-500/40">
-                          $10.00 ONE-TIME
+                          $5.00
                         </span>
                       </div>
                       <div className="text-2xl font-extrabold font-cyber text-cyan-300 mt-2">
-                        1,000 <span className="text-xs font-normal text-cyan-400/70 font-mono">PERPETUAL CREDITS</span>
+                        50 <span className="text-xs font-normal text-cyan-400/70 font-mono">CREDITS</span>
                       </div>
                       <p className="text-[11px] text-cyan-300/70 mt-1 leading-relaxed">
-                        One-time top-up: 1,000 perpetual credits for publishing boxes, capsules, and LLM agent tool calls. Credits never expire.
+                        Starter refill pack: $0.10 / credit. Try PRO access locks with no subscription required.
                       </p>
                     </div>
 
@@ -1055,28 +1161,31 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
                       rel="noopener noreferrer"
                       className="w-full py-2.5 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/60 text-cyan-200 font-cyber font-bold text-xs tracking-wider flex items-center justify-center gap-1.5 transition active:scale-[0.99]"
                     >
-                      <span>REFILL 1,000 CREDITS ($10)</span>
+                      <span>BUY 50 CREDITS ($5)</span>
                       <ExternalLink className="w-3.5 h-3.5 text-cyan-300" />
                     </a>
                   </div>
 
-                  {/* Pack 3: 5,000 Perpetual Credits */}
-                  <div className="p-4 rounded-xl bg-[#03010b] border border-cyan-500/40 hover:border-cyan-300 transition flex flex-col justify-between space-y-3 shadow-inner">
+                  {/* Pack 2: 150 Credits */}
+                  <div className="p-4 rounded-xl bg-gradient-to-b from-emerald-950/40 to-[#03010b] border-2 border-emerald-400/80 shadow-[0_0_20px_rgba(0,255,150,0.2)] flex flex-col justify-between space-y-3 relative">
+                    <div className="absolute -top-2.5 right-3 bg-emerald-400 text-black text-[9px] font-cyber font-extrabold px-2.5 py-0.5 rounded-full uppercase shadow-md">
+                      POPULAR &bull; SAVE 20%
+                    </div>
                     <div>
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-cyan-200 font-cyber flex items-center gap-1.5">
-                          <Coins className="w-3.5 h-3.5 text-cyan-400" />
-                          5,000 CREDITS (GROWTH)
+                        <span className="text-xs font-bold text-emerald-200 font-cyber flex items-center gap-1.5">
+                          <Coins className="w-3.5 h-3.5 text-emerald-400" />
+                          150 CREDITS
                         </span>
-                        <span className="text-[10px] font-mono bg-cyan-950 px-2 py-0.5 rounded text-cyan-300 border border-cyan-500/40">
-                          $35.00 ONE-TIME
+                        <span className="text-[10px] font-mono bg-emerald-950 px-2 py-0.5 rounded text-emerald-300 border border-emerald-500/40">
+                          $12.00
                         </span>
                       </div>
-                      <div className="text-2xl font-extrabold font-cyber text-cyan-300 mt-2">
-                        5,000 <span className="text-xs font-normal text-cyan-400/70 font-mono">PERPETUAL CREDITS</span>
+                      <div className="text-2xl font-extrabold font-cyber text-emerald-300 mt-2">
+                        150 <span className="text-xs font-normal text-emerald-400/70 font-mono">CREDITS</span>
                       </div>
-                      <p className="text-[11px] text-cyan-300/70 mt-1 leading-relaxed">
-                        Growth top-up: 5,000 perpetual credits for high-throughput AI agent workflows and high-volume link publishing.
+                      <p className="text-[11px] text-emerald-300/80 mt-1 leading-relaxed">
+                        Creator refill pack: $0.08 / credit. Ideal for creators deploying secured &amp; scheduled micro-links.
                       </p>
                     </div>
 
@@ -1084,30 +1193,30 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
                       href="https://creem.io/product/prod_1ybKpsP1FQPyKvVZUVSg0A"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-full py-2.5 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/60 text-cyan-200 font-cyber font-bold text-xs tracking-wider flex items-center justify-center gap-1.5 transition active:scale-[0.99]"
+                      className="w-full py-2.5 rounded-lg bg-emerald-400 text-black font-cyber font-bold text-xs tracking-wider flex items-center justify-center gap-1.5 transition shadow-[0_0_15px_rgba(0,255,150,0.4)] hover:brightness-110 active:scale-[0.99]"
                     >
-                      <span>REFILL 5,000 CREDITS ($35)</span>
-                      <ExternalLink className="w-3.5 h-3.5 text-cyan-300" />
+                      <span>BUY 150 CREDITS ($12)</span>
+                      <ExternalLink className="w-3.5 h-3.5 text-black" />
                     </a>
                   </div>
 
-                  {/* Pack 4: 15,000 Perpetual Credits */}
+                  {/* Pack 3: 400 Credits */}
                   <div className="p-4 rounded-xl bg-[#03010b] border border-cyan-500/40 hover:border-cyan-300 transition flex flex-col justify-between space-y-3 shadow-inner">
                     <div>
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-cyan-200 font-cyber flex items-center gap-1.5">
                           <Coins className="w-3.5 h-3.5 text-cyan-400" />
-                          15,000 CREDITS (PRO PACK)
+                          400 CREDITS
                         </span>
                         <span className="text-[10px] font-mono bg-cyan-950 px-2 py-0.5 rounded text-cyan-300 border border-cyan-500/40">
-                          $90.00 ONE-TIME
+                          $25.00
                         </span>
                       </div>
                       <div className="text-2xl font-extrabold font-cyber text-cyan-300 mt-2">
-                        15,000 <span className="text-xs font-normal text-cyan-400/70 font-mono">PERPETUAL CREDITS</span>
+                        400 <span className="text-xs font-normal text-cyan-400/70 font-mono">CREDITS</span>
                       </div>
                       <p className="text-[11px] text-cyan-300/70 mt-1 leading-relaxed">
-                        Bulk developer bundle: 15,000 perpetual credits at highest volume discount for programmatic agent pipelines.
+                        Pro refill bundle: $0.0625 / credit (Save 38%). Highest volume discount for developer toolchains.
                       </p>
                     </div>
 
@@ -1117,7 +1226,7 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
                       rel="noopener noreferrer"
                       className="w-full py-2.5 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/60 text-cyan-200 font-cyber font-bold text-xs tracking-wider flex items-center justify-center gap-1.5 transition active:scale-[0.99]"
                     >
-                      <span>REFILL 15,000 CREDITS ($90)</span>
+                      <span>BUY 400 CREDITS ($25)</span>
                       <ExternalLink className="w-3.5 h-3.5 text-cyan-300" />
                     </a>
                   </div>

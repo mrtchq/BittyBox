@@ -946,7 +946,7 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
                         <span>CREDITS BALANCE & REFILLS</span>
                       </h3>
                       <p className="text-[11px] text-emerald-300/70 mt-0.5">
-                        Credits power autonomous link compression, password locks, and API requests.
+                        Credits power pay-as-you-go passcode locks, time-based locks, and visitor quotas.
                       </p>
                     </div>
                     <div className="text-right">
@@ -955,53 +955,78 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
                     </div>
                   </div>
 
+                  {/* Lock Credit Costs Reference */}
+                  <div className="p-3 rounded-xl bg-[#03010b] border border-cyan-500/25 space-y-1.5 text-xs">
+                    <div className="text-[10px] text-cyan-400 font-bold uppercase tracking-wider">
+                      LOCK CREDIT COSTS PER BOX:
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-[11px]">
+                      <div className="flex items-center justify-between p-1.5 rounded bg-black/50">
+                        <span className="text-zinc-300">Passcode PIN Lock:</span>
+                        <span className="font-bold text-fuchsia-400">5 CR</span>
+                      </div>
+                      <div className="flex items-center justify-between p-1.5 rounded bg-black/50">
+                        <span className="text-zinc-300">Time-Based Locks:</span>
+                        <span className="font-bold text-amber-400">10 CR</span>
+                      </div>
+                      <div className="flex items-center justify-between p-1.5 rounded bg-black/50">
+                        <span className="text-zinc-300">Reveal + Decay:</span>
+                        <span className="font-bold text-rose-400">10 CR</span>
+                      </div>
+                      <div className="flex items-center justify-between p-1.5 rounded bg-black/50">
+                        <span className="text-zinc-300">Visitor Quota:</span>
+                        <span className="font-bold text-emerald-400">10 CR</span>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Refill Packages Grid */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div className="p-3.5 rounded-xl bg-[#03010b] border border-emerald-500/30 flex flex-col justify-between gap-3 text-center">
                       <div>
-                        <div className="text-xs font-cyber font-bold text-emerald-200">STARTER REFILL</div>
-                        <div className="text-lg font-bold font-cyber text-white mt-1">100 PTS</div>
+                        <div className="text-xs font-cyber font-bold text-emerald-200">STARTER PACK</div>
+                        <div className="text-lg font-bold font-cyber text-white mt-1">50 PTS</div>
                         <div className="text-[11px] text-emerald-400/70 mt-0.5">$5.00 USD</div>
                       </div>
                       <button
                         type="button"
-                        onClick={() => purchaseCredits('starter-100', 100, 500)}
+                        onClick={() => purchaseCredits('pack_50', 50, 500)}
                         className="w-full py-1.5 rounded-lg bg-emerald-500/20 border border-emerald-400/50 text-emerald-200 text-xs font-bold font-cyber hover:bg-emerald-500/30 transition cursor-pointer"
                       >
-                        REFILL 100 PTS
+                        REFILL 50 PTS
                       </button>
                     </div>
 
                     <div className="p-3.5 rounded-xl bg-gradient-to-b from-emerald-950/40 to-teal-950/40 border border-emerald-400/50 flex flex-col justify-between gap-3 text-center relative shadow-lg">
                       <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[9px] font-bold font-mono uppercase bg-emerald-400 text-black px-2 py-0.2 rounded-full">
-                        POPULAR
+                        SAVE 20%
                       </span>
                       <div>
-                        <div className="text-xs font-cyber font-bold text-emerald-200">POWER BUILDER</div>
-                        <div className="text-lg font-bold font-cyber text-white mt-1">500 PTS</div>
-                        <div className="text-[11px] text-emerald-400/70 mt-0.5">$20.00 USD</div>
+                        <div className="text-xs font-cyber font-bold text-emerald-200">CREATOR PACK</div>
+                        <div className="text-lg font-bold font-cyber text-white mt-1">150 PTS</div>
+                        <div className="text-[11px] text-emerald-400/70 mt-0.5">$12.00 USD</div>
                       </div>
                       <button
                         type="button"
-                        onClick={() => purchaseCredits('power-500', 500, 2000)}
+                        onClick={() => purchaseCredits('pack_150', 150, 1200)}
                         className="w-full py-1.5 rounded-lg bg-emerald-400 text-black text-xs font-bold font-cyber hover:brightness-110 transition cursor-pointer"
                       >
-                        REFILL 500 PTS
+                        REFILL 150 PTS
                       </button>
                     </div>
 
                     <div className="p-3.5 rounded-xl bg-[#03010b] border border-emerald-500/30 flex flex-col justify-between gap-3 text-center">
                       <div>
-                        <div className="text-xs font-cyber font-bold text-emerald-200">STUDIO BATCH</div>
-                        <div className="text-lg font-bold font-cyber text-white mt-1">2,500 PTS</div>
-                        <div className="text-[11px] text-emerald-400/70 mt-0.5">$75.00 USD</div>
+                        <div className="text-xs font-cyber font-bold text-emerald-200">PRO BUNDLE</div>
+                        <div className="text-lg font-bold font-cyber text-white mt-1">400 PTS</div>
+                        <div className="text-[11px] text-emerald-400/70 mt-0.5">$25.00 USD (38% OFF)</div>
                       </div>
                       <button
                         type="button"
-                        onClick={() => purchaseCredits('studio-2500', 2500, 7500)}
+                        onClick={() => purchaseCredits('pack_400', 400, 2500)}
                         className="w-full py-1.5 rounded-lg bg-emerald-500/20 border border-emerald-400/50 text-emerald-200 text-xs font-bold font-cyber hover:bg-emerald-500/30 transition cursor-pointer"
                       >
-                        REFILL 2,500 PTS
+                        REFILL 400 PTS
                       </button>
                     </div>
                   </div>

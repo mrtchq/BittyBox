@@ -460,7 +460,7 @@ export function useAccount(): UseAccountResult {
     }
   };
 
-  const purchaseCredits = async (packageId: string, amount = 100, costCents = 500): Promise<boolean> => {
+  const purchaseCredits = async (packageId: string, amount = 50, costCents = 500): Promise<boolean> => {
     const tx: CreditTransaction = {
       id: `tx_${Date.now()}`,
       type: 'purchase',

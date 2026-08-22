@@ -279,15 +279,17 @@ app.post('/api/accounts/links', async (req, res) => {
     }
     const linkData = req.body || {};
     recordLinkCreation(user.id, linkData);
-    let cost = 1;
-    if (typeof linkData.cost === 'number' && linkData.cost >= 1) {
+    let cost = 0;
+    if (typeof linkData.cost === 'number' && linkData.cost >= 0) {
       cost = Math.floor(linkData.cost);
     } else if (linkData.locks) {
-      if (linkData.locks.password) cost += 1;
-      if (linkData.locks.timeWindow) cost += 1;
-      if (linkData.locks.accessLimit) cost += 1;
+      if (linkData.locks.password) cost += 5;
+      if (linkData.locks.timeWindow) cost += 10;
+      if (linkData.locks.accessLimit) cost += 10;
     }
-    await deductCredits(user.id, cost, 'human', `Generated Box: ${linkData.title || 'Bitty Box'}`);
+    if (cost > 0) {
+      await deductCredits(user.id, cost, 'human', `Generated Box: ${linkData.title || 'Bitty Box'}`);
+    }
     res.json({ success: true, user: sanitizeUser(user) });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -378,20 +380,20 @@ app.post('/api/accounts/credits/purchase', async (req, res) => {
       return res.status(401).json({ success: false, error: 'Authentication required to purchase credits' });
     }
     const { packageId, amount, costCents } = req.body || {};
-    let creditsToAdd = 100;
+    let creditsToAdd = 50;
     let cost = costCents || 500;
 
-    if (packageId === 'starter' || amount === 100) {
-      creditsToAdd = 100;
+    if (packageId === 'pack_50' || packageId === 'starter' || amount === 50) {
+      creditsToAdd = 50;
       cost = 500; // $5.00
-    } else if (packageId === 'pro' || amount === 500) {
-      creditsToAdd = 500;
-      cost = 2000; // $20.00
-    } else if (packageId === 'studio' || amount === 2500) {
-      creditsToAdd = 2500;
-      cost = 5000; // $50.00
+    } else if (packageId === 'pack_150' || packageId === 'creator' || amount === 150) {
+      creditsToAdd = 150;
+      cost = 1200; // $12.00
+    } else if (packageId === 'pack_400' || packageId === 'pro' || amount === 400) {
+      creditsToAdd = 400;
+      cost = 2500; // $25.00
     } else if (amount) {
-      creditsToAdd = parseInt(amount, 10) || 100;
+      creditsToAdd = parseInt(amount, 10) || 50;
     }
 
     const result = await purchaseCredits(user.id, packageId, creditsToAdd, cost);
