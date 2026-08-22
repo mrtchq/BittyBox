@@ -418,7 +418,29 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
               {activeTab === 'account' && (
                 <div>
                   {!isAuthenticated ? (
-                    <div className="max-w-md mx-auto space-y-5 font-mono">
+                    <div className="max-w-md mx-auto space-y-4 font-mono">
+                      {/* 100 Credits Allotment Rule Banner */}
+                      <div className="p-3 rounded-xl bg-gradient-to-r from-amber-500/20 via-emerald-500/15 to-cyan-500/20 border-2 border-amber-400/60 shadow-[0_0_20px_rgba(245,158,11,0.25)] relative overflow-hidden">
+                        <div className="flex items-start gap-2.5">
+                          <div className="p-1.5 rounded-lg bg-amber-400/20 border border-amber-400/60 text-amber-300 shrink-0 mt-0.5">
+                            <Coins className="w-4 h-4 text-amber-300 animate-pulse" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="font-cyber font-bold text-[11px] text-amber-200">
+                                100 CREDITS ALLOTMENT
+                              </span>
+                              <span className="text-[8px] uppercase px-1.5 py-0.5 rounded bg-amber-400 text-black font-extrabold">
+                                GOOGLE ONLY
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-amber-100/90 font-mono mt-1 leading-snug">
+                              To receive the <strong className="text-amber-300">100 free credits</strong> bonus, you must use <strong className="text-cyan-300">"Sign In with Google"</strong> below. <span className="text-rose-300 font-semibold">No credits are issued if you use magic link.</span>
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
                       {/* Sign In Form */}
                       <div className="bg-[#06182c]/90 border border-cyan-500/30 rounded-2xl p-5 shadow-xl relative">
                         {/* Primary Google Sign In Button */}
@@ -428,20 +450,25 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
                             type="button"
                             onClick={handleGoogleSignIn}
                             disabled={googleLoading || authSubmitting}
-                            className="w-full py-2.5 px-4 rounded-xl font-sans font-bold text-xs tracking-wide text-white bg-gradient-to-r from-[#0d1c30] via-[#10243d] to-[#0c1c2e] hover:from-[#132845] hover:to-[#173254] border border-cyan-400/50 hover:border-cyan-300 active:scale-[0.99] transition-all duration-200 shadow-[0_0_20px_rgba(0,242,255,0.2)] cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2.5 group"
+                            className="w-full py-3 px-3.5 rounded-xl font-sans font-bold text-xs tracking-wide text-white bg-gradient-to-r from-[#0d1c30] via-[#10243d] to-[#0c1c2e] hover:from-[#132845] hover:to-[#173254] border-2 border-cyan-400/60 hover:border-cyan-300 active:scale-[0.99] transition-all duration-200 shadow-[0_0_25px_rgba(0,242,255,0.25)] cursor-pointer disabled:opacity-50 flex items-center justify-between group"
                           >
                             {googleLoading ? (
-                              <>
+                              <div className="flex items-center justify-center gap-2 w-full">
                                 <RefreshCw className="w-3.5 h-3.5 text-cyan-300 animate-spin" />
                                 <span className="font-mono text-cyan-200 text-[11px]">AUTHENTICATING...</span>
-                              </>
+                              </div>
                             ) : (
                               <>
-                                <div className="w-5 h-5 rounded-lg bg-white flex items-center justify-center shrink-0 shadow-md p-0.5 group-hover:scale-105 transition-transform">
-                                  <GoogleIcon className="w-3.5 h-3.5" />
+                                <div className="flex items-center gap-2.5">
+                                  <div className="w-5 h-5 rounded-lg bg-white flex items-center justify-center shrink-0 shadow-md p-0.5 group-hover:scale-105 transition-transform">
+                                    <GoogleIcon className="w-3.5 h-3.5" />
+                                  </div>
+                                  <span className="text-xs font-bold text-slate-100 group-hover:text-white">
+                                    Sign In with Google
+                                  </span>
                                 </div>
-                                <span className="text-xs font-bold text-slate-100 group-hover:text-white">
-                                  Sign In with Google
+                                <span className="text-[9px] font-mono font-bold bg-amber-400/20 text-amber-300 border border-amber-400/50 px-1.5 py-0.5 rounded-full">
+                                  🎁 +100 CR
                                 </span>
                               </>
                             )}
@@ -449,12 +476,20 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
                         </div>
 
                         {/* Visual Divider */}
-                        <div className="flex items-center gap-2 mb-4">
+                        <div className="flex items-center gap-2 mb-3">
                           <div className="h-px flex-1 bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent" />
                           <span className="text-[9px] uppercase font-mono tracking-widest text-cyan-400/60">
-                            OR MAGIC EMAIL
+                            OR MAGIC EMAIL (0 CREDITS)
                           </span>
                           <div className="h-px flex-1 bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent" />
+                        </div>
+
+                        {/* Magic Link Disclaimer */}
+                        <div className="mb-3 p-2 rounded-lg bg-[#02010c] border border-cyan-500/30 text-[10px] font-mono text-cyan-200/80 flex items-start gap-1.5">
+                          <Info className="w-3 h-3 text-cyan-400 shrink-0 mt-0.5" />
+                          <p className="leading-tight">
+                            Magic Link accounts start with <strong className="text-rose-300">0 credits</strong>. Use Google above for 100 free credits.
+                          </p>
                         </div>
 
                         {magicLinkSent ? (
@@ -542,6 +577,9 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
                                 </>
                               )}
                             </button>
+                            <div className="text-[10px] text-cyan-400/60 text-center font-mono mt-2">
+                              ⚡ Passwordless email sign-in • 0 starter credits (Google required for 100 CR)
+                            </div>
                           </form>
                         )}
                       </div>

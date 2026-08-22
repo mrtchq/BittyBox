@@ -369,6 +369,28 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
               </p>
             </div>
 
+            {/* 100 Credits Allotment Rule Banner */}
+            <div className="mb-5 p-3.5 rounded-xl bg-gradient-to-r from-amber-500/20 via-emerald-500/15 to-cyan-500/20 border-2 border-amber-400/60 shadow-[0_0_25px_rgba(245,158,11,0.25)] relative overflow-hidden z-10 animate-in fade-in duration-300">
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-xl bg-amber-400/20 border border-amber-400/70 text-amber-300 shrink-0 shadow-[0_0_12px_rgba(245,158,11,0.5)]">
+                  <Coins className="w-5 h-5 text-amber-300 animate-pulse" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-cyber font-bold text-xs text-amber-200 tracking-wider">
+                      ONE-TIME ALLOTMENT: 100 FREE CREDITS
+                    </span>
+                    <span className="text-[9px] uppercase px-2 py-0.5 rounded bg-gradient-to-r from-amber-400 to-amber-300 text-black font-extrabold shadow-sm">
+                      GOOGLE SIGN-IN ONLY
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-amber-100/90 font-mono mt-1 leading-relaxed">
+                    To be eligible for the <strong className="text-amber-300 font-bold">100 free credits</strong> allotment for new accounts, you must use <strong className="text-cyan-300 font-bold">"Continue with Google"</strong> below. <span className="text-rose-300 font-semibold">No credits are issued if you use magic link.</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* Primary Google Sign In Button */}
             <div className="mb-5 relative z-10">
               <button
@@ -376,20 +398,25 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
                 type="button"
                 onClick={handleGoogleSignIn}
                 disabled={googleLoading || authSubmitting}
-                className="w-full py-3.5 px-4 rounded-xl font-sans font-bold text-sm tracking-wide text-white bg-gradient-to-r from-[#0d1c30] via-[#10243d] to-[#0c1c2e] hover:from-[#132845] hover:to-[#173254] border border-cyan-400/60 hover:border-cyan-300 active:scale-[0.99] transition-all duration-200 shadow-[0_0_25px_rgba(0,242,255,0.25)] cursor-pointer disabled:opacity-50 flex items-center justify-center gap-3 group"
+                className="w-full py-3.5 px-4 rounded-xl font-sans font-bold text-sm tracking-wide text-white bg-gradient-to-r from-[#0d1c30] via-[#10243d] to-[#0c1c2e] hover:from-[#132845] hover:to-[#173254] border-2 border-cyan-400/70 hover:border-cyan-300 active:scale-[0.99] transition-all duration-200 shadow-[0_0_30px_rgba(0,242,255,0.3)] cursor-pointer disabled:opacity-50 flex items-center justify-between group"
               >
                 {googleLoading ? (
-                  <>
+                  <div className="flex items-center justify-center gap-2 w-full">
                     <RefreshCw className="w-4 h-4 text-cyan-300 animate-spin" />
                     <span className="font-mono text-xs text-cyan-200">AUTHENTICATING WITH GOOGLE...</span>
-                  </>
+                  </div>
                 ) : (
                   <>
-                    <div className="w-6 h-6 rounded-lg bg-white flex items-center justify-center shrink-0 shadow-md p-1 group-hover:scale-105 transition-transform">
-                      <GoogleIcon className="w-4 h-4" />
+                    <div className="flex items-center gap-3">
+                      <div className="w-6 h-6 rounded-lg bg-white flex items-center justify-center shrink-0 shadow-md p-1 group-hover:scale-105 transition-transform">
+                        <GoogleIcon className="w-4 h-4" />
+                      </div>
+                      <span className="text-sm font-bold text-slate-100 group-hover:text-white font-mono tracking-wide">
+                        CONTINUE WITH GOOGLE
+                      </span>
                     </div>
-                    <span className="text-sm font-bold text-slate-100 group-hover:text-white font-mono tracking-wide">
-                      CONTINUE WITH GOOGLE
+                    <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-mono font-bold bg-amber-400/20 text-amber-300 border border-amber-400/50 px-2 py-0.5 rounded-full">
+                      🎁 +100 CREDITS
                     </span>
                   </>
                 )}
@@ -397,12 +424,20 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
             </div>
 
             {/* Visual Divider */}
-            <div className="flex items-center gap-3 mb-5 relative z-10">
+            <div className="flex items-center gap-3 mb-4 relative z-10">
               <div className="h-px flex-1 bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent" />
               <span className="text-[10px] uppercase font-mono tracking-widest text-cyan-400/60">
-                OR PASSWORDLESS EMAIL
+                OR PASSWORDLESS EMAIL (0 CREDITS)
               </span>
               <div className="h-px flex-1 bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent" />
+            </div>
+
+            {/* Magic Link Disclaimer Banner */}
+            <div className="mb-4 p-2.5 rounded-xl bg-[#050414] border border-cyan-500/30 text-[11px] font-mono text-cyan-200/80 flex items-start gap-2 relative z-10">
+              <Info className="w-3.5 h-3.5 text-cyan-400 shrink-0 mt-0.5" />
+              <p className="leading-snug">
+                <span className="text-cyan-300 font-bold">Magic Link Notice:</span> Accounts created via Magic Link start with <strong className="text-rose-300">0 credits</strong>. Sign in with Google above to receive your 100 free credits.
+              </p>
             </div>
 
             {magicLinkSent ? (
@@ -504,7 +539,7 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
                   )}
                 </button>
                 <div className="text-[10px] text-cyan-400/60 text-center font-mono">
-                  ⚡ Instant access via email • No password required
+                  ⚡ Instant access via email • 0 starter credits (Sign in with Google for 100 CR)
                 </div>
               </form>
             )}
