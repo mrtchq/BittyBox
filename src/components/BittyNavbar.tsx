@@ -157,13 +157,13 @@ export const BittyNavbar: React.FC<BittyNavbarProps> = ({
             id="nav-editor-btn"
             onClick={() => onViewChange('editor')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${
-              currentView === 'editor' || currentView === 'account'
+              currentView === 'editor'
                 ? 'bg-gradient-to-r from-cyan-500/20 to-teal-500/20 text-cyan-200 border border-cyan-400/50 shadow-[0_0_12px_rgba(0,221,255,0.25)]'
                 : 'text-purple-200/70 hover:text-cyan-200 hover:bg-purple-900/30'
             }`}
           >
-            <User className="w-3.5 h-3.5 text-cyan-400" />
-            <span>ACCOUNT</span>
+            <Code className="w-3.5 h-3.5 text-cyan-400" />
+            <span>EDITOR</span>
           </button>
 
           <button
@@ -314,13 +314,13 @@ export const BittyNavbar: React.FC<BittyNavbarProps> = ({
             id="mobile-nav-editor-btn"
             onClick={() => onViewChange('editor')}
             className={`flex items-center justify-center gap-1 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${
-              currentView === 'editor' || currentView === 'account'
+              currentView === 'editor'
                 ? 'bg-gradient-to-r from-cyan-500/25 to-teal-500/25 text-cyan-200 border border-cyan-400/60 shadow-[0_0_10px_rgba(0,221,255,0.3)]'
                 : 'text-purple-200/70 hover:text-cyan-200'
             }`}
           >
-            <User className="w-3.5 h-3.5 shrink-0" />
-            <span>ACCOUNT</span>
+            <Code className="w-3.5 h-3.5 shrink-0" />
+            <span>EDITOR</span>
           </button>
 
           <button

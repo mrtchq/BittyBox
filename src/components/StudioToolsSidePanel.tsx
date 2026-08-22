@@ -337,77 +337,75 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
               </div>
             </div>
 
-            {/* Segmented Tab Navigation Header */}
-            <div className="px-4 py-2 border-b border-cyan-500/20 bg-[#030d1a]/90 flex items-center gap-1.5 overflow-x-auto font-mono text-xs scrollbar-none">
-              <button
-                type="button"
-                onClick={() => setActiveTab('account')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition cursor-pointer shrink-0 ${
-                  activeTab === 'account'
-                    ? 'bg-cyan-950 text-cyan-200 border border-cyan-400/50 shadow-sm'
-                    : 'text-cyan-400/60 hover:text-cyan-200'
-                }`}
-              >
-                <User className="w-3.5 h-3.5 text-cyan-400" />
-                <span>{isAuthenticated ? 'ACCOUNT' : 'SIGN IN'}</span>
-              </button>
+            {/* Segmented Tab Navigation Header (Authenticated only) */}
+            {isAuthenticated && (
+              <div className="px-4 py-2 border-b border-cyan-500/20 bg-[#030d1a]/90 flex items-center gap-1.5 overflow-x-auto font-mono text-xs scrollbar-none">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('account')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition cursor-pointer shrink-0 ${
+                    activeTab === 'account'
+                      ? 'bg-cyan-950 text-cyan-200 border border-cyan-400/50 shadow-sm'
+                      : 'text-cyan-400/60 hover:text-cyan-200'
+                  }`}
+                >
+                  <User className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>ACCOUNT</span>
+                </button>
 
-              {isAuthenticated && (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('boxes')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition cursor-pointer shrink-0 ${
-                      activeTab === 'boxes'
-                        ? 'bg-fuchsia-950 text-fuchsia-200 border border-fuchsia-400/50 shadow-sm'
-                        : 'text-fuchsia-400/60 hover:text-fuchsia-200'
-                    }`}
-                  >
-                    <History className="w-3.5 h-3.5 text-fuchsia-400" />
-                    <span>TRACKED BOXES ({(user?.links || []).length})</span>
-                  </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('boxes')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition cursor-pointer shrink-0 ${
+                    activeTab === 'boxes'
+                      ? 'bg-fuchsia-950 text-fuchsia-200 border border-fuchsia-400/50 shadow-sm'
+                      : 'text-fuchsia-400/60 hover:text-fuchsia-200'
+                  }`}
+                >
+                  <History className="w-3.5 h-3.5 text-fuchsia-400" />
+                  <span>TRACKED BOXES ({(user?.links || []).length})</span>
+                </button>
 
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('keys')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition cursor-pointer shrink-0 ${
-                      activeTab === 'keys'
-                        ? 'bg-amber-950 text-amber-200 border border-amber-400/50 shadow-sm'
-                        : 'text-amber-400/60 hover:text-amber-200'
-                    }`}
-                  >
-                    <Key className="w-3.5 h-3.5 text-amber-400" />
-                    <span>API KEYS ({(user?.apiKeys || []).length})</span>
-                  </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('keys')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition cursor-pointer shrink-0 ${
+                    activeTab === 'keys'
+                      ? 'bg-amber-950 text-amber-200 border border-amber-400/50 shadow-sm'
+                      : 'text-amber-400/60 hover:text-amber-200'
+                  }`}
+                >
+                  <Key className="w-3.5 h-3.5 text-amber-400" />
+                  <span>API KEYS ({(user?.apiKeys || []).length})</span>
+                </button>
 
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('credits')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition cursor-pointer shrink-0 ${
-                      activeTab === 'credits'
-                        ? 'bg-emerald-950 text-emerald-200 border border-emerald-400/50 shadow-sm'
-                        : 'text-emerald-400/60 hover:text-emerald-200'
-                    }`}
-                  >
-                    <Coins className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>CREDITS ({user?.credits || 0})</span>
-                  </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('credits')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition cursor-pointer shrink-0 ${
+                    activeTab === 'credits'
+                      ? 'bg-emerald-950 text-emerald-200 border border-emerald-400/50 shadow-sm'
+                      : 'text-emerald-400/60 hover:text-emerald-200'
+                  }`}
+                >
+                  <Coins className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>CREDITS ({user?.credits || 0})</span>
+                </button>
 
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('mcp')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition cursor-pointer shrink-0 ${
-                      activeTab === 'mcp'
-                        ? 'bg-purple-950 text-purple-200 border border-purple-400/50 shadow-sm'
-                        : 'text-purple-400/60 hover:text-purple-200'
-                    }`}
-                  >
-                    <Bot className="w-3.5 h-3.5 text-purple-400" />
-                    <span>MCP SERVER</span>
-                  </button>
-                </>
-              )}
-            </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('mcp')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition cursor-pointer shrink-0 ${
+                    activeTab === 'mcp'
+                      ? 'bg-purple-950 text-purple-200 border border-purple-400/50 shadow-sm'
+                      : 'text-purple-400/60 hover:text-purple-200'
+                  }`}
+                >
+                  <Bot className="w-3.5 h-3.5 text-purple-400" />
+                  <span>MCP SERVER</span>
+                </button>
+              </div>
+            )}
 
             {/* Panel Body */}
             <div className="flex-1 overflow-y-auto p-4 sm:p-6 cyber-scrollbar space-y-6">
