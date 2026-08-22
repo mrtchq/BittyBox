@@ -27,6 +27,7 @@ import { useAccount } from './hooks/useAccount';
 import { AccountDashboard } from './components/AccountDashboard';
 import { ProPaywallModal } from './components/ProPaywallModal';
 import { EdgeGripHandles } from './components/EdgeGripHandles';
+import { PreviewDropdownPanel } from './components/PreviewDropdownPanel';
 import { TemplatesSidePanel } from './components/TemplatesSidePanel';
 import { StudioToolsSidePanel } from './components/StudioToolsSidePanel';
 import { useEdgeSwipe } from './hooks/useEdgeSwipe';
@@ -159,6 +160,7 @@ export default function App() {
   const [isQrOpen, setIsQrOpen] = useState<boolean>(false);
   const [isLeftTemplatesPanelOpen, setIsLeftTemplatesPanelOpen] = useState<boolean>(false);
   const [isRightToolsPanelOpen, setIsRightToolsPanelOpen] = useState<boolean>(false);
+  const [isPreviewDropdownOpen, setIsPreviewDropdownOpen] = useState<boolean>(false);
   const [isCloseSessionModalOpen, setIsCloseSessionModalOpen] = useState<boolean>(false);
   const [history, setHistory] = useState<BittyHistoryItem[]>([]);
 
@@ -899,12 +901,12 @@ export default function App() {
       {/* Global Interactive Quantum Click Spark FX */}
       <ClickSparkEffect theme={workspaceTheme} />
 
-      {/* Edge Grip Handles on Center Far Left & Center Far Right */}
+      {/* Edge Grip Handles on Center Top (PREVIEW) & Center Bottom (ACCOUNT) */}
       <EdgeGripHandles
-        onOpenLeft={() => setIsLeftTemplatesPanelOpen(true)}
-        onOpenRight={() => setIsRightToolsPanelOpen(true)}
-        isLeftOpen={isLeftTemplatesPanelOpen}
-        isRightOpen={isRightToolsPanelOpen}
+        onOpenPreview={() => setIsPreviewDropdownOpen(true)}
+        onOpenAccount={() => setIsRightToolsPanelOpen(true)}
+        isPreviewOpen={isPreviewDropdownOpen}
+        isAccountOpen={isRightToolsPanelOpen}
       />
 
       {/* Top Cyber Navigation Bar */}
@@ -988,6 +990,17 @@ export default function App() {
           />
         )}
       </main>
+
+      {/* Live Preview Dropdown Panel (Sliding down from Top) */}
+      <PreviewDropdownPanel
+        isOpen={isPreviewDropdownOpen}
+        onClose={() => setIsPreviewDropdownOpen(false)}
+        content={content}
+        metadata={metadata}
+        title={metadata.title}
+        bittyUrl={bittyUrl}
+        onPreviewInTab={handlePreviewInTab}
+      />
 
       {/* Full-Screen Templates Side Panel (Sliding from Left) */}
       <TemplatesSidePanel

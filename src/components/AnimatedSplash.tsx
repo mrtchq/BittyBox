@@ -32,6 +32,7 @@ import {
 } from 'lucide-react';
 import { CyberScrambleText } from './CyberScrambleText';
 import { EdgeGripHandles } from './EdgeGripHandles';
+import { PreviewDropdownPanel } from './PreviewDropdownPanel';
 import { TemplatesSidePanel } from './TemplatesSidePanel';
 import { StudioToolsSidePanel } from './StudioToolsSidePanel';
 import { QrModal } from './QrModal';
@@ -43,6 +44,8 @@ import { HoloToggle } from './HoloToggle';
 import { homeSlides } from '../content/homeSlides';
 import { buildBittyUrl, compressContent, compressContentSync, getRenderedHtml } from '../utils/bittyEngine';
 import { useAccount } from '../hooks/useAccount';
+import { buildTimeWindow, formatHybridSummary, formatLocalDateTime, type TimeLockMode } from '../utils/timeWindow';
+import { DurationTimeControl, DateRangeControl } from './TimeLockControls';
 import { BittyMetadata } from '../types';
 
 interface AnimatedSplashProps {
@@ -126,7 +129,13 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
   const [slide1ViewMode, setSlide1ViewMode] = useState<'text' | 'split' | 'preview'>('text');
 
   const [timeLockEnabled, setTimeLockEnabled] = useState<boolean>(false);
+  const [timeLockMode, setTimeLockMode] = useState<TimeLockMode>('expiry');
   const [timeExpiryHours, setTimeExpiryHours] = useState<number>(24);
+  const [timeDelayHours, setTimeDelayHours] = useState<number>(24);
+  const [timeOpenAt, setTimeOpenAt] = useState<string>(formatLocalDateTime(new Date(Date.now() + 24 * 3600 * 1000)));
+  const [timeLockAt, setTimeLockAt] = useState<string>(formatLocalDateTime(new Date(Date.now() + 48 * 3600 * 1000)));
+  const [hybridRevealMode, setHybridRevealMode] = useState<'delay' | 'date'>('delay');
+  const [hybridSelfDestructHours, setHybridSelfDestructHours] = useState<number>(24);
   const [showTimeCountdown, setShowTimeCountdown] = useState<boolean>(true);
 
   const [accessLimitEnabled, setAccessLimitEnabled] = useState<boolean>(false);
@@ -137,6 +146,7 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
   const [isCopied, setIsCopied] = useState<boolean>(false);
   const [isLeftTemplatesPanelOpen, setIsLeftTemplatesPanelOpen] = useState<boolean>(false);
   const [isRightToolsPanelOpen, setIsRightToolsPanelOpen] = useState<boolean>(false);
+  const [isPreviewDropdownOpen, setIsPreviewDropdownOpen] = useState<boolean>(false);
   const [isQrModalOpen, setIsQrModalOpen] = useState<boolean>(false);
   const [qrModalUrl, setQrModalUrl] = useState<string>('');
   const account = useAccount();
@@ -146,6 +156,14 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
   const isPasscodeActive = Boolean(passwordEnabled && passwordValue.trim().length > 0);
   const isTimeLockActive = Boolean(timeLockEnabled);
   const isAccessLimitActive = Boolean(accessLimitEnabled);
+
+  const timeLockSummary = useMemo(() => {
+    if (!timeLockEnabled) return 'Disabled';
+    if (timeLockMode === 'expiry') return `Expires after ${timeExpiryHours === 168 ? '7 Days' : `${timeExpiryHours}h`}`;
+    if (timeLockMode === 'delay') return `Unlocks in ${timeDelayHours === 168 ? '7 Days' : `${timeDelayHours}h`}`;
+    if (timeLockMode === 'hybrid') return formatHybridSummary({ hybridRevealMode, delayHours: timeDelayHours, openAt: timeOpenAt, hybridSelfDestructHours });
+    return `Opens ${timeOpenAt ? new Date(timeOpenAt).toLocaleString() : '—'} · Locks ${timeLockAt ? new Date(timeLockAt).toLocaleString() : '—'}`;
+  }, [timeLockEnabled, timeLockMode, timeExpiryHours, timeDelayHours, timeOpenAt, timeLockAt, hybridRevealMode, hybridSelfDestructHours]);
 
   const calculatedCreditCost = useMemo(() => {
     let cost = 1; // Base Generation Cost
@@ -363,12 +381,17 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
 
         if (timeLockEnabled) {
           meta.lockConfig = {
-            timeWindow: {
-              enabled: true,
-              notBefore: null,
-              notAfter: new Date(Date.now() + timeExpiryHours * 3600 * 1000).toISOString(),
+            timeWindow: buildTimeWindow({
+              enabled: timeLockEnabled,
+              mode: timeLockMode,
+              expiryHours: timeExpiryHours,
+              delayHours: timeDelayHours,
+              openAt: timeOpenAt,
+              lockAt: timeLockAt,
+              hybridRevealMode,
+              hybridSelfDestructHours,
               showCountdown: showTimeCountdown,
-            },
+            })!,
           };
         }
 
@@ -395,7 +418,7 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
     return () => {
       isCancelled = true;
     };
-  }, [boxContent, boxTitle, passwordEnabled, passwordValue, timeLockEnabled, timeExpiryHours, showTimeCountdown, accessLimitEnabled, accessLimitMaxOpens, showRemainingAccessCount]);
+  }, [boxContent, boxTitle, passwordEnabled, passwordValue, timeLockEnabled, timeLockMode, timeExpiryHours, timeDelayHours, timeOpenAt, timeLockAt, hybridRevealMode, hybridSelfDestructHours, showTimeCountdown, accessLimitEnabled, accessLimitMaxOpens, showRemainingAccessCount]);
 
   // Start Over / Reset All State
   const handleStartOver = useCallback(() => {
@@ -406,7 +429,13 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
     setPasswordValue('');
     setShowPassword(false);
     setTimeLockEnabled(false);
+    setTimeLockMode('expiry');
     setTimeExpiryHours(6);
+    setTimeDelayHours(24);
+    setTimeOpenAt(formatLocalDateTime(new Date(Date.now() + 24 * 3600 * 1000)));
+    setTimeLockAt(formatLocalDateTime(new Date(Date.now() + 48 * 3600 * 1000)));
+    setHybridRevealMode('delay');
+    setHybridSelfDestructHours(24);
     setShowTimeCountdown(true);
     setAccessLimitEnabled(false);
     setAccessLimitMaxOpens(1);
@@ -465,12 +494,17 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
 
     if (timeLockEnabled) {
       meta.lockConfig = {
-        timeWindow: {
-          enabled: true,
-          notBefore: null,
-          notAfter: new Date(Date.now() + timeExpiryHours * 3600 * 1000).toISOString(),
+        timeWindow: buildTimeWindow({
+          enabled: timeLockEnabled,
+          mode: timeLockMode,
+          expiryHours: timeExpiryHours,
+          delayHours: timeDelayHours,
+          openAt: timeOpenAt,
+          lockAt: timeLockAt,
+          hybridRevealMode,
+          hybridSelfDestructHours,
           showCountdown: showTimeCountdown,
-        },
+        })!,
       };
     }
 
@@ -551,12 +585,17 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
                 showRemainingCount: showRemainingAccessCount,
               },
               timeWindow: timeLockEnabled
-                ? {
-                    enabled: true,
-                    notBefore: null,
-                    notAfter: new Date(Date.now() + timeExpiryHours * 3600 * 1000).toISOString(),
+                ? buildTimeWindow({
+                    enabled: timeLockEnabled,
+                    mode: timeLockMode,
+                    expiryHours: timeExpiryHours,
+                    delayHours: timeDelayHours,
+                    openAt: timeOpenAt,
+                    lockAt: timeLockAt,
+                    hybridRevealMode,
+                    hybridSelfDestructHours,
                     showCountdown: showTimeCountdown,
-                  }
+                  })
                 : null,
             },
           }),
@@ -592,7 +631,7 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
         });
       }
     } catch {}
-  }, [readyUrl, boxContent, boxTitle, passwordEnabled, passwordValue, timeLockEnabled, timeExpiryHours, showTimeCountdown, accessLimitEnabled, accessLimitMaxOpens, showRemainingAccessCount, calculatedCreditCost]);
+  }, [readyUrl, boxContent, boxTitle, passwordEnabled, passwordValue, timeLockEnabled, timeLockMode, timeExpiryHours, timeDelayHours, timeOpenAt, timeLockAt, hybridRevealMode, hybridSelfDestructHours, showTimeCountdown, accessLimitEnabled, accessLimitMaxOpens, showRemainingAccessCount, calculatedCreditCost]);
 
   // Auto-play timer
   useEffect(() => {
@@ -1145,27 +1184,125 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
 
                       {timeLockEnabled ? (
                         <div className="space-y-3 animate-in fade-in duration-200 flex-1 flex flex-col justify-between">
-                          <div className="text-[11px] text-amber-300/80 font-bold">SELECT EXPIRATION DURATION:</div>
-                          <div className="grid grid-cols-4 gap-1.5">
-                            {[1, 6, 24, 168].map(hrs => (
-                              <button
-                                key={hrs}
-                                type="button"
-                                onClick={() => setTimeExpiryHours(hrs)}
-                                className={`py-1.5 px-2 rounded-lg border text-[11px] font-bold transition-all ${
-                                  timeExpiryHours === hrs
-                                    ? 'bg-amber-500/30 border-amber-400 text-amber-200 shadow-[0_0_12px_rgba(245,158,11,0.4)]'
-                                    : 'bg-amber-950/30 border-amber-500/30 text-amber-400 hover:bg-amber-900/40'
-                                }`}
-                              >
-                                {hrs === 168 ? '7 Days' : `${hrs}h`}
-                              </button>
-                            ))}
+                          {/* Mode selector */}
+                          <div className="space-y-1.5">
+                            <div className="text-[11px] text-amber-300/80 font-bold">LOCK MODE:</div>
+                            <div className="grid grid-cols-3 gap-1.5">
+                              {([
+                                { id: 'expiry', label: 'Expires', sub: 'Duration' },
+                                { id: 'delay', label: 'Time Until Open', sub: 'Sleeper' },
+                                { id: 'range', label: 'Date Range', sub: 'Scheduled' },
+                                { id: 'hybrid', label: 'Reveal + Decay', sub: 'Hybrid' },
+                              ] as const).map(m => (
+                                <button
+                                  key={m.id}
+                                  type="button"
+                                  onClick={() => setTimeLockMode(m.id)}
+                                  className={`py-1.5 px-1 rounded-lg border text-[10px] font-bold leading-tight transition-all ${
+                                    timeLockMode === m.id
+                                      ? 'bg-amber-500/30 border-amber-400 text-amber-200 shadow-[0_0_12px_rgba(245,158,11,0.4)]'
+                                      : 'bg-amber-950/30 border-amber-500/30 text-amber-400 hover:bg-amber-900/40'
+                                  }`}
+                                >
+                                  <div>{m.label}</div>
+                                  <div className="text-[8px] opacity-70 uppercase tracking-wide">{m.sub}</div>
+                                </button>
+                              ))}
+                            </div>
                           </div>
+
+                          {/* Expiry (current behavior) */}
+                          {timeLockMode === 'expiry' && (
+                            <DurationTimeControl
+                              label="SELECT EXPIRATION DURATION:"
+                              presets={[1, 6, 24, 168]}
+                              value={timeExpiryHours}
+                              onChange={setTimeExpiryHours}
+                              hint="Link self-destructs after this duration."
+                            />
+                          )}
+
+                          {/* Delay (Time Until Open) */}
+                          {timeLockMode === 'delay' && (
+                            <DurationTimeControl
+                              label="UNLOCKS AFTER (TIME UNTIL OPEN):"
+                              presets={[6, 24, 72, 168]}
+                              value={timeDelayHours}
+                              onChange={setTimeDelayHours}
+                              hint="Link stays inert & unopenable until then."
+                            />
+                          )}
+
+                          {/* Date Range (Opens at / Locks on) */}
+                          {timeLockMode === 'range' && (
+                            <DateRangeControl
+                              openAt={timeOpenAt}
+                              lockAt={timeLockAt}
+                              onOpenAt={setTimeOpenAt}
+                              onLockAt={setTimeLockAt}
+                            />
+                          )}
+
+                          {/* Hybrid (Reveal + Self-Destruct) */}
+                          {timeLockMode === 'hybrid' && (
+                            <div className="space-y-2">
+                              <div className="text-[10px] text-amber-300/80 font-bold">REVEAL INSTANT:</div>
+                              <div className="grid grid-cols-2 gap-1.5">
+                                {([{ id: 'delay', label: 'After Delay' }, { id: 'date', label: 'On Date' }] as const).map(o => (
+                                  <button
+                                    key={o.id}
+                                    type="button"
+                                    onClick={() => setHybridRevealMode(o.id)}
+                                    className={`py-1.5 px-2 rounded-lg border text-[11px] font-bold transition-all ${
+                                      hybridRevealMode === o.id
+                                        ? 'bg-amber-500/30 border-amber-400 text-amber-200 shadow-[0_0_12px_rgba(245,158,11,0.4)]'
+                                        : 'bg-amber-950/30 border-amber-500/30 text-amber-400 hover:bg-amber-900/40'
+                                    }`}
+                                  >
+                                    {o.label}
+                                  </button>
+                                ))}
+                              </div>
+
+                              {hybridRevealMode === 'delay' ? (
+                                <DurationTimeControl
+                                  label="REVEALS AFTER (TIME UNTIL OPEN):"
+                                  presets={[6, 24, 72, 168]}
+                                  value={timeDelayHours}
+                                  onChange={setTimeDelayHours}
+                                  compact
+                                />
+                              ) : (
+                                <div className="space-y-1.5">
+                                  <div className="text-[10px] text-amber-300/80 font-bold">REVEALS ON (DATE/TIME):</div>
+                                  <input
+                                    type="datetime-local"
+                                    value={timeOpenAt}
+                                    onChange={e => setTimeOpenAt(e.target.value)}
+                                    className="w-full rounded-lg border border-amber-400/50 bg-[#02010a] px-2 py-1.5 text-[11px] text-amber-100 outline-none focus:border-amber-300 font-mono"
+                                  />
+                                </div>
+                              )}
+
+                              <DurationTimeControl
+                                label="SELF-DESTRUCTS AFTER REVEAL:"
+                                presets={[1, 6, 24, 168]}
+                                value={hybridSelfDestructHours}
+                                onChange={setHybridSelfDestructHours}
+                                compact
+                              />
+                              <div className="text-[9px] text-amber-300/60 truncate">Reveals at scheduled instant, then auto-burns after the decay window.</div>
+                            </div>
+                          )}
 
                           <div className="flex items-center gap-1.5 text-[10px] text-amber-300/80 pt-0.5">
                             <Timer className="w-3 h-3 text-amber-400 shrink-0" />
-                            <span className="truncate">AUTO-DECAY // SELF-DESTRUCTS AFTER DURATION</span>
+                            <span className="truncate">
+                              {timeLockMode === 'expiry' && 'AUTO-DECAY // SELF-DESTRUCTS AFTER DURATION'}
+                              {timeLockMode === 'delay' && 'SLEEPER // REVEALS ITSELF AFTER COUNTDOWN'}
+                              {timeLockMode === 'range' && 'SCHEDULED // ANCHORED TO CALENDAR'}
+                              {timeLockMode === 'hybrid' && 'HYBRID // SCHEDULED REVEAL + SELF-DESTRUCT'}
+                            </span>
                           </div>
                         </div>
                       ) : (
@@ -1300,7 +1437,7 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
                             <div className="min-w-0">
                               <div className="font-bold text-[11px] truncate">TIME-BASED LOCK</div>
                               <div className="text-[10px] opacity-80 truncate">
-                                {timeLockEnabled ? `Expires after ${timeExpiryHours === 168 ? '7 Days' : `${timeExpiryHours}h`}` : 'Disabled'}
+                                {timeLockSummary}
                               </div>
                             </div>
                           </div>
@@ -1667,12 +1804,24 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
         </div>
       </footer>
 
-      {/* Edge Grip Handles on Center Far Left (TEMPLATES) & Center Far Right (TOOLS) */}
+      {/* Edge Grip Handles on Center Top (PREVIEW) & Center Bottom (ACCOUNT) */}
       <EdgeGripHandles
-        onOpenLeft={() => setIsLeftTemplatesPanelOpen(true)}
-        onOpenRight={() => setIsRightToolsPanelOpen(true)}
-        isLeftOpen={isLeftTemplatesPanelOpen}
-        isRightOpen={isRightToolsPanelOpen}
+        onOpenPreview={() => setIsPreviewDropdownOpen(true)}
+        onOpenAccount={() => setIsRightToolsPanelOpen(true)}
+        isPreviewOpen={isPreviewDropdownOpen}
+        isAccountOpen={isRightToolsPanelOpen}
+      />
+
+      {/* Live Preview Dropdown Panel (Sliding down from Top) */}
+      <PreviewDropdownPanel
+        isOpen={isPreviewDropdownOpen}
+        onClose={() => setIsPreviewDropdownOpen(false)}
+        content={boxContent}
+        title={boxTitle}
+        bittyUrl={generatedUrl}
+        onPreviewInTab={() => {
+          if (generatedUrl) window.open(generatedUrl, '_blank');
+        }}
       />
 
       {/* Templates Side Panel (Sliding from Left) */}

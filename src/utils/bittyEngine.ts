@@ -1,6 +1,7 @@
 import { deflate, inflate } from 'pako';
 import { BittyMetadata } from '../types';
 import { decryptBox } from './bittyCrypto';
+import { TimeLockMode } from './timeWindow';
 
 export const GZIP_MARKER = 'gz';
 export const BASE64_MARKER = 'base64';
@@ -201,10 +202,12 @@ export function parseBittyHash(hash: string): {
       try {
         const rawTw = decodeURIComponent(parts[i + 1]);
         const [nb, na, sc] = rawTw.split('~');
+        const modePart = (rawTw.split('~')[3] as TimeLockMode) || undefined;
         metadata.lockConfig = {
           ...(metadata.lockConfig || {}),
           timeWindow: {
             enabled: true,
+            mode: modePart,
             notBefore: nb && nb !== '_' ? nb : null,
             notAfter: na && na !== '_' ? na : null,
             showCountdown: sc !== '0',
@@ -479,7 +482,8 @@ export function buildBittyUrl(
     const nb = tw.notBefore ? encodeURIComponent(tw.notBefore) : '_';
     const na = tw.notAfter ? encodeURIComponent(tw.notAfter) : '_';
     const sc = tw.showCountdown === false ? '0' : '1';
-    metaHash += `/tw/${nb}~${na}~${sc}`;
+    const mode = tw.mode ? `~${tw.mode}` : '';
+    metaHash += `/tw/${nb}~${na}~${sc}${mode}`;
   }
   if (metadata.lockConfig?.openLimit?.enabled) {
     const ol = metadata.lockConfig.openLimit;
