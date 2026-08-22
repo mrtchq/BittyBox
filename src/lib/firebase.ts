@@ -335,3 +335,15 @@ export async function deductCreditsInFirestore(
   await updateDoc(userRef, updatePayload);
   return true;
 }
+
+/**
+ * Set credits to an absolute value in Firestore.
+ * Used to mirror the authoritative Creem CCA balance for Firebase users.
+ */
+export async function setCreditsInFirestore(
+  uid: string,
+  amount: number
+): Promise<void> {
+  const userRef = doc(db, 'users', uid);
+  await updateDoc(userRef, { credits: amount });
+}

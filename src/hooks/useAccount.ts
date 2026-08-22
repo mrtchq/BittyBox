@@ -11,7 +11,8 @@ import {
   addApiKeyToFirestore,
   revokeApiKeyInFirestore,
   addCreditsInFirestore,
-  deductCreditsInFirestore
+  deductCreditsInFirestore,
+  setCreditsInFirestore
 } from '../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 
@@ -47,6 +48,7 @@ export interface UseAccountResult {
       accessLimit?: boolean;
     };
   }) => Promise<boolean>;
+  syncUserCreditsWithCreem: () => Promise<boolean>;
   deleteTrackedBox: (linkId: string) => Promise<boolean>;
 }
 
@@ -86,6 +88,9 @@ export function useAccount(): UseAccountResult {
           setIsLoading(true);
           const bittyUser = await getOrCreateFirestoreUser(fbUser);
           setUser(bittyUser);
+
+          // Reconcile Creem CCA balance into Firestore (purchases land in Creem).
+          syncUserCreditsWithCreem().catch(() => {});
           
           // Generate or sync a local session ID if none exists
           const currentSid = localStorage.getItem('bitty_session_id') || `fb_sess_${fbUser.uid}_${Date.now()}`;
@@ -471,6 +476,36 @@ export function useAccount(): UseAccountResult {
     return false;
   };
 
+  // Reconcile the Firebase display ledger with the authoritative Creem CCA
+  // balance. Firebase users' purchases land in Creem (via webhook), not
+  // Firestore — so we mirror Creem's balance into Firestore here. Call this
+  // on login and after returning from a Creem checkout.
+  const syncUserCreditsWithCreem = async (): Promise<boolean> => {
+    if (!auth.currentUser || !user) return false;
+    try {
+      const sid = sessionId || (typeof localStorage !== 'undefined' ? localStorage.getItem('bitty_session_id') : null);
+      const headers: Record<string, string> = {};
+      if (sid) headers['X-Session-Id'] = sid;
+      // Firebase users have no server session. Send the verified Firebase ID
+      // token so the server can prove identity (never trust a raw email).
+      const idToken = await auth.currentUser.getIdToken();
+      if (idToken) headers['Authorization'] = `Bearer ${idToken}`;
+      const res = await fetch('/api/accounts/credits/sync-from-creem', {
+        method: 'GET',
+        headers
+      });
+      const data = await res.json();
+      if (data.success && typeof data.balance === 'number') {
+        await setCreditsInFirestore(auth.currentUser.uid, data.balance);
+        return Boolean(data.synced);
+      }
+      return false;
+    } catch (err) {
+      console.error('[useAccount] syncUserCreditsWithCreem failed:', err);
+      return false;
+    }
+  };
+
   const recordCreatedBox = async (linkData: {
     title: string;
     url: string;
@@ -639,6 +674,7 @@ export function useAccount(): UseAccountResult {
     testApiKey,
     purchaseCredits,
     recordCreatedBox,
+    syncUserCreditsWithCreem,
     deleteTrackedBox,
   };
 }

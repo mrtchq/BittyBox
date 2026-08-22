@@ -32,6 +32,8 @@ import {
 import { sendMagicLinkEmail } from './lib/resend-client.js';
 import { triggerN8nWebhook } from './lib/n8n-client.js';
 import { authMiddleware } from './lib/auth-middleware.js';
+import firebaseAdmin from './lib/firebase-admin.cjs';
+const { verifyFirebaseIdToken } = firebaseAdmin;
 import { createBox, getBox, listBoxes, updateLockConfig, incrementOpensUsed, publishBox, unpublishBox, deleteBox, setPasswordLock, setTimeWindowLock, setAccessLimitLock, setSessionLimitLock, setInviteOnlyLock, createTimeWindow, createOpenLimit, createSessionOpenLimit, createInviteOnly, evaluateAndRecord, touchSessionOpens, getSessionOpenCount } from './lib/box-store.js';
 import { evaluatePolicy, createSessionGrant, verifySessionGrant, verifyPassword, createPasswordVerifier } from './lib/policy-evaluator.js';
 
@@ -418,6 +420,62 @@ app.get('/api/accounts/credits/ledger', async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ==========================================
+// Sync Firebase user's Firestore balance FROM Creem CCA (source of truth)
+// Firebase users: webhook grants land in Creem CCA, not Firestore. This
+// endpoint returns the authoritative CCA balance so the client can mirror it.
+// Firebase users have no server session, so they send their Firebase ID
+// token (verified server-side) to prove identity. We trust ONLY the verified
+// email, never a client-supplied one.
+// ==========================================
+app.get('/api/accounts/credits/sync-from-creem', async (req, res) => {
+  try {
+    let email = req.user?.email || null;
+
+    // Verify Firebase ID token if provided (Firebase users have no session).
+    const authHeader = req.headers['authorization'] || req.headers['x-firebase-token'];
+    const idToken = authHeader ? String(authHeader).replace(/^Bearer\s+/i, '') : null;
+    if (!email && idToken) {
+      const decoded = await verifyFirebaseIdToken(idToken);
+      if (decoded && decoded.email) {
+        email = decoded.email;
+      } else {
+        return res.status(401).json({ success: false, error: 'Invalid Firebase ID token' });
+      }
+    }
+
+    if (!email) {
+      return res.status(401).json({ success: false, error: 'Authentication required to sync credits' });
+    }
+
+    // Ensure Creem customer + credit account linkage exists (autolink by email).
+    const { customerId, creditAccountId } = await ensureUserCreemCreditAccount({
+      email,
+      displayName: (req.user?.displayName) || email.split('@')[0]
+    }) || {};
+
+    if (!creditAccountId) {
+      // No Creem account yet (user never purchased). Nothing to mirror.
+      return res.json({ success: true, balance: null, synced: false });
+    }
+
+    const creemBalance = await getCreemCustomerBalance(creditAccountId);
+    if (creemBalance === null || creemBalance === undefined) {
+      return res.status(502).json({ success: false, error: 'Could not read Creem balance' });
+    }
+
+    return res.json({
+      success: true,
+      balance: creemBalance,
+      creditAccountId,
+      synced: true
+    });
+  } catch (err) {
+    console.error('[sync-from-creem] error:', err.message);
+    return res.status(500).json({ success: false, error: err.message });
   }
 });
 

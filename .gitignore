@@ -7,3 +7,7 @@ coverage/
 .env*
 !.env.example
 .grant-secret
+
+# Firebase Admin SDK private key (server-only)
+secrets/
+/etc/bittybox/
