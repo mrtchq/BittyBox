@@ -447,31 +447,44 @@ app.post(['/api/billing/webhook', '/api/webhooks/creem', '/api/webhooks/payment'
     const productId = data.product_id || data.product?.id;
     const amountCents = data.amount || data.price || 0;
 
-    let creditsToAdd = 1000;
-    let packageId = 'topup_1000';
+    // LIVE product IDs (BittyBox account — creem-creds-2.txt).
+    // PRO monthly grants 1,000 recurring credits + all features.
+    // Credit top-ups route through Creem Customer Credit Accounts (CCA).
+    const PRO_MONTHLY = 'prod_21AwXWmmf6vUmr7Z4JJ3sO';
+    const CREDITS_100 = 'prod_RZv35BDis62xNpVbtwhZT';
+    const CREDITS_500 = 'prod_7TpN3lpNqR0lIcD6tRZNDM';
+    const CREDITS_2500 = 'prod_4qidrzVKMckokpFYgp8NM4';
 
-    if (productId === 'prod_6W2ZUtURJf1Mk02xaq6aJF' || amountCents === 1000) {
+    let creditsToAdd = 0;
+    let packageId = 'unknown';
+    let isProUnlock = false;
+
+    if (productId === CREDITS_100 || amountCents === 100) {
+      creditsToAdd = 100;
+      packageId = 'credits_100';
+    } else if (productId === CREDITS_500 || amountCents === 500) {
+      creditsToAdd = 500;
+      packageId = 'credits_500';
+    } else if (productId === CREDITS_2500 || amountCents === 1000) {
+      creditsToAdd = 2500;
+      packageId = 'credits_2500';
+    } else if (productId === PRO_MONTHLY || amountCents === 700) {
       creditsToAdd = 1000;
-      packageId = 'starter_1000';
-    } else if (productId === 'prod_1ybKpsP1FQPyKvVZUVSg0A' || amountCents === 3500) {
-      creditsToAdd = 5000;
-      packageId = 'growth_5000';
-    } else if (productId === 'prod_2qRxHcyee2IvOfAiIFKYw6' || amountCents === 9000) {
-      creditsToAdd = 15000;
-      packageId = 'pro_15000';
-    } else if (productId === 'prod_3dVHhedrXPaGmitx9VecS3' || amountCents === 2500) {
-      creditsToAdd = 10000;
-      packageId = 'monthly_pass_10000';
+      packageId = 'pro_monthly';
+      isProUnlock = true;
     }
 
     if (customerEmail) {
       const user = getUserByEmail(customerEmail);
       if (user) {
-        if (packageId === 'monthly_pass_10000') {
-          user.tier = 'PRO Builder (Active)';
+        if (isProUnlock || productId === PRO_MONTHLY) {
+          user.tier = 'PRO';
+          user.isPro = true;
         }
-        await purchaseCredits(user.id, packageId, creditsToAdd, amountCents);
-        console.log(`[billing-webhook] Credited ${creditsToAdd} points to user ${user.email} (${packageId})`);
+        if (creditsToAdd > 0) {
+          await purchaseCredits(user.id, packageId, creditsToAdd, amountCents);
+        }
+        console.log(`[billing-webhook] Processed ${packageId} for user ${user.email}`);
       }
     }
 

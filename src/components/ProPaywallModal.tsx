@@ -38,9 +38,9 @@ interface ProPaywallModalProps {
   onSwitchToPro?: () => void;
 }
 
-// Official Checkout Links
-const PRO_MONTHLY_CHECKOUT_URL = 'https://creem.io/product/prod_3dVHhedrXPaGmitx9VecS3';
-const PRO_ANNUAL_CHECKOUT_URL = 'https://creem.io/product/prod_3dVHhedrXPaGmitx9VecS3?interval=annual';
+// Official Checkout Links (live BittyBox products)
+const PRO_MONTHLY_CHECKOUT_URL = 'https://creem.io/product/prod_21AwXWmmf6vUmr7Z4JJ3sO';
+const PRO_ANNUAL_CHECKOUT_URL = 'https://creem.io/product/prod_21AwXWmmf6vUmr7Z4JJ3sO?interval=annual';
 
 export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
   isOpen,
@@ -107,34 +107,34 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
 
   const CREDIT_PACKS = [
     {
-      id: 'pack_50',
-      credits: 50,
-      price: '$5',
-      pricePerCredit: '$0.10 / CR',
-      tag: 'STARTER PACK',
+      id: 'pack_100',
+      credits: 100,
+      price: '$1',
+      pricePerCredit: '$0.01 / CR',
+      tag: 'TRIAL PACK',
       popular: false,
-      desc: 'Try PRO locks with no subscription required. Credits never expire.',
-      checkoutUrl: 'https://creem.io/product/prod_6W2ZUtURJf1Mk02xaq6aJF',
+      desc: 'Test PRO locks with almost no spend. Credits never expire.',
+      checkoutUrl: 'https://creem.io/product/prod_RZv35BDis62xNpVbtwhZT',
     },
     {
-      id: 'pack_150',
-      credits: 150,
-      price: '$12',
-      pricePerCredit: '$0.08 / CR',
-      tag: 'SAVE 20%',
+      id: 'pack_500',
+      credits: 500,
+      price: '$5',
+      pricePerCredit: '$0.01 / CR',
+      tag: 'BEST VALUE',
       popular: true,
       desc: 'Ideal for creators & developers deploying secure micro-links.',
-      checkoutUrl: 'https://creem.io/product/prod_1ybKpsP1FQPyKvVZUVSg0A',
+      checkoutUrl: 'https://creem.io/product/prod_7TpN3lpNqR0lIcD6tRZNDM',
     },
     {
-      id: 'pack_400',
-      credits: 400,
-      price: '$25',
-      pricePerCredit: '$0.06 / CR',
-      tag: 'BEST VALUE (38% OFF)',
+      id: 'pack_2500',
+      credits: 2500,
+      price: '$10',
+      pricePerCredit: '$0.004 / CR',
+      tag: 'PRO POWER',
       popular: false,
       desc: 'Maximum flexibility for high-volume automated links and agent tools.',
-      checkoutUrl: 'https://creem.io/product/prod_2qRxHcyee2IvOfAiIFKYw6',
+      checkoutUrl: 'https://creem.io/product/prod_4qidrzVKMckokpFYgp8NM4',
     },
   ];
 
@@ -327,16 +327,19 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
                   </div>
 
                   <div className="mt-3">
-                    <div className="flex items-baseline gap-1.5">
-                      <span className="text-3xl font-black font-cyber text-white">
-                        {billingCycle === 'annual' ? '$79' : '$9'}
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-base font-bold font-cyber text-zinc-500 line-through decoration-rose-500/70">
+                        $17
+                      </span>
+                      <span className="text-4xl font-black font-cyber text-white">
+                        $7
                       </span>
                       <span className="text-xs text-amber-200/80">
-                        {billingCycle === 'annual' ? '/ year ($6.58/mo)' : '/ month'}
+                        / month
                       </span>
                     </div>
                     <div className="text-[11px] text-emerald-300 mt-0.5">
-                      {billingCycle === 'annual' ? '⚡ Billed annually (Save $29/yr)' : '⚡ Cancel anytime &bull; No contracts'}
+                      ⚡ Limited price drop &bull; Cancel anytime &bull; No contracts
                     </div>
                   </div>
 
@@ -347,7 +350,7 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
                   <div className="space-y-2 mt-4 pt-3 border-t border-amber-500/30 text-xs">
                     <div className="flex items-start gap-2 text-amber-100 font-bold">
                       <CheckCheck className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
-                      <span>Passcode Lock (Numeric PIN + AES-256)</span>
+                      <span>1,000 monthly Credits included</span>
                     </div>
                     <div className="flex items-start gap-2 text-amber-100 font-bold">
                       <CheckCheck className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
@@ -378,7 +381,7 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
                   className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-400 via-amber-300 to-amber-400 text-black font-cyber font-bold text-xs tracking-wider flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(245,158,11,0.5)] hover:brightness-110 hover:scale-[1.02] active:scale-95 transition cursor-pointer"
                 >
                   <Crown className="w-4 h-4 text-black fill-black" />
-                  <span>UPGRADE TO PRO ({billingCycle === 'annual' ? '$79/YR' : '$9/MO'})</span>
+                  <span>UPGRADE TO PRO ($7/MO)</span>
                   <ExternalLink className="w-3.5 h-3.5 text-black" />
                 </button>
               </div>

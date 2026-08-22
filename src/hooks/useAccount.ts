@@ -460,46 +460,14 @@ export function useAccount(): UseAccountResult {
     }
   };
 
-  const purchaseCredits = async (packageId: string, amount = 50, costCents = 500): Promise<boolean> => {
-    const tx: CreditTransaction = {
-      id: `tx_${Date.now()}`,
-      type: 'purchase',
-      amount,
-      costCents,
-      packageId,
-      description: `Purchased ${amount} Credits (${packageId})`,
-      createdAt: new Date().toISOString()
-    };
-
-    if (auth.currentUser && user) {
-      try {
-        await addCreditsInFirestore(auth.currentUser.uid, amount, tx);
-        return true;
-      } catch (err) {
-        console.error('[useAccount] Error purchasing credits in Firestore:', err);
-      }
-    }
-
-    if (!sessionId) return false;
-    try {
-      const res = await fetch('/api/accounts/credits/purchase', {
-        method: 'POST',
-        headers: {
-          'X-Session-Id': sessionId,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ packageId, amount, costCents }),
-      });
-      const data = await res.json();
-      if (data.success && data.user) {
-        setUser(data.user);
-        return true;
-      }
-      return Boolean(data.success);
-    } catch (err) {
-      console.error('[useAccount] Failed to purchase credits:', err);
-      return false;
-    }
+  // SECURITY: credits are NEVER granted client-side. The dashboard's
+  // "Buy" buttons are <a href> links that open the Creem checkout; real
+  // credits are issued ONLY by the server billing webhook after a paid
+  // event (via Creem Customer Credit Accounts). This function is a no-op
+  // guard so no code path can self-grant free credits.
+  const purchaseCredits = async (packageId?: string, amount = 50, costCents = 500): Promise<boolean> => {
+    console.warn('[useAccount] purchaseCredits is disabled: credits are issued only via the Creem paid webhook.');
+    return false;
   };
 
   const recordCreatedBox = async (linkData: any): Promise<boolean> => {
