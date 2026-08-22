@@ -17,9 +17,8 @@ interface ParticleNode {
 
 export const HoloBackground: React.FC<HoloBackgroundProps> = ({ theme = 'synthwave' }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const mouseRef = useRef<{ x: number | null; y: number | null }>({ x: null, y: null });
 
-  // Interactive Quantum Particle Constellation & Matrix Rain Canvas Effect
+  // Ambient Quantum Particle Constellation & Matrix Rain Canvas Effect
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -37,25 +36,6 @@ export const HoloBackground: React.FC<HoloBackgroundProps> = ({ theme = 'synthwa
     };
     window.addEventListener('resize', handleResize);
 
-    const handleMouseMove = (e: MouseEvent) => {
-      mouseRef.current = { x: e.clientX, y: e.clientY };
-    };
-    const handleMouseLeave = () => {
-      mouseRef.current = { x: null, y: null };
-    };
-    const handleTouchMove = (e: TouchEvent) => {
-      if (e.touches.length > 0) {
-        mouseRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-      }
-    };
-    const handleTouchEnd = () => {
-      mouseRef.current = { x: null, y: null };
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseleave', handleMouseLeave);
-    window.addEventListener('touchmove', handleTouchMove, { passive: true });
-    window.addEventListener('touchend', handleTouchEnd);
 
     // -------------------------------------------------------------
     // MATRIX THEME: High-density phosphor digital stream
@@ -78,12 +58,7 @@ export const HoloBackground: React.FC<HoloBackgroundProps> = ({ theme = 'synthwa
           const x = i * fontSize;
           const y = drops[i] * fontSize;
 
-          // If mouse is close, perturb stream
-          const mx = mouseRef.current.x;
-          const my = mouseRef.current.y;
-          const isNearMouse = mx !== null && my !== null && Math.hypot(x - mx, y - my) < 80;
-
-          if (isNearMouse || Math.random() > 0.96) {
+          if (Math.random() > 0.96) {
             ctx.fillStyle = '#ffffff';
           } else {
             ctx.fillStyle = '#00ff66';
@@ -104,21 +79,16 @@ export const HoloBackground: React.FC<HoloBackgroundProps> = ({ theme = 'synthwa
 
       return () => {
         window.removeEventListener('resize', handleResize);
-        window.removeEventListener('mousemove', handleMouseMove);
-        window.removeEventListener('mouseleave', handleMouseLeave);
-        window.removeEventListener('touchmove', handleTouchMove);
-        window.removeEventListener('touchend', handleTouchEnd);
         cancelAnimationFrame(animationFrameId);
       };
     }
 
     // -------------------------------------------------------------
-    // SYNTHWAVE & MONOCHROME THEMES: Interactive Quantum Constellation Mesh
+    // SYNTHWAVE & MONOCHROME THEMES: Ambient Quantum Constellation Mesh
     // -------------------------------------------------------------
     const isSynthwave = theme === 'synthwave';
     const particleCount = Math.min(Math.floor((width * height) / 18000), 75);
     const connectionDistance = 140;
-    const mouseRadius = 160;
 
     const colors = isSynthwave
       ? ['#00f2ff', '#ff00de', '#8b5cf6', '#00f5d4']
@@ -152,30 +122,6 @@ export const HoloBackground: React.FC<HoloBackgroundProps> = ({ theme = 'synthwa
         // Bounce walls
         if (p.x < 0 || p.x > width) p.vx *= -1;
         if (p.y < 0 || p.y > height) p.vy *= -1;
-
-        // Interactive mouse gravity attraction
-        const mx = mouseRef.current.x;
-        const my = mouseRef.current.y;
-        if (mx !== null && my !== null) {
-          const dx = mx - p.x;
-          const dy = my - p.y;
-          const dist = Math.hypot(dx, dy);
-          if (dist < mouseRadius && dist > 1) {
-            const force = (1 - dist / mouseRadius) * 0.4;
-            p.x += (dx / dist) * force;
-            p.y += (dy / dist) * force;
-
-            // Draw connection ray to cursor
-            ctx.beginPath();
-            ctx.moveTo(p.x, p.y);
-            ctx.lineTo(mx, my);
-            ctx.strokeStyle = isSynthwave
-              ? `rgba(0, 242, 255, ${0.4 * (1 - dist / mouseRadius)})`
-              : `rgba(255, 255, 255, ${0.35 * (1 - dist / mouseRadius)})`;
-            ctx.lineWidth = 1;
-            ctx.stroke();
-          }
-        }
 
         // Draw particle node
         ctx.beginPath();
@@ -211,10 +157,6 @@ export const HoloBackground: React.FC<HoloBackgroundProps> = ({ theme = 'synthwa
 
     return () => {
       window.removeEventListener('resize', handleResize);
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseleave', handleMouseLeave);
-      window.removeEventListener('touchmove', handleTouchMove);
-      window.removeEventListener('touchend', handleTouchEnd);
       cancelAnimationFrame(animationFrameId);
     };
   }, [theme]);
@@ -232,7 +174,7 @@ export const HoloBackground: React.FC<HoloBackgroundProps> = ({ theme = 'synthwa
   if (theme === 'monochrome') {
     return (
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden select-none bg-[#08080a]">
-        {/* Interactive Constellation Mesh */}
+        {/* Ambient Constellation Mesh */}
         <canvas ref={canvasRef} className="absolute inset-0 w-full h-full opacity-60" />
         {/* Subtle geometric dot grid for minimalist monochrome */}
         <div className="absolute inset-0 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:24px_24px] opacity-[0.07]" />

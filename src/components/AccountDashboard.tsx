@@ -136,16 +136,6 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
 
   // Canvas starfield background
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    const { clientX, clientY } = e;
-    const { innerWidth, innerHeight } = window;
-    setMousePos({
-      x: (clientX / innerWidth) * 2 - 1,
-      y: (clientY / innerHeight) * 2 - 1,
-    });
-  };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -206,8 +196,8 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
 
         const fov = 400;
         const scale = fov / (fov + p.z);
-        const sx = cx + (p.x + mousePos.x * 40) * scale;
-        const sy = cy + (p.y + mousePos.y * 30) * scale;
+        const sx = cx + p.x * scale;
+        const sy = cy + p.y * scale;
 
         if (sx >= 0 && sx <= width && sy >= 0 && sy <= height) {
           ctx.beginPath();
@@ -226,7 +216,7 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
       window.removeEventListener("resize", handleResize);
       if (animFrame) cancelAnimationFrame(animFrame);
     };
-  }, [mousePos]);
+  }, []);
 
   // Handle Google Sign In
   const handleGoogleSignIn = async () => {
@@ -330,7 +320,6 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
   if (!isAuthenticated || !user) {
     return (
       <div
-        onMouseMove={handleMouseMove}
         className="relative min-h-[calc(100vh-4rem)] bg-[#03020e] text-cyan-100 font-sans py-8 px-4 sm:px-6 overflow-hidden flex items-center justify-center select-none"
       >
         {/* 3D Canvas Background */}
@@ -554,7 +543,6 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
   // =========================================================================
   return (
     <div
-      onMouseMove={handleMouseMove}
       className="relative min-h-[calc(100vh-4rem)] bg-[#03020e] text-cyan-100 font-sans py-6 sm:py-8 px-3 sm:px-6 overflow-hidden select-none"
     >
       {/* 3D Canvas Background */}

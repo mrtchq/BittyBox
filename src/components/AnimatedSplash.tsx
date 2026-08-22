@@ -92,7 +92,6 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [isWarping, setIsWarping] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
 
   // Configuration state across the 5 slides
@@ -661,15 +660,7 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentSlide, slides.length, nextSlide, prevSlide, handleLaunch]);
 
-  // Mouse & Touch gestures
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const { clientX, clientY } = e;
-    const { innerWidth, innerHeight } = window;
-    setMousePos({
-      x: (clientX / innerWidth - 0.5) * 2,
-      y: (clientY / innerHeight - 0.5) * 2,
-    });
-  };
+  // Touch gestures
 
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchStartX(e.touches[0].clientX);
@@ -749,8 +740,8 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
 
         const fov = 400;
         const scale = fov / (fov + p.z);
-        const sx = cx + (p.x + mousePos.x * 60) * scale;
-        const sy = cy + (p.y + mousePos.y * 40) * scale;
+        const sx = cx + p.x * scale;
+        const sy = cy + p.y * scale;
 
         if (sx >= 0 && sx <= width && sy >= 0 && sy <= height) {
           ctx.beginPath();
@@ -769,7 +760,7 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
       window.removeEventListener('resize', handleResize);
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     };
-  }, [mousePos, isExiting]);
+  }, [isExiting]);
 
   // Framer Motion Slide Variants
   const slideVariants = {
@@ -814,7 +805,6 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
 
   return (
     <div
-      onMouseMove={handleMouseMove}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       className={`fixed inset-0 z-50 overflow-hidden bg-[#03020e] text-cyan-100 flex flex-col justify-between select-none h-[100dvh] transition-all duration-700 ${
