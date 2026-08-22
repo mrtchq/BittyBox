@@ -16,7 +16,7 @@ import {
 import { BittyMetadata } from '../types';
 import { decompressBittyData, getRenderedHtml } from '../utils/bittyEngine';
 import { CyberScrambleText } from './CyberScrambleText';
-import { useTimeWindow } from '../utils/timeWindow';
+import { useTimeWindow, type TimeLockMode } from '../utils/timeWindow';
 
 interface BittyRendererProps {
   hashFragment: string;
@@ -462,7 +462,7 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
 
                 <div className="bg-black/60 border border-fuchsia-500/30 rounded-lg p-2.5 text-center">
                   <div className="text-[10px] text-fuchsia-300 uppercase tracking-widest mb-1">
-                    Auto-Destructs In
+                    {twConfig?.mode === 'hybrid' ? 'Burns In' : 'Auto-Destructs In'}
                   </div>
                   <div className="text-xl sm:text-2xl font-cyber text-white tracking-[0.18em] tabular-nums">
                     {tw.remainingLabel || '00 : 00 : 00 : 00'}
@@ -631,7 +631,9 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
           {twEnabled && (
             <div className="flex items-center gap-1 text-fuchsia-300 font-bold">
               <Clock className="w-3 h-3 text-fuchsia-400 animate-pulse" />
-              <span>{tw.remainingLabel || 'AUTO-DESTRUCT ACTIVE'}</span>
+              {twConfig?.mode === 'hybrid'
+                ? <span>BURNS IN {tw.remainingLabel || 'ACTIVE'}</span>
+                : <span>{tw.remainingLabel || 'AUTO-DESTRUCT ACTIVE'}</span>}
             </div>
           )}
 

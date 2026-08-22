@@ -22,10 +22,14 @@ export type TimeWindowStatus = 'NONE' | 'PENDING' | 'OPEN' | 'EXPIRED';
 
 export interface TimeWindowConfig {
   enabled?: boolean;
+  /** Client-only lock mode used to drive viewer copy (expiry/delay/range/hybrid). Optional. */
+  mode?: TimeLockMode;
   notBefore?: string | null;
   notAfter?: string | null;
   showCountdown?: boolean;
 }
+
+export type TimeLockMode = 'expiry' | 'delay' | 'range' | 'hybrid';
 
 /**
  * Pure evaluation of a time-window lock at a given instant.
@@ -114,6 +118,102 @@ export function nextBoundary(
     if (ms != null) return { kind: 'expires', ms };
   }
   return { kind: null, ms: null };
+}
+
+/** Convert a Date to a `YYYY-MM-DDTHH:MM` string in *local* time for <input type="datetime-local">. */
+export function formatLocalDateTime(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/**
+ * Build a TimeWindowConfig from the slide-03 mode selector.
+ *   expiry → notBefore:null,             notAfter: now + expiryHours   (current behavior)
+ *   delay  → notBefore: now + delayHours, notAfter:null                (Time Until Open)
+ *   range  → notBefore: openAt,          notAfter: lockAt              (Date Range)
+ * Returns null when disabled so callers can spread it conditionally.
+ * Mirrors server semantics in lib/policy-evaluator.js#evaluateTimeWindow EXACTLY.
+ */
+export type HybridRevealMode = 'delay' | 'date';
+
+export function buildTimeWindow(opts: {
+  enabled: boolean;
+  mode: TimeLockMode;
+  expiryHours: number;
+  delayHours: number;
+  openAt: string;
+  lockAt: string;
+  /** Hybrid-only: how the reveal instant is chosen. */
+  hybridRevealMode: HybridRevealMode;
+  /** Hybrid-only: hours after the reveal instant before the box self-destructs. */
+  hybridSelfDestructHours: number;
+  showCountdown: boolean;
+}): TimeWindowConfig | null {
+  if (!opts.enabled) return null;
+  const nowMs = Date.now();
+  let notBefore: string | null = null;
+  let notAfter: string | null = null;
+  if (opts.mode === 'expiry') {
+    notAfter = new Date(nowMs + opts.expiryHours * 3600 * 1000).toISOString();
+  } else if (opts.mode === 'delay') {
+    notBefore = new Date(nowMs + opts.delayHours * 3600 * 1000).toISOString();
+  } else if (opts.mode === 'range') {
+    notBefore = opts.openAt ? new Date(opts.openAt).toISOString() : null;
+    notAfter = opts.lockAt ? new Date(opts.lockAt).toISOString() : null;
+  } else if (opts.mode === 'hybrid') {
+    // Scheduled reveal (delay-from-now OR fixed date) + self-destruct after reveal.
+    const revealMs =
+      opts.hybridRevealMode === 'delay'
+        ? nowMs + opts.delayHours * 3600 * 1000
+        : opts.openAt
+          ? new Date(opts.openAt).getTime()
+          : nowMs;
+    notBefore = new Date(revealMs).toISOString();
+    notAfter = new Date(revealMs + opts.hybridSelfDestructHours * 3600 * 1000).toISOString();
+  }
+  return { enabled: true, mode: opts.mode, notBefore, notAfter, showCountdown: opts.showCountdown };
+}
+
+/**
+ * Resolve the human-readable reveal/expire bounds for the hybrid mode, used by
+ * the slide-05 summary. Returns nulls when unresolvable.
+ */
+export function buildRangeBoundaries(opts: {
+  hybridRevealMode: HybridRevealMode;
+  delayHours: number;
+  openAt: string;
+  hybridSelfDestructHours: number;
+}): { revealMs: number | null; burnMs: number | null } {
+  const nowMs = Date.now();
+  const revealMs =
+    opts.hybridRevealMode === 'delay'
+      ? nowMs + opts.delayHours * 3600 * 1000
+      : opts.openAt
+        ? new Date(opts.openAt).getTime()
+        : null;
+  if (revealMs == null || Number.isNaN(revealMs)) return { revealMs: null, burnMs: null };
+  return { revealMs, burnMs: revealMs + opts.hybridSelfDestructHours * 3600 * 1000 };
+}
+
+/** Format the hybrid summary line: "Reveals <date> · Self-destructs <duration> later". */
+export function formatHybridSummary(opts: {
+  hybridRevealMode: HybridRevealMode;
+  delayHours: number;
+  openAt: string;
+  hybridSelfDestructHours: number;
+}): string {
+  const { revealMs, burnMs } = buildRangeBoundaries(opts);
+  if (revealMs == null || burnMs == null) return 'Hybrid window';
+  const reveal = new Date(revealMs).toLocaleString();
+  const sd =
+    opts.hybridSelfDestructHours === 168
+      ? '7 Days'
+      : opts.hybridSelfDestructHours === 72
+        ? '3 Days'
+        : opts.hybridSelfDestructHours === 1
+          ? '1h'
+          : `${opts.hybridSelfDestructHours}h`;
+  return `Reveals ${reveal} · Self-destructs ${sd} after`;
 }
 
 import { useEffect, useState } from 'react';

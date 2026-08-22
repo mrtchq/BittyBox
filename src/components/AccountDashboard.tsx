@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  User,
   Key,
   Coins,
   History,
@@ -235,36 +234,6 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[550px] h-[550px] bg-gradient-to-tr from-cyan-600/10 via-fuchsia-600/10 to-transparent rounded-full blur-3xl pointer-events-none" />
 
         <div className="w-full max-w-lg relative z-10">
-          {/* Brand Header */}
-          <div className="text-center mb-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/80 border border-cyan-400/40 text-cyan-300 font-mono text-xs mb-3 shadow-[0_0_15px_rgba(0,242,255,0.25)]">
-              <User className="w-3.5 h-3.5 text-cyan-400" />
-              <span>BITTY ACCOUNT NETWORK</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold font-cyber tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-fuchsia-300 to-teal-200">
-              BUILDER AUTHENTICATION
-            </h1>
-            <p className="text-xs sm:text-sm text-cyan-300/70 font-mono mt-1.5 max-w-md mx-auto">
-              Passwordless magic sign-in, API keys, and autonomous agent credit balance.
-            </p>
-          </div>
-
-          {/* Bonus Perks Banner */}
-          <div className="mb-5 p-3 sm:p-3.5 rounded-xl bg-gradient-to-r from-cyan-950/70 via-purple-950/60 to-fuchsia-950/70 border border-cyan-500/30 flex items-center justify-between gap-3 shadow-[0_0_20px_rgba(0,242,255,0.12)]">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-400/50 flex items-center justify-center text-cyan-300">
-                <Coins className="w-4 h-4 text-cyan-300 animate-pulse" />
-              </div>
-              <div>
-                <div className="text-xs font-bold text-cyan-200 font-cyber">100 FREE STARTER CREDITS</div>
-                <div className="text-[10px] text-cyan-300/70 font-mono">Instant balance granted upon registration</div>
-              </div>
-            </div>
-            <span className="text-[10px] uppercase font-mono font-bold bg-cyan-900/60 border border-cyan-400/40 px-2 py-0.5 rounded text-cyan-300">
-              FREE TIER
-            </span>
-          </div>
-
           {/* Form Card */}
           <div className="bg-[#08031a]/90 backdrop-blur-xl border border-cyan-500/30 rounded-2xl p-5 sm:p-7 shadow-[0_0_35px_rgba(0,242,255,0.15)] font-mono relative">
             {/* Primary Google Sign In Button */}

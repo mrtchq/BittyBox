@@ -9,7 +9,6 @@ import {
   LogOut, 
   Sparkles, 
   Search, 
-  Sliders, 
   Shield, 
   Palette, 
   Check, 
@@ -24,6 +23,7 @@ import {
   History, 
   Info,
   ChevronRight,
+  ChevronDown,
   Lock,
   FileText,
   User,
@@ -139,7 +139,7 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
     deleteTrackedBox,
   } = account;
 
-  const [activeTab, setActiveTab] = useState<'account' | 'boxes' | 'keys' | 'credits' | 'mcp' | 'tools'>('account');
+  const [activeTab, setActiveTab] = useState<'account' | 'boxes' | 'keys' | 'credits' | 'mcp'>('account');
 
   // Auth Form local state (Google & Magic Link)
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -286,13 +286,13 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
             className="fixed inset-0 bg-black/80 backdrop-blur-md"
           />
 
-          {/* Sliding Panel from Right */}
+          {/* Sliding Panel from Bottom */}
           <motion.div
-            initial={{ x: '100%', opacity: 0.5 }}
-            animate={{ x: '0%', opacity: 1 }}
-            exit={{ x: '100%', opacity: 0 }}
+            initial={{ y: '100%', opacity: 0.5 }}
+            animate={{ y: '0%', opacity: 1 }}
+            exit={{ y: '100%', opacity: 0 }}
             transition={{ type: 'spring', damping: 28, stiffness: 280 }}
-            className="fixed inset-y-0 right-0 w-full max-w-4xl bg-[#040d18]/98 border-l border-cyan-500/40 shadow-[0_0_50px_rgba(0,242,255,0.3)] flex flex-col z-50 overflow-hidden"
+            className="fixed inset-x-0 bottom-0 w-full max-w-5xl mx-auto h-[88vh] max-h-[92vh] bg-[#040d18]/98 border-t-2 border-x-2 border-cyan-500/40 rounded-t-3xl shadow-[0_0_60px_rgba(0,242,255,0.35)] flex flex-col z-50 overflow-hidden"
           >
             {/* Ambient Top Glow Beam */}
             <div className="h-1 w-full bg-gradient-to-r from-cyan-400 via-teal-400 to-purple-500 shadow-[0_0_15px_#00f2ff]" />
@@ -331,8 +331,8 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
                   className="p-2 rounded-xl bg-cyan-950/70 hover:bg-cyan-900 border border-cyan-500/40 text-cyan-200 hover:text-white transition flex items-center gap-1 text-xs font-mono cursor-pointer"
                   title="Close Tools Panel"
                 >
+                  <ChevronDown className="w-4 h-4" />
                   <span className="hidden sm:inline">CLOSE</span>
-                  <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -407,19 +407,6 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
                   </button>
                 </>
               )}
-
-              <button
-                type="button"
-                onClick={() => setActiveTab('tools')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition cursor-pointer shrink-0 ${
-                  activeTab === 'tools'
-                    ? 'bg-teal-950 text-teal-200 border border-teal-400/50 shadow-sm'
-                    : 'text-teal-400/60 hover:text-teal-200'
-                }`}
-              >
-                <Sliders className="w-3.5 h-3.5 text-teal-400" />
-                <span>STUDIO TOOLS & THEME</span>
-              </button>
             </div>
 
             {/* Panel Body */}
@@ -1096,111 +1083,6 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
                       </pre>
                     </div>
                   </div>
-                </div>
-              )}
-
-              {/* =========================================================================
-                  TAB 6: STUDIO TOOLS, SHARING & THEME SETTINGS
-                 ========================================================================= */}
-              {activeTab === 'tools' && (
-                <div className="space-y-5">
-                  {/* Share & Compression Section */}
-                  <div className="rounded-2xl bg-gradient-to-b from-[#06182c]/80 to-[#030d1a]/80 border border-cyan-500/30 p-4 sm:p-5 shadow-lg">
-                    <div className="flex items-center justify-between mb-3 pb-2 border-b border-cyan-500/20">
-                      <div className="flex items-center gap-2 text-cyan-300 font-cyber font-bold text-xs uppercase tracking-wider">
-                        <Activity className="w-4 h-4 text-cyan-400" />
-                        <span>SHARE YOUR BITTY LINK</span>
-                      </div>
-                      <div className="text-[11px] font-mono text-teal-300 bg-teal-950/60 px-2 py-0.5 rounded border border-teal-500/30">
-                        {compressionRatio > 0 ? `${compressionRatio}% SPACE SAVED` : 'READY'}
-                      </div>
-                    </div>
-
-                    {/* Generate & Copy Button */}
-                    {onGenerate && (
-                      <button
-                        onClick={onGenerate}
-                        className={`w-full py-2.5 px-4 rounded-xl font-cyber text-xs font-bold transition flex items-center justify-center gap-2 shadow-lg cursor-pointer ${
-                          isCopied
-                            ? 'bg-teal-500 text-black font-extrabold shadow-[0_0_20px_rgba(20,184,166,0.6)]'
-                            : 'bg-gradient-to-r from-cyan-500 via-teal-500 to-fuchsia-600 hover:from-cyan-400 hover:to-fuchsia-500 text-black font-extrabold shadow-[0_0_20px_rgba(0,242,255,0.4)]'
-                        }`}
-                      >
-                        <Copy className="w-4 h-4" />
-                        <span>{isCopied ? 'LINK COPIED TO CLIPBOARD! ?' : 'CREATE & COPY SHAREABLE LINK'}</span>
-                      </button>
-                    )}
-
-                    {/* Quick Tools Grid */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3">
-                      {onOpenQr && (
-                        <button
-                          onClick={() => onOpenQr(bittyUrl)}
-                          className="p-2.5 rounded-xl bg-cyan-950/40 hover:bg-cyan-900/60 border border-cyan-500/30 text-cyan-200 flex flex-col items-center justify-center gap-1 transition text-xs font-mono cursor-pointer"
-                        >
-                          <QrCode className="w-4 h-4 text-cyan-400" />
-                          <span>QR CODE</span>
-                        </button>
-                      )}
-
-                      {onExportZip && (
-                        <button
-                          onClick={onExportZip}
-                          className="p-2.5 rounded-xl bg-cyan-950/40 hover:bg-cyan-900/60 border border-cyan-500/30 text-cyan-200 flex flex-col items-center justify-center gap-1 transition text-xs font-mono cursor-pointer"
-                        >
-                          <FolderArchive className="w-4 h-4 text-cyan-400" />
-                          <span>EXPORT ZIP</span>
-                        </button>
-                      )}
-
-                      {onPreviewInTab && (
-                        <button
-                          onClick={onPreviewInTab}
-                          className="p-2.5 rounded-xl bg-purple-950/40 hover:bg-purple-900/60 border border-purple-500/30 text-purple-200 flex flex-col items-center justify-center gap-1 transition text-xs font-mono cursor-pointer"
-                        >
-                          <ExternalLink className="w-4 h-4 text-purple-400" />
-                          <span>NEW TAB</span>
-                        </button>
-                      )}
-
-                      {onShare && (
-                        <button
-                          onClick={onShare}
-                          className="p-2.5 rounded-xl bg-fuchsia-950/40 hover:bg-fuchsia-900/60 border border-fuchsia-500/30 text-fuchsia-200 flex flex-col items-center justify-center gap-1 transition text-xs font-mono cursor-pointer"
-                        >
-                          <Share2 className="w-4 h-4 text-fuchsia-400" />
-                          <span>SHARE</span>
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Theme Switcher Section */}
-                  {onThemeChange && (
-                    <div className="rounded-2xl bg-[#06182c]/80 border border-cyan-500/30 p-4 sm:p-5 shadow-lg space-y-3">
-                      <div className="flex items-center gap-2 text-cyan-300 font-cyber font-bold text-xs uppercase tracking-wider border-b border-cyan-500/20 pb-2">
-                        <Palette className="w-4 h-4 text-cyan-400" />
-                        <span>WORKSPACE CYBER THEME</span>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                        {THEMES.map(t => (
-                          <div
-                            key={t.id}
-                            onClick={() => onThemeChange(t.id)}
-                            className={`p-3 rounded-xl border transition cursor-pointer flex flex-col justify-between ${
-                              theme === t.id
-                                ? 'bg-cyan-950/80 border-cyan-400 text-white shadow-[0_0_15px_rgba(0,242,255,0.3)]'
-                                : 'bg-black/40 border-cyan-500/20 text-cyan-300/70 hover:border-cyan-500/50'
-                            }`}
-                          >
-                            <div className="text-xs font-cyber font-bold">{t.name}</div>
-                            <div className="text-[10px] text-cyan-400/60 font-mono mt-1 line-clamp-2">{t.desc}</div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
               )}
 
