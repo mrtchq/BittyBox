@@ -104,7 +104,7 @@ export function useProStatus(): ProStatusResult {
       return { success: true, message: 'Bitty Box PRO Subscription Activated Successfully!' };
     }
 
-    return { success: false, message: 'Invalid license key format. Please enter a valid PRO key or subscribe via Creem.' };
+    return { success: false, message: 'Invalid license key format. Please enter a valid PRO key or upgrade your account.' };
   }, []);
 
   return {

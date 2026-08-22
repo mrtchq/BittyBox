@@ -98,24 +98,27 @@ const DEFAULT_STARTER_HTML = `<!DOCTYPE html>
 </html>`;
 
 function getInitialUrlState() {
-  if (typeof window === 'undefined') return { hash: '', payload: '', metadata: null, isViewer: false, isAuth: false };
+  if (typeof window === 'undefined') return { hash: '', payload: '', metadata: null, isViewer: false, isAuth: false, isAccount: false };
   const hash = window.location.hash || '';
   const search = window.location.search || '';
   if (hash.includes('#/auth/verify') || hash.includes('token=') || search.includes('token=')) {
-    return { hash, payload: '', metadata: null, isViewer: false, isAuth: true };
+    return { hash, payload: '', metadata: null, isViewer: false, isAuth: true, isAccount: false };
   }
-  if (hash && hash.length > 2 && hash !== '#/edit' && hash !== '#edit' && hash !== '#/studio' && hash !== '#/' && hash !== '#') {
+  if (hash === '#/account') {
+    return { hash, payload: '', metadata: null, isViewer: false, isAuth: false, isAccount: true };
+  }
+  if (hash && hash.length > 2 && hash !== '#/edit' && hash !== '#edit' && hash !== '#/studio' && hash !== '#/account' && hash !== '#/' && hash !== '#') {
     const { payload, metadata } = parseBittyHash(hash);
-    return { hash, payload, metadata, isViewer: Boolean(payload), isAuth: false };
+    return { hash, payload, metadata, isViewer: Boolean(payload), isAuth: false, isAccount: false };
   }
-  return { hash: '', payload: '', metadata: null, isViewer: false, isAuth: false };
+  return { hash: '', payload: '', metadata: null, isViewer: false, isAuth: false, isAccount: false };
 }
 
 export default function App() {
   const proStatus = useProStatus();
   const initialUrl = useMemo(() => getInitialUrlState(), []);
   const [currentView, setCurrentView] = useState<AppView>(() => {
-    if (initialUrl.isAuth) return 'account';
+    if (initialUrl.isAuth || initialUrl.isAccount) return 'account';
     return initialUrl.isViewer ? 'viewer' : 'editor';
   });
   const [inlinePreviewActive, setInlinePreviewActive] = useState<boolean>(false);
@@ -192,7 +195,7 @@ export default function App() {
   }, []);
 
   const [showSplash, setShowSplash] = useState<boolean>(() => {
-    if (initialUrl.isViewer || initialUrl.isAuth) return false;
+    if (initialUrl.isViewer || initialUrl.isAuth || initialUrl.isAccount) return false;
     return true;
   });
   const [isVerifyingMagic, setIsVerifyingMagic] = useState<boolean>(() => Boolean(initialUrl.isAuth));
@@ -580,7 +583,13 @@ export default function App() {
         return;
       }
 
-      if (hash === '#/studio' || hash === '#/account') {
+      if (hash === '#/account') {
+        setShowSplash(false);
+        setCurrentView('account');
+        return;
+      }
+
+      if (hash === '#/studio') {
         setShowSplash(true);
         return;
       }
@@ -1023,6 +1032,7 @@ export default function App() {
       <StudioToolsSidePanel
         isOpen={isRightToolsPanelOpen}
         onClose={() => setIsRightToolsPanelOpen(false)}
+        account={account}
         onGenerate={handleGenerate}
         bittyUrl={bittyUrl}
         originalBytes={originalBytes}

@@ -21,7 +21,7 @@ export async function handleMcpHttpRequest(req, res) {
   if (apiKey && apiKey.startsWith('bb_live_')) {
     const val = validateApiKey(apiKey);
     if (val.valid && val.user) {
-      deductCredits(val.user.id, 1, 'mcp');
+      await deductCredits(val.user.id, 1, 'mcp', 'MCP Server Tool Invocation');
     }
   }
 

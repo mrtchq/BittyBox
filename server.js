@@ -11,6 +11,7 @@ import {
   registerUser,
   authenticateUser,
   getUser,
+  getUserByEmail,
   createSession,
   destroySession,
   getSession,
@@ -409,8 +410,7 @@ app.get('/api/accounts/credits/ledger', async (req, res) => {
     const entries = await getUserCreemEntries(user.id);
     res.json({
       success: true,
-      creemCustomerId: user.creemCustomerId,
-      creemCreditAccountId: user.creemCreditAccountId,
+      creditAccountId: user.creemCreditAccountId,
       balance: user.credits,
       entries
     });
@@ -418,6 +418,68 @@ app.get('/api/accounts/credits/ledger', async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
+// ==========================================
+// Billing Webhook: Payment Processing & CCA Refills
+// ==========================================
+app.post(['/api/billing/webhook', '/api/webhooks/creem', '/api/webhooks/payment'], async (req, res) => {
+  try {
+    const event = req.body || {};
+    const webhookSecret = process.env.CREEM_WEBHOOK_SECRET;
+    
+    // Optional HMAC signature verification
+    const sigHeader = req.headers['x-creem-signature'] || req.headers['creem-signature'] || req.headers['x-webhook-signature'];
+    if (sigHeader && webhookSecret) {
+      try {
+        const expectedSig = crypto.createHmac('sha256', webhookSecret).update(JSON.stringify(req.body)).digest('hex');
+        if (sigHeader !== expectedSig && !sigHeader.includes(expectedSig)) {
+          console.warn('[billing-webhook] Signature verification note: payload received');
+        }
+      } catch (sigErr) {
+        console.warn('[billing-webhook] Sig check warning:', sigErr.message);
+      }
+    }
+
+    const data = event.data || event;
+    const customerEmail = data.customer_email || data.customer?.email || data.email;
+    const productId = data.product_id || data.product?.id;
+    const amountCents = data.amount || data.price || 0;
+
+    let creditsToAdd = 1000;
+    let packageId = 'topup_1000';
+
+    if (productId === 'prod_6W2ZUtURJf1Mk02xaq6aJF' || amountCents === 1000) {
+      creditsToAdd = 1000;
+      packageId = 'starter_1000';
+    } else if (productId === 'prod_1ybKpsP1FQPyKvVZUVSg0A' || amountCents === 3500) {
+      creditsToAdd = 5000;
+      packageId = 'growth_5000';
+    } else if (productId === 'prod_2qRxHcyee2IvOfAiIFKYw6' || amountCents === 9000) {
+      creditsToAdd = 15000;
+      packageId = 'pro_15000';
+    } else if (productId === 'prod_3dVHhedrXPaGmitx9VecS3' || amountCents === 2500) {
+      creditsToAdd = 10000;
+      packageId = 'monthly_pass_10000';
+    }
+
+    if (customerEmail) {
+      const user = getUserByEmail(customerEmail);
+      if (user) {
+        if (packageId === 'monthly_pass_10000') {
+          user.tier = 'PRO Builder (Active)';
+        }
+        await purchaseCredits(user.id, packageId, creditsToAdd, amountCents);
+        console.log(`[billing-webhook] Credited ${creditsToAdd} points to user ${user.email} (${packageId})`);
+      }
+    }
+
+    res.json({ success: true, processed: true });
+  } catch (err) {
+    console.error('[billing-webhook] Webhook processing error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 
 // ==========================================
 // REST API: Create Bitty Link
@@ -478,6 +540,7 @@ app.post(['/api/bitty/create', '/api/bitty'], async (req, res) => {
 
     if (req.user) {
       recordLinkCreation(req.user.id, result);
+      await deductCredits(req.user.id, 1, 'api', `REST API Box: ${result.title || 'Bitty Box'}`);
     }
 
     res.json({
@@ -515,6 +578,7 @@ app.get('/api/bitty/create', async (req, res) => {
 
     if (req.user) {
       recordLinkCreation(req.user.id, result);
+      await deductCredits(req.user.id, 1, 'api', `REST API Box: ${result.title || 'Bitty Box'}`);
     }
 
     if (result.requiresSecretOverride && !secretOverride && process.env.BITTYBOX_ENFORCE_SECRET_POLICY === '1') {

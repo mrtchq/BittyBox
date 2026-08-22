@@ -29,7 +29,7 @@ interface ProPaywallModalProps {
   onSwitchToPro?: () => void;
 }
 
-const CREEM_CHECKOUT_URL = 'https://creem.io/test/product/prod_3VNhmfcHL0GaJPU5KTLV1q';
+const PRO_CHECKOUT_URL = 'https://creem.io/product/prod_3dVHhedrXPaGmitx9VecS3';
 
 export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
   isOpen,
@@ -61,14 +61,14 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
     }
   };
 
-  const handleCreemCheckout = () => {
-    window.open(CREEM_CHECKOUT_URL, '_blank', 'noopener,noreferrer');
+  const handleProCheckout = () => {
+    window.open(PRO_CHECKOUT_URL, '_blank', 'noopener,noreferrer');
   };
 
   const PRO_FEATURES = [
     {
       icon: <Zap className="w-4 h-4 text-amber-400" />,
-      title: '2,500 Monthly Builder Credits',
+      title: '10,000 Monthly Builder Credits',
       desc: 'Automatic monthly allowance for human box creation, API calls, and MCP agent tool execution',
     },
     {
@@ -160,19 +160,19 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
               </span>
             </div>
             <div className="flex items-baseline gap-2 mt-1">
-              <span className="text-3xl font-black font-cyber text-white">$7</span>
+              <span className="text-3xl font-black font-cyber text-white">$25</span>
               <span className="text-xs text-amber-200/80">/ month &bull; cancel anytime</span>
             </div>
             <div className="text-[11px] text-cyan-300/80 mt-0.5">
-              Includes 2,500 monthly credits &amp; verified Creem Merchant of Record billing.
+              Includes 10,000 monthly credits &amp; secure Merchant of Record billing.
             </div>
           </div>
 
           <button
-            onClick={handleCreemCheckout}
+            onClick={handleProCheckout}
             className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-amber-400 via-amber-300 to-amber-400 text-black font-cyber font-bold text-xs tracking-wider flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(245,158,11,0.5)] hover:brightness-110 hover:scale-105 active:scale-95 transition cursor-pointer shrink-0"
           >
-            <span>CHECKOUT ON CREEM</span>
+            <span>SUBSCRIBE TO PRO</span>
             <ExternalLink className="w-3.5 h-3.5 text-black" />
           </button>
         </div>
@@ -181,7 +181,7 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
         <div className="mb-6 space-y-2.5">
           <div className="text-xs font-mono text-cyan-400 font-bold uppercase tracking-wider mb-2 flex items-center justify-between">
             <span>ALL PRO FEATURES INCLUDED:</span>
-            <span className="text-[10px] text-amber-300/80">2,500 CREDITS/MO</span>
+            <span className="text-[10px] text-amber-300/80">10,000 CREDITS/MO</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -223,11 +223,11 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
         {/* Primary Action Button */}
         <div className="space-y-3">
           <button
-            onClick={handleCreemCheckout}
+            onClick={handleProCheckout}
             className="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-amber-500 via-fuchsia-600 to-cyan-500 text-white font-mono font-bold text-sm tracking-wider flex items-center justify-center gap-3 shadow-[0_0_30px_rgba(245,158,11,0.4)] hover:shadow-[0_0_40px_rgba(245,158,11,0.7)] hover:scale-[1.01] active:scale-95 transition-all duration-200 group cursor-pointer"
           >
             <Crown className="w-4 h-4 text-amber-300 fill-amber-300" />
-            <span>UPGRADE TO BITTY BOX PRO &bull; $7 / MO</span>
+            <span>UPGRADE TO BITTY BOX PRO &bull; $25 / MO</span>
             <Sparkles className="w-4 h-4 text-cyan-200 group-hover:rotate-45 transition-transform" />
           </button>
 

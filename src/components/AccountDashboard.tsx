@@ -944,11 +944,11 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
                     </h2>
                     <span className="px-2 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-400/50 text-emerald-300 text-[10px] font-mono font-bold flex items-center gap-1">
                       <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                      <span>CREEM.IO CUSTOMER CREDITS</span>
+                      <span>CUSTOMER CREDITS ACCOUNT</span>
                     </span>
                   </div>
                   <p className="text-xs text-emerald-300/70 mt-1">
-                    Credits are issued, incremented, and decremented via Creem.io Customer Credits ledger on every generated Bitty Box, REST API creation, or MCP tool call.
+                    Credits are issued, incremented, and decremented across every generated Bitty Box, REST API creation, or MCP tool call.
                   </p>
                 </div>
 
@@ -958,7 +958,7 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
                   </div>
                   {user.creemCreditAccountId && (
                     <div className="text-[10px] font-mono text-emerald-400/60">
-                      CCA: {user.creemCreditAccountId}
+                      Ledger ID: {user.creemCreditAccountId}
                     </div>
                   )}
                 </div>
@@ -993,7 +993,7 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
 
               {/* Credit Top-Up Packages */}
               <div className="space-y-3 pt-2">
-                <div className="text-xs font-bold text-emerald-300 font-cyber">OFFICIAL CREEM.IO MEMBERSHIP & TOP-UP PLANS:</div>
+                <div className="text-xs font-bold text-emerald-300 font-cyber">MEMBERSHIP & TOP-UP PLANS:</div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Pack 1: Bitty Box PRO Monthly Membership */}
                   <div className="p-4 rounded-xl bg-gradient-to-b from-[#0e0422] to-[#04010e] border-2 border-amber-400 shadow-[0_0_25px_rgba(245,158,11,0.25)] flex flex-col justify-between space-y-3 relative">
@@ -1007,24 +1007,24 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
                           BITTY BOX PRO
                         </span>
                         <span className="text-[10px] font-mono bg-amber-950 px-2 py-0.5 rounded text-amber-300 border border-amber-500/50">
-                          $7.00 / mo
+                          $25.00 / mo
                         </span>
                       </div>
                       <div className="text-2xl font-extrabold font-cyber text-white mt-2">
-                        2,500 <span className="text-xs font-normal text-amber-300/80 font-mono">CREDITS / MONTH</span>
+                        10,000 <span className="text-xs font-normal text-amber-300/80 font-mono">CREDITS / MONTH</span>
                       </div>
                       <p className="text-[11px] text-zinc-300 mt-1 leading-relaxed">
-                        Full PRO membership: 2,500 recurring monthly credits, unlimited AES-256 encryption, time locks, visit quotas, and priority MCP server agent tools.
+                        Full PRO membership: 10,000 recurring monthly credits, unlimited AES-256 encryption, time locks, visit quotas, and priority MCP server agent tools.
                       </p>
                     </div>
 
                     <a
-                      href="https://creem.io/test/product/prod_3VNhmfcHL0GaJPU5KTLV1q"
+                      href="https://creem.io/product/prod_3dVHhedrXPaGmitx9VecS3"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="w-full py-2.5 rounded-lg bg-gradient-to-r from-amber-400 via-amber-300 to-amber-400 text-black font-cyber font-bold text-xs tracking-wider flex items-center justify-center gap-1.5 transition shadow-[0_0_15px_rgba(245,158,11,0.4)] hover:brightness-110 active:scale-[0.99]"
                     >
-                      <span>SUBSCRIBE TO PRO ($7/MO)</span>
+                      <span>SUBSCRIBE TO PRO ($25/MO)</span>
                       <ExternalLink className="w-3.5 h-3.5 text-black" />
                     </a>
                   </div>
@@ -1038,7 +1038,7 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
                           1,000 CREDITS TOP-UP
                         </span>
                         <span className="text-[10px] font-mono bg-cyan-950 px-2 py-0.5 rounded text-cyan-300 border border-cyan-500/40">
-                          $9.00 ONE-TIME
+                          $10.00 ONE-TIME
                         </span>
                       </div>
                       <div className="text-2xl font-extrabold font-cyber text-cyan-300 mt-2">
@@ -1050,12 +1050,74 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
                     </div>
 
                     <a
-                      href="https://creem.io/test/product/prod_7PSpGGc91G9rDu80HY2AQ0"
+                      href="https://creem.io/product/prod_6W2ZUtURJf1Mk02xaq6aJF"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="w-full py-2.5 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/60 text-cyan-200 font-cyber font-bold text-xs tracking-wider flex items-center justify-center gap-1.5 transition active:scale-[0.99]"
                     >
-                      <span>BUY 1,000 CREDITS ($9.00)</span>
+                      <span>REFILL 1,000 CREDITS ($10)</span>
+                      <ExternalLink className="w-3.5 h-3.5 text-cyan-300" />
+                    </a>
+                  </div>
+
+                  {/* Pack 3: 5,000 Perpetual Credits */}
+                  <div className="p-4 rounded-xl bg-[#03010b] border border-cyan-500/40 hover:border-cyan-300 transition flex flex-col justify-between space-y-3 shadow-inner">
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-cyan-200 font-cyber flex items-center gap-1.5">
+                          <Coins className="w-3.5 h-3.5 text-cyan-400" />
+                          5,000 CREDITS (GROWTH)
+                        </span>
+                        <span className="text-[10px] font-mono bg-cyan-950 px-2 py-0.5 rounded text-cyan-300 border border-cyan-500/40">
+                          $35.00 ONE-TIME
+                        </span>
+                      </div>
+                      <div className="text-2xl font-extrabold font-cyber text-cyan-300 mt-2">
+                        5,000 <span className="text-xs font-normal text-cyan-400/70 font-mono">PERPETUAL CREDITS</span>
+                      </div>
+                      <p className="text-[11px] text-cyan-300/70 mt-1 leading-relaxed">
+                        Growth top-up: 5,000 perpetual credits for high-throughput AI agent workflows and high-volume link publishing.
+                      </p>
+                    </div>
+
+                    <a
+                      href="https://creem.io/product/prod_1ybKpsP1FQPyKvVZUVSg0A"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full py-2.5 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/60 text-cyan-200 font-cyber font-bold text-xs tracking-wider flex items-center justify-center gap-1.5 transition active:scale-[0.99]"
+                    >
+                      <span>REFILL 5,000 CREDITS ($35)</span>
+                      <ExternalLink className="w-3.5 h-3.5 text-cyan-300" />
+                    </a>
+                  </div>
+
+                  {/* Pack 4: 15,000 Perpetual Credits */}
+                  <div className="p-4 rounded-xl bg-[#03010b] border border-cyan-500/40 hover:border-cyan-300 transition flex flex-col justify-between space-y-3 shadow-inner">
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-cyan-200 font-cyber flex items-center gap-1.5">
+                          <Coins className="w-3.5 h-3.5 text-cyan-400" />
+                          15,000 CREDITS (PRO PACK)
+                        </span>
+                        <span className="text-[10px] font-mono bg-cyan-950 px-2 py-0.5 rounded text-cyan-300 border border-cyan-500/40">
+                          $90.00 ONE-TIME
+                        </span>
+                      </div>
+                      <div className="text-2xl font-extrabold font-cyber text-cyan-300 mt-2">
+                        15,000 <span className="text-xs font-normal text-cyan-400/70 font-mono">PERPETUAL CREDITS</span>
+                      </div>
+                      <p className="text-[11px] text-cyan-300/70 mt-1 leading-relaxed">
+                        Bulk developer bundle: 15,000 perpetual credits at highest volume discount for programmatic agent pipelines.
+                      </p>
+                    </div>
+
+                    <a
+                      href="https://creem.io/product/prod_2qRxHcyee2IvOfAiIFKYw6"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full py-2.5 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/60 text-cyan-200 font-cyber font-bold text-xs tracking-wider flex items-center justify-center gap-1.5 transition active:scale-[0.99]"
+                    >
+                      <span>REFILL 15,000 CREDITS ($90)</span>
                       <ExternalLink className="w-3.5 h-3.5 text-cyan-300" />
                     </a>
                   </div>
