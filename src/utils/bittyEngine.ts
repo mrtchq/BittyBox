@@ -517,8 +517,6 @@ export function getRenderedHtml(content: string, metadata?: Partial<BittyMetadat
   ) {
     return content;
   }
-  const lang = metadata?.language || 'en';
-  const title = metadata?.title || 'Bitty Box';
-  return `<!DOCTYPE html><html lang="${lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${title}</title><style>body{margin:0 auto;padding:1.5rem;max-width:40em;font-family:-apple-system,BlinkMacSystemFont,sans-serif;line-height:1.6;background:#000000;color:#ffffff;}</style></head><body>${content}</body></html>`;
+  return `<!DOCTYPE html><html lang="${lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${title}</title><style>body{margin:0 auto;padding:1.5rem;max-width:48em;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.6;color:#1e293b;background:#ffffff;}@media(prefers-color-scheme:dark){body{color:#f1f5f9;background:#0f172a;}}</style></head><body>${content}</body></html>`;
 }
 

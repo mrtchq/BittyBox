@@ -905,6 +905,7 @@ export default function App() {
         activeContent={hashFragment ? undefined : content}
         metadata={metadata}
         onEdit={handleEditFromViewer}
+        onHome={handleGoToHomePage}
         onOpenQr={() => setIsQrOpen(true)}
         onShare={handleShare}
         onCloseSession={handleRequestCloseSession}
@@ -959,7 +960,36 @@ export default function App() {
 
       {/* Main Content Body */}
       <main className="flex-1 relative z-10">
-        {(currentView === 'editor' || currentView === 'account') && (
+        {currentView === 'editor' && (
+          <BittyEditor
+            content={content}
+            onChangeContent={handleContentChange}
+            metadata={metadata}
+            onChangeMetadata={handleMetadataChange}
+            onGenerate={handleGenerate}
+            bittyUrl={bittyUrl}
+            originalBytes={originalBytes}
+            compressedBytes={compressedBytes}
+            isCopied={isCopied}
+            onSelectTemplate={handleSelectTemplate}
+            onCloseSession={handleRequestCloseSession}
+            sessions={sessions}
+            currentSessionId={currentSessionId}
+            onSwitchSession={handleSwitchSession}
+            onCloseSessionById={handleCloseSessionById}
+            onNewSession={handleNewBox}
+            onOpenTemplatesPanel={() => setIsLeftTemplatesPanelOpen(true)}
+            onOpenToolsPanel={() => setIsRightToolsPanelOpen(true)}
+            inlinePreviewActive={inlinePreviewActive}
+            onToggleInlinePreview={() => setInlinePreviewActive(prev => !prev)}
+            onExitInlinePreview={() => setInlinePreviewActive(false)}
+            mode={proStatus.mode}
+            isPro={proStatus.isPro}
+            onOpenPaywall={proStatus.openPaywall}
+          />
+        )}
+
+        {currentView === 'account' && (
           <AccountDashboard
             account={account}
             onNavigateToSlide01={() => setShowSplash(true)}
@@ -976,6 +1006,7 @@ export default function App() {
             activeContent={hashFragment ? undefined : content}
             metadata={metadata}
             onEdit={handleEditFromViewer}
+            onHome={handleGoToHomePage}
             onOpenQr={() => setIsQrOpen(true)}
             onShare={handleShare}
             onCloseSession={handleRequestCloseSession}

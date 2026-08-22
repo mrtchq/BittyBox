@@ -23,6 +23,7 @@ interface BittyRendererProps {
   metadata: BittyMetadata;
   activeContent?: string;
   onEdit?: (content: string, metadata: Partial<BittyMetadata>) => void;
+  onHome?: () => void;
   onOpenQr?: () => void;
   onShare?: () => void;
   onCloseSession?: () => void;
@@ -33,6 +34,7 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
   metadata,
   activeContent,
   onEdit,
+  onHome,
 }) => {
   const effectiveHash = React.useMemo(() => {
     if (hashFragment) return hashFragment;
@@ -59,7 +61,7 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
 
   // Access-limit quota configuration
   const olConfig = metadata?.lockConfig?.openLimit ?? null;
-  const olEnabled = Boolean(olConfig && olConfig.enabled) || Boolean(metadata?.boxId);
+  const olEnabled = Boolean(olConfig && olConfig.enabled);
   const maxOpens = olConfig?.maxOpens || 1;
 
   // Active lock state
@@ -126,7 +128,7 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
   const [shake, setShake] = useState<boolean>(false);
   const [unlocking, setUnlocking] = useState<boolean>(false);
 
-  const [isCheckingQuota, setIsCheckingQuota] = useState<boolean>(() => Boolean(metadata?.boxId));
+  const [isCheckingQuota, setIsCheckingQuota] = useState<boolean>(() => Boolean(olConfig?.enabled && metadata?.boxId));
   const [quotaReason, setQuotaReason] = useState<string | null>(null);
 
   const loadData = async (passcode?: string) => {
@@ -211,9 +213,9 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
     loadData(passwordInput.trim());
   };
 
-  // Check box quota status from server if boxId is present
+  // Check box quota status from server if boxId is present and quota is enabled
   useEffect(() => {
-    if (!metadata?.boxId) {
+    if (!olConfig?.enabled || !metadata?.boxId) {
       setIsCheckingQuota(false);
       return;
     }
@@ -343,12 +345,21 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
             </div>
           )}
 
-          {onEdit && (
+                    {(onHome || onEdit) && (
             <button
-              onClick={() => onEdit(content || '', metadata)}
+              type="button"
+              onClick={() => {
+                if (onHome) {
+                  onHome();
+                } else if (onEdit) {
+                  onEdit(content || '', metadata);
+                } else {
+                  window.location.href = '/#/studio';
+                }
+              }}
               className="w-full py-3 rounded-xl bg-cyan-950 border border-cyan-500/40 text-cyan-300 text-xs font-cyber tracking-wider hover:bg-cyan-900 transition cursor-pointer"
             >
-              OPEN STUDIO TO REBUILD
+              OPEN STUDIO
             </button>
           )}
         </div>
@@ -382,12 +393,21 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
             <span className="font-bold">0 VISITS REMAINING</span> • BOX PERMANENTLY SEALED
           </div>
 
-          {onEdit && (
+                    {(onHome || onEdit) && (
             <button
-              onClick={() => onEdit(content || '', metadata)}
+              type="button"
+              onClick={() => {
+                if (onHome) {
+                  onHome();
+                } else if (onEdit) {
+                  onEdit(content || '', metadata);
+                } else {
+                  window.location.href = '/#/studio';
+                }
+              }}
               className="w-full py-3 rounded-xl bg-cyan-950 border border-cyan-500/40 text-cyan-300 text-xs font-cyber tracking-wider hover:bg-cyan-900 transition cursor-pointer"
             >
-              OPEN STUDIO TO REBUILD
+              OPEN STUDIO
             </button>
           )}
         </div>
@@ -593,12 +613,21 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
           <AlertTriangle className="w-10 h-10 text-rose-400 mx-auto mb-3" />
           <h3 className="font-cyber text-base text-rose-200 mb-1">TRANSMISSION DECODE ERROR</h3>
           <p className="text-xs text-purple-200/70 font-mono mb-4">{error}</p>
-          {onEdit && (
+                    {(onHome || onEdit) && (
             <button
-              onClick={() => onEdit(content || '', metadata)}
+              type="button"
+              onClick={() => {
+                if (onHome) {
+                  onHome();
+                } else if (onEdit) {
+                  onEdit(content || '', metadata);
+                } else {
+                  window.location.href = '/#/studio';
+                }
+              }}
               className="px-4 py-2 rounded-xl bg-cyan-950 border border-cyan-500/40 text-cyan-300 text-xs font-cyber hover:bg-cyan-900 transition cursor-pointer"
             >
-              OPEN STUDIO TO REBUILD
+              OPEN STUDIO
             </button>
           )}
         </div>
@@ -624,10 +653,10 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
 
   // ── 5. Rendered Live Content with Floating Lock HUD (Top-Right) ───────────
   return (
-    <div className="fixed inset-0 w-screen h-screen overflow-hidden bg-black">
+    <div className="fixed inset-0 w-screen h-screen overflow-hidden bg-[#050515]">
       {/* Floating Collapsible Lock Status HUD Pill */}
       {hasLock && !isHudDismissed && (
-        <div className="fixed top-3 right-3 z-[60] max-w-[90vw] flex items-center gap-2 bg-[#050314]/90 border border-cyan-500/40 rounded-full px-3 py-1.5 shadow-[0_0_20px_rgba(0,0,0,0.8),0_0_10px_rgba(0,242,255,0.2)] backdrop-blur-xl font-mono text-[10px] text-cyan-100 animate-in fade-in slide-in-from-top-2 duration-300">
+        <div className="fixed top-3 right-3 z-[60] max-w-[90vw] flex items-center gap-2 bg-[#050314]/90 border border-cyan-500/40 rounded-full px-3 py-1.5 shadow-[0_0_20px_rgba(0,0,0,0.8),0_0_10px_rgba(0,242,255,0.25)] backdrop-blur-xl font-mono text-[10px] text-cyan-100 animate-in fade-in slide-in-from-top-2 duration-300">
           {twEnabled && (
             <div className="flex items-center gap-1 text-fuchsia-300 font-bold">
               <Clock className="w-3 h-3 text-fuchsia-400 animate-pulse" />
@@ -661,7 +690,7 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
       <iframe
         srcDoc={finalHtml}
         title={metadata.title || 'Bitty Box'}
-        className="w-full h-full border-0 m-0 p-0 block bg-black"
+        className="w-full h-full border-0 m-0 p-0 block bg-white"
         sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-modals allow-downloads"
       />
     </div>

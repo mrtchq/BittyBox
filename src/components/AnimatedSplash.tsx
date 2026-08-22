@@ -65,30 +65,6 @@ interface CarouselSlide {
   icon: React.ReactNode;
 }
 
-function addTimeOfDayTheme(html: string): string {
-  const style = `<style id="bittybox-time-theme">
-    html[data-time-theme="day"] body,
-    html[data-time-theme="day"] body * { color: #000 !important; }
-    html[data-time-theme="day"] body { background: #fff !important; }
-    html[data-time-theme="night"] body,
-    html[data-time-theme="night"] body * { color: #fff !important; }
-    html[data-time-theme="night"] body { background: #000 !important; }
-    body { transition: background-color 300ms ease, color 300ms ease; }
-  </style>`;
-  const script = `<script>(function(){
-    function applyTimeTheme(){
-      var hour = new Date().getHours();
-      document.documentElement.dataset.timeTheme = hour >= 7 && hour < 19 ? 'day' : 'night';
-    }
-    applyTimeTheme();
-    setInterval(applyTimeTheme, 60000);
-  })();<\/script>`;
-
-  return html
-    .replace(/<\/head>/i, `${style}</head>`)
-    .replace(/<\/body>/i, `${script}</body>`);
-}
-
 const DEFAULT_STARTER_CODE = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -330,10 +306,10 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
   // Rendered preview HTML for Slide 05 Preview Window
   const slidePreviewHtml = useMemo(() => {
     const source = boxContent.trim() || DEFAULT_STARTER_CODE;
-    return addTimeOfDayTheme(getRenderedHtml(source, {
+    return getRenderedHtml(source, {
       title: boxTitle || 'Bitty Box',
       language: 'en',
-    }));
+    });
   }, [boxContent, boxTitle]);
 
   // Pre-generate / sync URL continuously so it is immediately available on click
@@ -344,10 +320,10 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
     const generatePreviewUrl = async () => {
       try {
         const source = boxContent.trim() || DEFAULT_STARTER_CODE;
-        const html = addTimeOfDayTheme(getRenderedHtml(source, {
+        const html = getRenderedHtml(source, {
           title: boxTitle || 'Bitty Box',
           language: 'en',
-        }));
+        });
 
         const pass = passwordEnabled && passwordValue.trim() ? passwordValue.trim() : undefined;
 
@@ -448,10 +424,10 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
   // Generate Bitty Box with all active lock configurations
   const handleGenerateFinal = useCallback(async () => {
     const source = boxContent.trim() || DEFAULT_STARTER_CODE;
-    const html = addTimeOfDayTheme(getRenderedHtml(source, {
+    const html = getRenderedHtml(source, {
       title: boxTitle || 'Bitty Box',
       language: 'en',
-    }));
+    });
 
     const pass = passwordEnabled && passwordValue.trim() ? passwordValue.trim() : undefined;
     const uniqueBoxId = `bbx_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 7)}`;
