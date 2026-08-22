@@ -210,6 +210,11 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
   const handlePasswordSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!passwordInput.trim()) return;
+    if (passwordInput.trim().length < 8) {
+      setError('Passcode must be at least 8 digits.');
+      setShake(true);
+      return;
+    }
     loadData(passwordInput.trim());
   };
 
@@ -532,21 +537,22 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
               <div>
                 <div className="flex items-center justify-between text-[11px] text-fuchsia-300 mb-1.5 uppercase tracking-wider">
                   <span>NUMERICAL PASSCODE</span>
-                  <span className="text-fuchsia-400/80 text-[10px]">{passwordInput.length} / 8 DIGITS</span>
+                  <span className="text-fuchsia-400/80 text-[10px]">{passwordInput.length} / 12 DIGITS</span>
                 </div>
                 <div className="relative">
                   <input
                     type={showPassword ? 'text' : 'password'}
                     inputMode="numeric"
                     pattern="[0-9]*"
-                    maxLength={8}
+                    maxLength={12}
+                    minLength={8}
                     value={passwordInput}
                     onChange={e => {
-                      const numbersOnly = e.target.value.replace(/\D/g, '').slice(0, 8);
+                      const numbersOnly = e.target.value.replace(/\D/g, '').slice(0, 12);
                       setPasswordInput(numbersOnly);
                       if (error) setError(null);
                     }}
-                    placeholder="Enter 1-8 digit passcode..."
+                    placeholder="Enter 8-12 digit passcode..."
                     autoFocus
                     className={`w-full bg-[#090314] border border-fuchsia-500/40 rounded-xl pl-4 pr-11 py-3 text-center text-lg tracking-[0.25em] text-white placeholder:text-purple-400/40 placeholder:text-xs placeholder:tracking-normal focus:outline-none focus:border-fuchsia-400 focus:ring-1 focus:ring-fuchsia-400 ${shake ? 'bitty-shake' : ''}`}
                     onAnimationEnd={() => setShake(false)}

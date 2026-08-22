@@ -28,7 +28,8 @@ import {
   Copy,
   Check,
   Coins,
-  RotateCcw
+  RotateCcw,
+  AlertTriangle
 } from 'lucide-react';
 import { CyberScrambleText } from './CyberScrambleText';
 import { EdgeGripHandles } from './EdgeGripHandles';
@@ -127,7 +128,9 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
   const account = useAccount();
   const { user, isAuthenticated } = account;
 
-  const isPasscodeActive = Boolean(passwordEnabled && passwordValue.trim().length > 0);
+  const trimmedPasscode = passwordValue.trim();
+  const isPasscodeActive = Boolean(passwordEnabled && trimmedPasscode.length >= 8);
+  const isPasscodeTooShort = Boolean(passwordEnabled && trimmedPasscode.length > 0 && trimmedPasscode.length < 8);
   const isTimeLockActive = Boolean(timeLockEnabled);
   const isAccessLimitActive = Boolean(accessLimitEnabled);
 
@@ -324,7 +327,7 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
           language: 'en',
         });
 
-        const pass = passwordEnabled && passwordValue.trim() ? passwordValue.trim() : undefined;
+        const pass = passwordEnabled && passwordValue.trim().length >= 8 ? passwordValue.trim() : undefined;
 
         let compressedFragment = '';
         if (!pass) {
@@ -428,7 +431,11 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
       language: 'en',
     });
 
-    const pass = passwordEnabled && passwordValue.trim() ? passwordValue.trim() : undefined;
+    const pass = passwordEnabled && passwordValue.trim().length >= 8 ? passwordValue.trim() : undefined;
+    if (passwordEnabled && passwordValue.trim().length < 8) {
+      setCurrentSlide(1);
+      return;
+    }
     const uniqueBoxId = `bbx_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 7)}`;
 
     let compressedFragment = '';
@@ -1062,9 +1069,9 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
                       {passwordEnabled ? (
                         <div className="space-y-2.5 animate-in fade-in duration-200 flex-1 flex flex-col justify-between">
                           <div className="flex items-center justify-between text-[10px] sm:text-[11px] text-fuchsia-300/80">
-                            <span>NUMERICAL PASSCODE (1-8 DIGITS)</span>
-                            <span className="bg-fuchsia-950/80 border border-fuchsia-500/40 px-1.5 py-0.5 rounded text-fuchsia-200 font-bold">
-                              {passwordValue.length} / 8
+                            <span>NUMERICAL PASSCODE (8-12 DIGITS)</span>
+                            <span className={`bg-fuchsia-950/80 border px-1.5 py-0.5 rounded font-bold ${isPasscodeTooShort ? 'border-rose-500/60 text-rose-300' : 'border-fuchsia-500/40 text-fuchsia-200'}`}>
+                              {passwordValue.length} / 12
                             </span>
                           </div>
 
@@ -1073,13 +1080,14 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
                               type={showPassword ? 'text' : 'password'}
                               inputMode="numeric"
                               pattern="[0-9]*"
-                              maxLength={8}
+                              maxLength={12}
+                              minLength={8}
                               value={passwordValue}
                               onChange={e => {
-                                const numbersOnly = e.target.value.replace(/\D/g, '').slice(0, 8);
+                                const numbersOnly = e.target.value.replace(/\D/g, '').slice(0, 12);
                                 setPasswordValue(numbersOnly);
                               }}
-                              placeholder="1-8 numbers (e.g. 1234)..."
+                              placeholder="8-12 numbers (e.g. 12345678)..."
                               className="w-full rounded-lg border border-fuchsia-400/50 bg-[#02010a] px-3 py-2 text-center text-base tracking-[0.25em] text-fuchsia-100 placeholder:text-fuchsia-400/40 placeholder:text-xs placeholder:tracking-normal outline-none focus:border-fuchsia-300 pr-9 font-mono"
                             />
                             <button
@@ -1095,7 +1103,7 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
                           <div className="flex items-center justify-between gap-1.5 pt-0.5 text-xs">
                             <div className="flex items-center gap-1">
                               <span className="text-fuchsia-400/60 text-[10px]">PIN:</span>
-                              {['1234', '7777', '90210', '12345678'].map(pin => (
+                              {['12345678', '87654321', '90210902', '123456789012'].map(pin => (
                                 <button
                                   key={pin}
                                   type="button"
@@ -1116,6 +1124,13 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
                               </button>
                             )}
                           </div>
+
+                          {isPasscodeTooShort && (
+                            <div className="flex items-center gap-1.5 text-[10px] text-rose-300 pt-0.5">
+                              <AlertTriangle className="w-3 h-3 shrink-0" />
+                              <span>Passcode must be at least 8 digits before it can lock the Box.</span>
+                            </div>
+                          )}
 
                           <div className="flex items-center gap-1.5 text-[10px] text-fuchsia-300/80 pt-0.5">
                             <ShieldCheck className="w-3 h-3 text-emerald-400 shrink-0" />

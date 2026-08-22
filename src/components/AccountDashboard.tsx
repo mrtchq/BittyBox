@@ -45,6 +45,7 @@ import { UseAccountResult } from "../hooks/useAccount";
 import { CyberScrambleText } from "./CyberScrambleText";
 import { PrismCheckbox } from "./PrismCheckbox";
 import { UserAvatar } from "./UserAvatar";
+import { TimeWindowConfig, evaluateTimeWindow, formatCountdown, nextBoundary } from "../utils/timeWindow";
 
 export const GoogleIcon: React.FC<{ className?: string }> = ({ className = "w-4 h-4" }) => (
   <svg className={className} viewBox="0 0 24 24">
@@ -126,9 +127,16 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
   const [testKeyResult, setTestKeyResult] = useState<any>(null);
   const [isTestingKey, setIsTestingKey] = useState(false);
 
-  // Box search & filter
+  // Box search, filter, and details
   const [boxSearchQuery, setBoxSearchQuery] = useState("");
   const [copiedBoxId, setCopiedBoxId] = useState<string | null>(null);
+  const [selectedBox, setSelectedBox] = useState<TrackedBittyBox | null>(null);
+  const [nowMs, setNowMs] = useState(() => Date.now());
+
+  useEffect(() => {
+    const id = window.setInterval(() => setNowMs(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, []);
 
   // Credit purchasing state
   const [purchasingPkg, setPurchasingPkg] = useState<string | null>(null);
@@ -302,6 +310,40 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
       setTimeout(() => setPurchaseSuccessMsg(null), 4000);
     }
   };
+
+  const getBoxTimeWindow = useCallback((box: TrackedBittyBox): TimeWindowConfig | null => {
+    try {
+      const hash = new URL(box.url, window.location.origin).hash || "";
+      const parts = hash.replace(/^#\/?/, "").split("/");
+      const twIndex = parts.indexOf("tw");
+      if (twIndex === -1 || !parts[twIndex + 1]) return null;
+      const [nb, na, sc, mode] = decodeURIComponent(parts[twIndex + 1]).split("~");
+      return {
+        enabled: true,
+        mode: (mode as TimeWindowConfig["mode"]) || undefined,
+        notBefore: nb && nb !== "_" ? nb : null,
+        notAfter: na && na !== "_" ? na : null,
+        showCountdown: sc !== "0",
+      };
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const getBoxLockSnapshot = useCallback((box: TrackedBittyBox) => {
+    const timeWindow = getBoxTimeWindow(box);
+    const timeStatus = evaluateTimeWindow(timeWindow, nowMs);
+    const boundary = nextBoundary(timeWindow, timeStatus, nowMs);
+    return {
+      hasPassword: Boolean(box.locks?.password || box.encrypted),
+      hasTimeWindow: Boolean(box.locks?.timeWindow || timeWindow),
+      hasAccessLimit: Boolean(box.locks?.accessLimit),
+      timeWindow,
+      timeStatus,
+      timeRemainingLabel: boundary.ms == null ? null : formatCountdown(boundary.ms),
+      timeBoundary: boundary.kind,
+    };
+  }, [getBoxTimeWindow, nowMs]);
 
   // Filtered Boxes
   const filteredBoxes = (user?.links || []).filter(box => {
@@ -543,7 +585,7 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
   // =========================================================================
   return (
     <div
-      className="relative min-h-[calc(100vh-4rem)] bg-[#03020e] text-cyan-100 font-sans py-6 sm:py-8 px-3 sm:px-6 overflow-hidden select-none"
+      className="relative min-h-[calc(100vh-4rem)] bg-[#03020e] text-cyan-100 font-sans py-6 sm:py-8 px-3 sm:px-6 overflow-hidden"
     >
       {/* 3D Canvas Background */}
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none z-0" />
@@ -552,7 +594,7 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_30%,rgba(3,2,14,0.92)_100%)] pointer-events-none z-1" />
       <div className="absolute inset-0 bg-[linear-gradient(rgba(0,242,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,242,255,0.02)_1px,transparent_1px)] bg-[size:48px_48px] pointer-events-none z-1" />
 
-      <div className="max-w-7xl mx-auto space-y-6 relative z-10">
+      <div className="max-w-4xl mx-auto space-y-5 relative z-10">
 
         {/* =========================================================================
             TOP PROFILE & SYSTEM TELEMETRY BENTO HEADER
@@ -568,7 +610,7 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
           <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_50%,rgba(0,0,0,0.35)_51%)] bg-[length:100%_4px] pointer-events-none opacity-25" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(0,242,255,0.1),transparent_70%)] pointer-events-none" />
 
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-cyan-500/20 pb-4 mb-4 relative z-10">
+          <div className="flex flex-col items-stretch gap-4 border-b border-cyan-500/20 pb-4 mb-4 relative z-10">
             {/* User Details */}
             <div className="flex items-center gap-3.5">
               <UserAvatar
@@ -600,7 +642,7 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
             </div>
 
             {/* Quick Actions (Create Box, Sign Out) */}
-            <div className="flex items-center gap-2 self-start md:self-auto">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
               {onNavigateToSlide01 && (
                 <button
                   type="button"
@@ -624,7 +666,7 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
           </div>
 
           {/* High-Level Stat Bento Counters */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 relative z-10">
+          <div className="grid grid-cols-1 gap-3 relative z-10">
             {/* Stat 1: Credits Balance */}
             <div className="p-3.5 rounded-xl bg-[#03010f] border border-cyan-500/30 flex flex-col justify-between relative group hover:border-cyan-400 transition shadow-inner">
               <div className="text-[10px] text-cyan-400/80 font-bold uppercase flex items-center justify-between">
@@ -686,7 +728,7 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
         {/* =========================================================================
             MAIN SEGMENTED TAB NAVIGATION (BOXES | API KEYS | CREDITS & BILLING | MCP)
            ========================================================================= */}
-        <div className="flex items-center gap-1.5 p-1.5 bg-[#08041c]/95 border-2 border-cyan-500/30 rounded-2xl overflow-x-auto font-mono text-xs shadow-lg backdrop-blur-xl">
+        <div className="flex flex-col items-stretch gap-1.5 p-1.5 bg-[#08041c]/95 border-2 border-cyan-500/30 rounded-2xl font-mono text-xs shadow-lg backdrop-blur-xl">
           <button
             type="button"
             onClick={() => setActiveTab("boxes")}
@@ -798,11 +840,14 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
                 )}
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 relative z-10">
+              <div className="grid grid-cols-1 gap-3.5 relative z-10">
                 {filteredBoxes.map(box => (
-                  <div
+                  <button
                     key={box.id}
-                    className="p-4 rounded-xl bg-[#03010b] border border-cyan-500/30 hover:border-cyan-400 transition flex flex-col justify-between gap-3 shadow-inner group relative"
+                    type="button"
+                    onClick={() => setSelectedBox(box)}
+                    className="w-full text-left p-4 rounded-xl bg-[#03010b] border border-cyan-500/30 hover:border-cyan-400 hover:bg-cyan-950/20 focus:outline-none focus:ring-2 focus:ring-cyan-300/60 transition flex flex-col justify-between gap-3 shadow-inner group relative cursor-pointer"
+                    aria-label={`Open details for ${box.title || "Untitled Bitty Box"}`}
                   >
                     <div>
                       <div className="flex items-start justify-between gap-2">
@@ -843,11 +888,28 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
                             <Flame className="w-3 h-3 text-emerald-400" /> Visitor Quota (10 CR)
                           </span>
                         )}
+                        {(() => {
+                          const lock = getBoxLockSnapshot(box);
+                          if (!lock.hasTimeWindow) return null;
+                          return (
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded border ${
+                              lock.timeStatus === "OPEN"
+                                ? "text-emerald-300 bg-emerald-950/80 border-emerald-500/40"
+                                : lock.timeStatus === "PENDING"
+                                  ? "text-amber-300 bg-amber-950/80 border-amber-500/40"
+                                  : "text-rose-300 bg-rose-950/80 border-rose-500/40"
+                            }`}>
+                              <Clock className="w-3 h-3" />
+                              {lock.timeStatus}
+                              {lock.timeRemainingLabel ? ` · ${lock.timeBoundary === "unlocks" ? "unlocks" : "expires"} ${lock.timeRemainingLabel}` : ""}
+                            </span>
+                          );
+                        })()}
                       </div>
                     </div>
 
                     {/* Card Actions */}
-                    <div className="flex items-center justify-between gap-1 pt-2.5 border-t border-cyan-500/20 text-xs">
+                    <div className="flex items-center justify-between gap-1 pt-2.5 border-t border-cyan-500/20 text-xs" onClick={e => e.stopPropagation()}>
                       <div className="flex items-center gap-1.5">
                         <button
                           type="button"
@@ -899,7 +961,7 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
             )}
@@ -1538,6 +1600,76 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
         )}
 
       </div>
+
+      <AnimatePresence>
+        {selectedBox && (() => {
+          const lock = getBoxLockSnapshot(selectedBox);
+          const hasAnyLock = lock.hasPassword || lock.hasTimeWindow || lock.hasAccessLimit;
+          return (
+            <motion.div
+              className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedBox(null)}
+            >
+              <motion.div
+                className="w-full max-w-2xl rounded-2xl border-2 border-cyan-400/50 bg-[#050316] shadow-[0_0_60px_rgba(0,242,255,0.25)] p-5 sm:p-6 font-mono text-cyan-100 space-y-4"
+                initial={{ scale: 0.96, y: 12 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.96, y: 12 }}
+                onClick={e => e.stopPropagation()}
+              >
+                <div className="flex items-start justify-between gap-4 border-b border-cyan-500/25 pb-3">
+                  <div className="min-w-0">
+                    <div className="text-[10px] text-cyan-400/70 uppercase tracking-[0.24em]">Box detail telemetry</div>
+                    <h3 className="text-lg font-cyber font-bold text-cyan-100 truncate">{selectedBox.title || "Untitled Bitty Box"}</h3>
+                    <p className="text-[11px] text-cyan-300/70">Created {new Date(selectedBox.createdAt).toLocaleString()}</p>
+                  </div>
+                  <button type="button" onClick={() => setSelectedBox(null)} className="px-3 py-1.5 rounded-lg border border-cyan-500/40 text-cyan-300 hover:bg-cyan-950/60 text-xs cursor-pointer">CLOSE</button>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="text-[10px] uppercase text-cyan-400/70 font-bold">Share URL</div>
+                  <div className="rounded-xl border border-cyan-500/25 bg-black/60 p-3 text-[11px] break-all select-all">{selectedBox.url}</div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3">
+                  <div className="rounded-xl border border-cyan-500/25 bg-cyan-950/20 p-3">
+                    <div className="text-[10px] uppercase text-cyan-300/70 font-bold mb-1">Format / size</div>
+                    <div className="text-sm text-cyan-100">{selectedBox.format || "HTML"}{selectedBox.stats?.rawLength ? ` · ${selectedBox.stats.rawLength} bytes raw` : ""}</div>
+                  </div>
+
+                  <div className="rounded-xl border border-fuchsia-500/25 bg-fuchsia-950/15 p-3 space-y-2">
+                    <div className="flex items-center gap-2 text-fuchsia-200 font-cyber font-bold text-sm"><Shield className="w-4 h-4" /> Lock status</div>
+                    {!hasAnyLock ? (
+                      <div className="text-xs text-cyan-300/70">No locks detected on this box.</div>
+                    ) : (
+                      <div className="space-y-2 text-xs">
+                        {lock.hasPassword && <div className="flex items-center justify-between gap-3 rounded-lg bg-black/40 border border-fuchsia-500/25 p-2"><span className="inline-flex items-center gap-2"><Lock className="w-3.5 h-3.5 text-fuchsia-300" /> Passcode / encryption</span><span className="text-fuchsia-200">ENABLED</span></div>}
+                        {lock.hasAccessLimit && <div className="flex items-center justify-between gap-3 rounded-lg bg-black/40 border border-emerald-500/25 p-2"><span className="inline-flex items-center gap-2"><Flame className="w-3.5 h-3.5 text-emerald-300" /> Visitor quota</span><span className="text-emerald-200">ENABLED</span></div>}
+                        {lock.hasTimeWindow && (
+                          <div className="rounded-lg bg-black/40 border border-amber-500/25 p-2 space-y-2">
+                            <div className="flex items-center justify-between gap-3"><span className="inline-flex items-center gap-2"><Clock className="w-3.5 h-3.5 text-amber-300" /> Time lock</span><span className="text-amber-200">{lock.timeStatus}</span></div>
+                            {lock.timeRemainingLabel && <div className="text-xl font-cyber text-cyan-100 tracking-wider">{lock.timeBoundary === "unlocks" ? "UNLOCKS IN" : lock.timeWindow?.mode === "hybrid" ? "BURNS IN" : "EXPIRES IN"}: {lock.timeRemainingLabel}</div>}
+                            {lock.timeWindow?.notBefore && <div className="text-[10px] text-cyan-300/65">Opens: {new Date(lock.timeWindow.notBefore).toLocaleString()}</div>}
+                            {lock.timeWindow?.notAfter && <div className="text-[10px] text-cyan-300/65">Closes: {new Date(lock.timeWindow.notAfter).toLocaleString()}</div>}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                  <button type="button" onClick={() => handleCopyBoxUrl(selectedBox)} className="flex-1 px-4 py-2 rounded-xl bg-cyan-500 text-black font-cyber font-bold text-xs hover:brightness-110 cursor-pointer">COPY LINK</button>
+                  <a href={selectedBox.url} target="_blank" rel="noopener noreferrer" className="flex-1 text-center px-4 py-2 rounded-xl border border-purple-500/50 text-purple-200 hover:bg-purple-950/50 font-cyber font-bold text-xs">OPEN BOX</a>
+                </div>
+              </motion.div>
+            </motion.div>
+          );
+        })()}
+      </AnimatePresence>
     </div>
   );
 };
