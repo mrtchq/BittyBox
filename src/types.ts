@@ -92,6 +92,7 @@ export interface TrackedBittyBox {
     timeWindow?: boolean;
     accessLimit?: boolean;
   };
+  cost?: number;
   createdAt: string;
 }
 

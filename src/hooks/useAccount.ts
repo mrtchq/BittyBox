@@ -47,6 +47,7 @@ export interface UseAccountResult {
       timeWindow?: boolean;
       accessLimit?: boolean;
     };
+    cost?: number;
   }) => Promise<boolean>;
   syncUserCreditsWithCreem: () => Promise<boolean>;
   deleteTrackedBox: (linkId: string) => Promise<boolean>;
