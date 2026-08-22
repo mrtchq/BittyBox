@@ -871,6 +871,12 @@ export default function App() {
     setCurrentView('editor');
   };
 
+  // Return from viewer to the home splash
+  const handleGoToHomePage = () => {
+    window.history.replaceState(null, '', '/');
+    setCurrentView('editor');
+  };
+
   if (isVerifyingMagic) {
     return (
       <div className="fixed inset-0 w-screen h-screen bg-[#050515] flex items-center justify-center p-4 z-50 font-sans">

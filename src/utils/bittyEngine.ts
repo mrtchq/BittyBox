@@ -517,6 +517,8 @@ export function getRenderedHtml(content: string, metadata?: Partial<BittyMetadat
   ) {
     return content;
   }
-  return `<!DOCTYPE html><html lang="${lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${title}</title><style>body{margin:0 auto;padding:1.5rem;max-width:48em;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.6;color:#1e293b;background:#ffffff;}@media(prefers-color-scheme:dark){body{color:#f1f5f9;background:#0f172a;}}</style></head><body>${content}</body></html>`;
+  const lang = metadata?.language || 'en';
+  const title = metadata?.title || 'Untitled';
+  return `<!DOCTYPE html><html lang="${lang}"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${title}</title><style>body{margin:0 auto;padding:1.5rem;max-width:48em;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.6;color:#1e293b;background:#ffffff;}@media(prefers-color-scheme:dark){body{color:#f1f5f9;background:#0f172a;}}</style></head><body>${content}</body></html>`;
 }
 
