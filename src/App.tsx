@@ -714,19 +714,28 @@ export default function App() {
       encrypted: !!metadata.password,
     });
 
-    // Auto-record to authenticated User Account Log
-    if (account.isAuthenticated) {
+    // Auto-record to authenticated User Account Log & Deduct Credits per Slide 05
+    if (account.isAuthenticated || account.user) {
+      const hasPasscode = Boolean(metadata.password && metadata.password.trim().length > 0);
+      const hasTimeWindow = Boolean(metadata.lockConfig?.timeWindow?.enabled);
+      const hasAccessLimit = Boolean(metadata.lockConfig?.openLimit?.enabled);
+      let cost = 0;
+      if (hasPasscode) cost += 5;
+      if (hasTimeWindow) cost += 10;
+      if (hasAccessLimit) cost += 10;
+
       account.recordCreatedBox({
         title: metadata.title || 'Untitled Bitty Box',
         url: fullUrl,
         format: 'html',
         byteSize: orig,
         compressedSize: comp,
-        encrypted: !!metadata.password,
+        encrypted: hasPasscode,
+        cost,
         locks: {
-          password: !!metadata.password,
-          timeWindow: !!metadata.lockConfig?.timeWindow?.enabled,
-          accessLimit: !!metadata.lockConfig?.openLimit?.enabled,
+          password: hasPasscode,
+          timeWindow: hasTimeWindow,
+          accessLimit: hasAccessLimit,
         },
       });
     }

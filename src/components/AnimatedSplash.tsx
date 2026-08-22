@@ -42,11 +42,11 @@ import { exportBittyToZip } from '../utils/zipExport';
 import { HoloGenerateButton } from './HoloGenerateButton';
 import { HoloToggle } from './HoloToggle';
 import { homeSlides } from '../content/homeSlides';
-import { buildBittyUrl, compressContent, compressContentSync, getRenderedHtml } from '../utils/bittyEngine';
+import { buildBittyUrl, compressContent, compressContentSync, getRenderedHtml, hashString } from '../utils/bittyEngine';
 import { useAccount } from '../hooks/useAccount';
 import { buildTimeWindow, formatHybridSummary, formatLocalDateTime, type TimeLockMode } from '../utils/timeWindow';
 import { DurationTimeControl, DateRangeControl } from './TimeLockControls';
-import { BittyMetadata } from '../types';
+import { BittyMetadata, BittyHistoryItem } from '../types';
 
 interface AnimatedSplashProps {
   onComplete: () => void;
@@ -150,8 +150,7 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
   const [isQrModalOpen, setIsQrModalOpen] = useState<boolean>(false);
   const [qrModalUrl, setQrModalUrl] = useState<string>('');
   const account = useAccount();
-
-  const { user, isAuthenticated } = useAccount();
+  const { user, isAuthenticated } = account;
 
   const isPasscodeActive = Boolean(passwordEnabled && passwordValue.trim().length > 0);
   const isTimeLockActive = Boolean(timeLockEnabled);
@@ -605,33 +604,47 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
       }
     }
 
-    // 5. Automatically save to logged-in user's account log
+    // 5. Record to local Quantum Vault history
     try {
-      const sid = localStorage.getItem('bitty_session_id');
-      if (sid && longUrl) {
-        await fetch('/api/accounts/links', {
-          method: 'POST',
-          headers: {
-            'X-Session-Id': sid,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            title: boxTitle || 'Bitty Box',
-            url: longUrl,
-            format: 'html',
-            byteSize: boxContent.length,
-            encrypted: Boolean(passwordEnabled && passwordValue),
-            cost: calculatedCreditCost,
-            locks: {
-              password: Boolean(passwordEnabled && passwordValue),
-              timeWindow: Boolean(timeLockEnabled),
-              accessLimit: Boolean(accessLimitEnabled),
-            },
-          }),
-        });
-      }
+      const hashId = await hashString(longUrl);
+      const historyItem: BittyHistoryItem = {
+        id: hashId,
+        url: longUrl,
+        title: boxTitle || 'Untitled Bitty Box',
+        description: 'A self-contained webpage living entirely in a URL',
+        favicon: '📦',
+        byteSize: boxContent.length,
+        compressedSize: compressedFragment.length || longUrl.length,
+        createdAt: Date.now(),
+        encrypted: Boolean(passwordEnabled && passwordValue),
+      };
+      const existingHistory = JSON.parse(localStorage.getItem('bitty_box_history') || '[]');
+      const updatedHistory = [historyItem, ...existingHistory.filter((h: any) => h.id !== hashId)].slice(0, 50);
+      localStorage.setItem('bitty_box_history', JSON.stringify(updatedHistory));
     } catch {}
-  }, [readyUrl, boxContent, boxTitle, passwordEnabled, passwordValue, timeLockEnabled, timeLockMode, timeExpiryHours, timeDelayHours, timeOpenAt, timeLockAt, hybridRevealMode, hybridSelfDestructHours, showTimeCountdown, accessLimitEnabled, accessLimitMaxOpens, showRemainingAccessCount, calculatedCreditCost]);
+
+    // 6. Automatically track and deduct credits in user's account log if signed in
+    if (account.isAuthenticated || account.user) {
+      try {
+        await account.recordCreatedBox({
+          title: boxTitle || 'Untitled Bitty Box',
+          url: longUrl,
+          format: 'html',
+          byteSize: boxContent.length,
+          compressedSize: compressedFragment.length || longUrl.length,
+          encrypted: Boolean(passwordEnabled && passwordValue),
+          cost: calculatedCreditCost,
+          locks: {
+            password: Boolean(passwordEnabled && passwordValue),
+            timeWindow: Boolean(timeLockEnabled),
+            accessLimit: Boolean(accessLimitEnabled),
+          },
+        });
+      } catch (err) {
+        console.error('[AnimatedSplash] Failed to record created box to user account:', err);
+      }
+    }
+  }, [readyUrl, boxContent, boxTitle, passwordEnabled, passwordValue, timeLockEnabled, timeLockMode, timeExpiryHours, timeDelayHours, timeOpenAt, timeLockAt, hybridRevealMode, hybridSelfDestructHours, showTimeCountdown, accessLimitEnabled, accessLimitMaxOpens, showRemainingAccessCount, calculatedCreditCost, account]);
 
   // Auto-play timer
   useEffect(() => {

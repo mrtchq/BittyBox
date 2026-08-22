@@ -10,7 +10,8 @@ import {
   deleteBoxFromFirestore,
   addApiKeyToFirestore,
   revokeApiKeyInFirestore,
-  addCreditsInFirestore
+  addCreditsInFirestore,
+  deductCreditsInFirestore
 } from '../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 
@@ -470,7 +471,30 @@ export function useAccount(): UseAccountResult {
     return false;
   };
 
-  const recordCreatedBox = async (linkData: any): Promise<boolean> => {
+  const recordCreatedBox = async (linkData: {
+    title: string;
+    url: string;
+    format?: string;
+    byteSize?: number;
+    compressedSize?: number;
+    encrypted?: boolean;
+    cost?: number;
+    locks?: {
+      password?: boolean;
+      timeWindow?: boolean;
+      accessLimit?: boolean;
+    };
+  }): Promise<boolean> => {
+    const lk = linkData.locks || {};
+    let cost = 0;
+    if (typeof linkData.cost === 'number' && linkData.cost >= 0) {
+      cost = Math.floor(linkData.cost);
+    } else {
+      if (lk.password) cost += 5;
+      if (lk.timeWindow) cost += 10;
+      if (lk.accessLimit) cost += 10;
+    }
+
     const boxId = `box_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
     const trackedBox: TrackedBittyBox = {
       id: boxId,
@@ -479,28 +503,71 @@ export function useAccount(): UseAccountResult {
       format: linkData.format || 'html',
       byteSize: linkData.byteSize || linkData.url?.length || 0,
       compressedSize: linkData.compressedSize || linkData.url?.length || 0,
-      encrypted: Boolean(linkData.encrypted),
+      encrypted: Boolean(linkData.encrypted || lk.password),
       locks: linkData.locks,
       createdAt: new Date().toISOString()
     };
 
-    if (auth.currentUser && user) {
+    // Optimistically update React user state so UI updates instantly
+    setUser((prev) => {
+      if (!prev) return prev;
+      const prevLinks = prev.links || [];
+      const newLinks = [trackedBox, ...prevLinks.filter((l) => l.id !== trackedBox.id)];
+      const newCredits = Math.max(0, (prev.credits || 0) - cost);
+      const newUsed = (prev.creditsUsedTotal || 0) + cost;
+      const newHuman = (prev.creditsHumanUsed || 0) + cost;
+      const tx: CreditTransaction = {
+        id: `tx_${Date.now()}`,
+        type: 'usage',
+        amount: -cost,
+        description: `Generated Box: ${trackedBox.title || 'Bitty Box'} (${cost} CR)`,
+        createdAt: new Date().toISOString()
+      };
+      const prevTx = prev.transactions || [];
+      return {
+        ...prev,
+        credits: newCredits,
+        creditsUsedTotal: newUsed,
+        creditsHumanUsed: newHuman,
+        links: newLinks,
+        transactions: cost > 0 ? [tx, ...prevTx] : prevTx,
+      };
+    });
+
+    if (auth.currentUser) {
       try {
         await saveBoxToFirestore(auth.currentUser.uid, trackedBox);
+
+        if (cost > 0) {
+          try {
+            await deductCreditsInFirestore(
+              auth.currentUser.uid,
+              cost,
+              'human',
+              `Generated Box: ${trackedBox.title || 'Bitty Box'} (${cost} CR)`
+            );
+          } catch (de) {
+            console.error('[useAccount] Credit deduction failed in Firestore:', de);
+          }
+        }
       } catch (err) {
         console.error('[useAccount] Error saving box to Firestore:', err);
       }
     }
 
-    if (sessionId && !sessionId.startsWith('fb_sess_')) {
+    const activeSid = sessionId || (typeof localStorage !== 'undefined' ? localStorage.getItem('bitty_session_id') : null);
+    if (activeSid && !activeSid.startsWith('fb_sess_')) {
       try {
         const res = await fetch('/api/accounts/links', {
           method: 'POST',
           headers: {
-            'X-Session-Id': sessionId,
+            'X-Session-Id': activeSid,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(linkData),
+          body: JSON.stringify({
+            ...linkData,
+            cost,
+          }),
         });
         const data = await res.json();
         if (data.success && data.user) {
@@ -515,20 +582,30 @@ export function useAccount(): UseAccountResult {
   };
 
   const deleteTrackedBox = async (linkId: string): Promise<boolean> => {
-    if (auth.currentUser && user) {
+    // Optimistically update local user state
+    setUser((prev) => {
+      if (!prev || !prev.links) return prev;
+      return {
+        ...prev,
+        links: prev.links.filter((l) => l.id !== linkId),
+      };
+    });
+
+    if (auth.currentUser) {
       try {
         await deleteBoxFromFirestore(auth.currentUser.uid, linkId);
-        return true;
       } catch (err) {
         console.error('[useAccount] Error deleting box from Firestore:', err);
       }
     }
 
-    if (!sessionId || !linkId) return false;
+    const activeSid = sessionId || (typeof localStorage !== 'undefined' ? localStorage.getItem('bitty_session_id') : null);
+    if (!activeSid || !linkId || activeSid.startsWith('fb_sess_')) return true;
+
     try {
       const res = await fetch(`/api/accounts/links/${encodeURIComponent(linkId)}`, {
         method: 'DELETE',
-        headers: { 'X-Session-Id': sessionId },
+        headers: { 'X-Session-Id': activeSid },
       });
       const data = await res.json();
       if (data.success && data.user) {
