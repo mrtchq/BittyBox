@@ -44,7 +44,7 @@ async function initEditor(initialData = null) {
             }
         },
         list: {
-            class: window.List || List,
+            class: window.EditorjsList || window.List,
             inlineToolbar: true,
             config: {
                 defaultStyle: 'unordered'
