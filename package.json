@@ -1,0 +1,13 @@
+{
+  "name": "bitty-box",
+  "version": "1.0.0",
+  "description": "Bitty box takes html (or other data), compresses it into a URL fragment, and provides a link that can be shared.",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "brotli-wasm": "^1.1.0",
+    "sharp": "^0.31.3"
+  }
+}
