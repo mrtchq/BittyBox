@@ -1,0 +1,446 @@
+/* Ghost CMS Koenig Cards Official Stylesheet */
+.kg-card {
+    margin: 1.5em 0;
+    box-sizing: border-box;
+}
+
+.kg-card.kg-width-wide {
+    position: relative;
+    width: 85vw;
+    min-width: 100%;
+    margin-left: calc(50% - 42.5vw);
+    margin-right: calc(50% - 42.5vw);
+    max-width: 1200px;
+}
+
+.kg-card.kg-width-full {
+    position: relative;
+    width: 100vw;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+    max-width: 100vw;
+}
+
+/* Image Card */
+.kg-image-card {
+    margin: 1.5em 0;
+}
+.kg-image-card img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: 0 auto;
+    border-radius: 4px;
+}
+.kg-image-card figcaption {
+    font-size: 0.85em;
+    text-align: center;
+    color: rgba(0, 0, 0, 0.6);
+    margin-top: 0.5em;
+}
+@media (prefers-color-scheme: dark) {
+    .kg-image-card figcaption {
+        color: rgba(255, 255, 255, 0.6);
+    }
+}
+
+/* Callout Card */
+.kg-callout-card {
+    display: flex;
+    padding: 1.2em 1.4em;
+    border-radius: 6px;
+    background: rgba(124, 139, 154, 0.13);
+    margin: 1.5em 0;
+    box-sizing: border-box;
+}
+.kg-callout-card-accent {
+    background: rgba(53, 142, 241, 0.12);
+    border-left: 3px solid #3077f3;
+}
+.kg-callout-card-green {
+    background: rgba(48, 209, 88, 0.12);
+    border-left: 3px solid #30d158;
+}
+.kg-callout-card-yellow {
+    background: rgba(255, 214, 10, 0.14);
+    border-left: 3px solid #ffd60a;
+}
+.kg-callout-card-red {
+    background: rgba(255, 69, 58, 0.12);
+    border-left: 3px solid #ff453a;
+}
+.kg-callout-card-purple {
+    background: rgba(191, 90, 242, 0.12);
+    border-left: 3px solid #bf5af2;
+}
+.kg-callout-emoji {
+    font-size: 1.4em;
+    line-height: 1.3;
+    padding-right: 0.8em;
+    flex-shrink: 0;
+    user-select: none;
+}
+.kg-callout-text {
+    flex-grow: 1;
+    font-size: 0.95em;
+    line-height: 1.5em;
+}
+.kg-callout-text p {
+    margin: 0;
+}
+.kg-callout-text p + p {
+    margin-top: 0.5em;
+}
+
+/* Bookmark Card */
+.kg-bookmark-card {
+    margin: 1.5em 0;
+    box-sizing: border-box;
+}
+.kg-bookmark-container {
+    display: flex;
+    text-decoration: none;
+    border-radius: 6px;
+    background: rgba(124, 139, 154, 0.08);
+    box-shadow: inset 0 0 0 1px rgba(124, 139, 154, 0.2);
+    overflow: hidden;
+    color: inherit;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.kg-bookmark-container:hover {
+    box-shadow: inset 0 0 0 1px rgba(124, 139, 154, 0.4), 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+.kg-bookmark-content {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    justify-content: space-between;
+    padding: 1.2em 1.4em;
+}
+.kg-bookmark-title {
+    font-size: 1em;
+    font-weight: 600;
+    line-height: 1.35em;
+    color: inherit;
+    margin-bottom: 0.3em;
+}
+.kg-bookmark-description {
+    font-size: 0.85em;
+    line-height: 1.4em;
+    opacity: 0.75;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.kg-bookmark-metadata {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    margin-top: 0.8em;
+    font-size: 0.8em;
+    opacity: 0.7;
+}
+.kg-bookmark-icon {
+    width: 16px;
+    height: 16px;
+    border-radius: 2px;
+}
+.kg-bookmark-thumbnail {
+    position: relative;
+    min-width: 33%;
+    max-height: 100%;
+}
+.kg-bookmark-thumbnail img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+@media (max-width: 500px) {
+    .kg-bookmark-container {
+        flex-direction: column-reverse;
+    }
+    .kg-bookmark-thumbnail {
+        min-height: 160px;
+    }
+}
+
+/* Button Card */
+.kg-button-card {
+    display: flex;
+    margin: 1.5em 0;
+    box-sizing: border-box;
+}
+.kg-button-card.kg-align-center {
+    justify-content: center;
+}
+.kg-button-card.kg-align-left {
+    justify-content: flex-start;
+}
+.kg-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75em 1.5em;
+    font-size: 0.95em;
+    font-weight: 600;
+    line-height: 1;
+    color: #fff;
+    background: #111;
+    border-radius: 4px;
+    text-decoration: none;
+    transition: opacity 0.2s ease, transform 0.1s ease;
+}
+.kg-btn:hover {
+    opacity: 0.9;
+}
+.kg-btn-accent {
+    background: #3077f3;
+}
+@media (prefers-color-scheme: dark) {
+    .kg-btn {
+        background: #fff;
+        color: #111;
+    }
+    .kg-btn-accent {
+        background: #40a0ff;
+        color: #fff;
+    }
+}
+
+/* Toggle / Accordion Card */
+.kg-toggle-card {
+    background: 0 0;
+    box-shadow: inset 0 0 0 1px rgba(124, 139, 154, 0.25);
+    border-radius: 6px;
+    padding: 1.2em;
+    margin: 1.5em 0;
+    box-sizing: border-box;
+}
+.kg-toggle-heading {
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+}
+.kg-toggle-heading-text {
+    font-size: 1.05em;
+    font-weight: 600;
+    margin: 0;
+}
+.kg-toggle-card-icon {
+    width: 20px;
+    height: 20px;
+    background: 0 0;
+    border: 0;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+.kg-toggle-card[data-kg-toggle-state="close"] .kg-toggle-card-icon svg {
+    transform: rotate(0deg);
+}
+.kg-toggle-card:not([data-kg-toggle-state="close"]) .kg-toggle-card-icon svg {
+    transform: rotate(180deg);
+}
+.kg-toggle-content {
+    font-size: 0.95em;
+    line-height: 1.5em;
+    margin-top: 0.8em;
+    padding-top: 0.8em;
+    border-top: 1px solid rgba(124, 139, 154, 0.15);
+}
+.kg-toggle-card[data-kg-toggle-state="close"] .kg-toggle-content {
+    display: none;
+}
+
+/* Audio Card */
+.kg-audio-card {
+    display: flex;
+    align-items: center;
+    gap: 1em;
+    padding: 1em 1.2em;
+    background: rgba(124, 139, 154, 0.1);
+    border-radius: 6px;
+    margin: 1.5em 0;
+    box-sizing: border-box;
+}
+.kg-audio-thumbnail {
+    width: 48px;
+    height: 48px;
+    border-radius: 4px;
+    background: rgba(124, 139, 154, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.kg-audio-player-container {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3em;
+}
+.kg-audio-title {
+    font-size: 0.95em;
+    font-weight: 600;
+    margin: 0;
+}
+.kg-audio-artist {
+    font-size: 0.8em;
+    opacity: 0.7;
+    margin: 0;
+}
+.kg-audio-player-container audio {
+    width: 100%;
+    height: 32px;
+    margin-top: 0.3em;
+}
+
+/* Video Card */
+.kg-video-card {
+    margin: 1.5em 0;
+    border-radius: 6px;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+.kg-video-card video {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 6px;
+}
+.kg-video-card figcaption {
+    font-size: 0.85em;
+    text-align: center;
+    opacity: 0.7;
+    margin-top: 0.5em;
+}
+
+/* Product Card */
+.kg-product-card {
+    border-radius: 6px;
+    background: rgba(124, 139, 154, 0.08);
+    box-shadow: inset 0 0 0 1px rgba(124, 139, 154, 0.2);
+    padding: 1.4em;
+    margin: 1.5em 0;
+    box-sizing: border-box;
+}
+.kg-product-card-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8em;
+}
+.kg-product-card-image {
+    width: 100%;
+    max-height: 240px;
+    object-fit: cover;
+    border-radius: 4px;
+}
+.kg-product-card-title {
+    font-size: 1.2em;
+    font-weight: 700;
+    margin: 0;
+}
+.kg-product-card-rating {
+    display: flex;
+    gap: 2px;
+    color: #ffb800;
+    font-size: 1em;
+}
+.kg-product-card-description {
+    font-size: 0.95em;
+    line-height: 1.5em;
+    margin: 0;
+}
+.kg-product-card-button {
+    align-self: flex-start;
+    margin-top: 0.5em;
+}
+
+/* Embed Card */
+.kg-embed-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    margin: 1.5em 0;
+}
+.kg-embed-card iframe {
+    border: 0;
+    width: 100%;
+    border-radius: 6px;
+}
+
+/* Code Card */
+.kg-code-card {
+    position: relative;
+    margin: 1.5em 0;
+}
+.kg-code-card pre {
+    margin: 0;
+    padding: 1.2em 1.4em;
+    border-radius: 6px;
+    background: #1e1e1e;
+    color: #d4d4d4;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.9em;
+    line-height: 1.5;
+    overflow-x: auto;
+}
+.kg-code-card code {
+    background: none;
+    color: inherit;
+    padding: 0;
+}
+.kg-code-card figcaption {
+    font-size: 0.85em;
+    text-align: center;
+    opacity: 0.7;
+    margin-top: 0.5em;
+}
+
+/* Blockquote & Pullquote */
+blockquote.kg-blockquote-card {
+    margin: 1.5em 0;
+    padding: 0.5em 0 0.5em 1.2em;
+    border-left: 3px solid currentColor;
+    font-style: italic;
+    opacity: 0.9;
+}
+blockquote.kg-blockquote-card cite {
+    display: block;
+    font-size: 0.85em;
+    font-style: normal;
+    opacity: 0.7;
+    margin-top: 0.4em;
+}
+blockquote.kg-pullquote-card {
+    text-align: center;
+    font-size: 1.4em;
+    line-height: 1.4;
+    font-weight: 500;
+    padding: 1em 1.5em;
+    border-top: 2px solid rgba(124, 139, 154, 0.3);
+    border-bottom: 2px solid rgba(124, 139, 154, 0.3);
+    border-left: none;
+    margin: 2em 0;
+}
+
+/* Delimiter / Divider */
+.kg-divider-card {
+    border: none;
+    text-align: center;
+    margin: 2.5em 0;
+}
+.kg-divider-card:before {
+    content: "···";
+    letter-spacing: 0.6em;
+    font-size: 1.5em;
+    opacity: 0.4;
+}

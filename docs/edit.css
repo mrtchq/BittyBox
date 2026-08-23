@@ -75,40 +75,101 @@ a {
   /* display: inline-block; */
 }
 
-body.loaded:not(.edited) #placeholder {
-  display: block;
+/* Editor.js Container & Typography */
+#editorjs {
+  min-height: 250px;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: var(--text-color);
 }
 
-#placeholder {
-  display: none;
-  font-style: italic;
-  color: var(--text-placeholder-color);
-  pointer-events: none;
-  position: absolute;
-  z-index: 100;
+.codex-editor__redactor {
+  padding-bottom: 120px !important;
 }
 
-body.drag #content {
-  outline: 3px dashed #ccc;
-  background-color: #fafafa;
-  border-radius: 1em;
-  pointer-events: all;
+.ce-block__content,
+.ce-toolbar__content {
+  max-width: 100% !important;
 }
 
-#content,
-#placeholder {
-  margin: -1em;
-  padding: 1em;
-  min-height: 7em;
-  /* margin-top: -3.6em; */
+.ce-paragraph {
+  font-size: 1.05rem;
+  line-height: 1.6;
 }
 
-#content {
+.ce-header {
+  margin: 1.2em 0 0.4em 0;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+/* Custom Tool inputs inside Editor.js */
+.cdx-input {
   width: 100%;
+  padding: 8px 12px;
+  border-radius: 4px;
+  border: 1px solid var(--divider-color);
+  font-size: 14px;
+  box-sizing: border-box;
+  background: transparent;
+  color: inherit;
   outline: none;
 }
-#content:focus {
-  outline-color: #ccc;
+.cdx-input:focus {
+  border-color: #3077f3;
+}
+
+.cdx-settings {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+}
+.cdx-settings-button {
+  padding: 4px 8px;
+  font-size: 12px;
+  border-radius: 3px;
+  cursor: pointer;
+  background: rgba(124, 139, 154, 0.15);
+  user-select: none;
+}
+.cdx-settings-button--active {
+  background: #3077f3;
+  color: white;
+}
+
+@media (prefers-color-scheme: dark) {
+  .ce-toolbar__plus,
+  .ce-toolbar__settings-btn {
+    color: #fff !important;
+    background-color: #222 !important;
+  }
+  .ce-popover {
+    background-color: #1e1e1e !important;
+    color: #fff !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5) !important;
+  }
+  .ce-popover-item {
+    color: #eee !important;
+  }
+  .ce-popover-item:hover {
+    background-color: #333 !important;
+  }
+  .ce-popover-item__icon {
+    color: #fff !important;
+    background-color: #2a2a2a !important;
+  }
+  .ce-inline-toolbar {
+    background-color: #1e1e1e !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    color: #fff !important;
+  }
+  .ce-inline-tool {
+    color: #fff !important;
+  }
+  .ce-inline-tool:hover {
+    background-color: #333 !important;
+  }
 }
 
 #doc-title {
