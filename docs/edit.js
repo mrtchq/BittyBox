@@ -56,6 +56,8 @@ async function initEditor(initialData = null) {
                 defaultStyle: 'unordered'
             }
         };
+    }
+
     if (window.Checklist) {
         tools.checklist = {
             class: window.Checklist,
