@@ -98,6 +98,7 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
   // Configuration state across the 5 slides
   const [boxContent, setBoxContent] = useState<string>(DEFAULT_STARTER_CODE);
   const [boxTitle, setBoxTitle] = useState<string>('My Bitty Box');
+  const [boxDescription, setBoxDescription] = useState<string>('A self-contained webpage living entirely in a URL');
   const [passwordEnabled, setPasswordEnabled] = useState<boolean>(false);
   const [passwordValue, setPasswordValue] = useState<string>('');
   const [showPassword, setShowPassword] = useState<boolean>(false);
@@ -310,9 +311,10 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
     const source = boxContent.trim() || DEFAULT_STARTER_CODE;
     return getRenderedHtml(source, {
       title: boxTitle || 'Bitty Box',
+      description: boxDescription.trim() || 'A self-contained webpage living entirely in a URL',
       language: 'en',
     });
-  }, [boxContent, boxTitle]);
+  }, [boxContent, boxTitle, boxDescription]);
 
   // Pre-generate / sync URL continuously so it is immediately available on click
   const [readyUrl, setReadyUrl] = useState<string>('');
@@ -324,6 +326,7 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
         const source = boxContent.trim() || DEFAULT_STARTER_CODE;
         const html = getRenderedHtml(source, {
           title: boxTitle || 'Bitty Box',
+          description: boxDescription.trim() || 'A self-contained webpage living entirely in a URL',
           language: 'en',
         });
 
@@ -351,7 +354,7 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
 
         const meta: BittyMetadata = {
           title: boxTitle || 'Bitty Box',
-          description: 'A self-contained webpage living entirely in a URL',
+          description: boxDescription.trim() || 'A self-contained webpage living entirely in a URL',
           favicon: '📦',
           includeMetadata: true,
         };
@@ -395,12 +398,13 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
     return () => {
       isCancelled = true;
     };
-  }, [boxContent, boxTitle, passwordEnabled, passwordValue, timeLockEnabled, timeLockMode, timeExpiryHours, timeDelayHours, timeOpenAt, timeLockAt, hybridRevealMode, hybridSelfDestructHours, showTimeCountdown, accessLimitEnabled, accessLimitMaxOpens, showRemainingAccessCount]);
+  }, [boxContent, boxTitle, boxDescription, passwordEnabled, passwordValue, timeLockEnabled, timeLockMode, timeExpiryHours, timeDelayHours, timeOpenAt, timeLockAt, hybridRevealMode, hybridSelfDestructHours, showTimeCountdown, accessLimitEnabled, accessLimitMaxOpens, showRemainingAccessCount]);
 
   // Start Over / Reset All State
   const handleStartOver = useCallback(() => {
     setBoxContent(DEFAULT_STARTER_CODE);
     setBoxTitle('My Bitty Box');
+    setBoxDescription('A self-contained webpage living entirely in a URL');
     setSlide1ViewMode('text');
     setPasswordEnabled(false);
     setPasswordValue('');
@@ -428,6 +432,7 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
     const source = boxContent.trim() || DEFAULT_STARTER_CODE;
     const html = getRenderedHtml(source, {
       title: boxTitle || 'Bitty Box',
+      description: boxDescription.trim() || 'A self-contained webpage living entirely in a URL',
       language: 'en',
     });
 
@@ -467,7 +472,7 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
 
     const meta: BittyMetadata = {
       title: boxTitle || 'Bitty Box',
-      description: 'A self-contained webpage living entirely in a URL',
+      description: boxDescription.trim() || 'A self-contained webpage living entirely in a URL',
       favicon: '📦',
       includeMetadata: true,
       boxId: (accessLimitEnabled || timeLockEnabled) ? uniqueBoxId : undefined,
@@ -593,7 +598,7 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
         id: hashId,
         url: longUrl,
         title: boxTitle || 'Untitled Bitty Box',
-        description: 'A self-contained webpage living entirely in a URL',
+        description: boxDescription.trim() || 'A self-contained webpage living entirely in a URL',
         favicon: '📦',
         byteSize: boxContent.length,
         compressedSize: compressedFragment.length || longUrl.length,
@@ -626,7 +631,7 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
         console.error('[AnimatedSplash] Failed to record created box to user account:', err);
       }
     }
-  }, [readyUrl, boxContent, boxTitle, passwordEnabled, passwordValue, timeLockEnabled, timeLockMode, timeExpiryHours, timeDelayHours, timeOpenAt, timeLockAt, hybridRevealMode, hybridSelfDestructHours, showTimeCountdown, accessLimitEnabled, accessLimitMaxOpens, showRemainingAccessCount, calculatedCreditCost, account]);
+  }, [readyUrl, boxContent, boxTitle, boxDescription, passwordEnabled, passwordValue, timeLockEnabled, timeLockMode, timeExpiryHours, timeDelayHours, timeOpenAt, timeLockAt, hybridRevealMode, hybridSelfDestructHours, showTimeCountdown, accessLimitEnabled, accessLimitMaxOpens, showRemainingAccessCount, calculatedCreditCost, account]);
 
   // Auto-play timer
   useEffect(() => {
@@ -986,6 +991,37 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
                         <span className="text-[10px] text-cyan-300 bg-cyan-950/80 border border-cyan-500/40 px-2 py-0.5 rounded font-bold shrink-0">
                           {boxContent.length} BYTES
                         </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
+                        <label className="flex flex-col gap-1 text-[10px] font-bold uppercase tracking-[0.18em] text-cyan-300/80">
+                          Page title
+                          <input
+                            type="text"
+                            value={boxTitle}
+                            onChange={e => setBoxTitle(e.target.value)}
+                            onFocus={() => setIsAutoPlay(false)}
+                            onPointerDown={e => e.stopPropagation()}
+                            aria-label="Page title for your Bitty Box"
+                            placeholder="My Bitty Box"
+                            maxLength={80}
+                            className="w-full rounded-lg border border-cyan-400/30 bg-[#02010a] px-2.5 py-2 text-xs normal-case tracking-normal text-cyan-100 placeholder:text-cyan-400/40 outline-none transition focus:border-cyan-300 focus:ring-1 focus:ring-cyan-500/30 font-mono"
+                          />
+                        </label>
+                        <label className="flex flex-col gap-1 text-[10px] font-bold uppercase tracking-[0.18em] text-cyan-300/80">
+                          Page description
+                          <input
+                            type="text"
+                            value={boxDescription}
+                            onChange={e => setBoxDescription(e.target.value)}
+                            onFocus={() => setIsAutoPlay(false)}
+                            onPointerDown={e => e.stopPropagation()}
+                            aria-label="Page description for your Bitty Box"
+                            placeholder="A self-contained webpage living entirely in a URL"
+                            maxLength={180}
+                            className="w-full rounded-lg border border-cyan-400/30 bg-[#02010a] px-2.5 py-2 text-xs normal-case tracking-normal text-cyan-100 placeholder:text-cyan-400/40 outline-none transition focus:border-cyan-300 focus:ring-1 focus:ring-cyan-500/30 font-mono"
+                          />
+                        </label>
                       </div>
 
                       {/* View Modes Content */}
