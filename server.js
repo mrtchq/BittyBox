@@ -92,7 +92,7 @@ function serveFile(filePath, res) {
   });
 }
 
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`========================================`);
   console.log(`  Bitty box local server running at:`);
   console.log(`  http://localhost:${PORT}`);
