@@ -137,38 +137,217 @@ a {
   color: white;
 }
 
+/* =========================================================
+   Editor.js Popover / Plus Menu / Toolbars - Light & Dark Modes
+   ========================================================= */
+
+/* --- Light Mode (Default) --- */
+.ce-popover,
+.ce-popover__container {
+  background-color: #ffffff !important;
+  color: #111111 !important;
+  border: 1px solid rgba(0, 0, 0, 0.12) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
+  border-radius: 8px !important;
+}
+
+.ce-popover-item {
+  color: #111111 !important;
+  background-color: transparent !important;
+  border-radius: 6px !important;
+  transition: background-color 0.15s ease;
+}
+
+.ce-popover-item__title {
+  color: #111111 !important;
+  font-weight: 500 !important;
+}
+
+.ce-popover-item__secondary-title {
+  color: rgba(0, 0, 0, 0.54) !important;
+}
+
+.ce-popover-item__icon {
+  color: #222222 !important;
+  background-color: #f0f2f5 !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  border-radius: 6px !important;
+}
+
+.ce-popover-item__icon svg {
+  fill: currentColor !important;
+  stroke: currentColor !important;
+}
+
+.ce-popover-item:hover,
+.ce-popover-item--focused,
+.ce-popover-item--active {
+  background-color: #f3f4f6 !important;
+  color: #000000 !important;
+}
+
+.ce-popover-item:hover .ce-popover-item__title,
+.ce-popover-item--focused .ce-popover-item__title {
+  color: #000000 !important;
+}
+
+.ce-popover-item:hover .ce-popover-item__icon,
+.ce-popover-item--focused .ce-popover-item__icon {
+  background-color: #e5e7eb !important;
+  color: #000000 !important;
+}
+
+.ce-popover__search,
+.cdx-search-field,
+.cdx-search-field__input {
+  background-color: #f8f9fa !important;
+  color: #111111 !important;
+  border: 1px solid rgba(0, 0, 0, 0.15) !important;
+  border-radius: 6px !important;
+}
+
+.cdx-search-field__input::placeholder {
+  color: rgba(0, 0, 0, 0.4) !important;
+}
+
+.ce-toolbar__plus,
+.ce-toolbar__settings-btn {
+  background-color: #ffffff !important;
+  color: #222222 !important;
+  border: 1px solid rgba(0, 0, 0, 0.15) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+}
+
+.ce-toolbar__plus:hover,
+.ce-toolbar__settings-btn:hover {
+  background-color: #f3f4f6 !important;
+  color: #000000 !important;
+}
+
+.ce-inline-toolbar {
+  background-color: #ffffff !important;
+  color: #111111 !important;
+  border: 1px solid rgba(0, 0, 0, 0.15) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12) !important;
+  border-radius: 6px !important;
+}
+
+.ce-inline-tool {
+  color: #222222 !important;
+}
+
+.ce-inline-tool:hover,
+.ce-inline-tool--active {
+  background-color: #f0f2f5 !important;
+  color: #000000 !important;
+}
+
+.ce-conversion-toolbar,
+.ce-conversion-tool {
+  background-color: #ffffff !important;
+  color: #111111 !important;
+}
+
+/* --- Dark Mode (Night) --- */
 @media (prefers-color-scheme: dark) {
+  .ce-popover,
+  .ce-popover__container {
+    background-color: #1e1e1e !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6) !important;
+  }
+
+  .ce-popover-item {
+    color: #ffffff !important;
+    background-color: transparent !important;
+  }
+
+  .ce-popover-item__title {
+    color: #ffffff !important;
+  }
+
+  .ce-popover-item__secondary-title {
+    color: rgba(255, 255, 255, 0.6) !important;
+  }
+
+  .ce-popover-item__icon {
+    color: #ffffff !important;
+    background-color: #2d2d2d !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  }
+
+  .ce-popover-item__icon svg {
+    fill: currentColor !important;
+    stroke: currentColor !important;
+  }
+
+  .ce-popover-item:hover,
+  .ce-popover-item--focused,
+  .ce-popover-item--active {
+    background-color: #333333 !important;
+    color: #ffffff !important;
+  }
+
+  .ce-popover-item:hover .ce-popover-item__title,
+  .ce-popover-item--focused .ce-popover-item__title {
+    color: #ffffff !important;
+  }
+
+  .ce-popover-item:hover .ce-popover-item__icon,
+  .ce-popover-item--focused .ce-popover-item__icon {
+    background-color: #444444 !important;
+    color: #ffffff !important;
+  }
+
+  .ce-popover__search,
+  .cdx-search-field,
+  .cdx-search-field__input {
+    background-color: #2a2a2a !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  }
+
+  .cdx-search-field__input::placeholder {
+    color: rgba(255, 255, 255, 0.4) !important;
+  }
+
   .ce-toolbar__plus,
   .ce-toolbar__settings-btn {
-    color: #fff !important;
-    background-color: #222 !important;
+    color: #ffffff !important;
+    background-color: #222222 !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4) !important;
   }
-  .ce-popover {
-    background-color: #1e1e1e !important;
-    color: #fff !important;
-    border: 1px solid rgba(255, 255, 255, 0.15) !important;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5) !important;
+
+  .ce-toolbar__plus:hover,
+  .ce-toolbar__settings-btn:hover {
+    background-color: #333333 !important;
+    color: #ffffff !important;
   }
-  .ce-popover-item {
-    color: #eee !important;
-  }
-  .ce-popover-item:hover {
-    background-color: #333 !important;
-  }
-  .ce-popover-item__icon {
-    color: #fff !important;
-    background-color: #2a2a2a !important;
-  }
+
   .ce-inline-toolbar {
     background-color: #1e1e1e !important;
     border: 1px solid rgba(255, 255, 255, 0.15) !important;
-    color: #fff !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6) !important;
   }
+
   .ce-inline-tool {
-    color: #fff !important;
+    color: #ffffff !important;
   }
-  .ce-inline-tool:hover {
-    background-color: #333 !important;
+
+  .ce-inline-tool:hover,
+  .ce-inline-tool--active {
+    background-color: #333333 !important;
+    color: #ffffff !important;
+  }
+
+  .ce-conversion-toolbar,
+  .ce-conversion-tool {
+    background-color: #1e1e1e !important;
+    color: #ffffff !important;
   }
 }
 
