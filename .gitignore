@@ -13,3 +13,8 @@ Thumbs.db
 
 # Temporary unpacking scripts
 unpack_*.py
+
+# Local environment secrets
+.env
+.env.*
+!.env.example
