@@ -33,55 +33,75 @@ async function initEditor(initialData = null) {
         } catch (e) {}
     }
 
-    const tools = {
-        header: {
-            class: window.Header || Header,
+    const tools = {};
+
+    if (window.Header) {
+        tools.header = {
+            class: window.Header,
             inlineToolbar: ['link', 'bold', 'italic', 'marker'],
             config: {
                 placeholder: 'Heading',
                 levels: [1, 2, 3, 4, 5, 6],
                 defaultLevel: 2
             }
-        },
-        list: {
-            class: window.EditorjsList || window.List,
+        };
+    }
+
+    const ListClass = window.EditorjsList || window.List || window.NestedList;
+    if (ListClass) {
+        tools.list = {
+            class: ListClass,
             inlineToolbar: true,
             config: {
                 defaultStyle: 'unordered'
             }
-        },
-        checklist: {
-            class: window.Checklist || Checklist,
+        };
+    if (window.Checklist) {
+        tools.checklist = {
+            class: window.Checklist,
             inlineToolbar: true
-        },
-        quote: {
-            class: window.Quote || Quote,
+        };
+    }
+
+    if (window.Quote) {
+        tools.quote = {
+            class: window.Quote,
             inlineToolbar: true,
             config: {
                 quotePlaceholder: 'Enter a quote',
-                captionPlaceholder: 'Quote\'s author / citation'
+                captionPlaceholder: "Quote's author / citation"
             }
-        },
-        delimiter: window.Delimiter || Delimiter,
-        table: {
-            class: window.Table || Table,
+        };
+    }
+
+    if (window.Delimiter) {
+        tools.delimiter = window.Delimiter;
+    }
+
+    if (window.Table) {
+        tools.table = {
+            class: window.Table,
             inlineToolbar: true
-        },
-        callout: GhostCalloutTool,
-        bookmark: GhostBookmarkTool,
-        button: GhostButtonTool,
-        toggle: GhostToggleTool,
-        audio: GhostAudioTool,
-        video: GhostVideoTool,
-        product: GhostProductTool,
-        code: GhostCodeTool,
-        image: GhostImageTool,
-        embed: GhostEmbedTool,
-        html: GhostHtmlTool,
-        marker: window.Marker || Marker,
-        inlineCode: window.InlineCode || InlineCode,
-        underline: window.Underline || Underline
-    };
+        };
+    }
+
+    // Ghost CMS Koenig Custom Tools
+    tools.callout = GhostCalloutTool;
+    tools.bookmark = GhostBookmarkTool;
+    tools.button = GhostButtonTool;
+    tools.toggle = GhostToggleTool;
+    tools.audio = GhostAudioTool;
+    tools.video = GhostVideoTool;
+    tools.product = GhostProductTool;
+    tools.code = GhostCodeTool;
+    tools.image = GhostImageTool;
+    tools.embed = GhostEmbedTool;
+    tools.html = GhostHtmlTool;
+
+    // Inline formatting tools
+    if (window.Marker) tools.marker = window.Marker;
+    if (window.InlineCode) tools.inlineCode = window.InlineCode;
+    if (window.Underline) tools.underline = window.Underline;
 
     editorInstance = new EditorJS({
         holder: 'editorjs',
@@ -101,7 +121,7 @@ async function initEditor(initialData = null) {
     window.editorInstance = editorInstance;
 }
 
-window.onload = async function() {
+async function initPage() {
     window.onpopstate = async function(e) {
         if (e.state && typeof e.state === 'object') {
             await initEditor(e.state);
@@ -177,7 +197,13 @@ window.onload = async function() {
 
     await initEditor(initialBlocks);
     updateBodyClass(initialBlocks && initialBlocks.blocks && initialBlocks.blocks.length > 0);
-};
+}
+
+if (document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', initPage);
+} else {
+    initPage();
+}
 
 function updateBodyClass(hasContent) {
     if (hasContent || importedFileData) {

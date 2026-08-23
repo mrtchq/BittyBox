@@ -335,8 +335,12 @@
 
   };
 
-  window.addEventListener('DOMContentLoaded',renderContent);
-  window.addEventListener('hashchange',renderContent);
+  if (document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', renderContent);
+  } else {
+    renderContent();
+  }
+  window.addEventListener('hashchange', renderContent);
 
   const SCRIPT_LOADER = `<!doctype html><meta charset=utf-8><script src="${location.origin}/render.js"></script>`
   async function renderContentWithScript(params) {

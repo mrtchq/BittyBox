@@ -4,21 +4,20 @@ body {
 }
 
 :root {
-  --text-color: #16161d;
-  --background-color: white;
+  --text-color: #2b333e;
+  --background-color: #e6ebf2;
   --shadow-color: var(--text-color);
-  --backdrop-color: red; 
+  --backdrop-color: #d8e0eb; 
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --text-color:white;
-    --background-color: #16161d;
-    --backdrop: repeating-conic-gradient(rgba(128,128,128,.5) 0% 25%, transparent 0% 50%) 50% / 4px 4px;
-
+    --text-color: #e2e8f0;
+    --background-color: #1a1e24;
+    --backdrop-color: #101216;
   }
   body{
-    color:var(--text-color);
-    background-color:var(--background-color);
+    color: var(--text-color);
+    background-color: var(--background-color);
   }
 }
 

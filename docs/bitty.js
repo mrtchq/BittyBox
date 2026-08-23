@@ -4,7 +4,7 @@ const HEAD_TAGS = (prefixes) => {
   prefixes?.split(" ").forEach((p) => tags.push(p.endsWith(".css") ? `<link rel="stylesheet" href="${p}">` : `<script src="${p}"></script>`))
   return btoa(padForBase64(tags.join("\n")));
 };
-const HEAD_TAGS_EXTENDED = () => btoa(padForBase64(`<meta charset="utf-8"><meta name="viewport" content="width=device-width"><base target="_top"><link rel="stylesheet" href="/ghost-cards.css"><style type="text/css">body{margin:0 auto;padding:12vmin 10vmin;max-width:35em;line-height:1.5em;font-family:-apple-system,BlinkMacSystemFont,sans-serif;word-wrap:break-word;}@media(prefers-color-scheme: dark){body{color:white;background-color:black;}}</style>`));
+const HEAD_TAGS_EXTENDED = () => btoa(padForBase64(`<meta charset="utf-8"><meta name="viewport" content="width=device-width"><base target="_top"><link rel="stylesheet" href="/ghost-cards.css"><style type="text/css">body{margin:0 auto;padding:12vmin 10vmin;max-width:38em;line-height:1.6em;font-family:-apple-system,BlinkMacSystemFont,sans-serif;word-wrap:break-word;background-color:#e6ebf2;color:#2b333e;}@media(prefers-color-scheme: dark){body{color:#e2e8f0;background-color:#1a1e24;}}</style>`));
 
 const dataUrlRE =
 /^data:(?<mediatype>(?<type>[a-z]+)\/(?<subtype>[a-z+\-]+))?(?<params>(?:;[^;,]+=[^;,]+)*)?(?:;(?<encoding>\w+64))?,(?<data>.*)$/
