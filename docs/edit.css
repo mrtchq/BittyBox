@@ -315,8 +315,27 @@ body.copied #copy-message {
   margin: 0 auto !important;
 }
 
-.ce-toolbar__actions {
-  right: calc(100% + 12px) !important;
+/* Desktop only: float action buttons outside the LEFT edge of the content column.
+   On mobile (<=650px) this pushes the Plus/Settings icons off-screen (x<0), so we
+   defer to Editor.js's built-in mobile layout instead. See probe: vw=390, plus.x=-57. */
+@media (min-width: 651px) {
+  .ce-toolbar__actions {
+    right: calc(100% + 12px) !important;
+  }
+}
+
+@media (max-width: 650px) {
+  .ce-toolbar__actions {
+    /* Match Editor.js core mobile behavior: no forced off-left anchoring */
+    right: auto !important;
+    padding-right: 0 !important;
+  }
+
+  .ce-toolbar__plus,
+  .ce-toolbar__settings-btn {
+    width: 32px !important;
+    height: 32px !important;
+  }
 }
 
 .ce-paragraph {
