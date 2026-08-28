@@ -17,6 +17,7 @@ import { BittyMetadata } from '../types';
 import { decompressBittyData, getRenderedHtml } from '../utils/bittyEngine';
 import { CyberScrambleText } from './CyberScrambleText';
 import { useTimeWindow, type TimeLockMode } from '../utils/timeWindow';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface BittyRendererProps {
   hashFragment: string;
@@ -27,6 +28,7 @@ interface BittyRendererProps {
   onOpenQr?: () => void;
   onShare?: () => void;
   onCloseSession?: () => void;
+  onNextChainBox?: () => void;
 }
 
 export const BittyRenderer: React.FC<BittyRendererProps> = ({
@@ -35,6 +37,7 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
   activeContent,
   onEdit,
   onHome,
+  onNextChainBox,
 }) => {
   const effectiveHash = React.useMemo(() => {
     if (hashFragment) return hashFragment;
@@ -112,7 +115,7 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
   });
 
   const [content, setContent] = useState<string>(() => {
-    if (!effectiveHash && activeContent && activeContent.trim()) {
+    if (activeContent && activeContent.trim()) {
       return activeContent;
     }
     return '';
@@ -175,14 +178,36 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
     setIsEncrypted(result.isEncrypted);
     setContent(result.content);
 
-    // If passcode was submitted, consume quota and unlock
+    // If passcode was submitted, consume quota and unlock.
+    // Server-authoritative: when a boxId exists, the shared server counter is
+    // consumed exactly once via the unlock gate — failed or premature attempts
+    // never reach this path. Local counter is UX/fallback state only.
     if (passcode) {
       if (olEnabled) {
+        if (metadata?.boxId) {
+          try {
+            const res = await fetch(`/api/boxes/${metadata.boxId}/unlock`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ password: passcode }),
+            });
+            if (res.ok) {
+              const data = await res.json().catch(() => ({}));
+              if (data.allowed === false) {
+                setQuotaBlocked(true);
+                setQuotaReason(data.reason || 'This Bitty Box has reached its maximum allowable opens and is permanently sealed.');
+                return;
+              }
+              if (data.remainingOpens !== undefined) {
+                setRemainingOpens(data.remainingOpens);
+              }
+            }
+          } catch {}
+        }
         const newUsed = localOpensUsed + 1;
         try {
           localStorage.setItem(quotaStorageKey, String(newUsed));
           setLocalOpensUsed(newUsed);
-          setRemainingOpens(Math.max(0, maxOpens - newUsed));
         } catch {}
       }
       setUnlocking(true);
@@ -199,13 +224,20 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
 
   useEffect(() => {
     const targetHash = hashFragment || (typeof window !== 'undefined' ? window.location.hash : '');
+    setIsEncrypted(isEncryptedFragment);
+    setNeedsPassword(isEncryptedFragment);
+    setPasswordInput('');
+    setError(null);
+    setIsUnlocked(!hasLock);
+    setIsHudDismissed(false);
+
     if (!targetHash && activeContent && activeContent.trim()) {
       setContent(activeContent);
     }
     if (targetHash && targetHash.trim()) {
       loadData();
     }
-  }, [hashFragment]);
+  }, [hashFragment, hasLock, isEncryptedFragment]);
 
   const handlePasswordSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -307,11 +339,15 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
     }, 320);
   };
 
-  // ── 1. Expired or Pending Time-Window Screen ───────────────────────────────
-  if (twBlocked) {
+  // ── 1. Standalone Expired or Pending Time-Window Screen ────────────────────
+  // AND-gate policy: when a passcode and/or access-limit lock is ALSO configured,
+  // fall through to the combined protected splash so every configured lock stays
+  // visible. This dedicated screen is only for a lone time lock.
+  const hasOtherLocks = Boolean(needsPassword || olEnabled);
+  if (twBlocked && !hasOtherLocks) {
     const expired = tw.status === 'EXPIRED';
     return (
-      <div className="fixed inset-0 w-screen h-screen bg-[#050515] flex items-center justify-center p-4 z-50 overflow-hidden font-sans">
+      <div className="fixed inset-0 w-screen h-[100dvh] bg-[#050515] flex flex-col items-center justify-center p-4 z-50 overflow-y-auto font-sans">
         <div className="w-full max-w-md p-6 bento-card-purple shadow-[0_0_50px_rgba(255,0,222,0.3)] relative animate-in zoom-in-95 duration-200">
           <div className="bento-corner-accent top-l bento-corner-accent-purple" />
           <div className="bento-corner-accent top-r bento-corner-accent-purple" />
@@ -351,21 +387,12 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
           )}
 
                     {(onHome || onEdit) && (
-            <button
-              type="button"
-              onClick={() => {
-                if (onHome) {
-                  onHome();
-                } else if (onEdit) {
-                  onEdit(content || '', metadata);
-                } else {
-                  window.location.href = '/#/studio';
-                }
-              }}
-              className="w-full py-3 rounded-xl bg-cyan-950 border border-cyan-500/40 text-cyan-300 text-xs font-cyber tracking-wider hover:bg-cyan-900 transition cursor-pointer"
+            <a
+              href="https://bittybox.org/"
+              className="w-full block text-center py-3 rounded-xl bg-cyan-950 border border-cyan-500/40 text-cyan-300 text-xs font-cyber tracking-wider hover:bg-cyan-900 transition cursor-pointer"
             >
-              OPEN STUDIO
-            </button>
+              VISIT BITTYBOX.ORG
+            </a>
           )}
         </div>
       </div>
@@ -375,7 +402,7 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
   // ── 2. Access Quota Limit Exhausted Screen ──────────────────────────────────
   if (quotaBlocked) {
     return (
-      <div className="fixed inset-0 w-screen h-screen bg-[#050515] flex items-center justify-center p-4 z-50 overflow-hidden font-sans">
+      <div className="fixed inset-0 w-screen h-[100dvh] bg-[#050515] flex flex-col items-center justify-center p-4 z-50 overflow-y-auto font-sans">
         <div className="w-full max-w-md p-6 bento-card border-rose-500/50 shadow-[0_0_50px_rgba(244,63,94,0.3)] relative animate-in zoom-in-95 duration-200">
           <div className="bento-corner-accent top-l" />
           <div className="bento-corner-accent top-r" />
@@ -399,21 +426,12 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
           </div>
 
                     {(onHome || onEdit) && (
-            <button
-              type="button"
-              onClick={() => {
-                if (onHome) {
-                  onHome();
-                } else if (onEdit) {
-                  onEdit(content || '', metadata);
-                } else {
-                  window.location.href = '/#/studio';
-                }
-              }}
-              className="w-full py-3 rounded-xl bg-cyan-950 border border-cyan-500/40 text-cyan-300 text-xs font-cyber tracking-wider hover:bg-cyan-900 transition cursor-pointer"
+            <a
+              href="https://bittybox.org/"
+              className="w-full block text-center py-3 rounded-xl bg-cyan-950 border border-cyan-500/40 text-cyan-300 text-xs font-cyber tracking-wider hover:bg-cyan-900 transition cursor-pointer"
             >
-              OPEN STUDIO
-            </button>
+              VISIT BITTYBOX.ORG
+            </a>
           )}
         </div>
       </div>
@@ -423,7 +441,7 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
   // ── 3. Access Quota Checking Loader ─────────────────────────────────────────
   if (isCheckingQuota) {
     return (
-      <div className="fixed inset-0 w-screen h-screen bg-[#050515] flex items-center justify-center p-4 z-50 font-sans">
+      <div className="fixed inset-0 w-screen h-[100dvh] bg-[#050515] flex flex-col items-center justify-center p-4 z-50 overflow-y-auto font-sans">
         <div className="text-center p-8 flex flex-col items-center">
           <RefreshCw className="w-10 h-10 text-emerald-400 animate-spin mb-4" />
           <h4 className="font-cyber text-sm text-emerald-300 tracking-wider">VERIFYING ACCESS QUOTA...</h4>
@@ -445,8 +463,13 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
       : null;
 
     return (
-      <div className={`fixed inset-0 w-screen h-screen bg-[#050515] flex items-center justify-center p-4 z-50 overflow-y-auto font-sans ${unlocking ? 'bitty-fade-out' : ''}`}>
-        <div className="w-full max-w-lg p-5 sm:p-7 bg-[#090620]/90 border border-cyan-500/40 rounded-2xl shadow-[0_0_60px_rgba(0,242,255,0.25),inset_0_0_30px_rgba(0,242,255,0.06)] backdrop-blur-2xl relative animate-in zoom-in-95 duration-200 font-mono">
+      <div className={`fixed inset-0 w-screen h-[100dvh] bg-[#050515] flex flex-col items-center justify-center p-4 z-50 overflow-y-auto font-sans ${unlocking ? 'bitty-fade-out' : ''}`}>
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.92, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ type: "spring", damping: 25, stiffness: 350 }}
+          className="w-full max-w-lg p-5 sm:p-7 bg-[#090620]/90 border border-cyan-500/40 rounded-2xl shadow-[0_0_60px_rgba(0,242,255,0.25),inset_0_0_30px_rgba(0,242,255,0.06)] backdrop-blur-2xl relative font-mono"
+        >
           {/* Bento Corner Accents */}
           <div className="absolute top-2 left-2 w-3 h-3 border-t-2 border-l-2 border-cyan-400 pointer-events-none" />
           <div className="absolute top-2 right-2 w-3 h-3 border-t-2 border-r-2 border-cyan-400 pointer-events-none" />
@@ -455,10 +478,14 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
 
           {/* Header */}
           <div className="text-center mb-5">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/80 border border-cyan-400/40 text-cyan-300 text-xs mb-3 shadow-[0_0_15px_rgba(0,242,255,0.3)]">
+            <motion.div 
+              animate={{ y: [0, -4, 0] }}
+              transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/80 border border-cyan-400/40 text-cyan-300 text-xs mb-3 shadow-[0_0_15px_rgba(0,242,255,0.3)]"
+            >
               <Shield className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
               <span>PROTECTED BITTY BOX</span>
-            </div>
+            </motion.div>
 
             <h2 className="text-xl sm:text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-200 via-teal-100 to-fuchsia-300 tracking-wide">
               <CyberScrambleText text={metadata.title || 'UNTITLED BITTY BOX'} speed={20} />
@@ -470,13 +497,27 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
 
           {/* Lock Status Badges Grid */}
           <div className="space-y-3 mb-6">
-            {/* Time Lock Card */}
+            {/* Time Lock Card — renders PENDING / OPEN / EXPIRED states so a
+                stacked box always discloses the time rule, never hides it. */}
             {twEnabled && (
-              <div className="p-3.5 sm:p-4 rounded-xl bg-fuchsia-950/40 border border-fuchsia-500/40 shadow-[0_0_20px_rgba(217,70,239,0.15)] flex flex-col gap-2">
+              <motion.div
+                whileHover={{ scale: 1.01 }}
+                className={`p-3.5 sm:p-4 rounded-xl border flex flex-col gap-2 shadow-[0_0_20px_rgba(217,70,239,0.15)] ${
+                  twBlocked
+                    ? 'bg-fuchsia-950/60 border-fuchsia-500/60'
+                    : 'bg-fuchsia-950/40 border-fuchsia-500/40'
+                }`}
+              >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-fuchsia-300 text-xs font-bold uppercase tracking-wider">
                     <Clock className="w-4 h-4 text-fuchsia-400 animate-pulse" />
-                    <span>TIME-LIMITED ACCESS</span>
+                    <span>
+                      {tw.status === 'PENDING'
+                        ? 'TIME LOCK — PENDING'
+                        : tw.status === 'EXPIRED'
+                          ? 'TIME LOCK — EXPIRED'
+                          : 'TIME-LIMITED ACCESS'}
+                    </span>
                   </div>
                   {formattedExpiry && (
                     <span className="text-[10px] text-fuchsia-300/70">
@@ -485,23 +526,56 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
                   )}
                 </div>
 
-                <div className="bg-black/60 border border-fuchsia-500/30 rounded-lg p-2.5 text-center">
-                  <div className="text-[10px] text-fuchsia-300 uppercase tracking-widest mb-1">
-                    {twConfig?.mode === 'hybrid' ? 'Burns In' : 'Auto-Destructs In'}
-                  </div>
-                  <div className="text-xl sm:text-2xl font-cyber text-white tracking-[0.18em] tabular-nums">
-                    {tw.remainingLabel || '00 : 00 : 00 : 00'}
-                  </div>
-                  <div className="text-[9px] text-fuchsia-300/60 mt-0.5">
-                    DAYS : HOURS : MINS : SECS
-                  </div>
-                </div>
-              </div>
+                {twBlocked ? (
+                  tw.status === 'PENDING' && showCountdown ? (
+                    <div className="bg-black/60 border border-fuchsia-500/30 rounded-lg p-2.5 text-center">
+                      <div className="text-[10px] text-fuchsia-300 uppercase tracking-widest mb-1">
+                        Unlocks In
+                      </div>
+                      <div className="text-xl sm:text-2xl font-cyber text-white tracking-[0.18em] tabular-nums">
+                        {tw.remainingLabel || '00 : 00 : 00 : 00'}
+                      </div>
+                      <div className="text-[9px] text-fuchsia-300/60 mt-0.5">
+                        DAYS : HOURS : MINS : SECS
+                      </div>
+                    </div>
+                  ) : (
+                    <div
+                      className={`rounded-lg p-2.5 text-center text-[11px] font-mono ${
+                        tw.status === 'EXPIRED'
+                          ? 'bg-black/60 border border-rose-500/40 text-rose-300'
+                          : 'bg-black/60 border border-fuchsia-500/30 text-purple-200/70'
+                      }`}
+                    >
+                      {tw.status === 'EXPIRED'
+                        ? 'This link has auto-revoked and is permanently unavailable.'
+                        : 'Scheduled transmission — countdown hidden by creator.'}
+                    </div>
+                  )
+                ) : (
+                  <>
+                    <div className="bg-black/60 border border-fuchsia-500/30 rounded-lg p-2.5 text-center">
+                      <div className="text-[10px] text-fuchsia-300 uppercase tracking-widest mb-1">
+                        {twConfig?.mode === 'hybrid' ? 'Burns In' : 'Auto-Destructs In'}
+                      </div>
+                      <div className="text-xl sm:text-2xl font-cyber text-white tracking-[0.18em] tabular-nums">
+                        {tw.remainingLabel || '00 : 00 : 00 : 00'}
+                      </div>
+                      <div className="text-[9px] text-fuchsia-300/60 mt-0.5">
+                        DAYS : HOURS : MINS : SECS
+                      </div>
+                    </div>
+                  </>
+                )}
+              </motion.div>
             )}
 
             {/* Access Limit Card */}
             {olEnabled && (
-              <div className="p-3.5 sm:p-4 rounded-xl bg-amber-950/40 border border-amber-500/40 shadow-[0_0_20px_rgba(245,158,11,0.15)] flex flex-col gap-2">
+              <motion.div 
+                whileHover={{ scale: 1.01 }}
+                className="p-3.5 sm:p-4 rounded-xl bg-amber-950/40 border border-amber-500/40 shadow-[0_0_20px_rgba(245,158,11,0.15)] flex flex-col gap-2"
+              >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-amber-300 text-xs font-bold uppercase tracking-wider">
                     <Flame className="w-4 h-4 text-amber-400 animate-pulse" />
@@ -520,19 +594,37 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
                     This transmission permanently seals when allowable open quota is exhausted.
                   </div>
                 </div>
-              </div>
+              </motion.div>
             )}
           </div>
 
           {/* Passcode Form or Direct Enter Button */}
-          {needsPassword || (isEncrypted && !content) ? (
+          {twBlocked ? (
+            /* AND-gate: while the time rule is pending/expired, no lock may be
+               attempted — the box stays sealed and the full stack stays visible. */
+            <div className="rounded-xl bg-black/50 border border-fuchsia-500/30 p-3 text-center text-[11px] font-mono text-fuchsia-300">
+              {tw.status === 'EXPIRED'
+                ? '🔒 BOX PERMANENTLY SEALED — time window has closed.'
+                : '⏳ SEALED UNTIL TIMER REACHES ZERO' +
+                  (needsPassword || olEnabled
+                    ? ' — passcode & quota unlock after the time boundary.'
+                    : '.')}
+            </div>
+          ) : needsPassword || (isEncrypted && !content) ? (
             <form onSubmit={handlePasswordSubmit} className="space-y-4">
-              {error && (
-                <div className="p-3 rounded-lg bg-rose-950/80 border border-rose-500/50 text-rose-300 text-xs flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-                  <span>{error}</span>
-                </div>
-              )}
+              <AnimatePresence>
+                {error && (
+                  <motion.div 
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="p-3 rounded-lg bg-rose-950/80 border border-rose-500/50 text-rose-300 text-xs flex items-center gap-2 overflow-hidden"
+                  >
+                    <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                    <span>{error}</span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               <div>
                 <div className="flex items-center justify-between text-[11px] text-fuchsia-300 mb-1.5 uppercase tracking-wider">
@@ -540,7 +632,9 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
                   <span className="text-fuchsia-400/80 text-[10px]">{passwordInput.length} / 12 DIGITS</span>
                 </div>
                 <div className="relative">
-                  <input
+                  <motion.input
+                    animate={shake ? { x: [-10, 10, -8, 8, -4, 4, 0] } : {}}
+                    transition={{ duration: 0.4 }}
                     type={showPassword ? 'text' : 'password'}
                     inputMode="numeric"
                     pattern="[0-9]*"
@@ -554,7 +648,7 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
                     }}
                     placeholder="Enter 8-12 digit passcode..."
                     autoFocus
-                    className={`w-full bg-[#090314] border border-fuchsia-500/40 rounded-xl pl-4 pr-11 py-3 text-center text-lg tracking-[0.25em] text-white placeholder:text-purple-400/40 placeholder:text-xs placeholder:tracking-normal focus:outline-none focus:border-fuchsia-400 focus:ring-1 focus:ring-fuchsia-400 ${shake ? 'bitty-shake' : ''}`}
+                    className="w-full bg-[#090314] border border-fuchsia-500/40 rounded-xl pl-4 pr-11 py-3 text-center text-lg tracking-[0.25em] text-white placeholder:text-purple-400/40 placeholder:text-xs placeholder:tracking-normal focus:outline-none focus:border-fuchsia-400 focus:ring-1 focus:ring-fuchsia-400"
                     onAnimationEnd={() => setShake(false)}
                   />
                   <button
@@ -568,10 +662,12 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
                 </div>
               </div>
 
-              <button
+              <motion.button
+                whileHover={{ scale: 1.02, boxShadow: "0 0 30px rgba(255,0,222,0.6)" }}
+                whileTap={{ scale: 0.98 }}
                 type="submit"
                 disabled={isLoading || !passwordInput.trim()}
-                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-fuchsia-600 via-purple-600 to-cyan-600 disabled:opacity-50 text-white font-cyber text-xs tracking-widest shadow-[0_0_25px_rgba(255,0,222,0.4)] hover:scale-[1.01] active:scale-[0.99] transition cursor-pointer flex items-center justify-center gap-2"
+                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-fuchsia-600 via-purple-600 to-cyan-600 disabled:opacity-50 text-white font-cyber text-xs tracking-widest shadow-[0_0_25px_rgba(255,0,222,0.4)] transition cursor-pointer flex items-center justify-center gap-2"
               >
                 {isLoading ? (
                   <>
@@ -584,24 +680,26 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
                     <span>UNLOCK TRANSMISSION</span>
                   </>
                 )}
-              </button>
+              </motion.button>
             </form>
           ) : (
             <div className="space-y-3">
-              <button
+              <motion.button
+                whileHover={{ scale: 1.02, boxShadow: "0 0 35px rgba(0,242,255,0.7)" }}
+                whileTap={{ scale: 0.98 }}
                 type="button"
                 onClick={handleUnlockAndEnter}
-                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 via-teal-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-black font-extrabold text-xs tracking-widest shadow-[0_0_30px_rgba(0,242,255,0.5)] hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer flex items-center justify-center gap-2 font-mono"
+                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 via-teal-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-black font-extrabold text-xs tracking-widest shadow-[0_0_30px_rgba(0,242,255,0.5)] transition-all cursor-pointer flex items-center justify-center gap-2 font-mono"
               >
                 <Zap className="w-4 h-4 text-black fill-black" />
                 <span>ENTER & VIEW BITTY BOX</span>
-              </button>
+              </motion.button>
               <div className="text-center text-[10px] text-cyan-300/60">
                 {olEnabled ? 'Consumes 1 allowable open on entry.' : 'Click to render self-contained transmission.'}
               </div>
             </div>
           )}
-        </div>
+        </motion.div>
       </div>
     );
   }
@@ -609,7 +707,7 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
   // If there's an unrecoverable decoding error
   if (error && !content) {
     return (
-      <div className="fixed inset-0 w-screen h-screen bg-[#050515] flex items-center justify-center p-4 z-50 font-sans">
+      <div className="fixed inset-0 w-screen h-[100dvh] bg-[#050515] flex flex-col items-center justify-center p-4 z-50 overflow-y-auto font-sans">
         <div className="text-center max-w-md p-6 bento-card border-rose-500/40 relative">
           <div className="bento-corner-accent top-l" />
           <div className="bento-corner-accent top-r" />
@@ -620,21 +718,12 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
           <h3 className="font-cyber text-base text-rose-200 mb-1">TRANSMISSION DECODE ERROR</h3>
           <p className="text-xs text-purple-200/70 font-mono mb-4">{error}</p>
                     {(onHome || onEdit) && (
-            <button
-              type="button"
-              onClick={() => {
-                if (onHome) {
-                  onHome();
-                } else if (onEdit) {
-                  onEdit(content || '', metadata);
-                } else {
-                  window.location.href = '/#/studio';
-                }
-              }}
-              className="px-4 py-2 rounded-xl bg-cyan-950 border border-cyan-500/40 text-cyan-300 text-xs font-cyber hover:bg-cyan-900 transition cursor-pointer"
+            <a
+              href="https://bittybox.org/"
+              className="px-4 py-2 inline-block rounded-xl bg-cyan-950 border border-cyan-500/40 text-cyan-300 text-xs font-cyber hover:bg-cyan-900 transition cursor-pointer"
             >
-              OPEN STUDIO
-            </button>
+              VISIT BITTYBOX.ORG
+            </a>
           )}
         </div>
       </div>
@@ -644,12 +733,21 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
   // If loading without cached content
   if (isLoading && !content) {
     return (
-      <div className="fixed inset-0 w-screen h-screen bg-[#050515] flex items-center justify-center p-4 z-50 font-sans">
-        <div className="text-center p-8 flex flex-col items-center">
-          <RefreshCw className="w-10 h-10 text-cyan-400 animate-spin mb-4" />
+      <div className="fixed inset-0 w-screen h-[100dvh] bg-[#050515] flex flex-col items-center justify-center p-4 z-50 overflow-y-auto font-sans">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center p-8 flex flex-col items-center"
+        >
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
+          >
+            <RefreshCw className="w-10 h-10 text-cyan-400 mb-4" />
+          </motion.div>
           <h4 className="font-cyber text-sm text-cyan-300 tracking-wider">INFLATING BITTY BOX TRANSMISSION...</h4>
           <p className="text-xs font-mono text-purple-300/70 mt-2">Decompressing URL hash data stream</p>
-        </div>
+        </motion.div>
       </div>
     );
   }
@@ -659,38 +757,74 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
 
   // ── 5. Rendered Live Content with Floating Lock HUD (Top-Right) ───────────
   return (
-    <div className="fixed inset-0 w-screen h-screen overflow-hidden bg-[#050515]">
-      {/* Floating Collapsible Lock Status HUD Pill */}
-      {hasLock && !isHudDismissed && (
-        <div className="fixed top-3 right-3 z-[60] max-w-[90vw] flex items-center gap-2 bg-[#050314]/90 border border-cyan-500/40 rounded-full px-3 py-1.5 shadow-[0_0_20px_rgba(0,0,0,0.8),0_0_10px_rgba(0,242,255,0.25)] backdrop-blur-xl font-mono text-[10px] text-cyan-100 animate-in fade-in slide-in-from-top-2 duration-300">
-          {twEnabled && (
-            <div className="flex items-center gap-1 text-fuchsia-300 font-bold">
-              <Clock className="w-3 h-3 text-fuchsia-400 animate-pulse" />
-              {twConfig?.mode === 'hybrid'
-                ? <span>BURNS IN {tw.remainingLabel || 'ACTIVE'}</span>
-                : <span>{tw.remainingLabel || 'AUTO-DESTRUCT ACTIVE'}</span>}
-            </div>
-          )}
-
-          {twEnabled && olEnabled && <span className="text-cyan-500/40">|</span>}
-
-          {olEnabled && (
-            <div className="flex items-center gap-1 text-amber-300 font-bold">
-              <Flame className="w-3 h-3 text-amber-400" />
-              <span>{remainingOpens !== null ? `${remainingOpens} Opens Left` : 'Active Quota'}</span>
-            </div>
-          )}
-
-          <button
-            type="button"
-            onClick={() => setIsHudDismissed(true)}
-            className="text-cyan-400/50 hover:text-cyan-200 ml-1 cursor-pointer transition-colors p-0.5"
-            title="Dismiss Lock HUD"
+    <div className="fixed inset-0 w-screen h-[100dvh] overflow-hidden bg-[#050515]">
+      <AnimatePresence>
+        {onNextChainBox && isUnlocked && !twBlocked && !quotaBlocked && (
+          <motion.div
+            initial={{ opacity: 0, x: 36 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 36 }}
+            transition={{ type: 'spring', stiffness: 420, damping: 26 }}
+            className="fixed right-0 top-1/2 -translate-y-1/2 z-[65] flex items-center select-none"
           >
-            <X className="w-3 h-3" />
-          </button>
-        </div>
-      )}
+            <motion.button
+              id="edge-grip-viewer-chain-next"
+              type="button"
+              onClick={onNextChainBox}
+              aria-label="Next chained Bitty Box"
+              whileHover={{ x: -5, scale: 1.03 }}
+              whileTap={{ scale: 0.94 }}
+              className="group relative flex min-h-[124px] w-[44px] flex-col items-center justify-center gap-2 rounded-l-2xl border-y-2 border-l-2 border-cyan-400 bg-gradient-to-l from-[#0d041e] via-[#170836] to-[#230d4e] px-1.5 py-3 text-cyan-200 shadow-[0_0_30px_rgba(0,242,255,0.38)] backdrop-blur-xl transition-all cursor-pointer hover:border-fuchsia-300 hover:text-fuchsia-100 hover:shadow-[0_0_38px_rgba(217,70,239,0.56)]"
+            >
+              <div className="absolute bottom-2 top-2 left-0 w-1 rounded-r bg-gradient-to-b from-cyan-400 via-fuchsia-400 to-emerald-300 shadow-[0_0_12px_#00f2ff]" />
+              <span className="text-lg leading-none text-cyan-300 transition-colors group-hover:text-fuchsia-200">›</span>
+              <span className="[writing-mode:vertical-rl] rotate-180 text-[10px] font-cyber font-extrabold tracking-[0.18em] uppercase text-cyan-100 transition-colors group-hover:text-fuchsia-100">NEXT BOX</span>
+            </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Floating Collapsible Lock Status HUD Pill */}
+      <AnimatePresence>
+        {hasLock && !isHudDismissed && (
+          <motion.div 
+            initial={{ opacity: 0, y: -20, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.9 }}
+            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+            className="fixed top-3 right-3 z-[60] max-w-[90vw] flex items-center gap-2 bg-[#050314]/90 border border-cyan-500/40 rounded-full px-3 py-1.5 shadow-[0_0_20px_rgba(0,0,0,0.8),0_0_10px_rgba(0,242,255,0.25)] backdrop-blur-xl font-mono text-[10px] text-cyan-100"
+          >
+            {twEnabled && (
+              <div className="flex items-center gap-1 text-fuchsia-300 font-bold">
+                <Clock className="w-3 h-3 text-fuchsia-400 animate-pulse" />
+                {twConfig?.mode === 'hybrid'
+                  ? <span>BURNS IN {tw.remainingLabel || 'ACTIVE'}</span>
+                  : <span>{tw.remainingLabel || 'AUTO-DESTRUCT ACTIVE'}</span>}
+              </div>
+            )}
+
+            {twEnabled && olEnabled && <span className="text-cyan-500/40">|</span>}
+
+            {olEnabled && (
+              <div className="flex items-center gap-1 text-amber-300 font-bold">
+                <Flame className="w-3 h-3 text-amber-400" />
+                <span>{remainingOpens !== null ? `${remainingOpens} Opens Left` : 'Active Quota'}</span>
+              </div>
+            )}
+
+            <motion.button
+              whileHover={{ scale: 1.2, rotate: 90 }}
+              whileTap={{ scale: 0.85 }}
+              type="button"
+              onClick={() => setIsHudDismissed(true)}
+              className="text-cyan-400/50 hover:text-cyan-200 ml-1 cursor-pointer transition-colors p-0.5"
+              title="Dismiss Lock HUD"
+            >
+              <X className="w-3 h-3" />
+            </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Sandboxed Iframe with Rendered Output */}
       <iframe

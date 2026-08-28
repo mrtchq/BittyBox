@@ -6,263 +6,141 @@ export interface TourConfig {
   onCancel?: () => void;
 }
 
+const title = (icon: string, label: string, color = 'text-cyan-300') =>
+  `<div class="flex items-center gap-2 ${color} font-cyber"><span class="text-base">${icon}</span>${label}</div>`;
+
+const body = (copy: string) => `<div class="space-y-2 text-xs font-mono text-purple-100 leading-relaxed">${copy}</div>`;
+
+const navButtons = (tour: any) => [
+  { text: '← BACK', classes: 'shepherd-btn-secondary', action: () => tour.back() },
+  { text: 'NEXT →', classes: 'shepherd-btn-primary', action: () => tour.next() },
+];
+
+/** First-run tour for the current five-slide Studio workflow. */
 export function createBittyTour(config?: TourConfig): any {
   const tour = new Shepherd.Tour({
     useModalOverlay: true,
     keyboardNavigation: true,
     defaultStepOptions: {
-      cancelIcon: {
-        enabled: true,
-      },
+      cancelIcon: { enabled: true },
       classes: 'bitty-shepherd-theme',
-      scrollTo: {
-        behavior: 'smooth',
-        block: 'center',
-      },
+      scrollTo: { behavior: 'smooth', block: 'center' },
     },
   });
 
-  // Step 1: Welcome Center Modal
   tour.addStep({
-    id: 'step-welcome',
-    title: '<div class="flex items-center gap-2 text-cyan-300 font-cyber"><span class="text-base">🚀</span> WELCOME TO BITTY BOX 2.0</div>',
-    text: `
-      <div class="space-y-2 text-xs font-mono text-purple-100">
-        <p class="leading-relaxed">
-          <strong class="text-cyan-300">Bitty Box</strong> is a zero-server micro-web protocol. Entire interactive web applications, portfolios, and tools are compressed directly into a single URL fragment!
-        </p>
-        <div class="p-2 rounded bg-purple-950/60 border border-purple-500/30 text-[11px] text-cyan-200">
-          ✨ <strong>No servers. No databases. No hosting fees.</strong> The URL is the entire application.
-        </div>
-      </div>
-    `,
-    buttons: [
-      {
-        text: 'SKIP TOUR',
-        classes: 'shepherd-btn-secondary',
-        action: () => tour.cancel(),
-      },
-      {
-        text: 'START WALKTHROUGH →',
-        classes: 'shepherd-btn-primary',
-        action: () => tour.next(),
-      },
-    ],
+    id: 'welcome',
+    title: title('⚡', 'WELCOME TO THE BITTY BOX STUDIO'),
+    text: body(`
+      <p>Bitty Box turns text, HTML, CSS, JavaScript, and markdown into a shareable Box link. The editor keeps your draft in this browser; the generated URL carries the Box so it can open anywhere.</p>
+      <div class="p-2 rounded bg-purple-950/60 border border-purple-500/30 text-[11px] text-cyan-200"><strong>Tour map:</strong> compose → protect (optional) → chain Boxes → generate → preview and share.</div>
+      <p class="text-[11px] text-purple-300/80">You can replay this walkthrough from About whenever you need a refresher.</p>
+    `),
+    buttons: [{ text: 'START WALKTHROUGH →', classes: 'shepherd-btn-primary', action: () => tour.next() }],
   });
 
-  // Step 2: Document Title & Metadata
   tour.addStep({
-    id: 'step-title',
-    attachTo: {
-      element: '#doc-title-input',
-      on: 'bottom',
-    },
-    title: '<div class="flex items-center gap-2 text-cyan-300 font-cyber"><span class="text-base">🏷️</span> TITLE & FAVICON SLUG</div>',
-    text: `
-      <div class="space-y-1.5 text-xs font-mono text-purple-100">
-        <p>Give your micro-site a memorable name. You can customize the favicon emoji, author, language tag, and URL path slug.</p>
-        <p class="text-[11px] text-cyan-300/80">Every parameter is stored directly inside the URL payload.</p>
-      </div>
-    `,
-    buttons: [
-      {
-        text: '← BACK',
-        classes: 'shepherd-btn-secondary',
-        action: () => tour.back(),
-      },
-      {
-        text: 'NEXT →',
-        classes: 'shepherd-btn-primary',
-        action: () => tour.next(),
-      },
-    ],
+    id: 'compose',
+    attachTo: { element: 'textarea[aria-label="Content for your Bitty Box"]', on: 'top' },
+    title: title('✍️', '1 · COMPOSE YOUR FIRST BOX'),
+    text: body(`
+      <p>Start with a note, a prompt, markdown, or a complete mini web page. The editor accepts plain text and HTML/CSS/JavaScript.</p>
+      <p class="text-[11px] text-cyan-300/80">Use <strong>Starter Box</strong> or <strong>Note</strong> below the editor if you want a safe example. Your draft saves locally as you work.</p>
+    `),
+    buttons: navButtons(tour),
   });
 
-  // Step 3: Template Gallery
   tour.addStep({
-    id: 'step-templates',
-    attachTo: {
-      element: '#bitty-presets-btn',
-      on: 'bottom',
-    },
-    title: '<div class="flex items-center gap-2 text-fuchsia-300 font-cyber"><span class="text-base">⚡</span> TEMPLATE GALLERY</div>',
-    text: `
-      <div class="space-y-1.5 text-xs font-mono text-purple-100">
-        <p>Explore production-ready micro-apps:</p>
-        <ul class="list-disc list-inside text-[11px] text-cyan-200/90 space-y-0.5 pl-1">
-          <li>Developer Portfolios & MeCards</li>
-          <li>Technical Documentation & Code Snippets</li>
-          <li>KPI Metric Dashboards & Interactive Charts</li>
-          <li>Interactive Terminal CLIs & 8-Bit Cyber Games</li>
-        </ul>
-      </div>
-    `,
-    buttons: [
-      {
-        text: '← BACK',
-        classes: 'shepherd-btn-secondary',
-        action: () => tour.back(),
-      },
-      {
-        text: 'NEXT →',
-        classes: 'shepherd-btn-primary',
-        action: () => tour.next(),
-      },
-    ],
+    id: 'identity',
+    attachTo: { element: 'input[aria-label="Page title for your Bitty Box"]', on: 'bottom' },
+    title: title('🏷️', '2 · NAME AND DESCRIBE IT', 'text-fuchsia-300'),
+    text: body(`
+      <p>Give the Box a title people will recognize. Add a short description when the link needs context; both travel with the generated metadata.</p>
+      <p class="text-[11px] text-fuchsia-200/80">Leave the description blank if the Box is self-explanatory. You can edit these fields later.</p>
+    `),
+    buttons: navButtons(tour),
   });
 
-  // Step 4: Code Workspace & Prettier
   tour.addStep({
-    id: 'step-code-editor',
-    attachTo: {
-      element: '#format-code-btn',
-      on: 'bottom',
-    },
-    title: '<div class="flex items-center gap-2 text-cyan-300 font-cyber"><span class="text-base">💻</span> CODE STUDIO & PRETTIER</div>',
-    text: `
-      <div class="space-y-1.5 text-xs font-mono text-purple-100">
-        <p>Write HTML5, CSS3, JavaScript, or Markdown with real-time syntax highlighting.</p>
-        <p class="text-[11px] text-teal-300">
-          💡 Click <strong>FORMAT CODE</strong> (or press <kbd class="px-1 py-0.5 rounded bg-black/60 border border-cyan-500/30">Shift+Alt+F</kbd>) to instantly beautify and optimize your code!
-        </p>
-      </div>
-    `,
-    buttons: [
-      {
-        text: '← BACK',
-        classes: 'shepherd-btn-secondary',
-        action: () => tour.back(),
-      },
-      {
-        text: 'NEXT →',
-        classes: 'shepherd-btn-primary',
-        action: () => tour.next(),
-      },
-    ],
+    id: 'protect',
+    attachTo: { element: 'button[aria-label="Next slide"]', on: 'top' },
+    title: title('🛡️', '3 · OPTIONAL ACCESS CONTROLS', 'text-amber-300'),
+    text: body(`
+      <p>Use the slide controls to move through optional protections: a numerical passcode, a timed reveal/decay window, and a view limit. Leave them off for a public Box.</p>
+      <div class="p-2 rounded bg-amber-950/40 border border-amber-500/30 text-[11px] text-amber-100"><strong>Tip:</strong> protections are applied when you generate the link. Test the final link before sharing.</div>
+      <p class="text-[11px] text-purple-300/80">Press the arrow at the bottom of each slide to continue to the chaining controls.</p>
+    `),
+    buttons: navButtons(tour),
   });
 
-  // Step 5: Telemetry & URL Compression Gauge
   tour.addStep({
-    id: 'step-telemetry',
-    attachTo: {
-      element: '#stats-copy-url-btn',
-      on: 'top',
-    },
-    title: '<div class="flex items-center gap-2 text-cyan-300 font-cyber"><span class="text-base">📊</span> LIVE TRANSMISSION STATS</div>',
-    text: `
-      <div class="space-y-1.5 text-xs font-mono text-purple-100">
-        <p>Real-time GZIP Deflate telemetry shows your compression ratio, raw payload, packed link size, and browser URL capacity.</p>
-        <p class="text-[11px] text-cyan-300">Click <strong>COPY GENERATED URL</strong> anytime to send your self-contained app anywhere!</p>
-      </div>
-    `,
-    buttons: [
-      {
-        text: '← BACK',
-        classes: 'shepherd-btn-secondary',
-        action: () => tour.back(),
-      },
-      {
-        text: 'NEXT →',
-        classes: 'shepherd-btn-primary',
-        action: () => tour.next(),
-      },
-    ],
+    id: 'chain-toggle',
+    attachTo: { element: '#holo-toggle-slide-05-chaining', on: 'left' },
+    title: title('🔗', '4 · TURN BOX CHAINING ON'),
+    text: body(`
+      <p><strong>Box chaining</strong> links up to five self-contained Boxes into one ordered sequence—ideal for a lesson, slide deck, multi-step tutorial, or staged workflow.</p>
+      <p class="text-[11px] text-cyan-200/80">On the final slide, switch <strong>CHAINING (LINKED BOXES)</strong> on. The current Box becomes Box 1; each Box keeps its own content and metadata.</p>
+    `),
+    buttons: navButtons(tour),
   });
 
-  // Step 6: Parameter & AES-256 Vault Cipher
   tour.addStep({
-    id: 'step-security',
-    attachTo: {
-      element: '#bitty-meta-btn',
-      on: 'top',
-    },
-    title: '<div class="flex items-center gap-2 text-fuchsia-300 font-cyber"><span class="text-base">🔒</span> AES-256 VAULT & CIPHER</div>',
-    text: `
-      <div class="space-y-1.5 text-xs font-mono text-purple-100">
-        <p>Configure Open Graph SEO tags or lock your micro-site with military-grade <strong>AES-GCM-256 client-side encryption</strong>.</p>
-        <p class="text-[11px] text-fuchsia-300/90">Includes an entropy password analyzer and cryptographic key generator.</p>
-      </div>
-    `,
-    buttons: [
-      {
-        text: '← BACK',
-        classes: 'shepherd-btn-secondary',
-        action: () => tour.back(),
-      },
-      {
-        text: 'NEXT →',
-        classes: 'shepherd-btn-primary',
-        action: () => tour.next(),
-      },
-    ],
+    id: 'chain-edit',
+    attachTo: { element: '#holo-toggle-slide-05-chaining', on: 'left' },
+    title: title('🧩', '5 · BUILD THE SEQUENCE', 'text-fuchsia-300'),
+    text: body(`
+      <p>After enabling chaining, choose <strong>Clone into Next</strong> to reuse the current content or <strong>Start Blank Next</strong> for a fresh Box.</p>
+      <ul class="list-disc list-inside text-[11px] text-cyan-200/90 space-y-1"><li>Click a Box pill to edit it.</li><li>Drag pills to reorder the sequence.</li><li>Delete the final Box when you need to trim the chain.</li></ul>
+      <p class="text-[11px] text-amber-200/80">The maximum is five Boxes; longer chains also create larger links.</p>
+    `),
+    buttons: navButtons(tour),
   });
 
-  // Step 7: QR Holograms & Sharing
   tour.addStep({
-    id: 'step-qr-share',
-    attachTo: {
-      element: '#nav-qr-btn',
-      on: 'bottom',
-    },
-    title: '<div class="flex items-center gap-2 text-teal-300 font-cyber"><span class="text-base">📱</span> QR HOLOGRAMS & ZIP EXPORT</div>',
-    text: `
-      <div class="space-y-1.5 text-xs font-mono text-purple-100">
-        <p>Beam your micro-site directly to smartphones with high-density QR holograms, or download an offline-ready standalone ZIP package.</p>
-      </div>
-    `,
-    buttons: [
-      {
-        text: '← BACK',
-        classes: 'shepherd-btn-secondary',
-        action: () => tour.back(),
-      },
-      {
-        text: 'NEXT →',
-        classes: 'shepherd-btn-primary',
-        action: () => tour.next(),
-      },
-    ],
+    id: 'chain-next',
+    attachTo: { element: '#edge-grip-chain-next', on: 'left' },
+    title: title('➡️', '6 · MOVE THROUGH A CHAIN'),
+    text: body(`
+      <p>The glowing right-edge grip opens the next Box while you are editing. In a generated Box, the same control lets a recipient continue to the next page.</p>
+      <p class="text-[11px] text-cyan-200/80">If the grip is hidden, finish the chain toggle step first; it only appears while chaining is enabled.</p>
+    `),
+    buttons: navButtons(tour),
   });
 
-  // Step 8: Workspace Themes
   tour.addStep({
-    id: 'step-themes',
-    attachTo: {
-      element: '#nav-theme-toggle-btn',
-      on: 'bottom',
-    },
-    title: '<div class="flex items-center gap-2 text-cyan-300 font-cyber"><span class="text-base">🎨</span> WORKSPACE THEMES</div>',
-    text: `
-      <div class="space-y-1.5 text-xs font-mono text-purple-100">
-        <p>Choose your workspace vibe:</p>
-        <ul class="list-disc list-inside text-[11px] text-cyan-200/90 space-y-0.5 pl-1">
-          <li><strong class="text-fuchsia-300">Neon Synthwave</strong> (Cyberpunk purple & cyan glow)</li>
-          <li><strong class="text-zinc-200">Minimalist Monochrome</strong> (High-contrast slate & white)</li>
-          <li><strong class="text-emerald-300">Matrix Cyber</strong> (Phosphor green terminal & rain)</li>
-        </ul>
-        <p class="text-[11px] text-emerald-400 font-bold mt-1">You are all set to build zero-server web applications!</p>
-      </div>
-    `,
-    buttons: [
-      {
-        text: '← BACK',
-        classes: 'shepherd-btn-secondary',
-        action: () => tour.back(),
-      },
-      {
-        text: 'FINISH & START CREATING 🚀',
-        classes: 'shepherd-btn-primary',
-        action: () => tour.complete(),
-      },
-    ],
+    id: 'generate',
+    attachTo: { element: '#holo-generate-btn', on: 'top' },
+    title: title('🚀', '7 · GENERATE THE SHARE LINK', 'text-emerald-300'),
+    text: body(`
+      <p>When the content and sequence are ready, press <strong>GENERATE &amp; COPY</strong>. Bitty Box compresses the payload, applies the selected metadata and locks, and copies the resulting URL.</p>
+      <p class="text-[11px] text-emerald-200/80">For a chain, the copied primary link starts at Box 1 and carries navigation to the rest.</p>
+    `),
+    buttons: navButtons(tour),
   });
 
-  if (config?.onComplete) {
-    tour.on('complete', config.onComplete);
-  }
-  if (config?.onCancel) {
-    tour.on('cancel', config.onCancel);
-  }
+  tour.addStep({
+    id: 'preview-share',
+    attachTo: { element: '#edge-grip-preview', on: 'bottom' },
+    title: title('👁️', '8 · PREVIEW, THEN SHARE', 'text-teal-300'),
+    text: body(`
+      <p>Use the top <strong>PREVIEW</strong> grip to inspect the rendered Box before you send it. The preview panel offers desktop, tablet, mobile, refresh, and open-in-new-tab views.</p>
+      <p class="text-[11px] text-teal-200/80">Use the tools panel for QR, share, ZIP export, history, and account features. The <strong>AGENTS</strong> view documents API and MCP creation for automated workflows.</p>
+    `),
+    buttons: navButtons(tour),
+  });
 
+  tour.addStep({
+    id: 'finish',
+    title: title('✨', 'YOU ARE READY TO BUILD'),
+    text: body(`
+      <p>That is the current Bitty Box loop: write once, optionally protect it, chain Boxes when the story needs steps, generate a portable link, and verify the result.</p>
+      <div class="p-2 rounded bg-cyan-950/60 border border-cyan-500/30 text-[11px] text-cyan-100"><strong>Next idea:</strong> make a three-Box tutorial—intro, hands-on example, and recap—then drag the pills to set the order.</div>
+      <p class="text-[11px] text-purple-300/80">Your work remains in this browser until you generate or save a link.</p>
+    `),
+    buttons: [{ text: 'FINISH & START BUILDING ✨', classes: 'shepherd-btn-primary', action: () => tour.complete() }],
+  });
+
+  if (config?.onComplete) tour.on('complete', config.onComplete);
+  if (config?.onCancel) tour.on('cancel', config.onCancel);
   return tour;
 }

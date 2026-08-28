@@ -11,3 +11,5 @@ coverage/
 # Firebase Admin SDK private key (server-only)
 secrets/
 /etc/bittybox/
+.hermes*
+

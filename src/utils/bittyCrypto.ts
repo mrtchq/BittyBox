@@ -43,7 +43,7 @@ function randomBytes(n: number): Uint8Array {
   return c.getRandomValues(new Uint8Array(n));
 }
 
-function bytesToBase64Url(bytes: Uint8Array): string {
+export function bytesToBase64Url(bytes: Uint8Array): string {
   let binary = '';
   const CHUNK = 0x8000;
   for (let i = 0; i < bytes.length; i += CHUNK) {
@@ -53,7 +53,7 @@ function bytesToBase64Url(bytes: Uint8Array): string {
   return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
-function base64UrlToBytes(str: string): Uint8Array {
+export function base64UrlToBytes(str: string): Uint8Array {
   let s = str.trim().replace(/-/g, '+').replace(/_/g, '/');
   while (s.length % 4 !== 0) s += '=';
   const binary = atob(s);
@@ -79,13 +79,17 @@ async function deriveKey(password: string, salt: Uint8Array): Promise<CryptoKey>
  * Returns a base64url envelope safe to drop into a URL fragment.
  */
 export async function encryptBox(plaintext: string, password: string): Promise<string> {
+  return encryptBoxBytes(new TextEncoder().encode(plaintext), password);
+}
+
+export async function encryptBoxBytes(plaintext: Uint8Array, password: string): Promise<string> {
   const salt = randomBytes(SALT_BYTES);
   const iv = randomBytes(IV_BYTES);
   const key = await deriveKey(password, salt);
   const ctBuf = await subtle().encrypt(
     { name: 'AES-GCM', iv },
     key,
-    new TextEncoder().encode(plaintext)
+    plaintext
   );
   const ct = new Uint8Array(ctBuf);
   const out = new Uint8Array(1 + SALT_BYTES + IV_BYTES + ct.length);

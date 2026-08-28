@@ -48,6 +48,13 @@ export interface UseAccountResult {
       accessLimit?: boolean;
     };
     cost?: number;
+    boxBreakdowns?: Array<{
+      index: number;
+      title: string;
+      isCloned?: boolean;
+      totalCost: number;
+      blockCount?: number;
+    }>;
   }) => Promise<boolean>;
   syncUserCreditsWithCreem: () => Promise<boolean>;
   deleteTrackedBox: (linkId: string) => Promise<boolean>;
@@ -515,6 +522,13 @@ export function useAccount(): UseAccountResult {
     compressedSize?: number;
     encrypted?: boolean;
     cost?: number;
+    boxBreakdowns?: Array<{
+      index: number;
+      title: string;
+      isCloned?: boolean;
+      totalCost: number;
+      blockCount?: number;
+    }>;
     locks?: {
       password?: boolean;
       timeWindow?: boolean;
@@ -526,7 +540,6 @@ export function useAccount(): UseAccountResult {
     if (typeof linkData.cost === 'number' && linkData.cost >= 0) {
       cost = Math.floor(linkData.cost);
     } else {
-      if (lk.password) cost += 5;
       if (lk.timeWindow) cost += 10;
       if (lk.accessLimit) cost += 10;
     }
@@ -534,15 +547,21 @@ export function useAccount(): UseAccountResult {
     const boxId = `box_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
     const trackedBox: TrackedBittyBox = {
       id: boxId,
-      title: linkData.title || 'Untitled Bitty Box',
+      title: linkData.title || (linkData.format === 'chain' ? 'Chained Bitty Box' : 'Untitled Bitty Box'),
       url: linkData.url,
       format: linkData.format || 'html',
+      cost,
       byteSize: linkData.byteSize || linkData.url?.length || 0,
       compressedSize: linkData.compressedSize || linkData.url?.length || 0,
       encrypted: Boolean(linkData.encrypted || lk.password),
       locks: linkData.locks,
+      boxBreakdowns: linkData.boxBreakdowns,
       createdAt: new Date().toISOString()
     };
+
+    const usageDesc = linkData.format === 'chain'
+      ? `Generated Box Chain: ${trackedBox.title} (${cost} CR)`
+      : `Generated Box: ${trackedBox.title} (${cost} CR)`;
 
     // Optimistically update React user state so UI updates instantly
     setUser((prev) => {
@@ -556,7 +575,7 @@ export function useAccount(): UseAccountResult {
         id: `tx_${Date.now()}`,
         type: 'usage',
         amount: -cost,
-        description: `Generated Box: ${trackedBox.title || 'Bitty Box'} (${cost} CR)`,
+        description: usageDesc,
         createdAt: new Date().toISOString()
       };
       const prevTx = prev.transactions || [];
@@ -580,7 +599,7 @@ export function useAccount(): UseAccountResult {
               auth.currentUser.uid,
               cost,
               'human',
-              `Generated Box: ${trackedBox.title || 'Bitty Box'} (${cost} CR)`
+              usageDesc
             );
           } catch (de) {
             console.error('[useAccount] Credit deduction failed in Firestore:', de);

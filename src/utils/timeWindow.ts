@@ -27,6 +27,12 @@ export interface TimeWindowConfig {
   notBefore?: string | null;
   notAfter?: string | null;
   showCountdown?: boolean;
+  expiryHours?: number;
+  delayHours?: number;
+  openAt?: string;
+  lockAt?: string;
+  hybridRevealMode?: HybridRevealMode;
+  hybridSelfDestructHours?: number;
 }
 
 export type TimeLockMode = 'expiry' | 'delay' | 'range' | 'hybrid';
@@ -171,7 +177,19 @@ export function buildTimeWindow(opts: {
     notBefore = new Date(revealMs).toISOString();
     notAfter = new Date(revealMs + opts.hybridSelfDestructHours * 3600 * 1000).toISOString();
   }
-  return { enabled: true, mode: opts.mode, notBefore, notAfter, showCountdown: opts.showCountdown };
+  return {
+    enabled: true,
+    mode: opts.mode,
+    notBefore,
+    notAfter,
+    showCountdown: opts.showCountdown,
+    expiryHours: opts.expiryHours,
+    delayHours: opts.delayHours,
+    openAt: opts.openAt,
+    lockAt: opts.lockAt,
+    hybridRevealMode: opts.hybridRevealMode,
+    hybridSelfDestructHours: opts.hybridSelfDestructHours,
+  };
 }
 
 /**

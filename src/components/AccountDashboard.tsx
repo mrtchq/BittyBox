@@ -46,6 +46,7 @@ import { CyberScrambleText } from "./CyberScrambleText";
 import { PrismCheckbox } from "./PrismCheckbox";
 import { UserAvatar } from "./UserAvatar";
 import { TimeWindowConfig, evaluateTimeWindow, formatCountdown, nextBoundary } from "../utils/timeWindow";
+import { SessionSaveIndicator } from "./SessionSaveIndicator";
 
 export const GoogleIcon: React.FC<{ className?: string }> = ({ className = "w-4 h-4" }) => (
   <svg className={className} viewBox="0 0 24 24">
@@ -72,12 +73,20 @@ interface AccountDashboardProps {
   account: UseAccountResult;
   onNavigateToSlide01?: () => void;
   onOpenQr?: (url: string) => void;
+  lastSavedAt?: number | null;
+  isSaving?: boolean;
+  activeSessionTitle?: string;
+  onManualSave?: () => void;
 }
 
 export const AccountDashboard: React.FC<AccountDashboardProps> = ({
   account,
   onNavigateToSlide01,
   onOpenQr,
+  lastSavedAt,
+  isSaving,
+  activeSessionTitle,
+  onManualSave,
 }) => {
   const {
     user,
@@ -142,89 +151,7 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
   const [purchasingPkg, setPurchasingPkg] = useState<string | null>(null);
   const [purchaseSuccessMsg, setPurchaseSuccessMsg] = useState<string | null>(null);
 
-  // Canvas starfield background
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    let animFrame: number;
-    let width = (canvas.width = window.innerWidth);
-    let height = (canvas.height = window.innerHeight);
-
-    const handleResize = () => {
-      if (!canvas) return;
-      width = canvas.width = window.innerWidth;
-      height = canvas.height = window.innerHeight;
-    };
-    window.addEventListener("resize", handleResize);
-
-    const particleCount = 75;
-    const particles: Array<{
-      x: number;
-      y: number;
-      z: number;
-      size: number;
-      color: string;
-      speed: number;
-    }> = [];
-
-    const colors = ["#00f2ff", "#bd00ff", "#ffffff", "#00ff9d", "#ff0077"];
-
-    for (let i = 0; i < particleCount; i++) {
-      particles.push({
-        x: (Math.random() - 0.5) * width * 2,
-        y: (Math.random() - 0.5) * height * 2,
-        z: Math.random() * 1000,
-        size: Math.random() * 1.5 + 0.5,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        speed: Math.random() * 0.4 + 0.1,
-      });
-    }
-
-    const render = () => {
-      ctx.fillStyle = "rgba(3, 2, 14, 0.28)";
-      ctx.fillRect(0, 0, width, height);
-
-      const cx = width / 2;
-      const cy = height / 2;
-
-      for (let i = 0; i < particles.length; i++) {
-        const p = particles[i];
-        p.z -= p.speed;
-
-        if (p.z <= 0) {
-          p.z = 1000;
-          p.x = (Math.random() - 0.5) * width * 2;
-          p.y = (Math.random() - 0.5) * height * 2;
-        }
-
-        const fov = 400;
-        const scale = fov / (fov + p.z);
-        const sx = cx + p.x * scale;
-        const sy = cy + p.y * scale;
-
-        if (sx >= 0 && sx <= width && sy >= 0 && sy <= height) {
-          ctx.beginPath();
-          ctx.arc(sx, sy, Math.max(0.7, p.size * scale), 0, Math.PI * 2);
-          ctx.fillStyle = p.color;
-          ctx.fill();
-        }
-      }
-
-      animFrame = requestAnimationFrame(render);
-    };
-
-    render();
-
-    return () => {
-      window.removeEventListener("resize", handleResize);
-      if (animFrame) cancelAnimationFrame(animFrame);
-    };
-  }, []);
 
   // Handle Google Sign In
   const handleGoogleSignIn = async () => {
@@ -362,15 +289,8 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
   if (!isAuthenticated || !user) {
     return (
       <div
-        className="relative min-h-[calc(100vh-4rem)] bg-[#03020e] text-cyan-100 font-sans py-8 px-4 sm:px-6 overflow-hidden flex items-center justify-center select-none"
+        className="relative min-h-[calc(100vh-4rem)] bg-transparent text-cyan-100 font-sans py-8 px-4 sm:px-6 overflow-hidden flex items-center justify-center select-none"
       >
-        {/* 3D Canvas Background */}
-        <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none z-0" />
-
-        {/* Cyber Vignette & Grid */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_30%,rgba(3,2,14,0.92)_100%)] pointer-events-none z-1" />
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(0,242,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,242,255,0.02)_1px,transparent_1px)] bg-[size:48px_48px] pointer-events-none z-1" />
-
         <div className="w-full max-w-lg relative z-10">
           {/* Main Cyber Bento Login Card */}
           <div className="bg-[#08041c]/95 backdrop-blur-2xl border-2 border-cyan-500/40 rounded-2xl p-6 sm:p-8 shadow-[0_0_50px_rgba(0,242,255,0.2)] font-mono relative overflow-hidden">
@@ -384,42 +304,28 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
             <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_50%,rgba(0,0,0,0.35)_51%)] bg-[length:100%_4px] pointer-events-none opacity-25" />
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(0,242,255,0.12),transparent_70%)] pointer-events-none" />
 
-            {/* Card Header Badge */}
-            <div className="text-center space-y-2 mb-6 relative z-10">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/80 border border-cyan-400/50 text-cyan-300 font-mono text-[10px] tracking-widest shadow-[0_0_15px_rgba(0,242,255,0.3)]">
-                <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
-                <span>BITTY BOX // QUANTUM AUTH TERMINAL</span>
+            {/* Card Header Badge & Top Right Saved Status */}
+            <div className="space-y-2 mb-6 relative z-30">
+              <div className="flex items-center justify-between gap-2 flex-wrap sm:flex-nowrap">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/80 border border-cyan-400/50 text-cyan-300 font-mono text-[10px] tracking-widest shadow-[0_0_15px_rgba(0,242,255,0.3)]">
+                  <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>BITTY BOX // QUANTUM AUTH TERMINAL</span>
+                </div>
+                <SessionSaveIndicator
+                  lastSavedAt={lastSavedAt}
+                  isSaving={isSaving}
+                  activeSessionTitle={activeSessionTitle}
+                  onManualSave={onManualSave}
+                />
               </div>
 
-              <h2 className="text-xl sm:text-2xl font-black font-cyber text-transparent bg-clip-text bg-gradient-to-r from-cyan-200 via-teal-200 to-fuchsia-200 tracking-wide mt-2">
+              <h2 className="text-xl sm:text-2xl font-black font-cyber text-center text-transparent bg-clip-text bg-gradient-to-r from-cyan-200 via-teal-200 to-fuchsia-200 tracking-wide mt-2">
                 <CyberScrambleText text="AUTHENTICATE IDENTITY" speed={20} />
               </h2>
 
-              <p className="text-xs text-cyan-300/80 max-w-sm mx-auto leading-relaxed">
+              <p className="text-xs text-center text-cyan-300/80 max-w-sm mx-auto leading-relaxed">
                 Sign in to manage your credits balance, tracked Bitty Boxes, API keys, and autonomous AI Agent tools.
               </p>
-            </div>
-
-            {/* 100 Credits Allotment Rule Banner */}
-            <div className="mb-5 p-3.5 rounded-xl bg-gradient-to-r from-amber-500/20 via-emerald-500/15 to-cyan-500/20 border-2 border-amber-400/60 shadow-[0_0_25px_rgba(245,158,11,0.25)] relative overflow-hidden z-10 animate-in fade-in duration-300">
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-xl bg-amber-400/20 border border-amber-400/70 text-amber-300 shrink-0 shadow-[0_0_12px_rgba(245,158,11,0.5)]">
-                  <Coins className="w-5 h-5 text-amber-300 animate-pulse" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-cyber font-bold text-xs text-amber-200 tracking-wider">
-                      ONE-TIME ALLOTMENT: 100 FREE CREDITS
-                    </span>
-                    <span className="text-[9px] uppercase px-2 py-0.5 rounded bg-gradient-to-r from-amber-400 to-amber-300 text-black font-extrabold shadow-sm">
-                      GOOGLE SIGN-IN ONLY
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-amber-100/90 font-mono mt-1 leading-relaxed">
-                    To be eligible for the <strong className="text-amber-300 font-bold">100 free credits</strong> allotment for new accounts, you must use <strong className="text-cyan-300 font-bold">"Continue with Google"</strong> below. <span className="text-rose-300 font-semibold">No credits are issued if you use magic link.</span>
-                  </p>
-                </div>
-              </div>
             </div>
 
             {/* Primary Google Sign In Button */}
@@ -429,7 +335,7 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
                 type="button"
                 onClick={handleGoogleSignIn}
                 disabled={googleLoading || authSubmitting}
-                className="w-full py-3.5 px-4 rounded-xl font-sans font-bold text-sm tracking-wide text-white bg-gradient-to-r from-[#0d1c30] via-[#10243d] to-[#0c1c2e] hover:from-[#132845] hover:to-[#173254] border-2 border-cyan-400/70 hover:border-cyan-300 active:scale-[0.99] transition-all duration-200 shadow-[0_0_30px_rgba(0,242,255,0.3)] cursor-pointer disabled:opacity-50 flex items-center justify-between group"
+                className="w-full py-3.5 px-4 rounded-xl font-sans font-bold text-sm tracking-wide text-white bg-gradient-to-r from-[#0d1c30] via-[#10243d] to-[#0c1c2e] hover:from-[#132845] hover:to-[#173254] border-2 border-cyan-400/70 hover:border-cyan-300 active:scale-[0.99] transition-all duration-200 shadow-[0_0_30px_rgba(0,242,255,0.3)] cursor-pointer disabled:opacity-50 flex items-center justify-center group"
               >
                 {googleLoading ? (
                   <div className="flex items-center justify-center gap-2 w-full">
@@ -437,38 +343,25 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
                     <span className="font-mono text-xs text-cyan-200">AUTHENTICATING WITH GOOGLE...</span>
                   </div>
                 ) : (
-                  <>
-                    <div className="flex items-center gap-3">
-                      <div className="w-6 h-6 rounded-lg bg-white flex items-center justify-center shrink-0 shadow-md p-1 group-hover:scale-105 transition-transform">
-                        <GoogleIcon className="w-4 h-4" />
-                      </div>
-                      <span className="text-sm font-bold text-slate-100 group-hover:text-white font-mono tracking-wide">
-                        CONTINUE WITH GOOGLE
-                      </span>
+                  <div className="flex items-center gap-3">
+                    <div className="w-6 h-6 rounded-lg bg-white flex items-center justify-center shrink-0 shadow-md p-1 group-hover:scale-105 transition-transform">
+                      <GoogleIcon className="w-4 h-4" />
                     </div>
-                    <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-mono font-bold bg-amber-400/20 text-amber-300 border border-amber-400/50 px-2 py-0.5 rounded-full">
-                      🎁 +100 CREDITS
+                    <span className="text-sm font-bold text-slate-100 group-hover:text-white font-mono tracking-wide">
+                      CONTINUE WITH GOOGLE
                     </span>
-                  </>
+                  </div>
                 )}
               </button>
             </div>
 
             {/* Visual Divider */}
-            <div className="flex items-center gap-3 mb-4 relative z-10">
+            <div className="flex items-center gap-3 mb-5 relative z-10">
               <div className="h-px flex-1 bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent" />
               <span className="text-[10px] uppercase font-mono tracking-widest text-cyan-400/60">
-                OR PASSWORDLESS EMAIL (0 CREDITS)
+                OR SIGN IN WITH EMAIL
               </span>
               <div className="h-px flex-1 bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent" />
-            </div>
-
-            {/* Magic Link Disclaimer Banner */}
-            <div className="mb-4 p-2.5 rounded-xl bg-[#050414] border border-cyan-500/30 text-[11px] font-mono text-cyan-200/80 flex items-start gap-2 relative z-10">
-              <Info className="w-3.5 h-3.5 text-cyan-400 shrink-0 mt-0.5" />
-              <p className="leading-snug">
-                <span className="text-cyan-300 font-bold">Magic Link Notice:</span> Accounts created via Magic Link start with <strong className="text-rose-300">0 credits</strong>. Sign in with Google above to receive your 100 free credits.
-              </p>
             </div>
 
             {magicLinkSent ? (
@@ -501,20 +394,57 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
               </div>
             ) : (
               <form onSubmit={handleMagicLinkSubmit} className="space-y-4 relative z-10">
-                <div>
-                  <label className="block text-[11px] font-bold text-cyan-300 mb-1">
-                    YOUR EMAIL ADDRESS:
-                  </label>
-                  <div className="relative">
+                <div className="input-container">
+                  <div className="input-field-container">
                     <input
                       type="email"
                       required
                       value={email}
                       onChange={e => setEmail(e.target.value)}
-                      placeholder="developer@yourdomain.com"
-                      className="w-full bg-[#02010c] border border-cyan-500/40 rounded-xl pl-9 pr-3 py-2.5 text-xs text-cyan-100 placeholder:text-cyan-600 outline-none focus:border-cyan-300 focus:shadow-[0_0_15px_rgba(0,242,255,0.3)] transition font-mono shadow-inner"
+                      className="holo-input"
+                      placeholder=""
                     />
-                    <Mail className="w-4 h-4 text-cyan-400/60 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <div className="input-border" />
+                    <div className="holo-scan-line" />
+                    <div className="input-glow" />
+                    <div className="input-active-indicator" />
+                    <div className="input-label">E-MAIL</div>
+
+                    <div className="input-data-visualization">
+                      {Array.from({ length: 20 }).map((_, i) => (
+                        <div className="data-segment" style={{ '--index': i + 1 }} key={i} />
+                      ))}
+                    </div>
+
+                    <div className="input-particles">
+                      <div className="input-particle" style={{ '--index': 1, top: '20%', left: '10%' }} />
+                      <div className="input-particle" style={{ '--index': 2, top: '65%', left: '25%' }} />
+                      <div className="input-particle" style={{ '--index': 3, top: '40%', left: '40%' }} />
+                      <div className="input-particle" style={{ '--index': 4, top: '75%', left: '60%' }} />
+                      <div className="input-particle" style={{ '--index': 5, top: '30%', left: '75%' }} />
+                      <div className="input-particle" style={{ '--index': 6, top: '60%', left: '90%' }} />
+                    </div>
+
+                    <div className="input-holo-overlay" />
+                    <div className="interface-lines">
+                      <div className="interface-line" />
+                      <div className="interface-line" />
+                      <div className="interface-line" />
+                      <div className="interface-line" />
+                    </div>
+                    <div className="hex-decoration" />
+                    <div className="input-status">Ready for input</div>
+                    <div className="power-indicator" />
+
+                    <div className="input-decoration">
+                      <div className="decoration-dot" />
+                      <div className="decoration-line" />
+                      <div className="decoration-dot" />
+                      <div className="decoration-line" />
+                      <div className="decoration-dot" />
+                      <div className="decoration-line" />
+                      <div className="decoration-dot" />
+                    </div>
                   </div>
                 </div>
 
@@ -570,7 +500,7 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
                   )}
                 </button>
                 <div className="text-[10px] text-cyan-400/60 text-center font-mono">
-                  ⚡ Instant access via email • 0 starter credits (Sign in with Google for 100 CR)
+                  ⚡ Passwordless email sign-in &bull; Instant single-use magic link
                 </div>
               </form>
             )}
@@ -585,15 +515,8 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
   // =========================================================================
   return (
     <div
-      className="relative min-h-[calc(100vh-4rem)] bg-[#03020e] text-cyan-100 font-sans py-6 sm:py-8 px-3 sm:px-6 overflow-hidden"
+      className="relative min-h-[calc(100vh-4rem)] bg-transparent text-cyan-100 font-sans py-6 sm:py-8 px-3 sm:px-6 overflow-hidden"
     >
-      {/* 3D Canvas Background */}
-      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none z-0" />
-
-      {/* Cyber Vignette & Grid */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_30%,rgba(3,2,14,0.92)_100%)] pointer-events-none z-1" />
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(0,242,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,242,255,0.02)_1px,transparent_1px)] bg-[size:48px_48px] pointer-events-none z-1" />
-
       <div className="max-w-4xl mx-auto space-y-5 relative z-10">
 
         {/* =========================================================================
@@ -610,9 +533,9 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
           <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_50%,rgba(0,0,0,0.35)_51%)] bg-[length:100%_4px] pointer-events-none opacity-25" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(0,242,255,0.1),transparent_70%)] pointer-events-none" />
 
-          <div className="flex flex-col items-stretch gap-4 border-b border-cyan-500/20 pb-4 mb-4 relative z-10">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-cyan-500/20 pb-4 mb-4 relative z-30">
             {/* User Details */}
-            <div className="flex items-center gap-3.5">
+            <div className="flex items-center gap-3.5 flex-1 min-w-0">
               <UserAvatar
                 user={user}
                 size="xl"
@@ -621,33 +544,39 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
                 altText={user.displayName || user.email}
               />
 
-              <div>
+              <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="font-cyber font-bold text-lg sm:text-xl text-cyan-200 flex items-center gap-2">
+                  <h1 className="font-cyber font-bold text-lg sm:text-xl text-cyan-200 flex items-center gap-2 truncate">
                     <CyberScrambleText text={user.displayName || "Bitty Builder"} speed={25} />
                   </h1>
-                  <span className="text-[10px] uppercase font-mono font-bold bg-cyan-950/80 border border-cyan-400/50 text-cyan-300 px-2 py-0.5 rounded shadow-sm">
+                  <span className="text-[10px] uppercase font-mono font-bold bg-cyan-950/80 border border-cyan-400/50 text-cyan-300 px-2 py-0.5 rounded shadow-sm shrink-0">
                     {user.tier || "PRO BUILDER"}
                   </span>
-                  <span className="text-[10px] font-mono text-cyan-400/60 hidden sm:inline">
+                  <span className="text-[10px] font-mono text-cyan-400/60 hidden sm:inline shrink-0">
                     ID: {user.id}
                   </span>
                 </div>
                 <div className="text-xs text-cyan-300/70 font-mono mt-0.5 flex items-center gap-2 flex-wrap">
-                  <span>{user.email}</span>
+                  <span className="truncate">{user.email}</span>
                   <span>•</span>
                   <span>Member since {new Date(user.joinedDate).toLocaleDateString()}</span>
                 </div>
               </div>
             </div>
 
-            {/* Quick Actions (Create Box, Sign Out) */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            {/* Quick Actions (Session Save Status at top right, Action buttons) */}
+            <div className="flex flex-wrap sm:flex-nowrap items-center justify-start md:justify-end gap-2 shrink-0 relative z-30">
+              <SessionSaveIndicator
+                lastSavedAt={lastSavedAt}
+                isSaving={isSaving}
+                activeSessionTitle={activeSessionTitle}
+                onManualSave={onManualSave}
+              />
               {onNavigateToSlide01 && (
                 <button
                   type="button"
                   onClick={onNavigateToSlide01}
-                  className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-cyan-500/20 via-teal-500/20 to-cyan-500/20 border border-cyan-400/60 hover:border-cyan-300 text-cyan-100 hover:text-white text-xs font-cyber font-bold flex items-center gap-1.5 transition cursor-pointer shadow-[0_0_15px_rgba(0,242,255,0.25)] hover:scale-105 active:scale-95"
+                  className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-cyan-500/20 via-teal-500/20 to-cyan-500/20 border border-cyan-400/60 hover:border-cyan-300 text-cyan-100 hover:text-white text-xs font-cyber font-bold flex items-center gap-1.5 transition cursor-pointer shadow-[0_0_15px_rgba(0,242,255,0.25)] hover:scale-105 active:scale-95 whitespace-nowrap"
                 >
                   <Plus className="w-4 h-4 text-cyan-300" />
                   <span>LAUNCH STUDIO BUILDER</span>
@@ -656,7 +585,7 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
               <button
                 type="button"
                 onClick={logout}
-                className="px-3 py-2 rounded-xl bg-rose-950/60 border border-rose-500/40 text-rose-300 hover:bg-rose-900/60 text-xs font-mono flex items-center gap-1.5 transition cursor-pointer hover:scale-105 active:scale-95"
+                className="px-3 py-2 rounded-xl bg-rose-950/60 border border-rose-500/40 text-rose-300 hover:bg-rose-900/60 text-xs font-mono flex items-center gap-1.5 transition cursor-pointer hover:scale-105 active:scale-95 whitespace-nowrap"
                 title="Sign out of this session"
               >
                 <LogOut className="w-3.5 h-3.5 text-rose-400" />
@@ -674,7 +603,7 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
                 <Coins className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
               </div>
               <div className="text-xl sm:text-2xl font-bold font-cyber text-cyan-200 mt-1">
-                {user.credits} <span className="text-xs font-mono text-cyan-400/60 font-normal">PTS</span>
+                {user.credits} <span className="text-xs font-mono text-cyan-400/60 font-normal">CR</span>
               </div>
               <div className="text-[10px] text-emerald-400 mt-0.5">
                 {user.creditsUsedTotal} credits used total
@@ -875,7 +804,7 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
                         )}
                         {box.locks?.password && (
                           <span className="inline-flex items-center gap-1 text-fuchsia-300 bg-fuchsia-950/80 border border-fuchsia-500/40 px-2 py-0.5 rounded">
-                            <Lock className="w-3 h-3 text-fuchsia-400" /> Passcode (5 CR)
+                            <Lock className="w-3 h-3 text-fuchsia-400" /> Passcode (FREE)
                           </span>
                         )}
                         {box.locks?.timeWindow && (
@@ -1248,10 +1177,10 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
               <div className="space-y-3 pt-2 relative z-10">
                 <div className="text-xs font-bold text-emerald-300 font-cyber flex items-center justify-between">
                   <span>MEMBERSHIP TIERS:</span>
-                  <span className="text-[10px] text-amber-300/80">FREE &bull; PRO ($9/MO) &bull; ULTRA ($29/MO)</span>
+                  <span className="text-[10px] text-amber-300/80">FREE &bull; PRO ($4/MO)</span>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl">
                   {/* Tier 1: FREE */}
                   <div className="p-4.5 rounded-xl bg-[#03010b] border border-cyan-500/30 flex flex-col justify-between space-y-3">
                     <div>
@@ -1288,35 +1217,35 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
                           <Crown className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
                           BITTY BOX PRO
                         </span>
-                        <span className="text-[9px] font-mono bg-amber-950 px-2 py-0.5 rounded text-amber-300 border border-amber-500/50">
-                          $9/MO &bull; $79/YR
+                        <span className="text-[9px] font-mono bg-amber-950 px-2 py-0.5 rounded text-amber-300 border border-amber-500/50 font-bold">
+                          $4/MO FLAT RATE
                         </span>
                       </div>
                       <div className="text-xl font-extrabold font-cyber text-white mt-1">
-                        ALL CURRENT LOCKS
+                        ALL FEATURES UNLOCKED
                       </div>
                       <p className="text-[11px] text-amber-100/90 mt-1 leading-relaxed">
-                        Passcode (numeric), Time Locks (Duration, Delay, Date Schedule), Reveal + Decay, Visitor Quota, and premium themes.
+                        Passcode PIN locks, Time Locks (Duration, Delay, Date Schedule), Reveal + Decay, Visitor Quota, and premium themes.
                       </p>
                       <div className="mt-2 pt-2 border-t border-amber-500/30 text-[10px] text-amber-200/90 space-y-0.5">
                         <div className="text-emerald-300 font-bold">&bull; Unlimited lock generation with 0 credits</div>
-                        <div>&bull; Basic views &amp; unlock event telemetry</div>
+                        <div>&bull; 1,000 monthly Credits included</div>
+                        <div>&bull; Views &amp; unlock event telemetry</div>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-2">
                       <a
-                        href="https://creem.io/product/prod_21AwXWmmf6vUmr7Z4JJ3sO"
+                        href="https://creem.io/product/prod_324HFJtSwkJk6B3qCSnCXq"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="py-2.5 rounded-lg bg-gradient-to-r from-amber-400 via-amber-300 to-amber-400 text-black font-cyber font-bold text-[10px] tracking-wider flex items-center justify-center gap-1 transition shadow-sm hover:brightness-110"
                       >
-                        <span className="line-through decoration-rose-600/80 mr-1">$17</span>
-                        <span>$7 / MO</span>
+                        <span>$4 / MO</span>
                         <ExternalLink className="w-3 h-3 text-black" />
                       </a>
                       <a
-                        href="https://creem.io/product/prod_21AwXWmmf6vUmr7Z4JJ3sO"
+                        href="https://creem.io/product/prod_324HFJtSwkJk6B3qCSnCXq"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="py-2.5 rounded-lg bg-amber-950 border border-amber-400/60 text-amber-200 font-cyber font-bold text-[10px] tracking-wider flex items-center justify-center gap-1 transition hover:bg-amber-900"
@@ -1325,35 +1254,6 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
                         <span>1,000 CR/MO</span>
                         <ExternalLink className="w-3 h-3 text-amber-300" />
                       </a>
-                    </div>
-                  </div>
-
-                  {/* Tier 3: ULTRA (FUTURE) */}
-                  <div className="p-4.5 rounded-xl bg-[#03010b] border border-fuchsia-500/40 flex flex-col justify-between space-y-3 opacity-90 hover:opacity-100 transition">
-                    <div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-fuchsia-200 font-cyber flex items-center gap-1.5">
-                          <Zap className="w-3.5 h-3.5 text-fuchsia-400" />
-                          ULTRA TIER
-                        </span>
-                        <span className="text-[9px] font-mono bg-fuchsia-950 px-2 py-0.5 rounded text-fuchsia-300 border border-fuchsia-500/40">
-                          $29/MO &bull; $249/YR
-                        </span>
-                      </div>
-                      <div className="text-xl font-extrabold font-cyber text-fuchsia-300 mt-1">
-                        CHAINS &amp; LOGIC
-                      </div>
-                      <p className="text-[11px] text-zinc-300 mt-1 leading-relaxed">
-                        Agent-native workflow powerhouse: multi-box chains, conditional logic, OAuth identity access, and agent triggers.
-                      </p>
-                      <div className="mt-2 pt-2 border-t border-fuchsia-500/20 text-[10px] text-fuchsia-300/70 space-y-0.5">
-                        <div>&bull; Version history &amp; snapshots</div>
-                        <div>&bull; Team collaboration &amp; vaults</div>
-                      </div>
-                    </div>
-
-                    <div className="py-2 text-center text-[10px] text-fuchsia-300 font-mono bg-fuchsia-950/40 rounded-lg border border-fuchsia-500/30">
-                      🚀 PLANNED FUTURE TIER
                     </div>
                   </div>
                 </div>
@@ -1368,7 +1268,7 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
                   <div className="p-2.5 rounded-lg bg-black/60 border border-cyan-500/25 flex items-center justify-between">
                     <span className="text-zinc-300 text-[11px]">Passcode (PIN)</span>
-                    <span className="font-bold text-fuchsia-400">5 CR</span>
+                    <span className="font-bold text-emerald-400">FREE (0 CR)</span>
                   </div>
                   <div className="p-2.5 rounded-lg bg-black/60 border border-cyan-500/25 flex items-center justify-between">
                     <span className="text-zinc-300 text-[11px]">Time-Based Locks</span>
@@ -1389,38 +1289,38 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
               <div className="space-y-3 pt-2 relative z-10">
                 <div className="text-xs font-bold text-emerald-300 font-cyber">CREDIT REFILL PACKAGES:</div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  {/* Pack 1: 100 Credits */}
+                  {/* Pack 1: 1,000 Credits (Starter) */}
                   <div className="p-4.5 rounded-xl bg-[#03010b] border border-cyan-500/40 hover:border-cyan-300 transition flex flex-col justify-between space-y-3 shadow-inner">
                     <div>
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-cyan-200 font-cyber flex items-center gap-1.5">
                           <Coins className="w-3.5 h-3.5 text-cyan-400" />
-                          100 CREDITS
+                          1,000 CREDITS
                         </span>
                         <span className="text-[10px] font-mono bg-cyan-950 px-2 py-0.5 rounded text-cyan-300 border border-cyan-500/40">
-                          $1.00
+                          $10.00
                         </span>
                       </div>
                       <div className="text-2xl font-extrabold font-cyber text-cyan-300 mt-2">
-                        100 <span className="text-xs font-normal text-cyan-400/70 font-mono">CREDITS</span>
+                        1,000 <span className="text-xs font-normal text-cyan-400/70 font-mono">CREDITS</span>
                       </div>
                       <p className="text-[11px] text-cyan-300/70 mt-1 leading-relaxed">
-                        Trial top-up: $0.01 / credit. Test PRO access locks with almost no spend.
+                        Starter top-up: $0.01 / credit. Test PRO access locks with pay-as-you-go credits.
                       </p>
                     </div>
 
                     <a
-                      href="https://creem.io/product/prod_RZv35BDis62xNpVbtwhZT"
+                      href="https://creem.io/product/prod_6W2ZUtURJf1Mk02xaq6aJF"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="w-full py-2.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/60 text-cyan-200 font-cyber font-bold text-xs tracking-wider flex items-center justify-center gap-1.5 transition active:scale-[0.99]"
                     >
-                      <span>BUY 100 CREDITS ($1)</span>
+                      <span>BUY 1,000 CREDITS ($10)</span>
                       <ExternalLink className="w-3.5 h-3.5 text-cyan-300" />
                     </a>
                   </div>
 
-                  {/* Pack 2: 500 Credits */}
+                  {/* Pack 2: 5,000 Credits (Growth) */}
                   <div className="p-4.5 rounded-xl bg-gradient-to-b from-emerald-950/40 to-[#03010b] border-2 border-emerald-400/80 shadow-[0_0_20px_rgba(0,255,150,0.2)] flex flex-col justify-between space-y-3 relative">
                     <div className="absolute -top-2.5 right-3 bg-emerald-400 text-black text-[9px] font-cyber font-extrabold px-2.5 py-0.5 rounded-full uppercase shadow-md">
                       POPULAR &bull; BEST VALUE
@@ -1429,58 +1329,58 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-emerald-200 font-cyber flex items-center gap-1.5">
                           <Coins className="w-3.5 h-3.5 text-emerald-400" />
-                          500 CREDITS
+                          5,000 CREDITS
                         </span>
                         <span className="text-[10px] font-mono bg-emerald-950 px-2 py-0.5 rounded text-emerald-300 border border-emerald-500/40">
-                          $5.00
+                          $35.00
                         </span>
                       </div>
                       <div className="text-2xl font-extrabold font-cyber text-emerald-300 mt-2">
-                        500 <span className="text-xs font-normal text-emerald-400/70 font-mono">CREDITS</span>
+                        5,000 <span className="text-xs font-normal text-emerald-400/70 font-mono">CREDITS</span>
                       </div>
                       <p className="text-[11px] text-emerald-300/80 mt-1 leading-relaxed">
-                        Creator top-up: $0.01 / credit. Ideal for secured &amp; scheduled micro-links.
+                        Growth top-up: $0.007 / credit. Ideal for creators deploying secured micro-links.
                       </p>
                     </div>
 
                     <a
-                      href="https://creem.io/product/prod_7TpN3lpNqR0lIcD6tRZNDM"
+                      href="https://creem.io/product/prod_1ybKpsP1FQPyKvVZUVSg0A"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="w-full py-2.5 rounded-xl bg-emerald-400 text-black font-cyber font-bold text-xs tracking-wider flex items-center justify-center gap-1.5 transition shadow-[0_0_15px_rgba(0,255,150,0.4)] hover:brightness-110 active:scale-[0.99]"
                     >
-                      <span>BUY 500 CREDITS ($5)</span>
+                      <span>BUY 5,000 CREDITS ($35)</span>
                       <ExternalLink className="w-3.5 h-3.5 text-black" />
                     </a>
                   </div>
 
-                  {/* Pack 3: 2500 Credits */}
+                  {/* Pack 3: 15,000 Credits (Pro) */}
                   <div className="p-4.5 rounded-xl bg-[#03010b] border border-cyan-500/40 hover:border-cyan-300 transition flex flex-col justify-between space-y-3 shadow-inner">
                     <div>
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-cyan-200 font-cyber flex items-center gap-1.5">
                           <Coins className="w-3.5 h-3.5 text-cyan-400" />
-                          2,500 CREDITS
+                          15,000 CREDITS
                         </span>
                         <span className="text-[10px] font-mono bg-cyan-950 px-2 py-0.5 rounded text-cyan-300 border border-cyan-500/40">
-                          $10.00
+                          $90.00
                         </span>
                       </div>
                       <div className="text-2xl font-extrabold font-cyber text-cyan-300 mt-2">
-                        2,500 <span className="text-xs font-normal text-cyan-400/70 font-mono">CREDITS</span>
+                        15,000 <span className="text-xs font-normal text-cyan-400/70 font-mono">CREDITS</span>
                       </div>
                       <p className="text-[11px] text-cyan-300/70 mt-1 leading-relaxed">
-                        Pro power bundle: $0.004 / credit. Maximum volume for automated links &amp; agents.
+                        Pro power bundle: $0.006 / credit. Maximum volume for automated links &amp; agent tools.
                       </p>
                     </div>
 
                     <a
-                      href="https://creem.io/product/prod_4qidrzVKMckokpFYgp8NM4"
+                      href="https://creem.io/product/prod_2qRxHcyee2IvOfAiIFKYw6"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="w-full py-2.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/60 text-cyan-200 font-cyber font-bold text-xs tracking-wider flex items-center justify-center gap-1.5 transition active:scale-[0.99]"
                     >
-                      <span>BUY 2,500 CREDITS ($10)</span>
+                      <span>BUY 15,000 CREDITS ($90)</span>
                       <ExternalLink className="w-3.5 h-3.5 text-cyan-300" />
                     </a>
                   </div>
@@ -1509,7 +1409,7 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
                         <span className="text-emerald-100">{t.description}</span>
                       </div>
                       <div className="flex items-center gap-2 text-[10px] text-emerald-400/70 shrink-0">
-                        <span className="font-bold text-emerald-300">+{t.amount} PTS</span>
+                        <span className="font-bold text-emerald-300">+{t.amount} CR</span>
                         <span>•</span>
                         <span>{new Date(t.createdAt).toLocaleDateString()}</span>
                       </div>

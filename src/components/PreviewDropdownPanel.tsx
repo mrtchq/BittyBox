@@ -38,7 +38,7 @@ export const PreviewDropdownPanel: React.FC<PreviewDropdownPanelProps> = ({
   onPreviewInTab,
 }) => {
   const [viewportMode, setViewportMode] = useState<ViewportMode>('desktop');
-  const [iframeKey, setIframeKey] = useState<number>(0);
+  const [refreshCount, setRefreshCount] = useState<number>(0);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
   // Close on Escape key
@@ -57,7 +57,7 @@ export const PreviewDropdownPanel: React.FC<PreviewDropdownPanelProps> = ({
   const renderedHtml = useMemo(() => {
     const activeCode = content && content.trim().length > 0
       ? content
-      : '<!DOCTYPE html><html><body style="background:#050515;color:#00f2ff;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:sans-serif;"><h3>Empty document — type or paste code in the editor to preview</h3></body></html>';
+      : '<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{background:#0a0520;color:#00f2ff;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;margin:0;font-family:sans-serif;text-align:center;}h3{font-size:1.15rem;margin:0 0 0.5rem 0;}p{color:#a78bfa;font-size:0.85rem;margin:0;}</style></head><body><div><h3>Live Sandbox Ready</h3><p>Type or paste HTML, Markdown, or code in the editor to preview.</p></div></body></html>';
     
     return getRenderedHtml(activeCode, {
       title: title || metadata?.title || 'Preview',
@@ -67,8 +67,8 @@ export const PreviewDropdownPanel: React.FC<PreviewDropdownPanelProps> = ({
 
   const handleRefresh = () => {
     setIsRefreshing(true);
-    setIframeKey(prev => prev + 1);
-    setTimeout(() => setIsRefreshing(false), 400);
+    setRefreshCount(prev => prev + 1);
+    setTimeout(() => setIsRefreshing(false), 350);
   };
 
   const handleOpenInNewTab = () => {
@@ -230,10 +230,10 @@ export const PreviewDropdownPanel: React.FC<PreviewDropdownPanelProps> = ({
                 )}
 
                 <iframe
-                  key={iframeKey}
+                  key={`preview-iframe-${refreshCount}`}
                   srcDoc={renderedHtml}
                   title="Live Code Preview"
-                  className="w-full h-full border-0 bg-black rounded-lg shadow-inner"
+                  className="w-full h-full border-0 bg-white rounded-lg shadow-inner"
                   sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-modals allow-downloads"
                 />
               </div>

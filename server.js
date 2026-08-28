@@ -2,9 +2,10 @@ import express from 'express';
 import path from 'path';
 import crypto from 'crypto';
 import { fileURLToPath } from 'url';
-import { createBittyLink, decodeBittyLink } from './lib/bitty-engine.js';
+import { createBittyLink, createBittyChain, decodeBittyLink, detectFormat } from './lib/bitty-engine.js';
 import { handleMcpHttpRequest } from './mcp/http-transport.js';
 import { renderApiDocsPage } from './lib/api-docs-page.js';
+import { getAgentDiscovery, renderAgentsPage } from './lib/agents-page.js';
 import {
   getDefaultUser,
   getOrCreateUser,
@@ -22,13 +23,15 @@ import {
   recordLinkCreation,
   deleteUserLink,
   purchaseCredits,
-  deductCredits,
+  deductCreditsEnforced,
+  requireCreditsAvailable,
   createMagicToken,
   verifyMagicToken,
   sanitizeUser,
   syncUserCreditsWithCreem,
   getUserCreemEntries
 } from './lib/account-store.js';
+import { calculateBoxCreditCost, calculateChainCreditCost, calculateRecordedLinkCreditCost } from './lib/credit-costs.js';
 import { sendMagicLinkEmail } from './lib/resend-client.js';
 import { triggerN8nWebhook } from './lib/n8n-client.js';
 import { authMiddleware } from './lib/auth-middleware.js';
@@ -87,11 +90,35 @@ app.get(['/api/health', '/api/bitty/health'], (_req, res) => {
 });
 
 // ==========================================
-// Interactive API & MCP Documentation
+// Interactive API, MCP & Agent Documentation
 // ==========================================
 app.get(['/api/docs', '/api/bitty/docs'], (_req, res) => {
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.send(renderApiDocsPage());
+});
+
+function sendCreditFailure(res, err) {
+  if (err?.code !== 'INSUFFICIENT_CREDITS') return false;
+  res.status(err.status || 402).json({
+    success: false,
+    error: err.message,
+    code: err.code,
+    creditsRequired: err.creditsRequired,
+    creditsAvailable: err.creditsAvailable,
+  });
+  return true;
+}
+
+app.get(['/agents', '/agents/'], (_req, res) => {
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.send(renderAgentsPage());
+});
+
+app.get(['/agents.json', '/.well-known/bittybox-agent.json', '/api/agent/capabilities'], (_req, res) => {
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.json(getAgentDiscovery());
 });
 
 // ==========================================
@@ -280,20 +307,17 @@ app.post('/api/accounts/links', async (req, res) => {
       return res.status(401).json({ success: false, error: 'Authentication required to save box to account' });
     }
     const linkData = req.body || {};
-    recordLinkCreation(user.id, linkData);
-    let cost = 0;
-    if (typeof linkData.cost === 'number' && linkData.cost >= 0) {
-      cost = Math.floor(linkData.cost);
-    } else if (linkData.locks) {
-      if (linkData.locks.password) cost += 5;
-      if (linkData.locks.timeWindow) cost += 10;
-      if (linkData.locks.accessLimit) cost += 10;
-    }
+    const cost = calculateRecordedLinkCreditCost(linkData);
     if (cost > 0) {
-      await deductCredits(user.id, cost, 'human', `Generated Box: ${linkData.title || 'Bitty Box'}`);
+      const desc = linkData.format === 'chain'
+        ? `Generated Box Chain: ${linkData.title || 'Chained Bitty Box'} (${cost} CR)`
+        : `Generated Box: ${linkData.title || 'Bitty Box'} (${cost} CR)`;
+      await deductCreditsEnforced(user.id, cost, 'human', desc);
     }
+    recordLinkCreation(user.id, { ...linkData, cost });
     res.json({ success: true, user: sanitizeUser(user) });
   } catch (err) {
+    if (sendCreditFailure(res, err)) return;
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -505,10 +529,20 @@ app.post(['/api/billing/webhook', '/api/webhooks/creem', '/api/webhooks/payment'
     const productId = data.product_id || data.product?.id;
     const amountCents = data.amount || data.price || 0;
 
-    // LIVE product IDs (BittyBox account — creem-creds-2.txt).
+    // LIVE product IDs (BittyBox Creem account).
     // PRO monthly grants 1,000 recurring credits + all features.
     // Credit top-ups route through Creem Customer Credit Accounts (CCA).
-    const PRO_MONTHLY = 'prod_21AwXWmmf6vUmr7Z4JJ3sO';
+    const PRO_MONTHLY_IDS = [
+      'prod_324HFJtSwkJk6B3qCSnCXq',
+      'prod_2YSR2KILROlKvcz91alMW0',
+      'prod_21AwXWmmf6vUmr7Z4JJ3sO'
+    ];
+    const CREDITS_STARTER_1000 = 'prod_6W2ZUtURJf1Mk02xaq6aJF';
+    const CREDITS_GROWTH_5000 = 'prod_1ybKpsP1FQPyKvVZUVSg0A';
+    const CREDITS_PRO_15000 = 'prod_2qRxHcyee2IvOfAiIFKYw6';
+    const CREDITS_MONTHLY_PASS_10000 = 'prod_3dVHhedrXPaGmitx9VecS3';
+
+    // Legacy product IDs
     const CREDITS_100 = 'prod_RZv35BDis62xNpVbtwhZT';
     const CREDITS_500 = 'prod_7TpN3lpNqR0lIcD6tRZNDM';
     const CREDITS_2500 = 'prod_4qidrzVKMckokpFYgp8NM4';
@@ -517,16 +551,28 @@ app.post(['/api/billing/webhook', '/api/webhooks/creem', '/api/webhooks/payment'
     let packageId = 'unknown';
     let isProUnlock = false;
 
-    if (productId === CREDITS_100 || amountCents === 100) {
+    if (productId === CREDITS_STARTER_1000 || (amountCents === 1000 && !PRO_MONTHLY_IDS.includes(productId))) {
+      creditsToAdd = 1000;
+      packageId = 'credits_starter_1000';
+    } else if (productId === CREDITS_GROWTH_5000 || amountCents === 3500) {
+      creditsToAdd = 5000;
+      packageId = 'credits_growth_5000';
+    } else if (productId === CREDITS_PRO_15000 || amountCents === 9000) {
+      creditsToAdd = 15000;
+      packageId = 'credits_pro_15000';
+    } else if (productId === CREDITS_MONTHLY_PASS_10000 || amountCents === 2500) {
+      creditsToAdd = 10000;
+      packageId = 'credits_monthly_pass_10000';
+    } else if (productId === CREDITS_100 || amountCents === 100) {
       creditsToAdd = 100;
       packageId = 'credits_100';
     } else if (productId === CREDITS_500 || amountCents === 500) {
       creditsToAdd = 500;
       packageId = 'credits_500';
-    } else if (productId === CREDITS_2500 || amountCents === 1000) {
+    } else if (productId === CREDITS_2500) {
       creditsToAdd = 2500;
       packageId = 'credits_2500';
-    } else if (productId === PRO_MONTHLY || amountCents === 700) {
+    } else if (PRO_MONTHLY_IDS.includes(productId) || amountCents === 400 || amountCents === 700 || amountCents === 900) {
       creditsToAdd = 1000;
       packageId = 'pro_monthly';
       isProUnlock = true;
@@ -535,7 +581,7 @@ app.post(['/api/billing/webhook', '/api/webhooks/creem', '/api/webhooks/payment'
     if (customerEmail) {
       const user = getUserByEmail(customerEmail);
       if (user) {
-        if (isProUnlock || productId === PRO_MONTHLY) {
+        if (isProUnlock || PRO_MONTHLY_IDS.includes(productId)) {
           user.tier = 'PRO';
           user.isPro = true;
         }
@@ -568,6 +614,12 @@ app.post(['/api/bitty/create', '/api/bitty'], async (req, res) => {
     let password = req.body?.password;
     let domain = req.body?.domain;
     let metadata = req.body?.metadata;
+    let description = req.body?.description;
+    let favicon = req.body?.favicon;
+    let image = req.body?.image;
+    let boxId = req.body?.boxId;
+    let lockConfig = req.body?.lockConfig;
+    let chain = req.body?.chain;
     const secretOverride = req.body?.secretOverride === true || req.body?.secretOverride === 'true' || req.body?.secretOverride === '1';
 
     if (typeof req.body === 'string') {
@@ -590,6 +642,11 @@ app.post(['/api/bitty/create', '/api/bitty'], async (req, res) => {
       });
     }
 
+    const creditCost = req.user ? calculateBoxCreditCost({ title, metadata, lockConfig, password }) : 0;
+    if (req.user && creditCost > 0) {
+      await requireCreditsAvailable(req.user.id, creditCost);
+    }
+
     const result = await createBittyLink({
       content,
       title,
@@ -599,7 +656,13 @@ app.post(['/api/bitty/create', '/api/bitty'], async (req, res) => {
       editable,
       password,
       domain,
-      metadata
+      metadata,
+      description,
+      favicon,
+      image,
+      boxId,
+      lockConfig,
+      chain
     });
 
     if (result.requiresSecretOverride && !secretOverride && process.env.BITTYBOX_ENFORCE_SECRET_POLICY === '1') {
@@ -612,8 +675,10 @@ app.post(['/api/bitty/create', '/api/bitty'], async (req, res) => {
     }
 
     if (req.user) {
-      recordLinkCreation(req.user.id, result);
-      await deductCredits(req.user.id, 1, 'api', `REST API Box: ${result.title || 'Bitty Box'}`);
+      if (creditCost > 0) {
+        await deductCreditsEnforced(req.user.id, creditCost, 'api', `REST API Box: ${result.title || 'Bitty Box'} (${creditCost} CR)`);
+      }
+      recordLinkCreation(req.user.id, { ...result, cost: creditCost });
     }
 
     res.json({
@@ -622,6 +687,7 @@ app.post(['/api/bitty/create', '/api/bitty'], async (req, res) => {
       ...result
     });
   } catch (err) {
+    if (sendCreditFailure(res, err)) return;
     console.error('[bittybox-api] Error creating bitty link:', err);
     res.status(500).json({ success: false, error: err.message });
   }
@@ -629,13 +695,18 @@ app.post(['/api/bitty/create', '/api/bitty'], async (req, res) => {
 
 app.get('/api/bitty/create', async (req, res) => {
   try {
-    const { content, title, format, language, theme, editable, password, domain, redirect } = req.query;
+    const { content, title, format, language, theme, editable, password, domain, redirect, description, favicon, image, boxId } = req.query;
     const secretOverride = req.query.secretOverride === 'true' || req.query.secretOverride === '1';
     if (!content) {
       return res.status(400).json({
         success: false,
         error: 'Missing required "content" query parameter'
       });
+    }
+
+    const creditCost = req.user ? calculateBoxCreditCost({ title, password }) : 0;
+    if (req.user && creditCost > 0) {
+      await requireCreditsAvailable(req.user.id, creditCost);
     }
 
     const result = await createBittyLink({
@@ -646,12 +717,18 @@ app.get('/api/bitty/create', async (req, res) => {
       theme: theme ? String(theme) : undefined,
       editable: editable === 'true' || editable === '1',
       password: password ? String(password) : undefined,
-      domain: domain ? String(domain) : undefined
+      domain: domain ? String(domain) : undefined,
+      description: description ? String(description) : undefined,
+      favicon: favicon ? String(favicon) : undefined,
+      image: image ? String(image) : undefined,
+      boxId: boxId ? String(boxId) : undefined
     });
 
     if (req.user) {
-      recordLinkCreation(req.user.id, result);
-      await deductCredits(req.user.id, 1, 'api', `REST API Box: ${result.title || 'Bitty Box'}`);
+      if (creditCost > 0) {
+        await deductCreditsEnforced(req.user.id, creditCost, 'api', `REST API Box: ${result.title || 'Bitty Box'} (${creditCost} CR)`);
+      }
+      recordLinkCreation(req.user.id, { ...result, cost: creditCost });
     }
 
     if (result.requiresSecretOverride && !secretOverride && process.env.BITTYBOX_ENFORCE_SECRET_POLICY === '1') {
@@ -669,9 +746,65 @@ app.get('/api/bitty/create', async (req, res) => {
 
     res.json({ success: true, ...result });
   } catch (err) {
+    if (sendCreditFailure(res, err)) return;
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
+// ==========================================
+// REST API: Create Bitty Chain
+// ==========================================
+app.post(['/api/bitty/chain', '/api/bitty/chains', '/api/bitty/box-chain', '/api/chain/create', '/api/box-chain/create'], async (req, res) => {
+  try {
+    const pages = req.body?.pages;
+    const title = req.body?.title;
+    const chainId = req.body?.chainId;
+    const domain = req.body?.domain;
+
+    if (!Array.isArray(pages) || pages.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing or empty "pages" array in request body'
+      });
+    }
+
+    const creditCalculation = calculateChainCreditCost(pages);
+    if (req.user && creditCalculation.totalCost > 0) {
+      await requireCreditsAvailable(req.user.id, creditCalculation.totalCost);
+    }
+
+    const result = await createBittyChain(pages, { title, chainId, domain });
+
+    if (req.user) {
+      if (creditCalculation.totalCost > 0) {
+        await deductCreditsEnforced(req.user.id, creditCalculation.totalCost, 'api', `REST API Box Chain: ${result.title} (${creditCalculation.totalCost} CR across ${pages.length} boxes)`);
+      }
+      recordLinkCreation(req.user.id, {
+        url: result.primaryUrl,
+        title: result.title,
+        format: 'chain',
+        cost: creditCalculation.totalCost,
+        boxBreakdowns: creditCalculation.boxBreakdowns,
+      });
+    }
+
+    res.json({
+      success: true,
+      endpoint: req.path,
+      aliases: ['/api/bitty/chain', '/api/bitty/box-chain', '/api/agent/chain', '/api/agent/box-chain'],
+      authenticatedAs: req.user ? req.user.email : undefined,
+      creditCost: creditCalculation.totalCost,
+      boxCreditBreakdowns: creditCalculation.boxBreakdowns,
+      ...result
+    });
+  } catch (err) {
+    if (sendCreditFailure(res, err)) return;
+    console.error('[bittybox-api] Error creating bitty chain:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get(['/api/bitty/chain', '/api/bitty/chains', '/api/bitty/box-chain', '/api/chain/create', '/api/box-chain/create'], sendAgentChainResponse);
 
 // ==========================================
 // REST API: Decode Bitty Link
@@ -706,6 +839,228 @@ app.get('/api/bitty/decode', async (req, res) => {
 
     const result = await decodeBittyLink(String(url), { password: password ? String(password) : undefined });
     res.json({ success: true, ...result });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ==========================================
+// Agent-friendly REST aliases
+// ==========================================
+function extractAgentCreateOptions(req) {
+  const source = req.method === 'GET' ? req.query : req.body;
+  let content = '';
+  let title = source?.title;
+  let format = source?.format;
+  let language = source?.language;
+  let theme = source?.theme;
+  let editable = source?.editable;
+  let password = source?.password;
+  let domain = source?.domain;
+  let metadata = source?.metadata;
+  let description = source?.description;
+  let favicon = source?.favicon;
+  let image = source?.image;
+  let boxId = source?.boxId;
+  let lockConfig = source?.lockConfig;
+  let chain = source?.chain;
+
+  if (typeof source === 'string') {
+    content = source;
+  } else if (source && source.content !== undefined) {
+    content = source.content;
+  } else if (source && source.code !== undefined) {
+    content = source.code;
+    format = format || 'code';
+  } else if (source && source.markdown !== undefined) {
+    content = source.markdown;
+    format = format || 'markdown';
+  } else if (source && source.html !== undefined) {
+    content = source.html;
+    format = format || 'html';
+  } else if (source && source.json !== undefined) {
+    content = typeof source.json === 'string' ? source.json : JSON.stringify(source.json, null, 2);
+    format = format || 'json';
+  } else if (source && source.svg !== undefined) {
+    content = source.svg;
+    format = format || 'svg';
+  }
+
+  if (req.method === 'GET') {
+    editable = editable === 'true' || editable === '1';
+    metadata = undefined;
+  }
+
+  const secretOverride = source?.secretOverride === true || source?.secretOverride === 'true' || source?.secretOverride === '1';
+  return { content, title, format, language, theme, editable, password, domain, metadata, description, favicon, image, boxId, lockConfig, chain, secretOverride };
+}
+
+async function sendAgentCreateResponse(req, res) {
+  try {
+    const options = extractAgentCreateOptions(req);
+    if (options.content === undefined || options.content === null || String(options.content).length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing content. Provide one of: content, code, markdown, html, json, or svg.',
+        discovery: '/agents',
+      });
+    }
+
+    const creditCost = req.user ? calculateBoxCreditCost(options) : 0;
+    if (req.user && creditCost > 0) {
+      await requireCreditsAvailable(req.user.id, creditCost);
+    }
+
+    const result = await createBittyLink(options);
+    if (result.requiresSecretOverride && !options.secretOverride && process.env.BITTYBOX_ENFORCE_SECRET_POLICY === '1') {
+      return res.status(403).json({
+        success: false,
+        error: 'Sensitive values detected in an unencrypted link. Pass secretOverride: true, or add password to encrypt the payload.',
+        warnings: result.warnings,
+        requiresSecretOverride: true,
+        discovery: '/agents',
+      });
+    }
+
+    if (req.user) {
+      if (creditCost > 0) {
+        await deductCreditsEnforced(req.user.id, creditCost, 'api', `Agent API Box: ${result.title || 'Bitty Box'} (${creditCost} CR)`);
+      }
+      recordLinkCreation(req.user.id, { ...result, cost: creditCost });
+    }
+
+    res.json({
+      success: true,
+      endpoint: '/api/agent/url',
+      canonicalEndpoint: '/api/bitty/create',
+      authenticatedAs: req.user ? req.user.email : undefined,
+      creditCost,
+      ...result,
+      next: {
+        inspect: '/api/agent/inspect',
+        mcp: '/mcp',
+        lockableBoxes: '/api/boxes',
+      },
+    });
+  } catch (err) {
+    if (sendCreditFailure(res, err)) return;
+    console.error('[bittybox-agent-api] Error creating agent URL:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+app.post('/api/agent/url', sendAgentCreateResponse);
+app.get('/api/agent/url', sendAgentCreateResponse);
+
+async function sendAgentChainResponse(req, res) {
+  try {
+    const source = req.method === 'GET' ? req.query : req.body;
+    let pages = source?.pages;
+    if (typeof pages === 'string') {
+      try {
+        pages = JSON.parse(pages);
+      } catch {
+        pages = [{ content: pages }];
+      }
+    }
+    const title = source?.title;
+    const chainId = source?.chainId;
+    const domain = source?.domain;
+
+    if (!Array.isArray(pages) || pages.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing or empty "pages" array. Provide an array of page objects with content/format/title.',
+        discovery: '/agents',
+      });
+    }
+
+    const creditCalculation = calculateChainCreditCost(pages);
+    if (req.user && creditCalculation.totalCost > 0) {
+      await requireCreditsAvailable(req.user.id, creditCalculation.totalCost);
+    }
+
+    const result = await createBittyChain(pages, { title, chainId, domain });
+
+    if (req.user) {
+      if (creditCalculation.totalCost > 0) {
+        await deductCreditsEnforced(req.user.id, creditCalculation.totalCost, 'api', `Agent API Box Chain: ${result.title} (${creditCalculation.totalCost} CR across ${pages.length} boxes)`);
+      }
+      recordLinkCreation(req.user.id, {
+        url: result.primaryUrl,
+        title: result.title,
+        format: 'chain',
+        cost: creditCalculation.totalCost,
+        boxBreakdowns: creditCalculation.boxBreakdowns,
+      });
+    }
+
+    res.json({
+      success: true,
+      endpoint: req.path,
+      canonicalEndpoint: '/api/bitty/chain',
+      aliases: ['/api/agent/chain', '/api/agent/box-chain', '/api/bitty/chain', '/api/bitty/box-chain'],
+      authenticatedAs: req.user ? req.user.email : undefined,
+      creditCost: creditCalculation.totalCost,
+      boxCreditBreakdowns: creditCalculation.boxBreakdowns,
+      ...result,
+      next: {
+        inspect: '/api/agent/inspect',
+        mcp: '/mcp',
+        lockableBoxes: '/api/boxes',
+      },
+    });
+  } catch (err) {
+    if (sendCreditFailure(res, err)) return;
+    console.error('[bittybox-agent-api] Error creating agent chain:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+app.post(['/api/agent/chain', '/api/agent/box-chain'], sendAgentChainResponse);
+app.get(['/api/agent/chain', '/api/agent/box-chain'], sendAgentChainResponse);
+
+async function sendAgentInspectResponse(req, res) {
+  try {
+    const source = req.method === 'GET' ? req.query : req.body;
+    const url = source?.url || source?.link || source?.hash;
+    const password = source?.password;
+    if (!url) {
+      return res.status(400).json({ success: false, error: 'Missing url, link, or hash.', discovery: '/agents' });
+    }
+    const result = await decodeBittyLink(String(url), { password: password ? String(password) : undefined });
+    res.json({ success: true, endpoint: '/api/agent/inspect', canonicalEndpoint: '/api/bitty/decode', ...result });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+app.post('/api/agent/inspect', sendAgentInspectResponse);
+app.get('/api/agent/inspect', sendAgentInspectResponse);
+
+app.post('/api/agent/validate', (req, res) => {
+  try {
+    const options = extractAgentCreateOptions(req);
+    if (options.content === undefined || options.content === null || String(options.content).length === 0) {
+      return res.status(400).json({ success: false, error: 'Missing content. Provide one of: content, code, markdown, html, json, or svg.' });
+    }
+    const content = String(options.content);
+    const rawBytes = Buffer.byteLength(content, 'utf-8');
+    const format = detectFormat(content, options.format || 'auto');
+    const warnings = [];
+    if (rawBytes > 90000) warnings.push('Large payload: prefer POST creation, externalize heavy assets, and expect URL-length risk.');
+    if (/((api|secret|token|password|private)[_-]?key|BEGIN (RSA|OPENSSH|PRIVATE) KEY)/i.test(content)) {
+      warnings.push('Potential secret-like text detected. Encrypt with password or remove secrets before sharing.');
+    }
+    res.json({
+      success: true,
+      format,
+      rawBytes,
+      recommendedEndpoint: '/api/agent/url',
+      mcpEndpoint: '/mcp',
+      warnings,
+      acceptedFormats: getAgentDiscovery().payload.formats,
+    });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -1110,9 +1465,18 @@ app.get('/api/bitty/formats', (_req, res) => {
     features: [
       'GZIP compression level 9',
       'AES-256-GCM encryption',
+      'Sequential Box Chaining (multi-page linked documents, slide decks, workflows)',
+      'Agent Box Chain creation via /api/agent/box-chain and MCP create_box_chain',
+      'Studio-compatible chain metadata: image, timeWindow locks, openLimit locks, ch/nx navigation',
       'Streamable HTTP Model Context Protocol (MCP) server',
       'Stdio MCP server',
       'API Key Authentication & Management'
+    ],
+    chainEndpoints: [
+      '/api/bitty/chain',
+      '/api/bitty/box-chain',
+      '/api/agent/chain',
+      '/api/agent/box-chain'
     ]
   });
 });

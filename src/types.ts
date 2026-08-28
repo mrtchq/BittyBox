@@ -1,5 +1,13 @@
 import type { TimeWindowConfig } from './utils/timeWindow';
 
+export interface BittyChainMetadata {
+  enabled?: boolean;
+  chainId?: string;
+  index?: number;
+  total?: number;
+  nextUrl?: string;
+}
+
 export interface BittyMetadata {
   title: string;
   description?: string;
@@ -11,6 +19,7 @@ export interface BittyMetadata {
   canonicalUrl?: string;
   language?: string;
   boxId?: string;
+  chain?: BittyChainMetadata;
   /**
    * Client-side & server-backed lock configuration surfaced on the recipient lock screen.
    */
@@ -23,6 +32,24 @@ export interface BittyMetadata {
       showRemainingCount?: boolean;
     };
   };
+}
+
+export interface BittyChainDraftPage {
+  id: string;
+  content: string;
+  metadata: BittyMetadata;
+  createdAt: number;
+  updatedAt: number;
+  isCloned?: boolean;
+}
+
+export interface BittyChainDraft {
+  version: 1;
+  chainId: string;
+  enabled: boolean;
+  currentIndex: number;
+  pages: BittyChainDraftPage[];
+  updatedAt: number;
 }
 
 export interface BittyHistoryItem {
@@ -40,7 +67,7 @@ export interface BittyHistoryItem {
 }
 
 export type EditorMode = 'code' | 'rich';
-export type AppView = 'account' | 'editor' | 'viewer' | 'history' | 'about';
+export type AppView = 'account' | 'editor' | 'viewer' | 'history' | 'about' | 'agents';
 export type WorkspaceTheme = 'synthwave' | 'monochrome' | 'matrix';
 export type WorkspaceMode = 'simple' | 'pro';
 
@@ -93,6 +120,13 @@ export interface TrackedBittyBox {
     accessLimit?: boolean;
   };
   cost?: number;
+  boxBreakdowns?: Array<{
+    index: number;
+    title: string;
+    isCloned?: boolean;
+    totalCost: number;
+    blockCount?: number;
+  }>;
   createdAt: string;
 }
 

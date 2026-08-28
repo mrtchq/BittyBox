@@ -22,69 +22,70 @@ export interface HomeSlideCopy {
 const slideStubs: HomeSlideCopy[] = [
   {
     id: "create-box",
-    kicker: "STEP 01 // INSERT CONTENT",
-    headline: "Enter what you want to share",
+    kicker: "STEP 01 // ADD YOUR CONTENT",
+    headline: "Type or paste what you want to share",
     body:
-      "Type or paste the HTML, CSS, JavaScript, markdown, or plain text you want to pack into a self-contained Bitty Box link. Free forever for unlimited boxes with zero server hosting. Hit Next to configure security and lock options.",
+      "Write or paste HTML, CSS, JavaScript, markdown, or plain text. Built for autonomous AI agent workflows and developer toolchains, but crafted so humans can easily create and share too. Bitty Box packs everything into a single web link that runs anywhere without hosting or database dependencies.",
     bullets: [
-      "Full HTML, JS, CSS, or markdown payload",
-      "Instant client-side compression in your browser",
-      "Free forever — no database, no server hosting required",
-      "Hit Next to configure optional access locks",
+      "Built for AI agent workflows — easy for humans too",
+      "Paste web code, markdown, or plain text notes",
+      "Zips and shrinks instantly right inside your browser",
+      "Free forever — no website hosting or database needed",
+      "Click Next to add an optional password or timer",
     ],
-    cta: "Next: Password Lock →",
+    cta: "Next: Passcode Lock →",
     metaDescription:
-      "Create a self-contained Bitty Box by inserting HTML, code, markdown, or text. Encoded completely in the URL.",
+      "Create a self-contained Bitty Box. Built for AI agents and humans alike, encoded completely in the URL.",
   },
   {
     id: "password-lock",
     kicker: "STEP 02 // PASSCODE LOCK",
-    headline: "Numerical Passcode Lock (Optional)",
+    headline: "Add a Secret PIN Code (Optional)",
     body:
-      "Optionally protect your Box with a numerical passcode (up to 8 digits). Bitty Box encrypts your payload with AES-256-GCM right in the browser. Zero knowledge, end to end: anyone with the link simply enters your numeric PIN to view.",
+      "Want to keep your page private? Lock it with an 8 to 12 digit PIN. Bitty Box encrypts your content right in your browser before creating the link, so only people who know your PIN can unlock and view it.",
     bullets: [
-      "1 to 8 digit numerical PIN — fast and easy to unlock",
-      "AES-256-GCM encryption — your content remains sealed",
-      "Included with PRO ($9/mo) or 5 pay-as-you-go credits",
+      "Easy 8 to 12 digit PIN to lock your page",
+      "Bank-grade encryption keeps your content secret",
+      "100% Free & Unlimited (0 credits needed)",
     ],
     cta: "Next: Time-Based Lock →",
     metaDescription:
-      "Passcode Lock gates any Bitty Box behind a numerical passcode with AES-GCM client-side encryption.",
+      "Lock your Bitty Box with a secret numerical PIN code and browser-based encryption.",
   },
   {
     id: "time-based-lock",
     kicker: "STEP 03 // TIME-BASED LOCK",
-    headline: "Time-Based Lock (Optional)",
+    headline: "Set an Expiration Timer (Optional)",
     body:
-      "Optionally set the clock on your Box. Tell it exactly when to wake up and when to self-destruct. Supports countdown durations, delayed drops, date ranges, and Reveal + Decay. Before its start time the Box is sealed; after its end time it is auto-revoked.",
+      "Choose when your link should open or disappear. You can set it to expire after a few hours, stay hidden until a future date, or show up for a limited time window before self-destructing.",
     bullets: [
-      "Expires Duration, Time Until Open, Date Range, & Reveal+Decay",
-      "Auto-revoke on schedule — no leftover cache or manual cleanup",
-      "Included with PRO ($9/mo) or 10 pay-as-you-go credits",
+      "Set countdown timers, delayed reveals, or date ranges",
+      "Automatically locks when time is up — nothing left behind",
+      "Free with PRO ($4/mo) or 10 credits",
     ],
-    cta: "Next: Access Limits →",
+    cta: "Next: View Limits →",
     metaDescription:
-      "Time-Based Lock lets your Bitty Box wake up and self-destruct on a schedule with no cached copy left behind.",
+      "Set an expiration timer so your Bitty Box automatically opens or locks on schedule.",
   },
   {
     id: "access-limit-lock",
-    kicker: "STEP 04 // ACCESS LIMITS",
-    headline: "Access Limit Lock (Optional)",
+    kicker: "STEP 04 // VIEW LIMITS",
+    headline: "Limit How Many Times It Can Be Opened (Optional)",
     body:
-      "Optionally set a hard limit on how many times your Box can open — 1-open burn-on-read, 3 opens, 5 opens, or custom visitor quotas. When the last open is spent, the Box seals itself permanently.",
+      "Control how many times your link can be viewed. Set it to self-destruct after 1 view (burn after reading), 3 views, 5 views, or a custom number. Once the views are used up, the link locks forever.",
     bullets: [
-      "Visitor Quota: 1 burn-on-read, 3, 5, or custom max opens",
-      "Live remaining-opens badge — count is visible on visit",
-      "Included with PRO ($9/mo) or 10 pay-as-you-go credits",
+      "Set 1 view (burn after reading), 3, 5, or custom views",
+      "Shows a live badge counting down remaining views",
+      "Free with PRO ($4/mo) or 10 credits",
     ],
-    cta: "Next: Review & Summary →",
+    cta: "Next: Review & Generate →",
     metaDescription:
-      "Access Limit Lock gives your Bitty Box a hard open cap — it seals for good after its last open with a tamper-proof counter.",
+      "Limit how many times your Bitty Box can be opened before it permanently locks.",
   },
   {
     id: "preview-launch",
-    kicker: "STEP 05 // ESTIMATED CREDITS",
-    headline: "ESTIMATED CREDITS",
+    kicker: "STEP 05 // REVIEW & GENERATE",
+    headline: "READY TO GENERATE",
     body: "",
     bullets: [],
     cta: "GENERATE BOX",
@@ -93,7 +94,8 @@ const slideStubs: HomeSlideCopy[] = [
   },
 ];
 
-// Ordered hero deck: 5 sequential configuration steps
+// Ordered hero deck: 5 sequential configuration steps; the public wizard ends
+// with review/generate instead of a dormant future-feature panel.
 export const homeSlides: HomeSlideCopy[] = [
   slideStubs[0], // Step 1: Insert Content
   slideStubs[1], // Step 2: Password Lock

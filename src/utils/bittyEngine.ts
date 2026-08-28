@@ -1,6 +1,7 @@
 import { deflate, inflate } from 'pako';
+import { marked } from 'marked';
 import { BittyMetadata } from '../types';
-import { decryptBox } from './bittyCrypto';
+import { decryptBox, encryptBoxBytes, bytesToBase64Url, base64UrlToBytes } from './bittyCrypto';
 import { TimeLockMode } from './timeWindow';
 
 export const GZIP_MARKER = 'gz';
@@ -59,6 +60,23 @@ export function base64ToUint8Array(base64: string): Uint8Array {
     bytes[i] = binary.charCodeAt(i);
   }
   return bytes;
+}
+
+export function encodeChainUrl(url: string): string {
+  if (!url) return '';
+  const bytes = new TextEncoder().encode(url);
+  const compressed = deflate(bytes, { level: 9 });
+  return uint8ArrayToBase64(compressed)
+    .replace(/=+$/, '')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_');
+}
+
+export function decodeChainUrl(encoded: string): string {
+  if (!encoded) return '';
+  const compressed = base64ToUint8Array(encoded);
+  const inflated = inflate(compressed);
+  return new TextDecoder().decode(inflated);
 }
 
 export async function subtleEncryptData(data: Uint8Array, pass: string): Promise<Uint8Array> {
@@ -130,6 +148,7 @@ export async function compressContent(
     mimeType?: string;
     render?: string;
     isRawHtml?: boolean;
+    zk?: boolean;
   }
 ): Promise<{ compressedUrl: string; originalBytes: number; compressedBytes: number }> {
   const syncRes = compressContentSync(content, options);
@@ -142,6 +161,20 @@ export async function compressContent(
   const originalBytes = rawBytes.byteLength;
 
   const deflated = deflate(rawBytes, { level: 9 });
+
+  // Zero-Knowledge mode: PBKDF2(310k) + AES-256-GCM via bittyCrypto envelope.
+  // The envelope is [v1][salt16][iv12][ct] base64url — self-contained in the
+  // URL fragment; decompressBittyData detects the version-1 header on read.
+  // The password never leaves the browser and never enters the URL.
+  if (options?.zk === true && options?.password) {
+    const envelope = await encryptBoxBytes(deflated, options.password.trim());
+    const b64Data = envelope;
+    const compressedBytes = b64Data.length;
+    const mime = options?.mimeType || 'text/html';
+    const url = `data:${mime};charset=utf-8;cipher=zk-aes256gcm-pbkdf2;base64url,${b64Data}`;
+    return { compressedUrl: url, originalBytes, compressedBytes };
+  }
+
   const encryptedBytes = await subtleEncryptData(deflated, options!.password!.trim());
   const b64Data = uint8ArrayToBase64(encryptedBytes).replace(/=+$/, '');
   const compressedBytes = b64Data.length;
@@ -175,17 +208,37 @@ export function parseBittyHash(hash: string): {
     return { payload: '', metadata: {} };
   }
 
-  const parts = cleanHash.split('/');
+  // If the whole cleanHash is directly a data: URI or starts with ?
+  if (cleanHash.startsWith('data:') || cleanHash.startsWith('?')) {
+    return { payload: cleanHash, metadata: {} };
+  }
+
+  // If the cleanHash contains /data: or /? anywhere, split cleanly at the payload boundary
+  const dataIdx = cleanHash.indexOf('/data:');
+  const qIdx = cleanHash.indexOf('/?');
+  let metaSection = cleanHash;
+  let directPayload = '';
+
+  if (dataIdx !== -1) {
+    metaSection = cleanHash.substring(0, dataIdx);
+    directPayload = cleanHash.substring(dataIdx + 1);
+  } else if (qIdx !== -1) {
+    metaSection = cleanHash.substring(0, qIdx);
+    directPayload = cleanHash.substring(qIdx + 1);
+  }
+
+  const parts = metaSection ? metaSection.split('/') : [];
   const metadata: Partial<BittyMetadata> = {};
-  let payload = '';
+  const metadataTokens = ['d', 'f', 'i', 'tw', 'ol', 'box', 'ch', 'nx'];
+  let payload = directPayload;
 
   for (let i = 0; i < parts.length; i++) {
     const part = parts[i];
-    if (part.startsWith('?') || part.startsWith('data:') || (part.length > 25 && !metadata.title && i === parts.length - 1)) {
+    if (!payload && (part.startsWith('?') || part.startsWith('data:') || (part.length > 25 && !metadata.title && i === parts.length - 1))) {
       payload = parts.slice(i).join('/');
       break;
     }
-    if (i === 0 && !['d', 'f', 'i', 'tw', 'ol', 'box'].includes(part)) {
+    if (i === 0 && !metadataTokens.includes(part)) {
       metadata.title = decodePrettyComponent(part);
     } else if (part === 'd' && parts[i + 1]) {
       metadata.description = decodePrettyComponent(parts[i + 1]);
@@ -233,10 +286,33 @@ export function parseBittyHash(hash: string): {
     } else if (part === 'box' && parts[i + 1]) {
       metadata.boxId = decodeURIComponent(parts[i + 1]);
       i++;
+    } else if (part === 'ch' && parts[i + 1]) {
+      try {
+        const rawChain = decodeURIComponent(parts[i + 1]);
+        const [chainId, indexRaw, totalRaw] = rawChain.split('~');
+        metadata.chain = {
+          ...(metadata.chain || {}),
+          enabled: true,
+          chainId: chainId || undefined,
+          index: Number.isFinite(Number(indexRaw)) ? Number(indexRaw) : undefined,
+          total: Number.isFinite(Number(totalRaw)) ? Number(totalRaw) : undefined,
+        };
+      } catch {}
+      i++;
+    } else if (part === 'nx' && parts[i + 1]) {
+      try {
+        const decodedNextUrl = decodeChainUrl(parts[i + 1]);
+        metadata.chain = {
+          ...(metadata.chain || {}),
+          enabled: true,
+          nextUrl: decodedNextUrl || undefined,
+        };
+      } catch {}
+      i++;
     }
   }
 
-  if (!payload && parts.length > 0) {
+  if (!payload && parts.length > 0 && !metadata.title) {
     payload = parts[parts.length - 1];
   }
 
@@ -477,6 +553,15 @@ export function buildBittyUrl(
   if (metadata.boxId) {
     metaHash += `/box/${encodeURIComponent(metadata.boxId)}`;
   }
+  if (metadata.chain?.enabled) {
+    const chainId = metadata.chain.chainId || `bbc_${Date.now().toString(36)}`;
+    const chainIndex = Math.max(0, Number(metadata.chain.index ?? 0));
+    const chainTotal = Math.max(1, Number(metadata.chain.total ?? 1));
+    metaHash += `/ch/${encodeURIComponent(`${chainId}~${chainIndex}~${chainTotal}`)}`;
+    if (metadata.chain.nextUrl) {
+      metaHash += `/nx/${encodeChainUrl(metadata.chain.nextUrl)}`;
+    }
+  }
   if (metadata.lockConfig?.timeWindow?.enabled) {
     const tw = metadata.lockConfig.timeWindow;
     const nb = tw.notBefore ? encodeURIComponent(tw.notBefore) : '_';
@@ -519,6 +604,25 @@ export function getRenderedHtml(content: string, metadata?: Partial<BittyMetadat
   }
   const lang = metadata?.language || 'en';
   const title = metadata?.title || 'Untitled';
-  return `<!DOCTYPE html><html lang="${lang}"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${title}</title><style>body{margin:0 auto;padding:1.5rem;max-width:48em;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.6;color:#1e293b;background:#ffffff;}@media(prefers-color-scheme:dark){body{color:#f1f5f9;background:#0f172a;}}</style></head><body>${content}</body></html>`;
+  const description = metadata?.description || '';
+  const escapeAttr = (value: string) => value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  const descriptionTag = description ? `<meta name="description" content="${escapeAttr(description)}">` : '';
+
+  if (trimmed.startsWith('<svg') && trimmed.endsWith('</svg>')) {
+    return `<!DOCTYPE html><html lang="${lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${title}</title>${descriptionTag}<style>body{margin:0;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#050515;}</style></head><body>${content}</body></html>`;
+  }
+
+  const hasHtmlTags = /<\/?(div|p|h[1-6]|span|button|form|input|table|section|article|header|footer|nav|ul|ol|li|img|video|audio|canvas|script|style|a|br|hr|pre|code|b|i|strong|em)[^>]*>/i.test(trimmed);
+
+  let bodyHtml = content;
+  if (!hasHtmlTags) {
+    try {
+      bodyHtml = marked.parse(content, { async: false }) as string;
+    } catch {
+      bodyHtml = `<pre style="white-space:pre-wrap;font-family:monospace;word-break:break-word;">${escapeAttr(content)}</pre>`;
+    }
+  }
+
+  return `<!DOCTYPE html><html lang="${lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${title}</title>${descriptionTag}<style>body{margin:0 auto;padding:1.5rem;max-width:48em;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.6;color:#1e293b;background:#ffffff;}@media(prefers-color-scheme:dark){body{color:#f1f5f9;background:#0f172a;}}img{max-width:100%;height:auto;}pre{background:#f1f5f9;padding:1rem;border-radius:8px;overflow-x:auto;}code{font-family:monospace;}</style></head><body>${bodyHtml}</body></html>`;
 }
 

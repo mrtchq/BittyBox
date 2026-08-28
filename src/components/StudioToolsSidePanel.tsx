@@ -51,6 +51,7 @@ import { CyberScrambleText } from './CyberScrambleText';
 import { PrismCheckbox } from './PrismCheckbox';
 import { AccountDashboard, GoogleIcon } from './AccountDashboard';
 import { UserAvatar } from './UserAvatar';
+import { LegalModal, LegalTab } from './LegalModal';
 
 interface StudioToolsSidePanelProps {
   isOpen: boolean;
@@ -140,6 +141,8 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
   } = account;
 
   const [activeTab, setActiveTab] = useState<'account' | 'boxes' | 'keys' | 'credits' | 'mcp'>('account');
+  const [isLegalModalOpen, setIsLegalModalOpen] = useState<boolean>(false);
+  const [legalModalTab, setLegalModalTab] = useState<LegalTab>('terms');
 
   // Auth Form local state (Google & Magic Link)
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -314,7 +317,7 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
                     </h2>
                     {user && (
                       <span className="text-[10px] font-mono font-bold bg-cyan-950 text-cyan-300 px-2 py-0.5 rounded-full border border-cyan-500/40">
-                        {user.credits} PTS
+                        {user.credits} CR
                       </span>
                     )}
                   </div>
@@ -427,28 +430,6 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
                 <div>
                   {!isAuthenticated ? (
                     <div className="max-w-md mx-auto space-y-4 font-mono">
-                      {/* 100 Credits Allotment Rule Banner */}
-                      <div className="p-3 rounded-xl bg-gradient-to-r from-amber-500/20 via-emerald-500/15 to-cyan-500/20 border-2 border-amber-400/60 shadow-[0_0_20px_rgba(245,158,11,0.25)] relative overflow-hidden">
-                        <div className="flex items-start gap-2.5">
-                          <div className="p-1.5 rounded-lg bg-amber-400/20 border border-amber-400/60 text-amber-300 shrink-0 mt-0.5">
-                            <Coins className="w-4 h-4 text-amber-300 animate-pulse" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <span className="font-cyber font-bold text-[11px] text-amber-200">
-                                100 CREDITS ALLOTMENT
-                              </span>
-                              <span className="text-[8px] uppercase px-1.5 py-0.5 rounded bg-amber-400 text-black font-extrabold">
-                                GOOGLE ONLY
-                              </span>
-                            </div>
-                            <p className="text-[10px] text-amber-100/90 font-mono mt-1 leading-snug">
-                              To receive the <strong className="text-amber-300">100 free credits</strong> bonus, you must use <strong className="text-cyan-300">"Sign In with Google"</strong> below. <span className="text-rose-300 font-semibold">No credits are issued if you use magic link.</span>
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
                       {/* Sign In Form */}
                       <div className="bg-[#06182c]/90 border border-cyan-500/30 rounded-2xl p-5 shadow-xl relative">
                         {/* Primary Google Sign In Button */}
@@ -458,7 +439,7 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
                             type="button"
                             onClick={handleGoogleSignIn}
                             disabled={googleLoading || authSubmitting}
-                            className="w-full py-3 px-3.5 rounded-xl font-sans font-bold text-xs tracking-wide text-white bg-gradient-to-r from-[#0d1c30] via-[#10243d] to-[#0c1c2e] hover:from-[#132845] hover:to-[#173254] border-2 border-cyan-400/60 hover:border-cyan-300 active:scale-[0.99] transition-all duration-200 shadow-[0_0_25px_rgba(0,242,255,0.25)] cursor-pointer disabled:opacity-50 flex items-center justify-between group"
+                            className="w-full py-3 px-3.5 rounded-xl font-sans font-bold text-xs tracking-wide text-white bg-gradient-to-r from-[#0d1c30] via-[#10243d] to-[#0c1c2e] hover:from-[#132845] hover:to-[#173254] border-2 border-cyan-400/60 hover:border-cyan-300 active:scale-[0.99] transition-all duration-200 shadow-[0_0_25px_rgba(0,242,255,0.25)] cursor-pointer disabled:opacity-50 flex items-center justify-center group"
                           >
                             {googleLoading ? (
                               <div className="flex items-center justify-center gap-2 w-full">
@@ -466,38 +447,25 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
                                 <span className="font-mono text-cyan-200 text-[11px]">AUTHENTICATING...</span>
                               </div>
                             ) : (
-                              <>
-                                <div className="flex items-center gap-2.5">
-                                  <div className="w-5 h-5 rounded-lg bg-white flex items-center justify-center shrink-0 shadow-md p-0.5 group-hover:scale-105 transition-transform">
-                                    <GoogleIcon className="w-3.5 h-3.5" />
-                                  </div>
-                                  <span className="text-xs font-bold text-slate-100 group-hover:text-white">
-                                    Sign In with Google
-                                  </span>
+                              <div className="flex items-center gap-2.5">
+                                <div className="w-5 h-5 rounded-lg bg-white flex items-center justify-center shrink-0 shadow-md p-0.5 group-hover:scale-105 transition-transform">
+                                  <GoogleIcon className="w-3.5 h-3.5" />
                                 </div>
-                                <span className="text-[9px] font-mono font-bold bg-amber-400/20 text-amber-300 border border-amber-400/50 px-1.5 py-0.5 rounded-full">
-                                  🎁 +100 CR
+                                <span className="text-xs font-bold text-slate-100 group-hover:text-white">
+                                  Sign In with Google
                                 </span>
-                              </>
+                              </div>
                             )}
                           </button>
                         </div>
 
                         {/* Visual Divider */}
-                        <div className="flex items-center gap-2 mb-3">
+                        <div className="flex items-center gap-2 mb-4">
                           <div className="h-px flex-1 bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent" />
                           <span className="text-[9px] uppercase font-mono tracking-widest text-cyan-400/60">
-                            OR MAGIC EMAIL (0 CREDITS)
+                            OR SIGN IN WITH EMAIL
                           </span>
                           <div className="h-px flex-1 bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent" />
-                        </div>
-
-                        {/* Magic Link Disclaimer */}
-                        <div className="mb-3 p-2 rounded-lg bg-[#02010c] border border-cyan-500/30 text-[10px] font-mono text-cyan-200/80 flex items-start gap-1.5">
-                          <Info className="w-3 h-3 text-cyan-400 shrink-0 mt-0.5" />
-                          <p className="leading-tight">
-                            Magic Link accounts start with <strong className="text-rose-300">0 credits</strong>. Use Google above for 100 free credits.
-                          </p>
                         </div>
 
                         {magicLinkSent ? (
@@ -586,7 +554,7 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
                               )}
                             </button>
                             <div className="text-[10px] text-cyan-400/60 text-center font-mono mt-2">
-                              ⚡ Passwordless email sign-in • 0 starter credits (Google required for 100 CR)
+                              ⚡ Passwordless email sign-in • Instant single-use magic link
                             </div>
                           </form>
                         )}
@@ -638,7 +606,7 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
                             <Coins className="w-3.5 h-3.5 text-cyan-400" />
                           </div>
                           <div className="text-xl font-bold font-cyber text-cyan-200 mt-1">
-                            {user.credits} <span className="text-xs text-cyan-400/60 font-normal">PTS</span>
+                            {user.credits} <span className="text-xs text-cyan-400/60 font-normal">CR</span>
                           </div>
                           <button
                             onClick={() => setActiveTab('credits')}
@@ -996,7 +964,7 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
                       </p>
                     </div>
                     <div className="text-right">
-                      <div className="text-xl font-cyber font-bold text-emerald-300">{user?.credits || 0} PTS</div>
+                      <div className="text-xl font-cyber font-bold text-emerald-300">{user?.credits || 0} CR</div>
                       <div className="text-[10px] text-emerald-400/70">{user?.creditsUsedTotal || 0} used total</div>
                     </div>
                   </div>
@@ -1009,7 +977,7 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
                     <div className="grid grid-cols-2 gap-2 text-[11px]">
                       <div className="flex items-center justify-between p-1.5 rounded bg-black/50">
                         <span className="text-zinc-300">Passcode PIN Lock:</span>
-                        <span className="font-bold text-fuchsia-400">5 CR</span>
+                        <span className="font-bold text-emerald-400">FREE (0 CR)</span>
                       </div>
                       <div className="flex items-center justify-between p-1.5 rounded bg-black/50">
                         <span className="text-zinc-300">Time-Based Locks:</span>
@@ -1031,7 +999,7 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
                     <div className="p-3.5 rounded-xl bg-[#03010b] border border-emerald-500/30 flex flex-col justify-between gap-3 text-center">
                       <div>
                         <div className="text-xs font-cyber font-bold text-emerald-200">STARTER PACK</div>
-                        <div className="text-lg font-bold font-cyber text-white mt-1">50 PTS</div>
+                        <div className="text-lg font-bold font-cyber text-white mt-1">50 CR</div>
                         <div className="text-[11px] text-emerald-400/70 mt-0.5">$5.00 USD</div>
                       </div>
                       <button
@@ -1039,7 +1007,7 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
                         onClick={() => purchaseCredits('pack_50', 50, 500)}
                         className="w-full py-1.5 rounded-lg bg-emerald-500/20 border border-emerald-400/50 text-emerald-200 text-xs font-bold font-cyber hover:bg-emerald-500/30 transition cursor-pointer"
                       >
-                        REFILL 50 PTS
+                        REFILL 50 CR
                       </button>
                     </div>
 
@@ -1049,7 +1017,7 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
                       </span>
                       <div>
                         <div className="text-xs font-cyber font-bold text-emerald-200">CREATOR PACK</div>
-                        <div className="text-lg font-bold font-cyber text-white mt-1">150 PTS</div>
+                        <div className="text-lg font-bold font-cyber text-white mt-1">150 CR</div>
                         <div className="text-[11px] text-emerald-400/70 mt-0.5">$12.00 USD</div>
                       </div>
                       <button
@@ -1057,14 +1025,14 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
                         onClick={() => purchaseCredits('pack_150', 150, 1200)}
                         className="w-full py-1.5 rounded-lg bg-emerald-400 text-black text-xs font-bold font-cyber hover:brightness-110 transition cursor-pointer"
                       >
-                        REFILL 150 PTS
+                        REFILL 150 CR
                       </button>
                     </div>
 
                     <div className="p-3.5 rounded-xl bg-[#03010b] border border-emerald-500/30 flex flex-col justify-between gap-3 text-center">
                       <div>
                         <div className="text-xs font-cyber font-bold text-emerald-200">PRO BUNDLE</div>
-                        <div className="text-lg font-bold font-cyber text-white mt-1">400 PTS</div>
+                        <div className="text-lg font-bold font-cyber text-white mt-1">400 CR</div>
                         <div className="text-[11px] text-emerald-400/70 mt-0.5">$25.00 USD (38% OFF)</div>
                       </div>
                       <button
@@ -1072,7 +1040,7 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
                         onClick={() => purchaseCredits('pack_400', 400, 2500)}
                         className="w-full py-1.5 rounded-lg bg-emerald-500/20 border border-emerald-400/50 text-emerald-200 text-xs font-bold font-cyber hover:bg-emerald-500/30 transition cursor-pointer"
                       >
-                        REFILL 400 PTS
+                        REFILL 400 CR
                       </button>
                     </div>
                   </div>
@@ -1127,10 +1095,51 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
                 </div>
               )}
 
+              {/* Panel Bottom Legal & Support Footer */}
+              <div className="pt-4 border-t border-purple-500/20 flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono text-purple-300/70">
+                <div className="flex items-center gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLegalModalTab('terms');
+                      setIsLegalModalOpen(true);
+                    }}
+                    className="hover:text-cyan-300 hover:underline transition-colors cursor-pointer"
+                  >
+                    Terms of Service
+                  </button>
+                  <span className="text-purple-500/40 select-none">&bull;</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLegalModalTab('privacy');
+                      setIsLegalModalOpen(true);
+                    }}
+                    className="hover:text-cyan-300 hover:underline transition-colors cursor-pointer"
+                  >
+                    Privacy Policy
+                  </button>
+                  <span className="text-purple-500/40 select-none">&bull;</span>
+                  <a
+                    href="mailto:support@bittybox.org"
+                    className="hover:text-cyan-300 hover:underline transition-colors cursor-pointer"
+                  >
+                    Contact Us
+                  </a>
+                </div>
+              </div>
+
             </div>
           </motion.div>
         </div>
       )}
+
+      {/* Legal Modal (Terms of Service & Privacy Policy) */}
+      <LegalModal
+        isOpen={isLegalModalOpen}
+        initialTab={legalModalTab}
+        onClose={() => setIsLegalModalOpen(false)}
+      />
     </AnimatePresence>
   );
 };

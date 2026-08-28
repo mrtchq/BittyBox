@@ -7,156 +7,174 @@ import {
   VolumeX,
   ArrowRight,
   ShieldCheck,
-  Radio,
-  ChevronLeft,
-  ChevronRight,
   Play,
   Pause,
-  Lock,
-  Unlock,
-  Code,
-  ExternalLink,
-  CheckCircle2,
-  Clock,
-  Timer,
-  Gauge,
-  Flame,
-  Key,
-  KeyRound,
-  Eye,
-  EyeOff,
-  Copy,
-  Check,
-  Coins,
   RotateCcw,
-  AlertTriangle
+  Code2,
+  Boxes,
+  Cpu,
+  Layers,
+  Link2,
+  Lock,
+  CheckCircle2,
+  Terminal,
+  Globe,
+  Radio,
+  FileCode,
+  Binary
 } from 'lucide-react';
 import { CyberScrambleText } from './CyberScrambleText';
-import { EdgeGripHandles } from './EdgeGripHandles';
-import { PreviewDropdownPanel } from './PreviewDropdownPanel';
-import { TemplatesSidePanel } from './TemplatesSidePanel';
-import { StudioToolsSidePanel } from './StudioToolsSidePanel';
-import { QrModal } from './QrModal';
-import { TemplatePreset } from '../types';
-import { exportBittyToZip } from '../utils/zipExport';
-
-import { HoloGenerateButton } from './HoloGenerateButton';
-import { HoloToggle } from './HoloToggle';
-import { homeSlides } from '../content/homeSlides';
-import { buildBittyUrl, compressContent, compressContentSync, getRenderedHtml, hashString } from '../utils/bittyEngine';
-import { useAccount } from '../hooks/useAccount';
-import { buildTimeWindow, formatHybridSummary, formatLocalDateTime, type TimeLockMode } from '../utils/timeWindow';
-import { DurationTimeControl, DateRangeControl } from './TimeLockControls';
-import { BittyMetadata, BittyHistoryItem } from '../types';
+import { LegalModal, LegalTab } from './LegalModal';
 
 interface AnimatedSplashProps {
   onComplete: () => void;
 }
 
-interface CarouselSlide {
-  id: string;
+interface CreationStage {
+  id: number;
+  phaseCode: string;
   tag: string;
-  category: string;
   title: string;
-  highlight: string;
+  headline: string;
   description: string;
   accentColor: 'cyan' | 'fuchsia' | 'emerald' | 'amber';
-  bullets: string[];
-  cta: string;
+  metricLabel: string;
+  metricValue: string;
+  compressionRatio: string;
+  badge: string;
   icon: React.ReactNode;
 }
 
-const DEFAULT_STARTER_CODE = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <title>Hello Bitty Box</title>
-  <style>
-    body { background: #050515; color: #00f2ff; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; text-align: center; }
-    .box { border: 1px solid #00f2ff; padding: 2rem; border-radius: 12px; box-shadow: 0 0 25px rgba(0,242,255,0.3); }
-    button { background: #00f2ff; color: #000; border: none; padding: 0.6rem 1.2rem; font-weight: bold; border-radius: 6px; cursor: pointer; margin-top: 1rem; }
-  </style>
-</head>
-<body>
-  <div class="box">
-    <h1>Welcome to Bitty Box</h1>
-    <p>A self-contained webpage living entirely inside its URL.</p>
-    <button onclick="alert('Working 100% in-browser!')">Click Me</button>
-  </div>
-</body>
-</html>`;
+const STAGES: CreationStage[] = [
+  {
+    id: 0,
+    phaseCode: 'PHASE 01 // READING YOUR CODE',
+    tag: 'GRAB CODE',
+    title: 'READING YOUR WEBPAGE & STYLES',
+    headline: 'Collecting your HTML, CSS, JavaScript, and text',
+    description: 'Built for autonomous AI agents and human creators alike. We take your webpage text, styles, and scripts and prepare them right inside the browser with zero external server dependencies.',
+    accentColor: 'cyan',
+    metricLabel: 'ORIGINAL SIZE',
+    metricValue: '64.8 KB // 100% SIZE',
+    compressionRatio: 'READY TO SHRINK',
+    badge: 'STEP 1 : READ',
+    icon: <Code2 className="w-5 h-5 text-cyan-300" />,
+  },
+  {
+    id: 1,
+    phaseCode: 'PHASE 02 // SHRINKING DATA',
+    tag: 'ZIP IT DOWN',
+    title: 'SQUEEZING YOUR CODE DOWN',
+    headline: 'Super-fast compression right in your browser',
+    description: 'Your webpage code is zipped and shrunk down by up to 95%, making it tiny enough to fit directly inside a shareable web link.',
+    accentColor: 'fuchsia',
+    metricLabel: 'SHRUNK SIZE',
+    metricValue: '3.8 KB // 95% SMALLER',
+    compressionRatio: '94.2% SPACE SAVED',
+    badge: 'STEP 2 : SHRINK',
+    icon: <Cpu className="w-5 h-5 text-fuchsia-300" />,
+  },
+  {
+    id: 2,
+    phaseCode: 'PHASE 03 // PACKAGING',
+    tag: 'PACK & PROTECT',
+    title: 'PACKING INTO A MINI-CONTAINER',
+    headline: 'Wrapping your page with optional locks and timers',
+    description: 'Your shrunken webpage is bundled into an all-in-one package. You can optionally add a PIN code, a timer, or a view limit so only the right people can see it.',
+    accentColor: 'amber',
+    metricLabel: 'SECURITY & LOCKS',
+    metricValue: 'OPTIONAL PIN & TIMER',
+    compressionRatio: '100% ALL-IN-ONE',
+    badge: 'STEP 3 : PACKAGE',
+    icon: <Boxes className="w-5 h-5 text-amber-300" />,
+  },
+  {
+    id: 3,
+    phaseCode: 'PHASE 04 // READY TO SHARE',
+    tag: 'WEB LINK READY',
+    title: 'STORED ENTIRELY INSIDE THE LINK',
+    headline: 'A full website that lives directly in the URL',
+    description: 'Your entire webpage is now stored right inside the web link. Send it to anyone—it runs instantly in their browser with no web server, hosting, or database needed.',
+    accentColor: 'emerald',
+    metricLabel: 'LINK ADDRESS',
+    metricValue: 'bittybox.org/#H4sIAAAA...',
+    compressionRatio: 'NO SERVER NEEDED',
+    badge: 'STEP 4 : READY',
+    icon: <Link2 className="w-5 h-5 text-emerald-300" />,
+  },
+];
+
+// Sample code tokens floating into the vortex during Phase 0 & 1
+const FLOATING_CODE_TOKENS = [
+  { text: '<!DOCTYPE html>', top: '14%', left: '12%', color: 'text-cyan-400' },
+  { text: '<canvas id="gl">', top: '22%', right: '14%', color: 'text-fuchsia-400' },
+  { text: 'deflate(payload)', top: '68%', left: '10%', color: 'text-amber-400' },
+  { text: 'AES256.GCM_SEAL()', top: '74%', right: '12%', color: 'text-emerald-400' },
+  { text: '01011001 01101111', top: '38%', left: '6%', color: 'text-cyan-300/70' },
+  { text: 'const bitty = create()', top: '34%', right: '8%', color: 'text-purple-300' },
+  { text: 'box.mount(#root)', top: '82%', left: '32%', color: 'text-teal-300' },
+  { text: '100% IN-BROWSER', top: '16%', left: '44%', color: 'text-cyan-300 font-bold' },
+];
 
 export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) => {
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [direction, setDirection] = useState<number>(1);
-  const [isAutoPlay, setIsAutoPlay] = useState(false);
-  const [soundEnabled, setSoundEnabled] = useState(true);
-  const [isWarping, setIsWarping] = useState(false);
-  const [isExiting, setIsExiting] = useState(false);
-  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [stageIndex, setStageIndex] = useState<number>(0);
+  const [progress, setProgress] = useState<number>(0);
+  const [isPaused, setIsPaused] = useState<boolean>(false);
+  const [isLegalModalOpen, setIsLegalModalOpen] = useState<boolean>(false);
+  const [legalModalTab, setLegalModalTab] = useState<LegalTab>('terms');
+  const [soundEnabled, setSoundEnabled] = useState<boolean>(() => {
+    try {
+      const stored = localStorage.getItem('bitty_splash_sound');
+      return stored !== null ? stored === 'true' : false;
+    } catch {
+      return false;
+    }
+  });
+  const [isWarping, setIsWarping] = useState<boolean>(false);
+  const [isExiting, setIsExiting] = useState<boolean>(false);
+  const [mouseTilt, setMouseTilt] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [viewportSize, setViewportSize] = useState<{ width: number; height: number }>(() => ({
+    width: typeof window !== 'undefined' ? window.innerWidth : 1280,
+    height: typeof window !== 'undefined' ? window.innerHeight : 900,
+  }));
 
-  // Configuration state across the 5 slides
-  const [boxContent, setBoxContent] = useState<string>(DEFAULT_STARTER_CODE);
-  const [boxTitle, setBoxTitle] = useState<string>('My Bitty Box');
-  const [boxDescription, setBoxDescription] = useState<string>('A self-contained webpage living entirely in a URL');
-  const [passwordEnabled, setPasswordEnabled] = useState<boolean>(false);
-  const [passwordValue, setPasswordValue] = useState<string>('');
-  const [showPassword, setShowPassword] = useState<boolean>(false);
-
-  const [slide1ViewMode, setSlide1ViewMode] = useState<'text' | 'split' | 'preview'>('text');
-
-  const [timeLockEnabled, setTimeLockEnabled] = useState<boolean>(false);
-  const [timeLockMode, setTimeLockMode] = useState<TimeLockMode>('expiry');
-  const [timeExpiryHours, setTimeExpiryHours] = useState<number>(24);
-  const [timeDelayHours, setTimeDelayHours] = useState<number>(24);
-  const [timeOpenAt, setTimeOpenAt] = useState<string>(formatLocalDateTime(new Date(Date.now() + 24 * 3600 * 1000)));
-  const [timeLockAt, setTimeLockAt] = useState<string>(formatLocalDateTime(new Date(Date.now() + 48 * 3600 * 1000)));
-  const [hybridRevealMode, setHybridRevealMode] = useState<'delay' | 'date'>('delay');
-  const [hybridSelfDestructHours, setHybridSelfDestructHours] = useState<number>(24);
-  const [showTimeCountdown, setShowTimeCountdown] = useState<boolean>(true);
-
-  const [accessLimitEnabled, setAccessLimitEnabled] = useState<boolean>(false);
-  const [accessLimitMaxOpens, setAccessLimitMaxOpens] = useState<number>(1);
-  const [showRemainingAccessCount, setShowRemainingAccessCount] = useState<boolean>(true);
-
-  const [generatedUrl, setGeneratedUrl] = useState<string>('');
-  const [isCopied, setIsCopied] = useState<boolean>(false);
-  const [isLeftTemplatesPanelOpen, setIsLeftTemplatesPanelOpen] = useState<boolean>(false);
-  const [isRightToolsPanelOpen, setIsRightToolsPanelOpen] = useState<boolean>(false);
-  const [isPreviewDropdownOpen, setIsPreviewDropdownOpen] = useState<boolean>(false);
-  const [isQrModalOpen, setIsQrModalOpen] = useState<boolean>(false);
-  const [qrModalUrl, setQrModalUrl] = useState<string>('');
-  const account = useAccount();
-  const { user, isAuthenticated } = account;
-
-  const trimmedPasscode = passwordValue.trim();
-  const isPasscodeActive = Boolean(passwordEnabled && trimmedPasscode.length >= 8);
-  const isPasscodeTooShort = Boolean(passwordEnabled && trimmedPasscode.length > 0 && trimmedPasscode.length < 8);
-  const isTimeLockActive = Boolean(timeLockEnabled);
-  const isAccessLimitActive = Boolean(accessLimitEnabled);
-
-  const timeLockSummary = useMemo(() => {
-    if (!timeLockEnabled) return 'Disabled';
-    if (timeLockMode === 'expiry') return `Expires after ${timeExpiryHours === 168 ? '7 Days' : `${timeExpiryHours}h`}`;
-    if (timeLockMode === 'delay') return `Unlocks in ${timeDelayHours === 168 ? '7 Days' : `${timeDelayHours}h`}`;
-    if (timeLockMode === 'hybrid') return formatHybridSummary({ hybridRevealMode, delayHours: timeDelayHours, openAt: timeOpenAt, hybridSelfDestructHours });
-    return `Opens ${timeOpenAt ? new Date(timeOpenAt).toLocaleString() : '—'} · Locks ${timeLockAt ? new Date(timeLockAt).toLocaleString() : '—'}`;
-  }, [timeLockEnabled, timeLockMode, timeExpiryHours, timeDelayHours, timeOpenAt, timeLockAt, hybridRevealMode, hybridSelfDestructHours]);
-
-  const calculatedCreditCost = useMemo(() => {
-    let cost = 0;
-    if (isPasscodeActive) cost += 5;
-    if (isTimeLockActive) cost += 10;
-    if (isAccessLimitActive) cost += 10;
-    return cost;
-  }, [isPasscodeActive, isTimeLockActive, isAccessLimitActive]);
-
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const stageTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const progressAnimRef = useRef<number | null>(null);
   const animFrameRef = useRef<number | null>(null);
-  const autoPlayTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Synthesized Web Audio Sound FX
+  const currentStage = STAGES[stageIndex] || STAGES[0];
+
+  const stageScale = useMemo(() => {
+    const { width, height } = viewportSize;
+
+    if (width < 640) {
+      // Mobile: scale gracefully based on available vertical space so HUD card & footer are cleanly in view
+      return Math.min(0.82, Math.max(0.58, (height - 120) / 760));
+    }
+
+    if (width < 1024) {
+      // Tablet: dynamic scaling with safe limits
+      return Math.min(0.88, Math.max(0.62, (height - 130) / 780));
+    }
+
+    // Desktop: smoothly zoom out so the complete 3D matrix and HUD card fit without scrolling or bottom clipping
+    return Math.min(0.92, Math.max(0.68, (height - 140) / 760));
+  }, [viewportSize]);
+
+  useEffect(() => {
+    const updateViewportSize = () => {
+      setViewportSize({ width: window.innerWidth, height: window.innerHeight });
+    };
+
+    updateViewportSize();
+    window.addEventListener('resize', updateViewportSize);
+    return () => window.removeEventListener('resize', updateViewportSize);
+  }, []);
+
+  // ---------------------------------------------------------------------------
+  // Web Audio Synthesizer (Synthesized Sci-Fi SFX, Zero External Assets)
+  // ---------------------------------------------------------------------------
   const initAudio = useCallback(() => {
     if (!audioCtxRef.current) {
       const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
@@ -169,7 +187,7 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
     }
   }, []);
 
-  const playTone = useCallback((freq: number, type: OscillatorType, duration: number, gainValue = 0.05) => {
+  const playTone = useCallback((freq: number, type: OscillatorType, duration: number, gainVal = 0.04, freqEnd?: number) => {
     if (!soundEnabled) return;
     try {
       initAudio();
@@ -180,7 +198,11 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
 
       osc.type = type;
       osc.frequency.setValueAtTime(freq, ctx.currentTime);
-      gain.gain.setValueAtTime(gainValue, ctx.currentTime);
+      if (freqEnd !== undefined) {
+        osc.frequency.exponentialRampToValueAtTime(Math.max(20, freqEnd), ctx.currentTime + duration);
+      }
+
+      gain.gain.setValueAtTime(gainVal, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
 
       osc.connect(gain);
@@ -191,12 +213,46 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
     } catch {}
   }, [soundEnabled, initAudio]);
 
-  const playSlideSound = useCallback((idx: number) => {
+  const playStageSound = useCallback((stage: number) => {
     if (!soundEnabled) return;
-    const baseFreqs = [440, 523.25, 659.25, 783.99];
-    const freq = baseFreqs[idx % baseFreqs.length] || 520;
-    playTone(freq, 'sine', 0.18, 0.06);
-  }, [soundEnabled, playTone]);
+    try {
+      initAudio();
+      if (!audioCtxRef.current) return;
+      const ctx = audioCtxRef.current;
+      const now = ctx.currentTime;
+
+      if (stage === 0) {
+        // High-tech Ingest Arpeggio
+        [587.33, 739.99, 880.0, 1174.66].forEach((f, i) => {
+          setTimeout(() => playTone(f, 'sine', 0.12, 0.03), i * 55);
+        });
+      } else if (stage === 1) {
+        // Compression Resonance Sweep
+        playTone(520, 'sawtooth', 0.45, 0.04, 130);
+        setTimeout(() => playTone(260, 'sine', 0.35, 0.05, 90), 120);
+      } else if (stage === 2) {
+        // Isometric Lock & Forge Snap
+        playTone(880, 'triangle', 0.18, 0.05, 440);
+        setTimeout(() => playTone(1320, 'sine', 0.25, 0.06), 80);
+        setTimeout(() => playTone(440, 'square', 0.1, 0.03), 160);
+      } else if (stage === 3) {
+        // Crystalline Creation Chord (C Major 9th Shimmer)
+        const chord = [523.25, 659.25, 783.99, 987.77, 1174.66];
+        chord.forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.04);
+          gain.gain.setValueAtTime(0.025, now + idx * 0.04);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.2 + idx * 0.05);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + idx * 0.04);
+          osc.stop(now + 1.3);
+        });
+      }
+    } catch {}
+  }, [soundEnabled, initAudio, playTone]);
 
   const playWarpSound = useCallback(() => {
     if (!soundEnabled) return;
@@ -206,1750 +262,655 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
       const ctx = audioCtxRef.current;
       const now = ctx.currentTime;
 
-      // Sub-bass drop
+      // Sub-bass drop + high whoosh
       const subOsc = ctx.createOscillator();
       const subGain = ctx.createGain();
       subOsc.type = 'sawtooth';
-      subOsc.frequency.setValueAtTime(240, now);
-      subOsc.frequency.exponentialRampToValueAtTime(28, now + 1.2);
-      subGain.gain.setValueAtTime(0.25, now);
-      subGain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+      subOsc.frequency.setValueAtTime(260, now);
+      subOsc.frequency.exponentialRampToValueAtTime(32, now + 0.9);
+      subGain.gain.setValueAtTime(0.18, now);
+      subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.9);
       subOsc.connect(subGain);
       subGain.connect(ctx.destination);
       subOsc.start(now);
-      subOsc.stop(now + 1.2);
+      subOsc.stop(now + 0.9);
+
+      const highOsc = ctx.createOscillator();
+      const highGain = ctx.createGain();
+      highOsc.type = 'sine';
+      highOsc.frequency.setValueAtTime(440, now);
+      highOsc.frequency.exponentialRampToValueAtTime(1760, now + 0.7);
+      highGain.gain.setValueAtTime(0.05, now);
+      highGain.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
+      highOsc.connect(highGain);
+      highGain.connect(ctx.destination);
+      highOsc.start(now);
+      highOsc.stop(now + 0.7);
     } catch {}
   }, [soundEnabled, initAudio]);
 
-  // 5 Slides Definition (Content -> Password -> Time -> Access Limits -> Summary & Generate)
-  const slideChrome: Array<Omit<CarouselSlide, 'id' | 'title' | 'highlight' | 'description' | 'bullets' | 'cta'>> = [
-    {
-      category: 'YOUR CONTENT',
-      tag: '01 // INSERT CONTENT',
-      accentColor: 'cyan',
-      icon: <Code className="w-6 h-6 text-cyan-300" />,
-    },
-    {
-      category: 'PASSCODE LOCK',
-      tag: '02 // PASSCODE LOCK',
-      accentColor: 'fuchsia',
-      icon: <Key className="w-6 h-6 text-fuchsia-300" />,
-    },
-    {
-      category: 'TIMED LOCK',
-      tag: '03 // TIME-BASED LOCK',
-      accentColor: 'amber',
-      icon: <Clock className="w-6 h-6 text-amber-300" />,
-    },
-    {
-      category: 'UNLOCK LIMITS',
-      tag: '04 // ACCESS LIMIT LOCK',
-      accentColor: 'emerald',
-      icon: <Gauge className="w-6 h-6 text-emerald-300" />,
-    },
-    {
-      category: 'CREDIT COST',
-      tag: '05 // ESTIMATED CREDITS',
-      accentColor: 'cyan',
-      icon: <Coins className="w-6 h-6 text-amber-300" />,
-    },
-  ];
+  const toggleSound = useCallback(() => {
+    initAudio();
+    setSoundEnabled(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem('bitty_splash_sound', String(next));
+      } catch {}
+      if (next) {
+        playTone(880, 'sine', 0.15, 0.04);
+      }
+      return next;
+    });
+  }, [initAudio, playTone]);
 
-  const slides: CarouselSlide[] = homeSlides.map((slide, index) => ({
-    id: slide.id,
-    category: slideChrome[index]?.category ?? slide.kicker,
-    tag: slideChrome[index]?.tag ?? slide.kicker,
-    title: slide.kicker,
-    highlight: slide.headline,
-    description: slide.body,
-    bullets: slide.bullets,
-    cta: slide.cta,
-    accentColor: slideChrome[index]?.accentColor ?? 'cyan',
-    icon: slideChrome[index]?.icon ?? <Code className="w-6 h-6 text-cyan-300" />,
-  }));
-
-  // Slide navigation handlers
-  const goToSlide = useCallback((newIndex: number, newDirection?: number) => {
-    const dir = newDirection !== undefined ? newDirection : newIndex > currentSlide ? 1 : -1;
-    setDirection(dir);
-    setCurrentSlide(newIndex);
-    playSlideSound(newIndex);
-  }, [currentSlide, playSlideSound]);
-
-  const nextSlide = useCallback(() => {
-    if (currentSlide < slides.length - 1) {
-      goToSlide(currentSlide + 1, 1);
-    } else {
-      goToSlide(0, 1);
-    }
-  }, [currentSlide, slides.length, goToSlide]);
-
-  const prevSlide = useCallback(() => {
-    if (currentSlide > 0) {
-      goToSlide(currentSlide - 1, -1);
-    } else {
-      goToSlide(slides.length - 1, -1);
-    }
-  }, [currentSlide, slides.length, goToSlide]);
-
-  // Handle Exit and launch into app
-  const handleLaunch = useCallback(() => {
+  // ---------------------------------------------------------------------------
+  // Launch into Live Studio
+  // ---------------------------------------------------------------------------
+  const handleLaunchApp = useCallback(() => {
+    if (isExiting || isWarping) return;
     playWarpSound();
     setIsWarping(true);
-    setIsAutoPlay(false);
+    setIsPaused(true);
 
     setTimeout(() => {
       setIsExiting(true);
-      setTimeout(() => {
-        onComplete();
-      }, 500);
-    }, 2600);
-  }, [onComplete, playWarpSound]);
+      onComplete();
+    }, 280);
+  }, [isExiting, isWarping, onComplete, playWarpSound]);
 
-  // Rendered preview HTML for Slide 05 Preview Window
-  const slidePreviewHtml = useMemo(() => {
-    const source = boxContent.trim() || DEFAULT_STARTER_CODE;
-    return getRenderedHtml(source, {
-      title: boxTitle || 'Bitty Box',
-      description: boxDescription.trim() || 'A self-contained webpage living entirely in a URL',
-      language: 'en',
-    });
-  }, [boxContent, boxTitle, boxDescription]);
-
-  // Pre-generate / sync URL continuously so it is immediately available on click
-  const [readyUrl, setReadyUrl] = useState<string>('');
+  // ---------------------------------------------------------------------------
+  // Progression Logic (Cycles smoothly through stages, NEVER auto-exits without user click)
+  // ---------------------------------------------------------------------------
+  const STAGE_DURATION_MS = 3000;
 
   useEffect(() => {
-    let isCancelled = false;
-    const generatePreviewUrl = async () => {
-      try {
-        const source = boxContent.trim() || DEFAULT_STARTER_CODE;
-        const html = getRenderedHtml(source, {
-          title: boxTitle || 'Bitty Box',
-          description: boxDescription.trim() || 'A self-contained webpage living entirely in a URL',
-          language: 'en',
-        });
+    if (isPaused || isWarping || isExiting) return;
 
-        const pass = passwordEnabled && passwordValue.trim().length >= 8 ? passwordValue.trim() : undefined;
+    const interval = setInterval(() => {
+      setStageIndex(prev => {
+        const next = (prev + 1) % STAGES.length;
+        playStageSound(next);
+        setProgress(((next + 1) / STAGES.length) * 100);
+        return next;
+      });
+    }, STAGE_DURATION_MS);
 
-        let compressedFragment = '';
-        if (!pass) {
-          const syncRes = compressContentSync(html, { mimeType: 'text/html', isRawHtml: true });
-          if (syncRes) {
-            compressedFragment = syncRes.compressedUrl;
-          }
-        }
-        if (!compressedFragment) {
-          const encoded = await compressContent(html, {
-            password: pass,
-            mimeType: 'text/html',
-            isRawHtml: true,
-          });
-          if (encoded) {
-            compressedFragment = encoded.compressedUrl;
-          }
-        }
+    return () => clearInterval(interval);
+  }, [isPaused, isWarping, isExiting, playStageSound]);
 
-        if (isCancelled || !compressedFragment) return;
-
-        const meta: BittyMetadata = {
-          title: boxTitle || 'Bitty Box',
-          description: boxDescription.trim() || 'A self-contained webpage living entirely in a URL',
-          favicon: '📦',
-          includeMetadata: true,
-        };
-
-        if (timeLockEnabled) {
-          meta.lockConfig = {
-            timeWindow: buildTimeWindow({
-              enabled: timeLockEnabled,
-              mode: timeLockMode,
-              expiryHours: timeExpiryHours,
-              delayHours: timeDelayHours,
-              openAt: timeOpenAt,
-              lockAt: timeLockAt,
-              hybridRevealMode,
-              hybridSelfDestructHours,
-              showCountdown: showTimeCountdown,
-            })!,
-          };
-        }
-
-        if (accessLimitEnabled) {
-          meta.lockConfig = {
-            ...(meta.lockConfig || {}),
-            openLimit: {
-              enabled: true,
-              maxOpens: accessLimitMaxOpens,
-              opensUsed: 0,
-              showRemainingCount: showRemainingAccessCount,
-            },
-          };
-        }
-
-        const fullUrl = buildBittyUrl(compressedFragment, meta);
-        if (!isCancelled) {
-          setReadyUrl(fullUrl);
-        }
-      } catch {}
-    };
-
-    generatePreviewUrl();
-    return () => {
-      isCancelled = true;
-    };
-  }, [boxContent, boxTitle, boxDescription, passwordEnabled, passwordValue, timeLockEnabled, timeLockMode, timeExpiryHours, timeDelayHours, timeOpenAt, timeLockAt, hybridRevealMode, hybridSelfDestructHours, showTimeCountdown, accessLimitEnabled, accessLimitMaxOpens, showRemainingAccessCount]);
-
-  // Start Over / Reset All State
-  const handleStartOver = useCallback(() => {
-    setBoxContent(DEFAULT_STARTER_CODE);
-    setBoxTitle('My Bitty Box');
-    setBoxDescription('A self-contained webpage living entirely in a URL');
-    setSlide1ViewMode('text');
-    setPasswordEnabled(false);
-    setPasswordValue('');
-    setShowPassword(false);
-    setTimeLockEnabled(false);
-    setTimeLockMode('expiry');
-    setTimeExpiryHours(6);
-    setTimeDelayHours(24);
-    setTimeOpenAt(formatLocalDateTime(new Date(Date.now() + 24 * 3600 * 1000)));
-    setTimeLockAt(formatLocalDateTime(new Date(Date.now() + 48 * 3600 * 1000)));
-    setHybridRevealMode('delay');
-    setHybridSelfDestructHours(24);
-    setShowTimeCountdown(true);
-    setAccessLimitEnabled(false);
-    setAccessLimitMaxOpens(1);
-    setShowRemainingAccessCount(true);
-    setReadyUrl('');
-    setGeneratedUrl('');
-    setIsCopied(false);
-    setCurrentSlide(0);
-  }, []);
-
-  // Generate Bitty Box with all active lock configurations
-  const handleGenerateFinal = useCallback(async () => {
-    const source = boxContent.trim() || DEFAULT_STARTER_CODE;
-    const html = getRenderedHtml(source, {
-      title: boxTitle || 'Bitty Box',
-      description: boxDescription.trim() || 'A self-contained webpage living entirely in a URL',
-      language: 'en',
-    });
-
-    const pass = passwordEnabled && passwordValue.trim().length >= 8 ? passwordValue.trim() : undefined;
-    if (passwordEnabled && passwordValue.trim().length < 8) {
-      setCurrentSlide(1);
-      return;
-    }
-    const uniqueBoxId = `bbx_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 7)}`;
-
-    let compressedFragment = '';
-    if (!pass) {
-      try {
-        const syncRes = compressContentSync(html, { mimeType: 'text/html', isRawHtml: true });
-        if (syncRes) {
-          compressedFragment = syncRes.compressedUrl;
-        }
-      } catch {}
-    }
-
-    if (!compressedFragment) {
-      try {
-        const encoded = await compressContent(html, {
-          password: pass,
-          mimeType: 'text/html',
-          isRawHtml: true,
-        });
-        if (encoded) {
-          compressedFragment = encoded.compressedUrl;
-        }
-      } catch (err) {
-        console.error('Compression failed:', err);
-      }
-    }
-
-    if (!compressedFragment) return;
-
-    const meta: BittyMetadata = {
-      title: boxTitle || 'Bitty Box',
-      description: boxDescription.trim() || 'A self-contained webpage living entirely in a URL',
-      favicon: '📦',
-      includeMetadata: true,
-      boxId: (accessLimitEnabled || timeLockEnabled) ? uniqueBoxId : undefined,
-    };
-
-    if (timeLockEnabled) {
-      meta.lockConfig = {
-        timeWindow: buildTimeWindow({
-          enabled: timeLockEnabled,
-          mode: timeLockMode,
-          expiryHours: timeExpiryHours,
-          delayHours: timeDelayHours,
-          openAt: timeOpenAt,
-          lockAt: timeLockAt,
-          hybridRevealMode,
-          hybridSelfDestructHours,
-          showCountdown: showTimeCountdown,
-        })!,
-      };
-    }
-
-    if (accessLimitEnabled) {
-      meta.lockConfig = {
-        ...(meta.lockConfig || {}),
-        openLimit: {
-          enabled: true,
-          maxOpens: accessLimitMaxOpens,
-          opensUsed: 0,
-          showRemainingCount: showRemainingAccessCount,
-        },
-      };
-    }
-
-    const longUrl = buildBittyUrl(compressedFragment, meta);
-    if (!longUrl) return;
-
-    setGeneratedUrl(longUrl);
-
-    // 2. Open new tab directly with the target URL in direct user gesture context
-    let tabOpened = false;
-    try {
-      const openedWin = window.open(longUrl, '_blank', 'noopener,noreferrer');
-      if (openedWin) {
-        tabOpened = true;
-      }
-    } catch {}
-
-    if (!tabOpened) {
-      try {
-        const link = document.createElement('a');
-        link.href = longUrl;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        tabOpened = true;
-      } catch {}
-    }
-
-    // 3. Copy to clipboard
-    try {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(longUrl);
-      } else {
-        const textArea = document.createElement('textarea');
-        textArea.value = longUrl;
-        textArea.style.position = 'fixed';
-        textArea.style.opacity = '0';
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textArea);
-      }
-      setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 3500);
-    } catch {}
-
-    // 4. Background registration if access limit is configured
-    if (accessLimitEnabled && longUrl) {
-      try {
-        await fetch('/api/boxes', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            id: uniqueBoxId,
-            boxId: uniqueBoxId,
-            title: boxTitle || 'Bitty Box',
-            bittyUrl: compressedFragment || longUrl,
-            lockConfig: {
-              openLimit: {
-                enabled: true,
-                maxOpens: accessLimitMaxOpens,
-                opensUsed: 0,
-                showRemainingCount: showRemainingAccessCount,
-              },
-              timeWindow: timeLockEnabled
-                ? buildTimeWindow({
-                    enabled: timeLockEnabled,
-                    mode: timeLockMode,
-                    expiryHours: timeExpiryHours,
-                    delayHours: timeDelayHours,
-                    openAt: timeOpenAt,
-                    lockAt: timeLockAt,
-                    hybridRevealMode,
-                    hybridSelfDestructHours,
-                    showCountdown: showTimeCountdown,
-                  })
-                : null,
-            },
-          }),
-        });
-      } catch {
-        // Fallback gracefully
-      }
-    }
-
-    // 5. Record to local Quantum Vault history
-    try {
-      const hashId = await hashString(longUrl);
-      const historyItem: BittyHistoryItem = {
-        id: hashId,
-        url: longUrl,
-        title: boxTitle || 'Untitled Bitty Box',
-        description: boxDescription.trim() || 'A self-contained webpage living entirely in a URL',
-        favicon: '📦',
-        byteSize: boxContent.length,
-        compressedSize: compressedFragment.length || longUrl.length,
-        createdAt: Date.now(),
-        encrypted: Boolean(passwordEnabled && passwordValue),
-      };
-      const existingHistory = JSON.parse(localStorage.getItem('bitty_box_history') || '[]');
-      const updatedHistory = [historyItem, ...existingHistory.filter((h: any) => h.id !== hashId)].slice(0, 50);
-      localStorage.setItem('bitty_box_history', JSON.stringify(updatedHistory));
-    } catch {}
-
-    // 6. Automatically track and deduct credits in user's account log if signed in
-    if (account.isAuthenticated || account.user) {
-      try {
-        await account.recordCreatedBox({
-          title: boxTitle || 'Untitled Bitty Box',
-          url: longUrl,
-          format: 'html',
-          byteSize: boxContent.length,
-          compressedSize: compressedFragment.length || longUrl.length,
-          encrypted: Boolean(passwordEnabled && passwordValue),
-          cost: calculatedCreditCost,
-          locks: {
-            password: Boolean(passwordEnabled && passwordValue),
-            timeWindow: Boolean(timeLockEnabled),
-            accessLimit: Boolean(accessLimitEnabled),
-          },
-        });
-      } catch (err) {
-        console.error('[AnimatedSplash] Failed to record created box to user account:', err);
-      }
-    }
-  }, [readyUrl, boxContent, boxTitle, boxDescription, passwordEnabled, passwordValue, timeLockEnabled, timeLockMode, timeExpiryHours, timeDelayHours, timeOpenAt, timeLockAt, hybridRevealMode, hybridSelfDestructHours, showTimeCountdown, accessLimitEnabled, accessLimitMaxOpens, showRemainingAccessCount, calculatedCreditCost, account]);
-
-  // Auto-play timer
+  // Initial stage sound on mount
   useEffect(() => {
-    if (!isAutoPlay || isExiting) return;
-    autoPlayTimerRef.current = setInterval(() => {
-      nextSlide();
-    }, 6500);
+    playStageSound(0);
+  }, [playStageSound]);
 
-    return () => {
-      if (autoPlayTimerRef.current) clearInterval(autoPlayTimerRef.current);
-    };
-  }, [isAutoPlay, isExiting, nextSlide]);
-
-  // Keyboard navigation
+  // Keyboard shortcut listener (Space/Enter/Esc to launch or pause)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement | null;
-      if (
-        target instanceof HTMLInputElement ||
-        target instanceof HTMLTextAreaElement ||
-        target?.isContentEditable
-      ) {
-        return;
-      }
-
-      if (e.key === 'ArrowRight' || e.key === 'PageDown') {
+      if (e.key === ' ' || e.key === 'Enter' || e.key === 'Escape') {
         e.preventDefault();
-        nextSlide();
-      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        handleLaunchApp();
+      } else if (e.key === 'p' || e.key === 'P') {
         e.preventDefault();
-        prevSlide();
-      } else if (e.key === 'Escape' || (e.key === 'Enter' && currentSlide === slides.length - 1)) {
+        setIsPaused(prev => !prev);
+      } else if (e.key === 'r' || e.key === 'R') {
         e.preventDefault();
-        handleLaunch();
+        setProgress(0);
+        setStageIndex(0);
+        setIsPaused(false);
+        playStageSound(0);
       }
     };
+
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentSlide, slides.length, nextSlide, prevSlide, handleLaunch]);
+  }, [handleLaunchApp, playStageSound]);
 
-  // Touch gestures
+  // Mouse Parallax movement
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const { clientX, clientY } = e;
+    const { innerWidth, innerHeight } = window;
+    const x = (clientX / innerWidth - 0.5) * 20; // -10 to +10 deg
+    const y = (clientY / innerHeight - 0.5) * -20; // -10 to +10 deg
+    setMouseTilt({ x, y });
+  }, []);
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchStartX(e.touches[0].clientX);
-  };
+  // Jump directly to a stage
+  const jumpToStage = useCallback((index: number) => {
+    setStageIndex(index);
+    setProgress((index / STAGES.length) * 100);
+    playStageSound(index);
+  }, [playStageSound]);
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartX === null) return;
-    const touchEndX = e.changedTouches[0].clientX;
-    const diff = touchStartX - touchEndX;
 
-    if (diff > 45) {
-      nextSlide();
-    } else if (diff < -45) {
-      prevSlide();
-    }
-    setTouchStartX(null);
-  };
-
-  // Dynamic 3D Particle Canvas
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    let width = (canvas.width = window.innerWidth);
-    let height = (canvas.height = window.innerHeight);
-
-    const handleResize = () => {
-      if (!canvas) return;
-      width = canvas.width = window.innerWidth;
-      height = canvas.height = window.innerHeight;
-    };
-    window.addEventListener('resize', handleResize);
-
-    const PARTICLE_COUNT = 160;
-    interface StarParticle {
-      x: number;
-      y: number;
-      z: number;
-      color: string;
-      size: number;
-      speed: number;
-    }
-
-    const particles: StarParticle[] = [];
-    const colorPalette = ['#00f2ff', '#bd00ff', '#00ffcc', '#d946ef', '#38bdf8', '#ffe0a6'];
-
-    for (let i = 0; i < PARTICLE_COUNT; i++) {
-      particles.push({
-        x: (Math.random() - 0.5) * width * 2,
-        y: (Math.random() - 0.5) * height * 2,
-        z: Math.random() * 1000 + 1,
-        color: colorPalette[Math.floor(Math.random() * colorPalette.length)],
-        size: Math.random() * 2 + 0.8,
-        speed: Math.random() * 2 + 1,
-      });
-    }
-
-    const render = () => {
-      ctx.fillStyle = 'rgba(3, 2, 14, 0.32)';
-      ctx.fillRect(0, 0, width, height);
-
-      const cx = width / 2;
-      const cy = height / 2;
-
-      for (let i = 0; i < particles.length; i++) {
-        const p = particles[i];
-        const warpMultiplier = isExiting ? 28 : 1;
-        p.z -= p.speed * warpMultiplier;
-
-        if (p.z <= 0) {
-          p.z = 1000;
-          p.x = (Math.random() - 0.5) * width * 2;
-          p.y = (Math.random() - 0.5) * height * 2;
-        }
-
-        const fov = 400;
-        const scale = fov / (fov + p.z);
-        const sx = cx + p.x * scale;
-        const sy = cy + p.y * scale;
-
-        if (sx >= 0 && sx <= width && sy >= 0 && sy <= height) {
-          ctx.beginPath();
-          ctx.arc(sx, sy, Math.max(0.8, p.size * scale * (isExiting ? 2.5 : 1)), 0, Math.PI * 2);
-          ctx.fillStyle = p.color;
-          ctx.fill();
-        }
-      }
-
-      animFrameRef.current = requestAnimationFrame(render);
-    };
-
-    render();
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
-    };
-  }, [isExiting]);
-
-  // Framer Motion Slide Variants
-  const slideVariants = {
-    enter: (dir: number) => ({
-      x: dir > 0 ? 120 : -120,
-      opacity: 0,
-      scale: 0.94,
-      rotateY: dir > 0 ? 10 : -10,
-      filter: 'blur(6px)',
-    }),
-    center: {
-      x: 0,
-      opacity: 1,
-      scale: 1,
-      rotateY: 0,
-      filter: 'blur(0px)',
-      transition: {
-        x: { type: 'spring', stiffness: 340, damping: 30 },
-        opacity: { duration: 0.3 },
-        scale: { duration: 0.3 },
-        rotateY: { duration: 0.35 },
-        filter: { duration: 0.25 },
-      },
-    },
-    exit: (dir: number) => ({
-      x: dir > 0 ? -120 : 120,
-      opacity: 0,
-      scale: 0.94,
-      rotateY: dir > 0 ? -10 : 10,
-      filter: 'blur(6px)',
-      transition: {
-        x: { type: 'spring', stiffness: 340, damping: 30 },
-        opacity: { duration: 0.2 },
-        scale: { duration: 0.2 },
-        rotateY: { duration: 0.25 },
-        filter: { duration: 0.2 },
-      },
-    }),
-  };
-
-  const activeSlideData = slides[currentSlide];
 
   return (
     <div
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-      className={`fixed inset-0 z-50 overflow-hidden bg-[#03020e] text-cyan-100 flex flex-col justify-between select-none h-[100dvh] transition-all duration-700 ${
-        isExiting ? 'scale-115 opacity-0 blur-xl filter' : 'opacity-100'
+      onMouseMove={handleMouseMove}
+      className={`fixed inset-0 z-50 overflow-hidden bg-[#03020e] text-cyan-100 flex flex-col justify-between select-none h-[100dvh] transition-all duration-300 ${
+        isWarping ? 'scale-105 opacity-0 blur-lg filter' : 'opacity-100'
       }`}
     >
-      {/* 3D Canvas */}
-      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none z-0" />
+      {/* Parallax Starfield Background */}
+      <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden" aria-hidden="true">
+        <div id="stars" />
+        <div id="stars2" />
+        <div id="stars3" />
+      </div>
 
-      {/* Cyber Vignette & Grid */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_35%,rgba(3,2,14,0.92)_100%)] pointer-events-none z-1" />
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(0,242,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,242,255,0.02)_1px,transparent_1px)] bg-[size:48px_48px] pointer-events-none z-1" />
+      {/* Floating Syntax Atoms Orbiting in Phase 0 & Phase 1 */}
+      <div className="absolute inset-0 pointer-events-none z-2 overflow-hidden">
+        <AnimatePresence>
+          {(stageIndex === 0 || stageIndex === 1) && (
+            <>
+              {FLOATING_CODE_TOKENS.map((token, idx) => (
+                <motion.div
+                  key={token.text}
+                  initial={{ opacity: 0, scale: 0.6, y: 30 }}
+                  animate={{
+                    opacity: [0, 0.85, 0.4, 0.85],
+                    scale: [0.8, 1.05, 0.95],
+                    y: [0, -12, 0],
+                  }}
+                  exit={{ opacity: 0, scale: 0.2, y: -40, filter: 'blur(8px)' }}
+                  transition={{
+                    duration: 3 + idx * 0.4,
+                    repeat: Infinity,
+                    repeatType: 'mirror',
+                    delay: idx * 0.12,
+                  }}
+                  style={{
+                    position: 'absolute',
+                    top: token.top,
+                    left: token.left,
+                    right: token.right,
+                  }}
+                  className={`font-mono text-xs px-2.5 py-1 rounded-md bg-black/60 border border-cyan-500/30 backdrop-blur-md shadow-[0_0_12px_rgba(0,242,255,0.2)] hidden sm:block ${token.color}`}
+                >
+                  <span className="opacity-40 mr-1.5">&gt;</span>
+                  {token.text}
+                </motion.div>
+              ))}
+            </>
+          )}
+        </AnimatePresence>
+      </div>
 
-      {/* Top HUD Header Navigation Bar */}
-      <header className="relative z-20 w-full px-4 sm:px-6 py-2 sm:py-2.5 flex items-center justify-between border-b border-cyan-500/20 bg-[#060419]/75 backdrop-blur-xl shrink-0">
-        <div className="flex items-center gap-2.5">
-          <div className="relative flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-cyan-950/90 border border-cyan-400/60 shadow-[0_0_15px_rgba(0,242,255,0.4)] overflow-hidden p-1">
+      {/* ───────────────────────────────────────────────────────────────────────
+          HEADER: HUD STATUS BAR & QUICK CONTROLS
+          ─────────────────────────────────────────────────────────────────────── */}
+      <header className="relative z-20 w-full px-4 sm:px-8 py-3 flex items-center justify-between border-b border-cyan-500/20 bg-[#050314]/80 backdrop-blur-xl shrink-0">
+        {/* Brand identity & live status */}
+        <div className="flex items-center gap-3">
+          <div className="relative flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-cyan-950/90 border border-cyan-400/60 shadow-[0_0_18px_rgba(0,242,255,0.4)] overflow-hidden p-1">
             <img
-              src="/bittybox-logo.png"
-              alt="Bitty Box Logo"
-              className="w-full h-full object-contain drop-shadow-[0_0_6px_rgba(0,242,255,0.6)]"
+              src="/bittybox.png"
+              onError={(e) => {
+                // Fallback to svg icon if custom logo png not loaded
+                (e.currentTarget as HTMLImageElement).style.display = 'none';
+              }}
+              alt="Bitty Box"
+              className="w-full h-full object-contain drop-shadow-[0_0_6px_rgba(0,242,255,0.8)]"
             />
-            <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+            <div className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
           </div>
+
           <div>
-            <div className="text-xs font-mono font-bold tracking-widest text-cyan-300 flex items-center gap-2">
+            <div className="text-xs font-mono font-black tracking-widest text-cyan-200 flex items-center gap-2">
               <span>BITTY BOX</span>
+              <span className="text-[10px] px-1.5 py-0.2 rounded bg-cyan-950 border border-cyan-400/40 text-cyan-300 font-bold">
+                GENESIS v3.8
+              </span>
             </div>
-            <div className="hidden sm:block text-[9px] font-mono text-cyan-400/60 tracking-wider">
-              CLIENT-SIDE IN-URL OPERATING SYSTEM
+            <div className="hidden sm:flex items-center gap-1.5 text-[9px] font-mono text-cyan-400/70 tracking-wider">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+              <span>MAKING WEBPAGES THAT LIVE INSIDE LINKS</span>
             </div>
           </div>
         </div>
 
-        {/* Live Slide Step Indicator (01 / 05) */}
-        <div className="flex items-center gap-1.5 font-mono text-xs text-cyan-300/80 bg-cyan-950/40 px-2.5 py-0.5 rounded-full border border-cyan-500/30">
-          <span className="text-cyan-200 font-bold">0{currentSlide + 1}</span>
-          <span className="text-cyan-500">/</span>
-          <span className="text-cyan-400/60">0{slides.length}</span>
+        {/* Real-Time Phase Scramble Badge */}
+        <div className="hidden md:flex items-center gap-2 font-mono text-xs px-3 py-1 rounded-full bg-black/60 border border-cyan-500/30 text-cyan-300">
+          <Radio className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+          <CyberScrambleText text={currentStage.phaseCode} speed={18} />
         </div>
 
-        {/* Controls: Audio Toggle, Sign In / Account */}
-        <div className="flex items-center gap-2 sm:gap-2.5">
+        {/* Audio FX Toggle & Fast Skip Button */}
+        <div className="flex items-center gap-2 sm:gap-3">
           <button
-            onClick={() => {
-              initAudio();
-              setSoundEnabled(!soundEnabled);
-            }}
-            className={`p-1.5 rounded-lg border transition-all ${
+            type="button"
+            onClick={toggleSound}
+            className={`p-2 rounded-xl border transition-all cursor-pointer ${
               soundEnabled
-                ? 'bg-cyan-950/60 border-cyan-500/40 text-cyan-300 hover:bg-cyan-900/50'
-                : 'bg-black/40 border-cyan-500/20 text-cyan-600 hover:text-cyan-400'
+                ? 'bg-cyan-950/60 border-cyan-500/50 text-cyan-300 shadow-[0_0_10px_rgba(0,242,255,0.25)] hover:bg-cyan-900/60'
+                : 'bg-black/50 border-cyan-500/20 text-cyan-600 hover:text-cyan-400'
             }`}
-            title={soundEnabled ? 'Mute Sound FX' : 'Enable Sound FX'}
-            aria-label="Toggle audio effects"
+            title={soundEnabled ? 'Mute Sound FX' : 'Enable Web Audio SFX'}
+            aria-label="Toggle Sound Effects"
           >
-            {soundEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
+            {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
           </button>
 
           <button
-            onClick={() => setIsRightToolsPanelOpen(true)}
-            className="px-3 py-1 rounded-lg bg-gradient-to-r from-fuchsia-950/90 to-purple-950/90 border border-fuchsia-500/60 hover:border-fuchsia-400 text-fuchsia-200 font-mono text-xs tracking-wider flex items-center gap-1.5 shadow-[0_0_12px_rgba(189,0,255,0.25)] transition-all hover:scale-105 active:scale-95 group cursor-pointer"
-            title={isAuthenticated || user ? 'Account & Tools' : 'Create Account / Sign In'}
+            type="button"
+            onClick={() => setIsPaused(prev => !prev)}
+            className="p-2 rounded-xl bg-black/50 border border-cyan-500/30 hover:border-cyan-400/60 text-cyan-300 transition-all cursor-pointer hidden sm:flex items-center justify-center"
+            title={isPaused ? 'Resume Animation' : 'Pause Animation'}
+            aria-label={isPaused ? 'Resume Animation' : 'Pause Animation'}
           >
-            <span>{isAuthenticated || user ? 'ACCOUNT' : 'CREATE ACCOUNT'}</span>
-            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform text-fuchsia-300" />
+            {isPaused ? <Play className="w-4 h-4 text-emerald-400" /> : <Pause className="w-4 h-4 text-cyan-400" />}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleLaunchApp}
+            className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500/30 via-teal-500/40 to-emerald-500/30 border border-cyan-400/80 hover:border-cyan-300 text-cyan-100 hover:text-white font-cyber font-bold text-xs tracking-wider flex items-center gap-2 shadow-[0_0_20px_rgba(0,242,255,0.4)] transition-all hover:scale-105 active:scale-95 cursor-pointer group"
+          >
+            <span>ENTER BITTY BOX</span>
+            <ArrowRight className="w-3.5 h-3.5 text-cyan-300 group-hover:translate-x-1 transition-transform" />
           </button>
         </div>
       </header>
 
-      {/* Main Interactive Carousel Area */}
-      <main className="relative z-10 flex-1 flex items-center justify-center w-full px-3 sm:px-6 py-2 max-w-5xl lg:max-w-6xl mx-auto min-h-0 overflow-y-auto">
+      {/* ───────────────────────────────────────────────────────────────────────
+          MAIN STAGE: 3D HOLOGRAPHIC ISOMETRIC BITTY BOX CREATION MATRIX
+          ─────────────────────────────────────────────────────────────────────── */}
+      <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 sm:px-6 py-1 max-w-7xl mx-auto w-full min-h-0 overflow-hidden">
+        
+        {/* Holographic 3D Viewport */}
+        <div
+          className="relative w-full flex-1 flex flex-col items-center justify-center [perspective:1200px] origin-center"
+          style={{
+            transform: `scale(${stageScale}) rotateX(${mouseTilt.y * 0.4}deg) rotateY(${mouseTilt.x * 0.4}deg)`,
+            transformOrigin: 'center center',
+            transition: 'transform 0.15s ease-out',
+          }}
+        >
+          {/* Ambient Glow Aura */}
+          <div
+            className={`absolute w-72 h-72 sm:w-96 sm:h-96 rounded-full blur-[90px] pointer-events-none transition-all duration-700 opacity-30 ${
+              stageIndex === 0
+                ? 'bg-cyan-500'
+                : stageIndex === 1
+                ? 'bg-fuchsia-500 scale-110'
+                : stageIndex === 2
+                ? 'bg-amber-500 scale-120'
+                : 'bg-emerald-500 scale-125'
+            }`}
+          />
 
-
-        <div className="w-full flex items-center justify-center [perspective:1200px] my-auto">
-          <AnimatePresence initial={false} custom={direction} mode="wait">
-            <motion.div
-              key={currentSlide}
-              custom={direction}
-              variants={slideVariants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              drag="x"
-              dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={0.25}
-              onDragEnd={(_e, { offset, velocity }) => {
-                const swipe = offset.x;
-                if (swipe < -50 || velocity.x < -200) {
-                  nextSlide();
-                } else if (swipe > 50 || velocity.x > 200) {
-                  prevSlide();
-                }
-              }}
-              className="w-full max-w-4xl lg:max-w-5xl bg-[#090620]/85 border border-cyan-500/30 rounded-2xl p-4 sm:p-5 md:p-6 shadow-[0_0_40px_rgba(0,0,0,0.85),inset_0_0_20px_rgba(0,242,255,0.08)] backdrop-blur-2xl relative cursor-grab active:cursor-grabbing scrollbar-thin scrollbar-thumb-cyan-500/40 scrollbar-track-transparent"
-            >
-              {/* Corner Accents */}
-              <div className="absolute top-2 left-2 w-2.5 h-2.5 border-t-2 border-l-2 border-cyan-400/80 pointer-events-none" />
-              <div className="absolute top-2 right-2 w-2.5 h-2.5 border-t-2 border-r-2 border-cyan-400/80 pointer-events-none" />
-              <div className="absolute bottom-2 left-2 w-2.5 h-2.5 border-b-2 border-l-2 border-cyan-400/80 pointer-events-none" />
-              <div className="absolute bottom-2 right-2 w-2.5 h-2.5 border-b-2 border-r-2 border-cyan-400/80 pointer-events-none" />
-
-              {/* Glowing Radial Accent */}
+          {/* -----------------------------------------------------------------
+              ISOMETRIC 3D CUBE SYSTEM (Pure CSS 3D Transforms)
+              ----------------------------------------------------------------- */}
+          <div className="relative w-48 h-48 sm:w-60 sm:h-60 lg:w-72 lg:h-72 flex items-center justify-center my-0.5 sm:my-1">
+            
+            {/* Holographic Gyroscope Orbit Rings (Spinning around the cube) */}
+            <div
+              className={`absolute inset-0 rounded-full border border-cyan-400/40 pointer-events-none transition-all duration-700 ${
+                stageIndex >= 1 ? 'animate-[spin_4s_linear_infinite] scale-125 border-fuchsia-400/60 shadow-[0_0_20px_rgba(217,70,239,0.3)]' : 'scale-90 opacity-40'
+              }`}
+              style={{ transformStyle: 'preserve-3d', transform: 'rotateX(65deg) rotateY(20deg)' }}
+            />
+            <div
+              className={`absolute inset-0 rounded-full border border-teal-400/40 pointer-events-none transition-all duration-700 ${
+                stageIndex >= 1 ? 'animate-[spin_6s_linear_infinite_reverse] scale-140 border-cyan-400/50' : 'scale-95 opacity-30'
+              }`}
+              style={{ transformStyle: 'preserve-3d', transform: 'rotateX(-45deg) rotateY(45deg)' }}
+            />
+            {stageIndex >= 2 && (
               <div
-                className={`absolute -top-20 -right-20 w-56 h-56 rounded-full blur-3xl opacity-20 pointer-events-none ${
-                  activeSlideData.accentColor === 'fuchsia'
-                    ? 'bg-fuchsia-500'
-                    : activeSlideData.accentColor === 'emerald'
-                    ? 'bg-emerald-500'
-                    : activeSlideData.accentColor === 'amber'
-                    ? 'bg-amber-500'
-                    : 'bg-cyan-500'
-                }`}
+                className="absolute inset-0 rounded-full border-2 border-emerald-400/60 pointer-events-none animate-[spin_8s_linear_infinite] scale-150 shadow-[0_0_25px_rgba(16,185,129,0.4)]"
+                style={{ transformStyle: 'preserve-3d', transform: 'rotateX(75deg)' }}
               />
+            )}
 
-              {/* Two-Column Responsive Grid Layout on Desktop */}
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6 items-stretch w-full">
-                {/* ─────────────────────────────────────────────────────────────
-                    LEFT COLUMN (md:col-span-6): Interactive Tool Panel
-                    ───────────────────────────────────────────────────────────── */}
-                <div
-                  className="md:col-span-6 flex flex-col justify-center min-h-0"
-                  onPointerDown={e => e.stopPropagation()}
-                  onClick={e => e.stopPropagation()}
-                >
-                  {/* =========================================================
-                      SLIDE 1 (Index 0): TEXT INPUT / COMPOSER FIELD (TEXT / SPLIT / PREVIEW)
-                      ========================================================= */}
-                  {currentSlide === 0 && (
-                    <div className="w-full bg-[#050314]/90 border border-cyan-500/40 rounded-xl p-3 sm:p-3.5 shadow-[0_0_25px_rgba(0,242,255,0.15)] font-mono flex flex-col justify-between h-full min-h-[220px] md:min-h-[260px]">
-                      {/* Top Bar: Mode Tabs (TEXT / SPLIT / PREVIEW) and Bytes Counter */}
-                      <div className="flex items-center justify-between border-b border-cyan-500/20 pb-2 mb-2 gap-2">
-                        <div className="flex items-center gap-1 bg-black/60 border border-cyan-500/30 rounded-lg p-0.5 text-[10px] font-mono">
-                          <button
-                            type="button"
-                            onClick={() => setSlide1ViewMode('text')}
-                            className={`px-2.5 py-1 rounded transition-all font-bold cursor-pointer ${
-                              slide1ViewMode === 'text'
-                                ? 'bg-cyan-950 text-cyan-200 border border-cyan-400/60 shadow-[0_0_8px_rgba(0,242,255,0.3)]'
-                                : 'text-cyan-400/60 hover:text-cyan-200'
-                            }`}
-                            title="Code / Text Editor only"
-                          >
-                            TEXT
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setSlide1ViewMode('split')}
-                            className={`px-2.5 py-1 rounded transition-all font-bold cursor-pointer ${
-                              slide1ViewMode === 'split'
-                                ? 'bg-cyan-950 text-cyan-200 border border-cyan-400/60 shadow-[0_0_8px_rgba(0,242,255,0.3)]'
-                                : 'text-cyan-400/60 hover:text-cyan-200'
-                            }`}
-                            title="Split View: Editor and Rendered Preview side-by-side"
-                          >
-                            SPLIT
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setSlide1ViewMode('preview')}
-                            className={`px-2.5 py-1 rounded transition-all font-bold cursor-pointer ${
-                              slide1ViewMode === 'preview'
-                                ? 'bg-cyan-950 text-cyan-200 border border-cyan-400/60 shadow-[0_0_8px_rgba(0,242,255,0.3)]'
-                                : 'text-cyan-400/60 hover:text-cyan-200'
-                            }`}
-                            title="Live Rendered Output from the TEXT tab"
-                          >
-                            PREVIEW
-                          </button>
-                        </div>
+            {/* The 3D Cube Container */}
+            <motion.div
+              className="relative w-32 h-32 sm:w-44 sm:h-44 lg:w-48 lg:h-48 [transform-style:preserve-3d] cursor-pointer"
+              animate={{
+                rotateX: stageIndex === 0 ? [-15, -25, -15] : stageIndex === 1 ? [-20, 20, -20] : [-18, -24, -18],
+                rotateY: stageIndex === 0 ? [25, 45, 25] : stageIndex === 1 ? [0, 360] : [35, 395],
+                scale: stageIndex === 0 ? 0.92 : stageIndex === 1 ? 0.85 : stageIndex === 2 ? 1.05 : 1.15,
+              }}
+              transition={{
+                rotateX: { duration: 6, repeat: Infinity, ease: 'easeInOut' },
+                rotateY: {
+                  duration: stageIndex === 1 ? 3 : 8,
+                  repeat: Infinity,
+                  ease: stageIndex === 1 ? 'linear' : 'linear',
+                },
+                scale: { duration: 0.6, ease: 'easeOut' },
+              }}
+            >
+              {/* Internal Quantum Pulsing Core */}
+              <div className="absolute inset-0 m-auto w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-tr from-cyan-400 via-fuchsia-500 to-emerald-400 blur-[6px] animate-pulse opacity-80" />
 
-                        <span className="text-[10px] text-cyan-300 bg-cyan-950/80 border border-cyan-500/40 px-2 py-0.5 rounded font-bold shrink-0">
-                          {boxContent.length} BYTES
-                        </span>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
-                        <label className="flex flex-col gap-1 text-[10px] font-bold uppercase tracking-[0.18em] text-cyan-300/80">
-                          Page title
-                          <input
-                            type="text"
-                            value={boxTitle}
-                            onChange={e => setBoxTitle(e.target.value)}
-                            onFocus={() => setIsAutoPlay(false)}
-                            onPointerDown={e => e.stopPropagation()}
-                            aria-label="Page title for your Bitty Box"
-                            placeholder="My Bitty Box"
-                            maxLength={80}
-                            className="w-full rounded-lg border border-cyan-400/30 bg-[#02010a] px-2.5 py-2 text-xs normal-case tracking-normal text-cyan-100 placeholder:text-cyan-400/40 outline-none transition focus:border-cyan-300 focus:ring-1 focus:ring-cyan-500/30 font-mono"
-                          />
-                        </label>
-                        <label className="flex flex-col gap-1 text-[10px] font-bold uppercase tracking-[0.18em] text-cyan-300/80">
-                          Page description
-                          <input
-                            type="text"
-                            value={boxDescription}
-                            onChange={e => setBoxDescription(e.target.value)}
-                            onFocus={() => setIsAutoPlay(false)}
-                            onPointerDown={e => e.stopPropagation()}
-                            aria-label="Page description for your Bitty Box"
-                            placeholder="A self-contained webpage living entirely in a URL"
-                            maxLength={180}
-                            className="w-full rounded-lg border border-cyan-400/30 bg-[#02010a] px-2.5 py-2 text-xs normal-case tracking-normal text-cyan-100 placeholder:text-cyan-400/40 outline-none transition focus:border-cyan-300 focus:ring-1 focus:ring-cyan-500/30 font-mono"
-                          />
-                        </label>
-                      </div>
-
-                      {/* View Modes Content */}
-                      {(slide1ViewMode === 'text' || slide1ViewMode === 'split') && (
-                        <textarea
-                          value={boxContent}
-                          onChange={e => setBoxContent(e.target.value)}
-                          onFocus={() => setIsAutoPlay(false)}
-                          onPointerDown={e => e.stopPropagation()}
-                          aria-label="Content for your Bitty Box"
-                          placeholder="Paste HTML or type the content for your new Bitty Box…"
-                          className="w-full flex-1 min-h-[110px] sm:min-h-[130px] md:min-h-[140px] resize-none rounded-lg border border-cyan-400/30 bg-[#02010a] p-2.5 text-xs leading-5 text-cyan-100 placeholder:text-cyan-400/40 outline-none transition focus:border-cyan-300 focus:ring-1 focus:ring-cyan-500/30 font-mono"
-                        />
-                      )}
-
-                      {slide1ViewMode === 'preview' && (
-                        <div className="w-full flex-1 min-h-[110px] sm:min-h-[130px] md:min-h-[140px] relative bg-[#000000] rounded-lg border border-cyan-500/30 overflow-hidden shadow-inner">
-                          <iframe
-                            srcDoc={slidePreviewHtml}
-                            title="Live Rendered Output Preview"
-                            className="w-full h-full border-0 absolute inset-0 bg-[#000000]"
-                            sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-modals allow-downloads"
-                          />
-                        </div>
-                      )}
-
-                      <div className="flex flex-wrap items-center justify-between gap-1.5 mt-2 pt-2 border-t border-cyan-500/20 text-xs">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-cyan-400/60 text-[10px]">PRESET:</span>
-                          <button
-                            type="button"
-                            onClick={() => setBoxContent(DEFAULT_STARTER_CODE)}
-                            className="px-2 py-0.5 rounded bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 text-[10px] hover:bg-cyan-900 transition-colors"
-                          >
-                            Starter Box
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setBoxContent('<h1>Secret Note</h1>\n<p>Only visible to those with the link.</p>')}
-                            className="px-2 py-0.5 rounded bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 text-[10px] hover:bg-cyan-900 transition-colors"
-                          >
-                            Note
-                          </button>
-                        </div>
-                        {boxContent && (
-                          <button
-                            type="button"
-                            onClick={() => setBoxContent('')}
-                            className="text-[10px] text-cyan-400/60 hover:text-rose-400 transition-colors"
-                          >
-                            Clear
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* =========================================================
-                      SLIDE 2 (Index 1): NUMERICAL PASSCODE LOCK (OPTIONAL)
-                      ========================================================= */}
-                  {currentSlide === 1 && (
-                    <div className="w-full bg-[#050314]/90 border border-fuchsia-500/40 rounded-xl p-3 sm:p-4 shadow-[0_0_25px_rgba(189,0,255,0.18)] font-mono flex flex-col justify-between h-full min-h-[220px] md:min-h-[260px]">
-                      <div className="flex items-center justify-between border-b border-fuchsia-500/20 pb-2.5 mb-2.5">
-                        <div className="flex items-center gap-2 text-fuchsia-300 text-xs font-bold">
-                          <Key className="w-4 h-4 text-fuchsia-400" />
-                          <span>ENABLE PASSCODE LOCK</span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setPasswordEnabled(!passwordEnabled)}
-                          className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold transition-all ${
-                            passwordEnabled
-                              ? 'bg-fuchsia-500 text-black shadow-[0_0_12px_rgba(217,70,239,0.8)]'
-                              : 'bg-fuchsia-950/60 border border-fuchsia-500/40 text-fuchsia-400'
-                          }`}
-                        >
-                          {passwordEnabled ? 'ENABLED' : 'OPTIONAL (OFF)'}
-                        </button>
-                      </div>
-
-                      {passwordEnabled ? (
-                        <div className="space-y-2.5 animate-in fade-in duration-200 flex-1 flex flex-col justify-between">
-                          <div className="flex items-center justify-between text-[10px] sm:text-[11px] text-fuchsia-300/80">
-                            <span>NUMERICAL PASSCODE (8-12 DIGITS)</span>
-                            <span className={`bg-fuchsia-950/80 border px-1.5 py-0.5 rounded font-bold ${isPasscodeTooShort ? 'border-rose-500/60 text-rose-300' : 'border-fuchsia-500/40 text-fuchsia-200'}`}>
-                              {passwordValue.length} / 12
-                            </span>
-                          </div>
-
-                          <div className="relative">
-                            <input
-                              type={showPassword ? 'text' : 'password'}
-                              inputMode="numeric"
-                              pattern="[0-9]*"
-                              maxLength={12}
-                              minLength={8}
-                              value={passwordValue}
-                              onChange={e => {
-                                const numbersOnly = e.target.value.replace(/\D/g, '').slice(0, 12);
-                                setPasswordValue(numbersOnly);
-                              }}
-                              placeholder="8-12 numbers (e.g. 12345678)..."
-                              className="w-full rounded-lg border border-fuchsia-400/50 bg-[#02010a] px-3 py-2 text-center text-base tracking-[0.25em] text-fuchsia-100 placeholder:text-fuchsia-400/40 placeholder:text-xs placeholder:tracking-normal outline-none focus:border-fuchsia-300 pr-9 font-mono"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setShowPassword(!showPassword)}
-                              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-fuchsia-400 hover:text-fuchsia-200"
-                              title={showPassword ? 'Hide passcode' : 'Show passcode'}
-                            >
-                              {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                            </button>
-                          </div>
-
-                          <div className="flex items-center justify-between gap-1.5 pt-0.5 text-xs">
-                            <div className="flex items-center gap-1">
-                              <span className="text-fuchsia-400/60 text-[10px]">PIN:</span>
-                              {['12345678', '87654321', '90210902', '123456789012'].map(pin => (
-                                <button
-                                  key={pin}
-                                  type="button"
-                                  onClick={() => setPasswordValue(pin)}
-                                  className="px-1.5 py-0.5 rounded bg-fuchsia-950/80 border border-fuchsia-500/40 text-fuchsia-300 text-[10px] hover:bg-fuchsia-900"
-                                >
-                                  {pin}
-                                </button>
-                              ))}
-                            </div>
-                            {passwordValue && (
-                              <button
-                                type="button"
-                                onClick={() => setPasswordValue('')}
-                                className="text-[10px] text-rose-400 hover:underline"
-                              >
-                                CLEAR
-                              </button>
-                            )}
-                          </div>
-
-                          {isPasscodeTooShort && (
-                            <div className="flex items-center gap-1.5 text-[10px] text-rose-300 pt-0.5">
-                              <AlertTriangle className="w-3 h-3 shrink-0" />
-                              <span>Passcode must be at least 8 digits before it can lock the Box.</span>
-                            </div>
-                          )}
-
-                          <div className="flex items-center gap-1.5 text-[10px] text-fuchsia-300/80 pt-0.5">
-                            <ShieldCheck className="w-3 h-3 text-emerald-400 shrink-0" />
-                            <span className="truncate">AES-GCM 256-BIT // ZERO-KNOWLEDGE ENCRYPTION</span>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex-1 flex flex-col items-center justify-center text-center p-3 text-xs text-fuchsia-200/70 space-y-2">
-                          <Unlock className="w-8 h-8 text-fuchsia-400/50" />
-                          <p className="text-[11px] text-fuchsia-300/80">No passcode required. Anyone with the URL will be able to view the Box.</p>
-                          <button
-                            type="button"
-                            onClick={() => setPasswordEnabled(true)}
-                            className="px-3 py-1 rounded bg-fuchsia-950 border border-fuchsia-500/40 text-fuchsia-300 text-[10px] font-bold hover:bg-fuchsia-900 transition-colors"
-                          >
-                            + Enable PIN Lock
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* =========================================================
-                      SLIDE 3 (Index 2): TIME-BASED LOCK (OPTIONAL)
-                      ========================================================= */}
-                  {currentSlide === 2 && (
-                    <div className="w-full bg-[#050314]/90 border border-amber-500/40 rounded-xl p-3 sm:p-4 shadow-[0_0_25px_rgba(245,158,11,0.18)] font-mono flex flex-col justify-between h-full min-h-[220px] md:min-h-[260px]">
-                      <div className="flex items-center justify-between border-b border-amber-500/20 pb-2.5 mb-2.5">
-                        <div className="flex items-center gap-2 text-amber-300 text-xs font-bold">
-                          <Clock className="w-4 h-4 text-amber-400" />
-                          <span>ENABLE TIME-BASED LOCK</span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setTimeLockEnabled(!timeLockEnabled)}
-                          className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold transition-all ${
-                            timeLockEnabled
-                              ? 'bg-amber-400 text-black shadow-[0_0_12px_rgba(245,158,11,0.8)]'
-                              : 'bg-amber-950/60 border border-amber-500/40 text-amber-400'
-                          }`}
-                        >
-                          {timeLockEnabled ? 'ENABLED' : 'OPTIONAL (OFF)'}
-                        </button>
-                      </div>
-
-                      {timeLockEnabled ? (
-                        <div className="space-y-3 animate-in fade-in duration-200 flex-1 flex flex-col justify-between">
-                          {/* Mode selector */}
-                          <div className="space-y-1.5">
-                            <div className="text-[11px] text-amber-300/80 font-bold">LOCK MODE:</div>
-                            <div className="grid grid-cols-3 gap-1.5">
-                              {([
-                                { id: 'expiry', label: 'Expires', sub: 'Duration' },
-                                { id: 'delay', label: 'Time Until Open', sub: 'Sleeper' },
-                                { id: 'range', label: 'Date Range', sub: 'Scheduled' },
-                                { id: 'hybrid', label: 'Reveal + Decay', sub: 'Hybrid' },
-                              ] as const).map(m => (
-                                <button
-                                  key={m.id}
-                                  type="button"
-                                  onClick={() => setTimeLockMode(m.id)}
-                                  className={`py-1.5 px-1 rounded-lg border text-[10px] font-bold leading-tight transition-all ${
-                                    timeLockMode === m.id
-                                      ? 'bg-amber-500/30 border-amber-400 text-amber-200 shadow-[0_0_12px_rgba(245,158,11,0.4)]'
-                                      : 'bg-amber-950/30 border-amber-500/30 text-amber-400 hover:bg-amber-900/40'
-                                  }`}
-                                >
-                                  <div>{m.label}</div>
-                                  <div className="text-[8px] opacity-70 uppercase tracking-wide">{m.sub}</div>
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Expiry (current behavior) */}
-                          {timeLockMode === 'expiry' && (
-                            <DurationTimeControl
-                              label="SELECT EXPIRATION DURATION:"
-                              presets={[1, 6, 24, 168]}
-                              value={timeExpiryHours}
-                              onChange={setTimeExpiryHours}
-                              hint="Link self-destructs after this duration."
-                            />
-                          )}
-
-                          {/* Delay (Time Until Open) */}
-                          {timeLockMode === 'delay' && (
-                            <DurationTimeControl
-                              label="UNLOCKS AFTER (TIME UNTIL OPEN):"
-                              presets={[6, 24, 72, 168]}
-                              value={timeDelayHours}
-                              onChange={setTimeDelayHours}
-                              hint="Link stays inert & unopenable until then."
-                            />
-                          )}
-
-                          {/* Date Range (Opens at / Locks on) */}
-                          {timeLockMode === 'range' && (
-                            <DateRangeControl
-                              openAt={timeOpenAt}
-                              lockAt={timeLockAt}
-                              onOpenAt={setTimeOpenAt}
-                              onLockAt={setTimeLockAt}
-                            />
-                          )}
-
-                          {/* Hybrid (Reveal + Self-Destruct) */}
-                          {timeLockMode === 'hybrid' && (
-                            <div className="space-y-2">
-                              <div className="text-[10px] text-amber-300/80 font-bold">REVEAL INSTANT:</div>
-                              <div className="grid grid-cols-2 gap-1.5">
-                                {([{ id: 'delay', label: 'After Delay' }, { id: 'date', label: 'On Date' }] as const).map(o => (
-                                  <button
-                                    key={o.id}
-                                    type="button"
-                                    onClick={() => setHybridRevealMode(o.id)}
-                                    className={`py-1.5 px-2 rounded-lg border text-[11px] font-bold transition-all ${
-                                      hybridRevealMode === o.id
-                                        ? 'bg-amber-500/30 border-amber-400 text-amber-200 shadow-[0_0_12px_rgba(245,158,11,0.4)]'
-                                        : 'bg-amber-950/30 border-amber-500/30 text-amber-400 hover:bg-amber-900/40'
-                                    }`}
-                                  >
-                                    {o.label}
-                                  </button>
-                                ))}
-                              </div>
-
-                              {hybridRevealMode === 'delay' ? (
-                                <DurationTimeControl
-                                  label="REVEALS AFTER (TIME UNTIL OPEN):"
-                                  presets={[6, 24, 72, 168]}
-                                  value={timeDelayHours}
-                                  onChange={setTimeDelayHours}
-                                  compact
-                                />
-                              ) : (
-                                <div className="space-y-1.5">
-                                  <div className="text-[10px] text-amber-300/80 font-bold">REVEALS ON (DATE/TIME):</div>
-                                  <input
-                                    type="datetime-local"
-                                    value={timeOpenAt}
-                                    onChange={e => setTimeOpenAt(e.target.value)}
-                                    className="w-full rounded-lg border border-amber-400/50 bg-[#02010a] px-2 py-1.5 text-[11px] text-amber-100 outline-none focus:border-amber-300 font-mono"
-                                  />
-                                </div>
-                              )}
-
-                              <DurationTimeControl
-                                label="SELF-DESTRUCTS AFTER REVEAL:"
-                                presets={[1, 6, 24, 168]}
-                                value={hybridSelfDestructHours}
-                                onChange={setHybridSelfDestructHours}
-                                compact
-                              />
-                              <div className="text-[9px] text-amber-300/60 truncate">Reveals at scheduled instant, then auto-burns after the decay window.</div>
-                            </div>
-                          )}
-
-                          <div className="flex items-center gap-1.5 text-[10px] text-amber-300/80 pt-0.5">
-                            <Timer className="w-3 h-3 text-amber-400 shrink-0" />
-                            <span className="truncate">
-                              {timeLockMode === 'expiry' && 'AUTO-DECAY // SELF-DESTRUCTS AFTER DURATION'}
-                              {timeLockMode === 'delay' && 'SLEEPER // REVEALS ITSELF AFTER COUNTDOWN'}
-                              {timeLockMode === 'range' && 'SCHEDULED // ANCHORED TO CALENDAR'}
-                              {timeLockMode === 'hybrid' && 'HYBRID // SCHEDULED REVEAL + SELF-DESTRUCT'}
-                            </span>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex-1 flex flex-col items-center justify-center text-center p-3 text-xs text-amber-200/70 space-y-2">
-                          <Clock className="w-8 h-8 text-amber-400/50" />
-                          <p className="text-[11px] text-amber-300/80">No time expiration set. The Box will remain accessible indefinitely.</p>
-                          <button
-                            type="button"
-                            onClick={() => setTimeLockEnabled(true)}
-                            className="px-3 py-1 rounded bg-amber-950 border border-amber-500/40 text-amber-300 text-[10px] font-bold hover:bg-amber-900 transition-colors"
-                          >
-                            + Enable Expiry Window
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* =========================================================
-                      SLIDE 4 (Index 3): ACCESS LIMIT LOCK (OPTIONAL)
-                      ========================================================= */}
-                  {currentSlide === 3 && (
-                    <div className="w-full bg-[#050314]/90 border border-emerald-500/40 rounded-xl p-3 sm:p-4 shadow-[0_0_25px_rgba(0,255,204,0.18)] font-mono flex flex-col justify-between h-full min-h-[220px] md:min-h-[260px]">
-                      <div className="flex items-center justify-between border-b border-emerald-500/20 pb-2.5 mb-2.5">
-                        <div className="flex items-center gap-2 text-emerald-300 text-xs font-bold">
-                          <Gauge className="w-4 h-4 text-emerald-400" />
-                          <span>ENABLE ACCESS LIMIT LOCK</span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setAccessLimitEnabled(!accessLimitEnabled)}
-                          className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold transition-all ${
-                            accessLimitEnabled
-                              ? 'bg-emerald-400 text-black shadow-[0_0_12px_rgba(0,255,204,0.8)]'
-                              : 'bg-emerald-950/60 border border-emerald-500/40 text-emerald-400'
-                          }`}
-                        >
-                          {accessLimitEnabled ? 'ENABLED' : 'OPTIONAL (OFF)'}
-                        </button>
-                      </div>
-
-                      {accessLimitEnabled ? (
-                        <div className="space-y-3 animate-in fade-in duration-200 flex-1 flex flex-col justify-between">
-                          <div className="text-[11px] text-emerald-300/80 font-bold">SET ALLOWABLE OPEN QUOTA:</div>
-                          <div className="grid grid-cols-4 gap-1.5">
-                            {[1, 3, 5, 10].map(q => (
-                              <button
-                                key={q}
-                                type="button"
-                                onClick={() => setAccessLimitMaxOpens(q)}
-                                className={`py-1.5 px-2 rounded-lg border text-[11px] font-bold transition-all ${
-                                  accessLimitMaxOpens === q
-                                    ? 'bg-emerald-500/30 border-emerald-400 text-emerald-200 shadow-[0_0_12px_rgba(0,255,204,0.4)]'
-                                    : 'bg-emerald-950/30 border-emerald-500/30 text-emerald-400 hover:bg-emerald-900/40'
-                                }`}
-                              >
-                                {q === 1 ? '1 (Burn)' : `${q} Opens`}
-                              </button>
-                            ))}
-                          </div>
-
-                          <div className="flex items-center gap-1.5 text-[10px] text-emerald-300/80 pt-0.5">
-                            <Flame className="w-3 h-3 text-emerald-400 shrink-0" />
-                            <span className="truncate">TAMPER-PROOF COUNTER // SEALS PERMANENTLY</span>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex-1 flex flex-col items-center justify-center text-center p-3 text-xs text-emerald-200/70 space-y-2">
-                          <Gauge className="w-8 h-8 text-emerald-400/50" />
-                          <p className="text-[11px] text-emerald-300/80">Unlimited opens. No access cap will be enforced.</p>
-                          <button
-                            type="button"
-                            onClick={() => setAccessLimitEnabled(true)}
-                            className="px-3 py-1 rounded bg-emerald-950 border border-emerald-500/40 text-emerald-300 text-[10px] font-bold hover:bg-emerald-900 transition-colors"
-                          >
-                            + Enable Open Quota
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* =========================================================
-                      SLIDE 5 (Index 4): CONFIGURED LOCKS SUMMARY
-                      ========================================================= */}
-                  {currentSlide === 4 && (
-                    <div className="w-full bg-[#050314]/90 border border-cyan-500/40 rounded-xl p-3 sm:p-3.5 shadow-[0_0_25px_rgba(0,242,255,0.2)] font-mono text-left flex flex-col justify-between h-full min-h-[220px] md:min-h-[260px]">
-                      <div className="flex items-center justify-between border-b border-cyan-500/20 pb-2 mb-2">
-                        <div className="flex items-center gap-1.5 text-cyan-300 text-xs font-bold font-cyber">
-                          <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
-                          <span>CONFIGURED LOCKS</span>
-                        </div>
-                        <span className="text-[9px] text-cyan-400 bg-cyan-950/80 border border-cyan-500/40 px-2 py-0.5 rounded-full font-bold">
-                          {boxContent.length} BYTES
-                        </span>
-                      </div>
-
-                      {/* Lock Status Items */}
-                      <div className="space-y-2 text-xs flex-1 flex flex-col justify-around">
-                        {/* 1. Passcode Lock */}
-                        <div className={`p-2 sm:p-2.5 rounded-lg border flex items-center justify-between gap-2 transition-colors ${
-                          passwordEnabled && passwordValue.trim()
-                            ? 'bg-fuchsia-950/40 border-fuchsia-500/50 text-fuchsia-200'
-                            : 'bg-[#08031a]/60 border-zinc-800/80 text-zinc-500'
-                        }`}>
-                          <div className="flex items-center gap-2 min-w-0">
-                            <Key className={`w-4 h-4 shrink-0 ${passwordEnabled && passwordValue.trim() ? 'text-fuchsia-400' : 'text-zinc-600'}`} />
-                            <div className="min-w-0">
-                              <div className="font-bold text-[11px] truncate">PASSCODE LOCK</div>
-                              <div className="text-[10px] opacity-80 truncate">
-                                {passwordEnabled && passwordValue.trim() ? `${passwordValue.length}-Digit PIN (AES-256-GCM)` : 'Disabled'}
-                              </div>
-                            </div>
-                          </div>
-                          <span className={`text-[10px] font-bold px-2 sm:px-2.5 py-0.5 rounded border shrink-0 ${
-                            passwordEnabled && passwordValue.trim()
-                              ? 'bg-fuchsia-950 text-fuchsia-300 border-fuchsia-500 shadow-[0_0_10px_rgba(217,70,239,0.5)]'
-                              : 'bg-zinc-900 text-zinc-600 border-zinc-800'
-                          }`}>
-                            {passwordEnabled && passwordValue.trim() ? 'ON' : 'OFF'}
-                          </span>
-                        </div>
-
-                        {/* 2. Timed Lock */}
-                        <div className={`p-2 sm:p-2.5 rounded-lg border flex items-center justify-between gap-2 transition-colors ${
-                          timeLockEnabled
-                            ? 'bg-amber-950/40 border-amber-500/50 text-amber-200'
-                            : 'bg-[#08031a]/60 border-zinc-800/80 text-zinc-500'
-                        }`}>
-                          <div className="flex items-center gap-2 min-w-0">
-                            <Clock className={`w-4 h-4 shrink-0 ${timeLockEnabled ? 'text-amber-400' : 'text-zinc-600'}`} />
-                            <div className="min-w-0">
-                              <div className="font-bold text-[11px] truncate">TIME-BASED LOCK</div>
-                              <div className="text-[10px] opacity-80 truncate">
-                                {timeLockSummary}
-                              </div>
-                            </div>
-                          </div>
-                          <span className={`text-[10px] font-bold px-2 sm:px-2.5 py-0.5 rounded border shrink-0 ${
-                            timeLockEnabled
-                              ? 'bg-amber-950 text-amber-300 border-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.5)]'
-                              : 'bg-zinc-900 text-zinc-600 border-zinc-800'
-                          }`}>
-                            {timeLockEnabled ? 'ON' : 'OFF'}
-                          </span>
-                        </div>
-
-                        {/* 3. Access Limit Lock */}
-                        <div className={`p-2 sm:p-2.5 rounded-lg border flex items-center justify-between gap-2 transition-colors ${
-                          accessLimitEnabled
-                            ? 'bg-emerald-950/40 border-emerald-500/50 text-emerald-200'
-                            : 'bg-[#08031a]/60 border-zinc-800/80 text-zinc-500'
-                        }`}>
-                          <div className="flex items-center gap-2 min-w-0">
-                            <Gauge className={`w-4 h-4 shrink-0 ${accessLimitEnabled ? 'text-emerald-400' : 'text-zinc-600'}`} />
-                            <div className="min-w-0">
-                              <div className="font-bold text-[11px] truncate">ACCESS LIMIT LOCK</div>
-                              <div className="text-[10px] opacity-80 truncate">
-                                {accessLimitEnabled ? (accessLimitMaxOpens === 1 ? '1 Open (Burn on Read)' : `${accessLimitMaxOpens} Opens Allowed`) : 'Disabled'}
-                              </div>
-                            </div>
-                          </div>
-                          <span className={`text-[10px] font-bold px-2 sm:px-2.5 py-0.5 rounded border shrink-0 ${
-                            accessLimitEnabled
-                              ? 'bg-emerald-950 text-emerald-300 border-emerald-500 shadow-[0_0_10px_rgba(0,255,150,0.5)]'
-                              : 'bg-zinc-900 text-zinc-600 border-zinc-800'
-                          }`}>
-                            {accessLimitEnabled ? 'ON' : 'OFF'}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+              {/* Cube Facet 1: FRONT */}
+              <div
+                className={`absolute inset-0 rounded-xl border flex flex-col items-center justify-center p-2 backdrop-blur-md transition-all duration-700 ${
+                  stageIndex === 0
+                    ? 'bg-cyan-950/40 border-cyan-400/50 [transform:translateZ(90px)] opacity-60'
+                    : stageIndex === 1
+                    ? 'bg-fuchsia-950/60 border-fuchsia-400/80 [transform:translateZ(70px)] shadow-[0_0_20px_rgba(217,70,239,0.5)]'
+                    : stageIndex === 2
+                    ? 'bg-amber-950/70 border-amber-400 [transform:translateZ(56px)] shadow-[0_0_25px_rgba(245,158,11,0.5)]'
+                    : 'bg-emerald-950/80 border-emerald-300 [transform:translateZ(56px)] shadow-[0_0_30px_rgba(16,185,129,0.7)]'
+                }`}
+              >
+                <div className="w-full flex items-center justify-between text-[8px] font-mono text-cyan-300/70 mb-1">
+                  <span>BITTY</span>
+                  <span>#01</span>
                 </div>
+                <Boxes className={`w-8 h-8 ${stageIndex === 3 ? 'text-emerald-300 animate-bounce' : 'text-cyan-300'}`} />
+                <span className="text-[9px] font-mono font-bold mt-1 tracking-wider text-cyan-200">
+                  {stageIndex === 3 ? 'SEALED' : 'HTML5'}
+                </span>
+                {/* Cyber Corner Brackets */}
+                <div className="absolute top-1 left-1 w-2 h-2 border-t border-l border-cyan-300" />
+                <div className="absolute top-1 right-1 w-2 h-2 border-t border-r border-cyan-300" />
+                <div className="absolute bottom-1 left-1 w-2 h-2 border-b border-l border-cyan-300" />
+                <div className="absolute bottom-1 right-1 w-2 h-2 border-b border-r border-cyan-300" />
+              </div>
 
-                {/* ─────────────────────────────────────────────────────────────
-                    RIGHT COLUMN (md:col-span-6): Slide Info & Actions
-                    ───────────────────────────────────────────────────────────── */}
-                <div className="md:col-span-6 flex flex-col justify-between space-y-3 sm:space-y-4">
-                  {/* Slide 01 SPLIT Mode: Live Preview Window completely takes over right side */}
-                  {currentSlide === 0 && slide1ViewMode === 'split' ? (
-                    <div className="flex-1 w-full bg-[#050314]/90 border border-cyan-500/40 rounded-xl overflow-hidden shadow-[0_0_25px_rgba(0,242,255,0.2)] flex flex-col min-h-[220px] md:min-h-[260px] font-mono">
-                      <div className="flex items-center justify-between px-3 py-1.5 bg-[#09051f] border-b border-cyan-500/25 text-[10px] text-cyan-300">
-                        <div className="flex items-center gap-1.5 font-bold">
-                          <Eye className="w-3.5 h-3.5 text-cyan-400" />
-                          <CyberScrambleText text="PREVIEW" speed={20} />
-                        </div>
-                        <div className="flex items-center gap-1.5 text-[9px] text-emerald-400 font-bold">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                          <span>LIVE RENDERED OUTPUT</span>
-                        </div>
-                      </div>
-                      <div className="flex-1 w-full relative min-h-[160px] sm:min-h-[190px] bg-[#000000]">
-                        <iframe
-                          srcDoc={slidePreviewHtml}
-                          title="Slide 01 Live Rendered Output Preview"
-                          className="w-full h-full border-0 absolute inset-0 bg-[#000000]"
-                          sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-modals allow-downloads"
-                        />
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      {/* Slide Top Metadata Tag */}
-                      <div className="flex items-center justify-between gap-2 min-h-[32px]">
-                        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-400/40 text-cyan-300 font-mono text-[10px] sm:text-[11px] tracking-wider shadow-[0_0_12px_rgba(0,242,255,0.2)]">
-                          <Radio className="w-3 h-3 text-emerald-400 animate-pulse" />
-                          <CyberScrambleText text={activeSlideData.tag} speed={20} />
-                        </div>
-                        {currentSlide === 1 ? (
-                          <div className="flex items-center justify-end scale-[0.52] sm:scale-[0.58] origin-right -my-3 -mr-1">
-                            <HoloToggle
-                              id="holo-toggle-slide-02"
-                              checked={passwordEnabled}
-                              onChange={setPasswordEnabled}
-                            />
-                          </div>
-                        ) : currentSlide === 2 ? (
-                          <div className="flex items-center justify-end scale-[0.52] sm:scale-[0.58] origin-right -my-3 -mr-1">
-                            <HoloToggle
-                              id="holo-toggle-slide-03"
-                              checked={timeLockEnabled}
-                              onChange={setTimeLockEnabled}
-                            />
-                          </div>
-                        ) : currentSlide === 3 ? (
-                          <div className="flex items-center justify-end scale-[0.52] sm:scale-[0.58] origin-right -my-3 -mr-1">
-                            <HoloToggle
-                              id="holo-toggle-slide-04"
-                              checked={accessLimitEnabled}
-                              onChange={setAccessLimitEnabled}
-                            />
-                          </div>
-                        ) : currentSlide === 4 ? (
-                          <button
-                            type="button"
-                            onClick={handleStartOver}
-                            className="px-2.5 py-1 rounded-lg bg-rose-950/70 hover:bg-rose-900/90 border border-rose-500/50 hover:border-rose-400 text-rose-300 hover:text-white text-[10px] sm:text-[11px] font-mono font-bold flex items-center gap-1.5 transition-all shadow-[0_0_12px_rgba(244,63,94,0.3)] cursor-pointer"
-                            title="Reset all settings and start over fresh"
-                          >
-                            <RotateCcw className="w-3.5 h-3.5" />
-                            <span>START OVER</span>
-                          </button>
-                        ) : (
-                          <div className="text-[10px] font-mono text-cyan-400/60 uppercase tracking-widest">
-                            <CyberScrambleText text={activeSlideData.category} speed={15} />
-                          </div>
-                        )}
-                      </div>
+              {/* Cube Facet 2: BACK */}
+              <div
+                className={`absolute inset-0 rounded-xl border flex flex-col items-center justify-center p-2 backdrop-blur-md transition-all duration-700 ${
+                  stageIndex === 0
+                    ? 'bg-cyan-950/40 border-cyan-400/50 [transform:translateZ(-90px)_rotateY(180deg)] opacity-60'
+                    : stageIndex === 1
+                    ? 'bg-fuchsia-950/60 border-fuchsia-400/80 [transform:translateZ(-70px)_rotateY(180deg)]'
+                    : stageIndex === 2
+                    ? 'bg-amber-950/70 border-amber-400 [transform:translateZ(-56px)_rotateY(180deg)]'
+                    : 'bg-emerald-950/80 border-emerald-300 [transform:translateZ(-56px)_rotateY(180deg)]'
+                }`}
+              >
+                <Binary className="w-7 h-7 text-cyan-400/80" />
+                <span className="text-[8px] font-mono text-cyan-300 mt-1">LZ_DEFLATE</span>
+              </div>
 
-                      {/* Slide Headline & Description (Only on slides 1-4) */}
-                      {currentSlide !== 4 && (
-                        <div className="space-y-1.5 text-left">
-                          <h2 className="text-base sm:text-lg md:text-xl font-extrabold font-mono tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-cyan-200 via-teal-100 to-fuchsia-300 leading-tight">
-                            <span
-                              className={`block text-sm sm:text-base md:text-lg ${
-                                activeSlideData.accentColor === 'fuchsia'
-                                  ? 'text-fuchsia-400 drop-shadow-[0_0_12px_rgba(217,70,239,0.8)]'
-                                  : activeSlideData.accentColor === 'emerald'
-                                  ? 'text-emerald-300 drop-shadow-[0_0_12px_rgba(0,255,204,0.8)]'
-                                  : activeSlideData.accentColor === 'amber'
-                                  ? 'text-amber-300 drop-shadow-[0_0_12px_rgba(245,158,11,0.8)]'
-                                  : 'text-cyan-300 drop-shadow-[0_0_12px_rgba(0,242,255,0.8)]'
-                              }`}
-                            >
-                              <CyberScrambleText text={activeSlideData.highlight} speed={22} delay={150} />
-                            </span>
-                          </h2>
+              {/* Cube Facet 3: RIGHT */}
+              <div
+                className={`absolute inset-0 rounded-xl border flex flex-col items-center justify-center p-2 backdrop-blur-md transition-all duration-700 ${
+                  stageIndex === 0
+                    ? 'bg-cyan-950/40 border-cyan-400/50 [transform:translateX(90px)_rotateY(90deg)] opacity-60'
+                    : stageIndex === 1
+                    ? 'bg-fuchsia-950/60 border-fuchsia-400/80 [transform:translateX(70px)_rotateY(90deg)]'
+                    : stageIndex === 2
+                    ? 'bg-amber-950/70 border-amber-400 [transform:translateX(56px)_rotateY(90deg)]'
+                    : 'bg-emerald-950/80 border-emerald-300 [transform:translateX(56px)_rotateY(90deg)]'
+                }`}
+              >
+                <Lock className="w-7 h-7 text-amber-300" />
+                <span className="text-[8px] font-mono text-amber-200 mt-1">AES-256</span>
+              </div>
 
-                          <p className="text-[11px] sm:text-xs text-cyan-200/80 font-mono leading-relaxed line-clamp-3 md:line-clamp-4">
-                            {activeSlideData.description}
-                          </p>
-                        </div>
-                      )}
+              {/* Cube Facet 4: LEFT */}
+              <div
+                className={`absolute inset-0 rounded-xl border flex flex-col items-center justify-center p-2 backdrop-blur-md transition-all duration-700 ${
+                  stageIndex === 0
+                    ? 'bg-cyan-950/40 border-cyan-400/50 [transform:translateX(-90px)_rotateY(-90deg)] opacity-60'
+                    : stageIndex === 1
+                    ? 'bg-fuchsia-950/60 border-fuchsia-400/80 [transform:translateX(-70px)_rotateY(-90deg)]'
+                    : stageIndex === 2
+                    ? 'bg-amber-950/70 border-amber-400 [transform:translateX(-56px)_rotateY(-90deg)]'
+                    : 'bg-emerald-950/80 border-emerald-300 [transform:translateX(-56px)_rotateY(-90deg)]'
+                }`}
+              >
+                <Cpu className="w-7 h-7 text-fuchsia-300" />
+                <span className="text-[8px] font-mono text-fuchsia-200 mt-1">SANDBOX</span>
+              </div>
 
-                      {/* Feature Bullets (Only on slides 1-4) */}
-                      {currentSlide !== 4 && activeSlideData.bullets.length > 0 && (
-                        <div className="space-y-1.5 text-left">
-                          {activeSlideData.bullets.slice(0, 3).map((bullet) => (
-                            <div
-                              key={bullet}
-                              className="flex items-start gap-1.5 rounded-md border border-cyan-500/20 bg-cyan-950/20 px-2 py-1 text-[10px] sm:text-[11px] font-mono leading-tight text-cyan-100/90"
-                            >
-                              <CheckCircle2 className="mt-0.5 h-3 w-3 shrink-0 text-emerald-300" />
-                              <span>{bullet}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+              {/* Cube Facet 5: TOP */}
+              <div
+                className={`absolute inset-0 rounded-xl border flex flex-col items-center justify-center p-2 backdrop-blur-md transition-all duration-700 ${
+                  stageIndex === 0
+                    ? 'bg-cyan-950/40 border-cyan-400/50 [transform:translateY(-90px)_rotateX(90deg)] opacity-60'
+                    : stageIndex === 1
+                    ? 'bg-fuchsia-950/60 border-fuchsia-400/80 [transform:translateY(-70px)_rotateX(90deg)]'
+                    : stageIndex === 2
+                    ? 'bg-amber-950/70 border-amber-400 [transform:translateY(-56px)_rotateX(90deg)]'
+                    : 'bg-emerald-950/80 border-emerald-300 [transform:translateY(-56px)_rotateX(90deg)]'
+                }`}
+              >
+                <Sparkles className="w-6 h-6 text-cyan-300 animate-spin" />
+              </div>
 
-                      {/* Slide 05: Dynamic Credit Cost Calculation Box */}
-                      {currentSlide === 4 && (
-                        <div className="flex-1 w-full bg-[#050314]/95 border border-cyan-500/40 rounded-xl overflow-hidden shadow-[0_0_25px_rgba(0,242,255,0.2)] flex flex-col justify-between p-3 font-mono relative group min-h-[140px] sm:min-h-[160px]">
-                          {/* Ambient glow and cyber scanlines */}
-                          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(0,242,255,0.12),transparent_70%)] pointer-events-none" />
-                          <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_50%,rgba(0,0,0,0.35)_51%)] bg-[length:100%_4px] pointer-events-none opacity-30" />
-
-                          {/* Header */}
-                          <div className="flex items-center justify-between border-b border-cyan-500/20 pb-2 relative z-10">
-                            <div className="flex items-center gap-1.5 text-cyan-300 text-xs font-bold font-cyber">
-                              <Coins className="w-3.5 h-3.5 text-amber-400 animate-bounce" />
-                              <CyberScrambleText text="ESTIMATED GENERATION COST" speed={20} />
-                            </div>
-                            <div className="flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full bg-cyan-950/90 border border-cyan-400/40 text-cyan-300 shadow-[0_0_8px_rgba(0,242,255,0.3)]">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                              <span>LIVE QUOTA</span>
-                            </div>
-                          </div>
-
-                          {/* Hero Animated Total Cost Display */}
-                          <div className="my-1.5 py-1.5 sm:py-2 px-3 rounded-lg bg-[#08041d]/90 border border-cyan-500/30 flex items-center justify-between gap-2 relative z-10 shadow-inner">
-                            <div className="min-w-0">
-                              <div className="text-[10px] text-cyan-400/90 uppercase tracking-wider font-bold">
-                                REQUIRED CREDITS
-                              </div>
-                              <div className="text-[10px] text-zinc-400 truncate">
-                                {isPasscodeActive || isTimeLockActive || isAccessLimitActive
-                                  ? `${[isPasscodeActive && 'PIN (+5)', isTimeLockActive && (timeLockMode === 'hybrid' ? 'Reveal+Decay (+10)' : 'Time (+10)'), isAccessLimitActive && 'Quota (+10)'].filter(Boolean).join(' + ')}`
-                                  : 'Standard URL Payload (Free Forever &bull; No Locks)'}
-                              </div>
-                            </div>
-
-                            <div className="flex items-baseline gap-1.5 shrink-0">
-                              <motion.span
-                                key={calculatedCreditCost}
-                                initial={{ scale: 1.35, opacity: 0.5, y: -2 }}
-                                animate={{ scale: 1, opacity: 1, y: 0 }}
-                                transition={{ type: 'spring', stiffness: 500, damping: 15 }}
-                                className="text-2xl sm:text-3xl font-black font-cyber text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-amber-300 to-fuchsia-300 drop-shadow-[0_0_12px_rgba(0,242,255,0.7)]"
-                              >
-                                {calculatedCreditCost}
-                              </motion.span>
-                              <span className="text-[10px] sm:text-[11px] font-bold text-amber-300 tracking-wider">
-                                {calculatedCreditCost === 1 ? 'CREDIT' : 'CREDITS'}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Itemized Cost Breakdown Grid */}
-                          <div className="grid grid-cols-2 gap-1.5 text-[10px] relative z-10">
-                            {/* Base Payload */}
-                            <div className="p-1.5 rounded bg-cyan-950/40 border border-cyan-500/30 text-cyan-200 flex items-center justify-between">
-                              <span className="truncate flex items-center gap-1">
-                                <Code className="w-3 h-3 text-cyan-400 shrink-0" />
-                                Base Builder
-                              </span>
-                              <span className="font-bold text-emerald-400 shrink-0">FREE (0 CR)</span>
-                            </div>
-
-                            {/* Passcode Lock */}
-                            <div className={`p-1.5 rounded border flex items-center justify-between transition-all duration-200 ${
-                              isPasscodeActive
-                                ? 'bg-fuchsia-950/40 border-fuchsia-500/50 text-fuchsia-200 shadow-[0_0_8px_rgba(217,70,239,0.3)]'
-                                : 'bg-black/30 border-zinc-800/80 text-zinc-600'
-                            }`}>
-                              <span className="truncate flex items-center gap-1">
-                                <Key className={`w-3 h-3 shrink-0 ${isPasscodeActive ? 'text-fuchsia-400' : 'text-zinc-600'}`} />
-                                Passcode PIN
-                              </span>
-                              <span className={`font-bold shrink-0 ${isPasscodeActive ? 'text-fuchsia-300' : 'text-zinc-600'}`}>
-                                {isPasscodeActive ? '+5 CR' : '0 CR'}
-                              </span>
-                            </div>
-
-                            {/* Time-Based Lock / Reveal + Decay */}
-                            <div className={`p-1.5 rounded border flex items-center justify-between transition-all duration-200 ${
-                              isTimeLockActive
-                                ? 'bg-amber-950/40 border-amber-500/50 text-amber-200 shadow-[0_0_8px_rgba(245,158,11,0.3)]'
-                                : 'bg-black/30 border-zinc-800/80 text-zinc-600'
-                            }`}>
-                              <span className="truncate flex items-center gap-1">
-                                {timeLockMode === 'hybrid' ? (
-                                  <Flame className={`w-3 h-3 shrink-0 ${isTimeLockActive ? 'text-rose-400' : 'text-zinc-600'}`} />
-                                ) : (
-                                  <Clock className={`w-3 h-3 shrink-0 ${isTimeLockActive ? 'text-amber-400' : 'text-zinc-600'}`} />
-                                )}
-                                {timeLockMode === 'hybrid' ? 'Reveal+Decay' : 'Time Lock'}
-                              </span>
-                              <span className={`font-bold shrink-0 ${isTimeLockActive ? 'text-amber-300' : 'text-zinc-600'}`}>
-                                {isTimeLockActive ? '+10 CR' : '0 CR'}
-                              </span>
-                            </div>
-
-                            {/* Access Limit Lock */}
-                            <div className={`p-1.5 rounded border flex items-center justify-between transition-all duration-200 ${
-                              isAccessLimitActive
-                                ? 'bg-emerald-950/40 border-emerald-500/50 text-emerald-200 shadow-[0_0_8px_rgba(0,255,204,0.3)]'
-                                : 'bg-black/30 border-zinc-800/80 text-zinc-600'
-                            }`}>
-                              <span className="truncate flex items-center gap-1">
-                                <Gauge className={`w-3 h-3 shrink-0 ${isAccessLimitActive ? 'text-emerald-400' : 'text-zinc-600'}`} />
-                                Visitor Quota
-                              </span>
-                              <span className={`font-bold shrink-0 ${isAccessLimitActive ? 'text-emerald-300' : 'text-zinc-600'}`}>
-                                {isAccessLimitActive ? '+10 CR' : '0 CR'}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Account Balance & Auto-Deduct Footer */}
-                          <div className="mt-1.5 pt-1.5 border-t border-cyan-500/20 flex items-center justify-between text-[10px] text-cyan-400/80 relative z-10">
-                            <div className="flex items-center gap-1 truncate">
-                              <Zap className="w-3 h-3 text-amber-400 shrink-0" />
-                              <span>{user ? `Balance: ${user.credits} CR` : 'Unlimited Free with No Locks'}</span>
-                            </div>
-                            <span className="text-emerald-400 font-bold shrink-0">
-                              {user ? `After: ${Math.max(0, (user.credits || 0) - calculatedCreditCost)} CR` : 'PRO ($9/mo) = 0 CR'}
-                            </span>
-                          </div>
-                        </div>
-                      )}
-                    </>
-                  )}
-
-                  {/* Action Buttons Bar */}
-                  <div
-                    className="pt-2 border-t border-cyan-500/20 flex items-center justify-between gap-2"
-                    onPointerDown={e => e.stopPropagation()}
-                    onClick={e => e.stopPropagation()}
-                  >
-                    <button
-                      onClick={prevSlide}
-                      className="p-2 rounded-lg bg-cyan-950/60 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-900/40 text-xs font-mono flex items-center gap-1 shrink-0 transition-colors"
-                      aria-label="Previous slide"
-                    >
-                      <ChevronLeft className="w-3.5 h-3.5" />
-                      <span className="hidden xs:inline text-[11px]">Prev</span>
-                    </button>
-
-                    {currentSlide === slides.length - 1 ? (
-                      <div className="flex-1 flex flex-col items-center justify-center min-w-0">
-                        <HoloGenerateButton
-                          onClick={handleGenerateFinal}
-                          isCopied={isCopied}
-                          label="GENERATE BOX"
-                          className="my-0 scale-85 sm:scale-95"
-                        />
-                        {isCopied && (
-                          <div className="mt-0.5 text-center text-[10px] text-emerald-400 font-bold flex items-center justify-center gap-1 animate-in fade-in">
-                            <Check className="w-3 h-3" />
-                            <span>URL copied! Opening in new tab…</span>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <button
-                        onClick={nextSlide}
-                        className="flex-1 py-2 sm:py-2.5 px-4 rounded-lg bg-cyan-950/90 hover:bg-cyan-900/90 border border-cyan-400/60 hover:border-cyan-300 text-cyan-100 font-mono font-bold text-xs tracking-wider flex items-center justify-center gap-1.5 shadow-[0_0_15px_rgba(0,242,255,0.25)] transition-all hover:scale-[1.01] active:scale-95 group"
-                      >
-                        <span>{activeSlideData.cta || 'NEXT STEP'}</span>
-                        <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform text-cyan-300" />
-                      </button>
-                    )}
-
-                    <button
-                      onClick={nextSlide}
-                      className="p-2 rounded-lg bg-cyan-950/60 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-900/40 text-xs font-mono flex items-center gap-1 shrink-0 transition-colors"
-                      aria-label="Next slide"
-                    >
-                      <span className="hidden xs:inline text-[11px]">Next</span>
-                      <ChevronRight className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
+              {/* Cube Facet 6: BOTTOM */}
+              <div
+                className={`absolute inset-0 rounded-xl border flex flex-col items-center justify-center p-2 backdrop-blur-md transition-all duration-700 ${
+                  stageIndex === 0
+                    ? 'bg-cyan-950/40 border-cyan-400/50 [transform:translateY(90px)_rotateX(-90deg)] opacity-60'
+                    : stageIndex === 1
+                    ? 'bg-fuchsia-950/60 border-fuchsia-400/80 [transform:translateY(70px)_rotateX(-90deg)]'
+                    : stageIndex === 2
+                    ? 'bg-amber-950/70 border-amber-400 [transform:translateY(56px)_rotateX(-90deg)]'
+                    : 'bg-emerald-950/80 border-emerald-300 [transform:translateY(56px)_rotateX(-90deg)]'
+                }`}
+              >
+                <div className="w-8 h-8 rounded-full bg-cyan-400/30 blur-sm" />
               </div>
             </motion.div>
+          </div>
+
+          {/* -----------------------------------------------------------------
+              STAGE 04: URL CAPSULE CRYSTALLIZATION PILL
+              ----------------------------------------------------------------- */}
+          <AnimatePresence>
+            {stageIndex === 3 && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                className="w-full max-w-lg mx-auto bg-[#07051a]/90 border border-emerald-400/80 rounded-2xl p-2.5 sm:p-3 shadow-[0_0_35px_rgba(16,185,129,0.35)] backdrop-blur-2xl my-1.5 text-center"
+              >
+                <div className="flex items-center justify-center gap-2 mb-1 text-emerald-300 font-mono text-[11px] font-bold">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  <span>YOUR WEB LINK IS READY TO SHARE</span>
+                </div>
+                <div className="font-mono text-xs sm:text-sm text-cyan-200 bg-black/70 border border-cyan-500/40 px-3 py-1.5 rounded-xl break-all select-all flex items-center justify-center gap-2 shadow-inner">
+                  <Link2 className="w-4 h-4 text-cyan-400 shrink-0" />
+                  <span className="text-emerald-300">bittybox.org/#</span>
+                  <CyberScrambleText text="H4sIAAAAAAAA31WwW7bMAy991cI3Iptx86y9QDAy0bA" speed={15} />
+                </div>
+                <div className="flex items-center justify-center gap-3 mt-2 text-[10px] font-mono text-cyan-300/80">
+                  <span>✓ Runs in Any Browser</span>
+                  <span>•</span>
+                  <span>✓ No Server or Database</span>
+                  <span>•</span>
+                  <span>✓ Stored in the Link</span>
+                </div>
+              </motion.div>
+            )}
           </AnimatePresence>
+
+          {/* -----------------------------------------------------------------
+              STAGE HUD CARD (Description & Real-Time Metrics)
+              ----------------------------------------------------------------- */}
+          <div className="w-full max-w-2xl bg-[#08051e]/85 border border-cyan-500/30 rounded-2xl p-3 sm:p-3.5 shadow-[0_0_35px_rgba(0,0,0,0.8),inset_0_0_15px_rgba(0,242,255,0.06)] backdrop-blur-2xl relative my-0.5 sm:my-1">
+            {/* Cyber Corner Accents */}
+            <div className="absolute top-2 left-2 w-2 h-2 border-t-2 border-l-2 border-cyan-400 pointer-events-none" />
+            <div className="absolute top-2 right-2 w-2 h-2 border-t-2 border-r-2 border-cyan-400 pointer-events-none" />
+            <div className="absolute bottom-2 left-2 w-2 h-2 border-b-2 border-l-2 border-cyan-400 pointer-events-none" />
+            <div className="absolute bottom-2 right-2 w-2 h-2 border-b-2 border-r-2 border-cyan-400 pointer-events-none" />
+
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-cyan-500/20 pb-2 mb-2">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-cyan-950/80 border border-cyan-400/40">
+                  {currentStage.icon}
+                </div>
+                <div>
+                  <h3 className="font-cyber font-bold text-xs sm:text-sm text-cyan-100 tracking-wider">
+                    {currentStage.title}
+                  </h3>
+                  <p className="text-[10px] font-mono text-cyan-400/70">
+                    {currentStage.headline}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 self-start sm:self-auto">
+                <span
+                  className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border ${
+                    currentStage.accentColor === 'cyan'
+                      ? 'bg-cyan-950 text-cyan-300 border-cyan-500/40'
+                      : currentStage.accentColor === 'fuchsia'
+                      ? 'bg-fuchsia-950 text-fuchsia-300 border-fuchsia-500/40'
+                      : currentStage.accentColor === 'amber'
+                      ? 'bg-amber-950 text-amber-300 border-amber-500/40'
+                      : 'bg-emerald-950 text-emerald-300 border-emerald-500/40'
+                  }`}
+                >
+                  {currentStage.badge}
+                </span>
+              </div>
+            </div>
+
+            <p className="text-xs font-sans text-cyan-200/85 leading-relaxed mb-2.5">
+              {currentStage.description}
+            </p>
+
+            {/* Real-time Telemetry Metrics Pill Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 font-mono text-[11px]">
+              <div className="bg-black/50 border border-cyan-500/20 rounded-lg p-2 flex flex-col">
+                <span className="text-[9px] text-cyan-400/60">PAYLOAD SIZE</span>
+                <span className="text-cyan-200 font-bold mt-0.5">{currentStage.metricValue}</span>
+              </div>
+              <div className="bg-black/50 border border-cyan-500/20 rounded-lg p-2 flex flex-col">
+                <span className="text-[9px] text-cyan-400/60">SPACE SAVED</span>
+                <span className="text-emerald-300 font-bold mt-0.5">{currentStage.compressionRatio}</span>
+              </div>
+              <div className="col-span-2 sm:col-span-1 bg-black/50 border border-cyan-500/20 rounded-lg p-2 flex flex-col">
+                <span className="text-[9px] text-cyan-400/60">WHERE IT RUNS</span>
+                <span className="text-cyan-300 font-bold mt-0.5">100% IN YOUR BROWSER</span>
+              </div>
+            </div>
+
+            {/* Primary Action Button to Advance */}
+            <div className="mt-2.5 pt-2 border-t border-cyan-500/20 flex flex-col sm:flex-row items-center justify-between gap-2">
+              <div className="text-[11px] font-mono text-cyan-300/80 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+                <span>No servers or databases &bull; Private & secure in your browser</span>
+              </div>
+
+              <motion.button
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
+                type="button"
+                onClick={handleLaunchApp}
+                className="w-full sm:w-auto px-6 py-2 rounded-xl bg-gradient-to-r from-cyan-400 via-teal-300 to-emerald-400 text-black font-cyber font-bold text-xs tracking-wider shadow-[0_0_25px_rgba(0,242,255,0.5)] hover:shadow-[0_0_35px_rgba(0,242,255,0.7)] flex items-center justify-center gap-2 cursor-pointer transition-all"
+              >
+                <span>ENTER BITTY BOX</span>
+                <ArrowRight className="w-4 h-4" />
+              </motion.button>
+            </div>
+          </div>
         </div>
-
-
       </main>
 
-      {/* Bottom Horizontal Carousel Indicators */}
-      <footer className="relative z-20 w-full px-4 sm:px-6 py-2 sm:py-2.5 border-t border-cyan-500/20 bg-[#060419]/80 backdrop-blur-xl flex flex-col sm:flex-row items-center justify-between gap-2 text-xs font-mono text-cyan-400/70 shrink-0">
-        <div className="flex items-center gap-2 text-[10px] sm:text-[11px]">
-          <span className="sm:hidden text-cyan-300/80">👈 Swipe left / right to configure 👉</span>
-          <span className="hidden sm:inline">Use <kbd className="px-1.5 py-0.5 bg-cyan-950 border border-cyan-500/40 rounded text-[9px] text-cyan-200">←</kbd> <kbd className="px-1.5 py-0.5 bg-cyan-950 border border-cyan-500/40 rounded text-[9px] text-cyan-200">→</kbd> to navigate steps</span>
-        </div>
+      {/* ───────────────────────────────────────────────────────────────────────
+          FOOTER: 4-STAGE INTERACTIVE PROGRESSION TIMELINE
+          ─────────────────────────────────────────────────────────────────────── */}
+      <footer className="relative z-20 w-full px-4 sm:px-8 py-2.5 sm:py-3 border-t border-cyan-500/20 bg-[#050314]/90 backdrop-blur-xl shrink-0">
+        <div className="max-w-5xl mx-auto flex flex-col gap-2">
+          
+          {/* Segmented Timeline Steps */}
+          <div className="grid grid-cols-4 gap-2 sm:gap-4 items-center">
+            {STAGES.map((stg, idx) => {
+              const isActive = stageIndex === idx;
+              const isPast = stageIndex > idx;
 
-        <div className="flex items-center gap-1.5">
-          {slides.map((slide, index) => {
-            const isActive = index === currentSlide;
-            return (
-              <button
-                key={slide.id}
-                onClick={() => goToSlide(index)}
-                className={`relative h-2 rounded-full transition-all duration-300 cursor-pointer ${
-                  isActive
-                    ? 'w-7 bg-gradient-to-r from-cyan-400 to-fuchsia-400 shadow-[0_0_10px_rgba(0,242,255,0.8)]'
-                    : 'w-2 bg-cyan-950/80 border border-cyan-500/40 hover:bg-cyan-900/60 hover:w-3.5'
-                }`}
-                title={`Jump to ${slide.category}`}
-                aria-label={`Jump to slide ${index + 1}`}
+              return (
+                <button
+                  key={stg.id}
+                  type="button"
+                  onClick={() => jumpToStage(idx)}
+                  className={`group relative text-left p-1.5 sm:p-2.5 rounded-xl border transition-all cursor-pointer font-mono ${
+                    isActive
+                      ? 'bg-cyan-950/80 border-cyan-400 shadow-[0_0_15px_rgba(0,242,255,0.3)] scale-[1.02]'
+                      : isPast
+                      ? 'bg-black/40 border-cyan-500/40 text-cyan-300 hover:border-cyan-400/60'
+                      : 'bg-black/20 border-cyan-500/10 text-cyan-600 hover:border-cyan-500/30'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-0.5">
+                    <span className={`text-[9px] sm:text-[10px] font-bold ${isActive ? 'text-cyan-300' : isPast ? 'text-cyan-400' : 'text-cyan-600'}`}>
+                      0{idx + 1}
+                    </span>
+                    {isPast && <CheckCircle2 className="w-3 h-3 text-emerald-400" />}
+                    {isActive && <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />}
+                  </div>
+                  <div className={`text-[10px] sm:text-xs font-cyber font-bold truncate ${isActive ? 'text-white' : 'text-cyan-400/80'}`}>
+                    {stg.tag}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Continuous Progress Bar & Status */}
+          <div className="flex items-center justify-between gap-3 pt-1 text-[10px] font-mono text-cyan-400/70">
+            <div className="flex items-center gap-2">
+              <span className="text-cyan-300 font-bold">{Math.round(progress)}%</span>
+              <span className="hidden sm:inline">LOADING PROGRESS</span>
+            </div>
+
+            {/* Glowing Fill Bar */}
+            <div className="flex-1 h-1.5 rounded-full bg-black/60 border border-cyan-500/30 overflow-hidden relative">
+              <div
+                className="h-full bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-emerald-400 rounded-full transition-all duration-100 shadow-[0_0_10px_rgba(0,242,255,0.8)]"
+                style={{ width: `${progress}%` }}
               />
-            );
-          })}
-        </div>
+            </div>
 
-        <div className="hidden sm:flex items-center gap-2 text-[10px] text-cyan-400/60">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-          <span>ZERO STORAGE // 100% IN-URL</span>
+            <div className="flex items-center gap-3 shrink-0">
+              <div className="hidden lg:flex items-center gap-2.5 text-[10px] text-cyan-400/80 mr-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLegalModalTab('terms');
+                    setIsLegalModalOpen(true);
+                  }}
+                  className="hover:text-cyan-200 hover:underline transition-colors cursor-pointer"
+                >
+                  Terms of Service
+                </button>
+                <span className="text-cyan-500/40 select-none">&bull;</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLegalModalTab('privacy');
+                    setIsLegalModalOpen(true);
+                  }}
+                  className="hover:text-cyan-200 hover:underline transition-colors cursor-pointer"
+                >
+                  Privacy Policy
+                </button>
+                <span className="text-cyan-500/40 select-none">&bull;</span>
+                <a
+                  href="mailto:support@bittybox.org"
+                  className="hover:text-cyan-200 hover:underline transition-colors cursor-pointer"
+                >
+                  Contact Us
+                </a>
+              </div>
+              <span className="hidden md:inline text-cyan-400/50">PRESS [SPACE] OR CLICK</span>
+              <button
+                type="button"
+                onClick={handleLaunchApp}
+                className="text-cyan-300 hover:text-white font-bold underline transition-colors cursor-pointer"
+              >
+                ENTER BITTY BOX →
+              </button>
+            </div>
+          </div>
         </div>
       </footer>
 
-      {/* Edge Grip Handles on Center Top (PREVIEW) & Center Bottom (ACCOUNT) */}
-      <EdgeGripHandles
-        onOpenPreview={() => setIsPreviewDropdownOpen(true)}
-        onOpenAccount={() => setIsRightToolsPanelOpen(true)}
-        isPreviewOpen={isPreviewDropdownOpen}
-        isAccountOpen={isRightToolsPanelOpen}
+      {/* Legal Modal (Terms of Service & Privacy Policy) */}
+      <LegalModal
+        isOpen={isLegalModalOpen}
+        initialTab={legalModalTab}
+        onClose={() => setIsLegalModalOpen(false)}
       />
-
-      {/* Live Preview Dropdown Panel (Sliding down from Top) */}
-      <PreviewDropdownPanel
-        isOpen={isPreviewDropdownOpen}
-        onClose={() => setIsPreviewDropdownOpen(false)}
-        content={boxContent}
-        title={boxTitle}
-        bittyUrl={generatedUrl}
-        onPreviewInTab={() => {
-          if (generatedUrl) window.open(generatedUrl, '_blank');
-        }}
-      />
-
-      {/* Templates Side Panel (Sliding from Left) */}
-      <TemplatesSidePanel
-        isOpen={isLeftTemplatesPanelOpen}
-        onClose={() => setIsLeftTemplatesPanelOpen(false)}
-        onSelectTemplate={(tpl: TemplatePreset) => {
-          setBoxContent(tpl.content);
-          setBoxTitle(tpl.title);
-          setCurrentSlide(0);
-          setIsLeftTemplatesPanelOpen(false);
-        }}
-        currentContentLength={boxContent.length}
-      />
-
-      {/* Studio Tools & Account Side Panel (Sliding from Right) */}
-      <StudioToolsSidePanel
-        isOpen={isRightToolsPanelOpen}
-        onClose={() => setIsRightToolsPanelOpen(false)}
-        account={account}
-        bittyUrl={generatedUrl}
-        originalBytes={boxContent.length}
-        compressedBytes={generatedUrl.length}
-        isCopied={isCopied}
-        onOpenQr={(url) => {
-          setQrModalUrl(url || generatedUrl);
-          setIsQrModalOpen(true);
-        }}
-        onShare={() => {
-          if (navigator.share && generatedUrl) {
-            navigator.share({ title: boxTitle, url: generatedUrl }).catch(() => {});
-          }
-        }}
-        onPreviewInTab={() => {
-          if (generatedUrl) window.open(generatedUrl, '_blank');
-        }}
-        onExportZip={() => {
-          exportBittyToZip(boxContent, { title: boxTitle }, generatedUrl);
-        }}
-        onNewBox={() => {
-          setBoxContent('<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="utf-8">\n  <title>New Box</title>\n</head>\n<body>\n  <h1>Hello Bitty Box</h1>\n</body>\n</html>');
-          setBoxTitle('My Bitty Box');
-          setCurrentSlide(0);
-        }}
-        onNavigateToSlide01={() => {
-          setCurrentSlide(0);
-          setIsRightToolsPanelOpen(false);
-        }}
-      />
-
-      {/* QR Code Modal */}
-      {isQrModalOpen && (
-        <QrModal
-          url={qrModalUrl || generatedUrl || window.location.href}
-          title={boxTitle}
-          onClose={() => setIsQrModalOpen(false)}
-        />
-      )}
-
-
-      {/* Warp Transition Overlay */}
-      <AnimatePresence>
-        {isWarping && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.85 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 1.5, filter: 'blur(24px)' }}
-            transition={{ duration: 0.5, ease: 'easeOut' }}
-            className="rings-warp-portal-container"
-          >
-            <div className="rings anim-pan">
-              <div style={{ '--delay': '06' } as React.CSSProperties} className="ring anim-zoomIn" />
-              <div style={{ '--delay': '04' } as React.CSSProperties} className="ring anim-zoomIn" />
-              <div style={{ '--delay': '03' } as React.CSSProperties} className="ring anim-zoomIn" />
-              <div style={{ '--delay': '02' } as React.CSSProperties} className="ring anim-zoomIn" />
-              <div style={{ '--delay': '01' } as React.CSSProperties} className="ring anim-zoomIn" />
-              <div style={{ '--delay': '00' } as React.CSSProperties} className="ring anim-zoomIn" />
-            </div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.25, duration: 0.4 }}
-              className="mt-8 flex flex-col items-center gap-2 z-10"
-            >
-              <div className="flex items-center gap-2.5 px-5 py-2 rounded-full bg-[#070318]/90 border border-cyan-400/60 shadow-[0_0_30px_rgba(0,242,255,0.45)] backdrop-blur-md">
-                <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping" />
-                <span className="font-cyber font-bold text-xs sm:text-sm tracking-widest text-cyan-200">
-                  WARPING TO STUDIO WORKSPACE
-                </span>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };

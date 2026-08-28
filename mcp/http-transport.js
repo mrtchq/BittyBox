@@ -1,6 +1,23 @@
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import { buildMcpServer } from './mcp-server.js';
-import { validateApiKey, deductCredits } from '../lib/account-store.js';
+import { validateApiKey, deductCreditsEnforced } from '../lib/account-store.js';
+import { calculateBoxCreditCost, calculateChainCreditCost } from '../lib/credit-costs.js';
+
+function calculateMcpCreditCost(body) {
+  const calls = Array.isArray(body) ? body : [body];
+  return calls.reduce((sum, message) => {
+    if (message?.method !== 'tools/call') return sum;
+    const toolName = message.params?.name;
+    const args = message.params?.arguments || {};
+    if (toolName === 'create_bitty_chain' || toolName === 'create_box_chain') {
+      return sum + calculateChainCreditCost(args.pages || []).totalCost;
+    }
+    if (toolName === 'create_bitty_link') {
+      return sum + calculateBoxCreditCost(args);
+    }
+    return sum;
+  }, 0);
+}
 
 /**
  * Handle incoming MCP Streamable HTTP requests on Express
@@ -15,13 +32,35 @@ export async function handleMcpHttpRequest(req, res) {
     return res.status(200).end();
   }
 
-  // Check and deduct credits for authenticated MCP requests
+  // Check and deduct credits for authenticated MCP box generation requests
   const authHeader = req.headers['authorization'] || '';
   const apiKey = req.headers['x-api-key'] || (authHeader.startsWith('Bearer ') ? authHeader.substring(7).trim() : '');
   if (apiKey && apiKey.startsWith('bb_live_')) {
     const val = validateApiKey(apiKey);
     if (val.valid && val.user) {
-      await deductCredits(val.user.id, 1, 'mcp', 'MCP Server Tool Invocation');
+      const creditCost = calculateMcpCreditCost(req.body);
+      if (creditCost > 0) {
+        try {
+          await deductCreditsEnforced(val.user.id, creditCost, 'mcp', `MCP Box Generation (${creditCost} CR)`);
+        } catch (err) {
+          if (err?.code === 'INSUFFICIENT_CREDITS') {
+            return res.status(err.status || 402).json({
+              jsonrpc: '2.0',
+              error: {
+                code: -32002,
+                message: err.message,
+                data: {
+                  code: err.code,
+                  creditsRequired: err.creditsRequired,
+                  creditsAvailable: err.creditsAvailable,
+                },
+              },
+              id: req.body?.id ?? null,
+            });
+          }
+          throw err;
+        }
+      }
     }
   }
 

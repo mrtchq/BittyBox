@@ -1,6 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import { createBittyLink, decodeBittyLink, DEFAULT_DOMAIN } from '../lib/bitty-engine.js';
+import { createBittyLink, createBittyChain, decodeBittyLink, DEFAULT_DOMAIN } from '../lib/bitty-engine.js';
 import {
   createBox, getBox, listBoxes, deleteBox,
   setPasswordLock, setTimeWindowLock, setAccessLimitLock, setSessionLimitLock, setInviteOnlyLock,
@@ -30,7 +30,33 @@ export function buildMcpServer() {
       theme: z.enum(['auto', 'dark', 'light']).optional().default('auto').describe('Theme styling for markdown, code, and viewer templates'),
       editable: z.boolean().optional().default(false).describe('Whether to open directly in Bitty Box editable note mode'),
       password: z.string().optional().describe('Optional password to encrypt the document using AES-256-GCM'),
-      domain: z.string().optional().describe(`Base domain for the generated link (default: ${DEFAULT_DOMAIN})`)
+      domain: z.string().optional().describe(`Base domain for the generated link (default: ${DEFAULT_DOMAIN})`),
+      description: z.string().optional().describe('Optional page description metadata'),
+      favicon: z.string().optional().describe('Optional emoji or icon URL'),
+      image: z.string().optional().describe('Optional image URL/data URL metadata, matching the human Studio metadata model'),
+      boxId: z.string().optional().describe('Optional box id metadata for Studio-compatible lock/open tracking'),
+      lockConfig: z.object({
+        timeWindow: z.object({
+          enabled: z.boolean().optional(),
+          mode: z.string().optional(),
+          notBefore: z.string().nullable().optional(),
+          notAfter: z.string().nullable().optional(),
+          showCountdown: z.boolean().optional()
+        }).optional(),
+        openLimit: z.object({
+          enabled: z.boolean().optional(),
+          maxOpens: z.number().optional(),
+          opensUsed: z.number().optional(),
+          showRemainingCount: z.boolean().optional()
+        }).optional()
+      }).optional().describe('URL-native lock metadata used by the human Studio creator'),
+      chain: z.object({
+        enabled: z.boolean().optional().default(true).describe('Whether chaining is active'),
+        chainId: z.string().optional().describe('Chain ID (e.g. bbc_...)'),
+        index: z.number().optional().describe('0-based index of this box in the chain'),
+        total: z.number().optional().describe('Total number of boxes in the chain'),
+        nextUrl: z.string().optional().describe('URL of the subsequent box in the chain')
+      }).optional().describe('Optional chain configuration to link this box into a sequential chain')
     },
     async (args) => {
       try {
@@ -174,7 +200,94 @@ export function buildMcpServer() {
     }
   );
 
-  // Tool 5: Bitty Link Decoder
+  const bittyChainPageSchema = z.object({
+    content: z.string().describe('The content for this page/box (markdown, code, HTML, JSON, etc.)'),
+    title: z.string().optional().describe('Page title'),
+    format: z.enum(['auto', 'markdown', 'code', 'html', 'text', 'json', 'svg', 'canvas', 'recipe', 'raw']).optional().describe('Rendering format'),
+    language: z.string().optional().describe('Programming language if format is code'),
+    theme: z.enum(['auto', 'dark', 'light']).optional().describe('Theme styling'),
+    description: z.string().optional().describe('Page description'),
+    favicon: z.string().optional().describe('Emoji or URL icon for this page'),
+    image: z.string().optional().describe('Optional image URL/data URL metadata, matching the human Studio metadata model'),
+    boxId: z.string().optional().describe('Optional box id metadata. If omitted for time/open-limit pages, BittyBox generates one.'),
+    password: z.string().optional().describe('Optional AES-256-GCM encryption password for this page'),
+    lockConfig: z.object({
+      timeWindow: z.object({
+        enabled: z.boolean().optional(),
+        mode: z.string().optional(),
+        notBefore: z.string().nullable().optional(),
+        notAfter: z.string().nullable().optional(),
+        showCountdown: z.boolean().optional()
+      }).optional(),
+      openLimit: z.object({
+        enabled: z.boolean().optional(),
+        maxOpens: z.number().optional(),
+        opensUsed: z.number().optional(),
+        showRemainingCount: z.boolean().optional()
+      }).optional()
+    }).optional().describe('URL-native lock metadata used by the human Studio chain creator'),
+    metadata: z.object({
+      title: z.string().optional(),
+      description: z.string().optional(),
+      favicon: z.string().optional(),
+      image: z.string().optional(),
+      boxId: z.string().optional(),
+      lockConfig: z.any().optional()
+    }).passthrough().optional().describe('Optional Studio-compatible page metadata')
+  });
+
+  const bittyChainToolSchema = {
+    pages: z.array(bittyChainPageSchema).min(1).describe('Array of pages in sequential order (page 1 -> page 2 -> ... -> page N)'),
+    title: z.string().optional().describe('Overall title for the chain (defaults to page 1 title)'),
+    chainId: z.string().optional().describe('Optional custom chain ID (defaults to auto-generated bbc_...)'),
+    domain: z.string().optional().describe(`Base domain for the generated links (default: ${DEFAULT_DOMAIN})`)
+  };
+
+  async function createBittyChainToolResponse(args, toolName = 'create_bitty_chain') {
+    try {
+      const result = await createBittyChain(args.pages, {
+        title: args.title,
+        chainId: args.chainId,
+        domain: args.domain
+      });
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({ tool: toolName, ...result }, null, 2)
+          }
+        ]
+      };
+    } catch (err) {
+      return {
+        isError: true,
+        content: [
+          {
+            type: 'text',
+            text: `Error creating Bitty box chain: ${err.message}`
+          }
+        ]
+      };
+    }
+  }
+
+  // Tool 5: Sequential Box Chain Creator
+  server.tool(
+    'create_bitty_chain',
+    'Create a sequential Box Chain of multiple Bitty Boxes (multi-page document, slide deck, multi-step code walkthrough, or multi-box workflow) where each box links seamlessly to the next box in the sequence without backend storage.',
+    bittyChainToolSchema,
+    async (args) => createBittyChainToolResponse(args, 'create_bitty_chain')
+  );
+
+  // Tool 6: Agent-discoverable Box Chain Creator alias
+  server.tool(
+    'create_box_chain',
+    'Create a human-Studio-compatible Box Chain. This is an alias of create_bitty_chain with explicit box-chain naming for AI agents.',
+    bittyChainToolSchema,
+    async (args) => createBittyChainToolResponse(args, 'create_box_chain')
+  );
+
+  // Tool 7: Bitty Link Decoder
   server.tool(
     'decode_bitty_link',
     'Decode an existing Bitty Link URL or hash fragment back to its original source content and metadata.',
@@ -207,7 +320,7 @@ export function buildMcpServer() {
     }
   );
 
-  // Tool 6: Supported Formats & Capabilities
+  // Tool 8: Supported Formats & Capabilities
   server.tool(
     'list_supported_formats',
     'List all supported formats, templates, code languages, and link features supported by Bitty Box.',
@@ -263,6 +376,9 @@ export function buildMcpServer() {
               ],
               features: [
                 'Zero-backend persistent URLs (payload stored in URL hash)',
+                'Sequential Box Chaining (multi-page linked documents, slide decks, workflows)',
+                'Agent-discoverable create_box_chain MCP alias',
+                'Studio-compatible chain metadata: image, timeWindow locks, openLimit locks, ch/nx navigation',
                 'GZIP compression level 9',
                 'Optional AES-256-GCM password encryption',
                 'Embedded responsive dark/light themes',

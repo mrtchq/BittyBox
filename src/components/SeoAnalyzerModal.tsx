@@ -20,6 +20,7 @@ import {
   Layers
 } from 'lucide-react';
 import { BittyMetadata } from '../types';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface SeoAnalyzerModalProps {
   isOpen: boolean;
@@ -422,117 +423,168 @@ ${image ? `<meta property="twitter:image" content="${image}">\n` : ''}
     } catch {}
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-4xl max-h-[90vh] bg-[#070312] border border-cyan-500/40 rounded-2xl shadow-[0_0_50px_rgba(0,242,255,0.25)] flex flex-col overflow-hidden">
-        {/* Holographic Header */}
-        <div className="p-4 sm:p-6 border-b border-cyan-500/25 bg-gradient-to-r from-cyan-950/60 via-purple-950/60 to-black/80 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-cyan-500/15 border border-cyan-400/40 text-cyan-300 shadow-[0_0_15px_rgba(0,242,255,0.3)]">
-              <Search className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="font-cyber text-base sm:text-lg font-bold text-cyan-100 tracking-wider">
-                  SEO &amp; DISCOVERABILITY ANALYZER
-                </h3>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-400/40">
-                  v2.4 AST AUDIT
-                </span>
-              </div>
-              <p className="text-xs font-mono text-purple-300/70">
-                Actionable SEO heuristics, SERP simulator &amp; metadata discovery auditor
-              </p>
-            </div>
-          </div>
-
-          <button
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop Blur Fade */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             onClick={onClose}
-            className="p-2 rounded-lg bg-purple-950/50 hover:bg-purple-900/80 border border-purple-500/30 text-purple-200 hover:text-white transition"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+            className="fixed inset-0 bg-black/85 backdrop-blur-md"
+          />
 
-        {/* Score Ribbon & Quick Action Bar */}
-        <div className="p-4 sm:px-6 bg-black/50 border-b border-cyan-500/15 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className={`px-3.5 py-1.5 rounded-xl font-cyber text-xl font-black border ${auditResults.gradeColor} shadow-md flex items-center gap-2`}>
-              <span>{auditResults.grade}</span>
-              <span className="text-xs font-mono font-normal opacity-80">({auditResults.score}/100)</span>
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.92, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.92, y: 20 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+            className="relative w-full max-w-4xl max-h-[90vh] bg-[#070312] border border-cyan-500/40 rounded-2xl shadow-[0_0_50px_rgba(0,242,255,0.25)] flex flex-col overflow-hidden z-10"
+          >
+            {/* Holographic Header */}
+            <div className="p-4 sm:p-6 border-b border-cyan-500/25 bg-gradient-to-r from-cyan-950/60 via-purple-950/60 to-black/80 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <motion.div 
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 400 }}
+                  className="p-2.5 rounded-xl bg-cyan-500/15 border border-cyan-400/40 text-cyan-300 shadow-[0_0_15px_rgba(0,242,255,0.3)]"
+                >
+                  <Search className="w-5 h-5" />
+                </motion.div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-cyber text-base sm:text-lg font-bold text-cyan-100 tracking-wider">
+                      SEO &amp; DISCOVERABILITY ANALYZER
+                    </h3>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-400/40">
+                      v2.4 AST AUDIT
+                    </span>
+                  </div>
+                  <p className="text-xs font-mono text-purple-300/70">
+                    Actionable SEO heuristics, SERP simulator &amp; metadata discovery auditor
+                  </p>
+                </div>
+              </div>
+
+              <motion.button
+                whileHover={{ scale: 1.15, rotate: 90 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={onClose}
+                className="p-2 rounded-lg bg-purple-950/50 hover:bg-purple-900/80 border border-purple-500/30 text-purple-200 hover:text-white transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </motion.button>
             </div>
-            <div>
-              <div className="text-xs font-bold text-cyan-200">{auditResults.gradeDesc}</div>
-              <div className="text-[11px] font-mono text-purple-300/70 flex items-center gap-3 mt-0.5">
-                <span className="text-emerald-400">✓ {auditResults.passedCount} Passed</span>
-                {auditResults.warnCount > 0 && <span className="text-amber-400">▲ {auditResults.warnCount} Warnings</span>}
-                {auditResults.failCount > 0 && <span className="text-rose-400">✕ {auditResults.failCount} Critical</span>}
+
+            {/* Score Ribbon & Quick Action Bar */}
+            <div className="p-4 sm:px-6 bg-black/50 border-b border-cyan-500/15 flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <motion.div 
+                  initial={{ scale: 0.8 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 450 }}
+                  className={`px-3.5 py-1.5 rounded-xl font-cyber text-xl font-black border ${auditResults.gradeColor} shadow-md flex items-center gap-2`}
+                >
+                  <span>{auditResults.grade}</span>
+                  <span className="text-xs font-mono font-normal opacity-80">({auditResults.score}/100)</span>
+                </motion.div>
+                <div>
+                  <div className="text-xs font-bold text-cyan-200">{auditResults.gradeDesc}</div>
+                  <div className="text-[11px] font-mono text-purple-300/70 flex items-center gap-3 mt-0.5">
+                    <span className="text-emerald-400">✓ {auditResults.passedCount} Passed</span>
+                    {auditResults.warnCount > 0 && <span className="text-amber-400">▲ {auditResults.warnCount} Warnings</span>}
+                    {auditResults.failCount > 0 && <span className="text-rose-400">✕ {auditResults.failCount} Critical</span>}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <motion.button
+                  whileHover={{ scale: 1.04, boxShadow: "0 0 25px rgba(0,242,255,0.6)" }}
+                  whileTap={{ scale: 0.96 }}
+                  onClick={handleAutoOptimizeAll}
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-fuchsia-600 hover:from-cyan-400 hover:to-fuchsia-500 text-white font-cyber text-xs font-bold shadow-[0_0_20px_rgba(0,242,255,0.4)] transition cursor-pointer"
+                  title="Automatically fix and maximize all SEO recommendations"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>AUTO-OPTIMIZE ALL (100%)</span>
+                </motion.button>
               </div>
             </div>
-          </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleAutoOptimizeAll}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-fuchsia-600 hover:from-cyan-400 hover:to-fuchsia-500 text-white font-cyber text-xs font-bold shadow-[0_0_20px_rgba(0,242,255,0.4)] transition"
-              title="Automatically fix and maximize all SEO recommendations"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>AUTO-OPTIMIZE ALL (100%)</span>
-            </button>
-          </div>
-        </div>
+            {/* Navigation Tabs with layoutId animated underline */}
+            <div className="flex border-b border-cyan-500/20 px-6 bg-[#04010b] relative">
+              <button
+                onClick={() => setActiveTab('audit')}
+                className={`relative py-3 px-4 text-xs font-cyber tracking-wider transition-colors flex items-center gap-2 cursor-pointer ${
+                  activeTab === 'audit' ? 'text-cyan-300 font-bold' : 'text-purple-300/60 hover:text-purple-200'
+                }`}
+              >
+                {activeTab === 'audit' && (
+                  <motion.div
+                    layoutId="active-seo-tab-border"
+                    className="absolute inset-0 border-b-2 border-cyan-400 bg-cyan-950/30"
+                    transition={{ type: "spring", stiffness: 450, damping: 30 }}
+                  />
+                )}
+                <Zap className="w-3.5 h-3.5 relative z-10" />
+                <span className="relative z-10">AUDIT &amp; SUGGESTIONS ({auditResults.checks.length})</span>
+              </button>
 
-        {/* Navigation Tabs */}
-        <div className="flex border-b border-cyan-500/20 px-6 bg-[#04010b]">
-          <button
-            onClick={() => setActiveTab('audit')}
-            className={`py-3 px-4 text-xs font-cyber tracking-wider border-b-2 transition flex items-center gap-2 ${
-              activeTab === 'audit'
-                ? 'border-cyan-400 text-cyan-300 font-bold bg-cyan-950/30'
-                : 'border-transparent text-purple-300/60 hover:text-purple-200'
-            }`}
-          >
-            <Zap className="w-3.5 h-3.5" />
-            <span>AUDIT &amp; SUGGESTIONS ({auditResults.checks.length})</span>
-          </button>
+              <button
+                onClick={() => setActiveTab('preview')}
+                className={`relative py-3 px-4 text-xs font-cyber tracking-wider transition-colors flex items-center gap-2 cursor-pointer ${
+                  activeTab === 'preview' ? 'text-cyan-300 font-bold' : 'text-purple-300/60 hover:text-purple-200'
+                }`}
+              >
+                {activeTab === 'preview' && (
+                  <motion.div
+                    layoutId="active-seo-tab-border"
+                    className="absolute inset-0 border-b-2 border-cyan-400 bg-cyan-950/30"
+                    transition={{ type: "spring", stiffness: 450, damping: 30 }}
+                  />
+                )}
+                <Globe className="w-3.5 h-3.5 relative z-10" />
+                <span className="relative z-10">SEARCH &amp; SOCIAL PREVIEW</span>
+              </button>
 
-          <button
-            onClick={() => setActiveTab('preview')}
-            className={`py-3 px-4 text-xs font-cyber tracking-wider border-b-2 transition flex items-center gap-2 ${
-              activeTab === 'preview'
-                ? 'border-cyan-400 text-cyan-300 font-bold bg-cyan-950/30'
-                : 'border-transparent text-purple-300/60 hover:text-purple-200'
-            }`}
-          >
-            <Globe className="w-3.5 h-3.5" />
-            <span>SEARCH &amp; SOCIAL PREVIEW</span>
-          </button>
+              <button
+                onClick={() => setActiveTab('code')}
+                className={`relative py-3 px-4 text-xs font-cyber tracking-wider transition-colors flex items-center gap-2 cursor-pointer ${
+                  activeTab === 'code' ? 'text-cyan-300 font-bold' : 'text-purple-300/60 hover:text-purple-200'
+                }`}
+              >
+                {activeTab === 'code' && (
+                  <motion.div
+                    layoutId="active-seo-tab-border"
+                    className="absolute inset-0 border-b-2 border-cyan-400 bg-cyan-950/30"
+                    transition={{ type: "spring", stiffness: 450, damping: 30 }}
+                  />
+                )}
+                <FileText className="w-3.5 h-3.5 relative z-10" />
+                <span className="relative z-10">HTML META CODE</span>
+              </button>
+            </div>
 
-          <button
-            onClick={() => setActiveTab('code')}
-            className={`py-3 px-4 text-xs font-cyber tracking-wider border-b-2 transition flex items-center gap-2 ${
-              activeTab === 'code'
-                ? 'border-cyan-400 text-cyan-300 font-bold bg-cyan-950/30'
-                : 'border-transparent text-purple-300/60 hover:text-purple-200'
-            }`}
-          >
-            <FileText className="w-3.5 h-3.5" />
-            <span>HTML META CODE</span>
-          </button>
-        </div>
-
-        {/* Toast alert */}
-        {appliedToast && (
-          <div className="bg-emerald-950/90 border border-emerald-400/60 text-emerald-200 px-4 py-2 text-xs font-mono flex items-center justify-between animate-in slide-in-from-top-1">
-            <span className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-              {appliedToast}
-            </span>
-          </div>
-        )}
+            {/* Toast alert */}
+            <AnimatePresence>
+              {appliedToast && (
+                <motion.div 
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="bg-emerald-950/90 border border-emerald-400/60 text-emerald-200 px-4 py-2 text-xs font-mono flex items-center justify-between overflow-hidden"
+                >
+                  <span className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    {appliedToast}
+                  </span>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
         {/* Tab Body Content */}
         <div className="p-6 overflow-y-auto flex-1 cyber-scrollbar space-y-4">
@@ -564,7 +616,7 @@ ${image ? `<meta property="twitter:image" content="${image}">\n` : ''}
                           </h4>
                         </div>
                         <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-black/60 text-purple-300 border border-purple-500/30">
-                          {check.score}/{check.maxScore} PTS
+                          {check.score}/{check.maxScore} CR
                         </span>
                       </div>
 
@@ -744,14 +796,18 @@ ${image ? `<meta property="twitter:image" content="${image}">\n` : ''}
           <div className="text-[11px] font-mono text-purple-300/60 hidden sm:block">
             Bitty Box URL-Native Search Discovery Protocol
           </div>
-          <button
+          <motion.button
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.96 }}
             onClick={onClose}
-            className="px-5 py-2 rounded-xl bg-purple-950 hover:bg-purple-900 border border-purple-500/40 text-purple-200 hover:text-white font-cyber text-xs transition"
+            className="px-5 py-2 rounded-xl bg-purple-950 hover:bg-purple-900 border border-purple-500/40 text-purple-200 hover:text-white font-cyber text-xs transition cursor-pointer"
           >
             CLOSE ANALYZER
-          </button>
+          </motion.button>
         </div>
-      </div>
+      </motion.div>
     </div>
+      )}
+    </AnimatePresence>
   );
 };

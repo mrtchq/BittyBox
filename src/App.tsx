@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { BittyNavbar } from './components/BittyNavbar';
 import { HoloBackground } from './components/HoloBackground';
-import { BittyEditor } from './components/BittyEditor';
+import { HomeSlideCarousel } from './components/HomeSlideCarousel';
 import { BittyRenderer } from './components/BittyRenderer';
 import { HistoryModal } from './components/HistoryModal';
 import { AboutModal } from './components/AboutModal';
+import { AgentsPage } from './components/AgentsPage';
 import { QrModal } from './components/QrModal';
-import { BittyMetadata, BittyHistoryItem, AppView, TemplatePreset, WorkspaceTheme, BittySession } from './types';
+import { LegalModal, LegalTab } from './components/LegalModal';
+import { BittyMetadata, BittyHistoryItem, AppView, TemplatePreset, WorkspaceTheme, BittySession, BittyChainDraft } from './types';
 import { 
   compressContent, 
   compressContentSync,
@@ -27,91 +29,51 @@ import { useAccount } from './hooks/useAccount';
 import { AccountDashboard } from './components/AccountDashboard';
 import { ProPaywallModal } from './components/ProPaywallModal';
 import { EdgeGripHandles } from './components/EdgeGripHandles';
+import { ChainNextModal } from './components/ChainNextModal';
 import { PreviewDropdownPanel } from './components/PreviewDropdownPanel';
 import { TemplatesSidePanel } from './components/TemplatesSidePanel';
 import { StudioToolsSidePanel } from './components/StudioToolsSidePanel';
 import { useEdgeSwipe } from './hooks/useEdgeSwipe';
-import { ClickSparkEffect } from './components/ClickSparkEffect';
+import { motion, AnimatePresence } from 'motion/react';
+import {
+  BITTY_CHAIN_MAX_PAGES,
+  createChainDraftFromCurrent,
+  createNextChainDraftPage,
+  deleteChainDraftPage,
+  generateChainedBittyUrls,
+  loadChainDraft,
+  reorderChainDraftPages,
+  saveChainDraft,
+  updateChainDraftPage,
+  calculateTotalChainCreditCost,
+} from './utils/bittyChain';
 
-const DEFAULT_STARTER_HTML = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Welcome</title>
-  <style>
-    body {
-      background: #000000;
-      color: #ffffff;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      margin: 0;
-      padding: 1.5rem;
-      box-sizing: border-box;
-    }
-    .card {
-      background: #0a0a0a;
-      border: 1px solid #222222;
-      border-radius: 12px;
-      padding: 2.5rem;
-      max-width: 500px;
-      text-align: center;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
-    }
-    h1 {
-      color: #ffffff;
-      font-size: 1.8rem;
-      margin-top: 0;
-      margin-bottom: 0.75rem;
-    }
-    p {
-      color: #ffffff;
-      line-height: 1.6;
-      margin-bottom: 1.5rem;
-    }
-    button {
-      background: #ffffff;
-      color: #000000;
-      border: none;
-      padding: 0.75rem 1.5rem;
-      border-radius: 8px;
-      font-weight: 600;
-      font-size: 0.95rem;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    button:hover {
-      background: #e4e4e7;
-    }
-  </style>
-</head>
-<body>
-  <div class="card">
-    <h1>Welcome to My Webpage</h1>
-    <p>This is a standalone web page generated entirely from code in the editor.</p>
-    <button onclick="alert('Hello from your app!')">Click Me</button>
-  </div>
-</body>
-</html>`;
+const DEFAULT_STARTER_HTML = '';
 
 function getInitialUrlState() {
-  if (typeof window === 'undefined') return { hash: '', payload: '', metadata: null, isViewer: false, isAuth: false, isAccount: false };
+  if (typeof window === 'undefined') return { hash: '', payload: '', metadata: null, isViewer: false, isAuth: false, isAccount: false, isTerms: false, isPrivacy: false, isAgents: false };
   const hash = window.location.hash || '';
   const search = window.location.search || '';
   if (hash.includes('#/auth/verify') || hash.includes('token=') || search.includes('token=')) {
-    return { hash, payload: '', metadata: null, isViewer: false, isAuth: true, isAccount: false };
+    return { hash, payload: '', metadata: null, isViewer: false, isAuth: true, isAccount: false, isTerms: false, isPrivacy: false, isAgents: false };
   }
   if (hash === '#/account') {
-    return { hash, payload: '', metadata: null, isViewer: false, isAuth: false, isAccount: true };
+    return { hash, payload: '', metadata: null, isViewer: false, isAuth: false, isAccount: true, isTerms: false, isPrivacy: false, isAgents: false };
   }
-  if (hash && hash.length > 2 && hash !== '#/edit' && hash !== '#edit' && hash !== '#/studio' && hash !== '#/account' && hash !== '#/' && hash !== '#') {
+  if (hash === '#/agents' || hash === '#agents' || hash === '#/agent' || hash === '#agent') {
+    return { hash, payload: '', metadata: null, isViewer: false, isAuth: false, isAccount: false, isTerms: false, isPrivacy: false, isAgents: true };
+  }
+  if (hash === '#/terms' || hash === '#terms') {
+    return { hash, payload: '', metadata: null, isViewer: false, isAuth: false, isAccount: false, isTerms: true, isPrivacy: false, isAgents: false };
+  }
+  if (hash === '#/privacy' || hash === '#privacy') {
+    return { hash, payload: '', metadata: null, isViewer: false, isAuth: false, isAccount: false, isTerms: false, isPrivacy: true, isAgents: false };
+  }
+  if (hash && hash.length > 2 && hash !== '#/edit' && hash !== '#edit' && hash !== '#/studio' && hash !== '#/account' && hash !== '#/' && hash !== '#' && hash !== '#/terms' && hash !== '#terms' && hash !== '#/privacy' && hash !== '#privacy' && hash !== '#/agents' && hash !== '#agents' && hash !== '#/agent' && hash !== '#agent') {
     const { payload, metadata } = parseBittyHash(hash);
-    return { hash, payload, metadata, isViewer: Boolean(payload), isAuth: false, isAccount: false };
+    return { hash, payload, metadata, isViewer: Boolean(payload), isAuth: false, isAccount: false, isTerms: false, isPrivacy: false, isAgents: false };
   }
-  return { hash: '', payload: '', metadata: null, isViewer: false, isAuth: false, isAccount: false };
+  return { hash: '', payload: '', metadata: null, isViewer: false, isAuth: false, isAccount: false, isTerms: false, isPrivacy: false, isAgents: false };
 }
 
 export default function App() {
@@ -119,18 +81,20 @@ export default function App() {
   const initialUrl = useMemo(() => getInitialUrlState(), []);
   const [currentView, setCurrentView] = useState<AppView>(() => {
     if (initialUrl.isAuth || initialUrl.isAccount) return 'account';
+    if (initialUrl.isAgents) return 'agents';
     return initialUrl.isViewer ? 'viewer' : 'editor';
   });
   const [inlinePreviewActive, setInlinePreviewActive] = useState<boolean>(false);
   const [content, setContent] = useState<string>(() => (initialUrl.isViewer ? '' : DEFAULT_STARTER_HTML));
   const [metadata, setMetadata] = useState<BittyMetadata>(() => {
     return {
-      title: initialUrl.metadata?.title || 'My Webpage',
-      description: initialUrl.metadata?.description || 'A self-contained webpage living entirely in a URL',
+      title: initialUrl.metadata?.title || 'My Box',
+      description: initialUrl.metadata?.description || '',
       favicon: initialUrl.metadata?.favicon || '📦',
       image: initialUrl.metadata?.image,
       boxId: initialUrl.metadata?.boxId,
       lockConfig: initialUrl.metadata?.lockConfig,
+      chain: initialUrl.metadata?.chain,
       includeMetadata: true,
     };
   });
@@ -165,7 +129,17 @@ export default function App() {
   const [isRightToolsPanelOpen, setIsRightToolsPanelOpen] = useState<boolean>(false);
   const [isPreviewDropdownOpen, setIsPreviewDropdownOpen] = useState<boolean>(false);
   const [isCloseSessionModalOpen, setIsCloseSessionModalOpen] = useState<boolean>(false);
+  const [isLegalModalOpen, setIsLegalModalOpen] = useState<boolean>(() => Boolean(initialUrl.isTerms || initialUrl.isPrivacy));
+  const [legalModalTab, setLegalModalTab] = useState<LegalTab>(() => (initialUrl.isPrivacy ? 'privacy' : 'terms'));
   const [history, setHistory] = useState<BittyHistoryItem[]>([]);
+  const [chainDraft, setChainDraft] = useState<BittyChainDraft | null>(() => loadChainDraft());
+  const [isChainModalOpen, setIsChainModalOpen] = useState<boolean>(false);
+  const [isLastEditorSlide, setIsLastEditorSlide] = useState<boolean>(false);
+
+  const chainEnabled = Boolean(chainDraft?.enabled);
+  const chainCurrentIndex = chainDraft?.currentIndex ?? 0;
+  const chainTotal = chainDraft?.pages.length ?? 1;
+  const isLastChainBox = !chainEnabled || chainCurrentIndex >= chainTotal - 1;
 
   // Edge Swiping Gesture Hook
   useEdgeSwipe({
@@ -208,6 +182,10 @@ export default function App() {
     } catch {}
   }, [workspaceTheme]);
 
+  useEffect(() => {
+    saveChainDraft(chainDraft);
+  }, [chainDraft]);
+
   // Magic Link verification handler on URL mount
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -249,7 +227,7 @@ export default function App() {
 
     // Check if there is an active hash in the URL for viewer mode
     const hash = window.location.hash;
-    const isSpecialRoute = !hash || hash === '#/edit' || hash === '#edit' || hash === '#/studio';
+    const isSpecialRoute = !hash || hash === '#/edit' || hash === '#edit' || hash === '#/studio' || hash === '#/terms' || hash === '#terms' || hash === '#/privacy' || hash === '#privacy';
 
     // Load multi-sessions from localStorage
     let loadedSessions: BittySession[] = [];
@@ -278,8 +256,8 @@ export default function App() {
       // Check autosaved session draft fallback
       let initialContent = DEFAULT_STARTER_HTML;
       let initialMeta: BittyMetadata = {
-        title: 'My Webpage',
-        description: 'A self-contained webpage living entirely in a URL',
+        title: 'My Box',
+        description: '',
         favicon: '📦',
         includeMetadata: true,
       };
@@ -297,7 +275,7 @@ export default function App() {
 
       const initialSess: BittySession = {
         id: 'sess-default',
-        title: initialMeta.title || 'My Webpage',
+        title: initialMeta.title || 'My Box',
         favicon: initialMeta.favicon || '📦',
         content: initialContent,
         metadata: initialMeta,
@@ -338,6 +316,7 @@ export default function App() {
   // Sync content updates with active session
   const handleContentChange = useCallback((newContent: string) => {
     setContent(newContent);
+    setChainDraft(prev => prev?.enabled ? updateChainDraftPage(prev, prev.currentIndex, newContent, metadata) : prev);
     const now = Date.now();
     setIsSavingSession(true);
     setSessions(prev => {
@@ -359,11 +338,12 @@ export default function App() {
     setLastSavedTimestamp(now);
     const saveTimer = setTimeout(() => setIsSavingSession(false), 250);
     return () => clearTimeout(saveTimer);
-  }, [currentSessionId]);
+  }, [currentSessionId, metadata]);
 
   // Sync metadata updates with active session
   const handleMetadataChange = useCallback((newMetadata: BittyMetadata) => {
     setMetadata(newMetadata);
+    setChainDraft(prev => prev?.enabled ? updateChainDraftPage(prev, prev.currentIndex, content, newMetadata) : prev);
     const now = Date.now();
     setIsSavingSession(true);
     setSessions(prev => {
@@ -387,7 +367,7 @@ export default function App() {
     setLastSavedTimestamp(now);
     const saveTimer = setTimeout(() => setIsSavingSession(false), 250);
     return () => clearTimeout(saveTimer);
-  }, [currentSessionId]);
+  }, [currentSessionId, content]);
 
   // Manual Force Save Handler
   const handleManualSaveSession = useCallback(() => {
@@ -468,12 +448,12 @@ export default function App() {
           const freshId = 'sess-' + Date.now();
           const freshSession: BittySession = {
             id: freshId,
-            title: 'My Webpage',
+            title: 'My Box',
             favicon: '📦',
             content: DEFAULT_STARTER_HTML,
             metadata: {
-              title: 'My Webpage',
-              description: 'A self-contained webpage living entirely in a URL',
+              title: 'My Box',
+              description: '',
               favicon: '📦',
               includeMetadata: true,
             },
@@ -522,6 +502,162 @@ export default function App() {
       return updated;
     });
   }, []);
+
+  const handleSetChainEnabled = useCallback((enabled: boolean) => {
+    if (!enabled) {
+      setChainDraft(null);
+      setIsChainModalOpen(false);
+      return;
+    }
+    setChainDraft(prev => prev?.enabled ? updateChainDraftPage(prev, prev.currentIndex, content, metadata) : createChainDraftFromCurrent(content, metadata));
+  }, [content, metadata]);
+
+  const goToChainPage = useCallback((targetIndex: number) => {
+    if (!chainDraft?.enabled) return;
+    const persisted = updateChainDraftPage(chainDraft, chainDraft.currentIndex, content, metadata);
+    const safeIndex = Math.min(Math.max(0, targetIndex), persisted.pages.length - 1);
+    const target = persisted.pages[safeIndex];
+    setChainDraft({ ...persisted, currentIndex: safeIndex, updatedAt: Date.now() });
+    setContent(target.content);
+    setMetadata(target.metadata);
+  }, [chainDraft, content, metadata]);
+
+  const handleOpenChainNext = useCallback(() => {
+    const baseDraft = chainDraft?.enabled
+      ? updateChainDraftPage(chainDraft, chainDraft.currentIndex, content, metadata)
+      : createChainDraftFromCurrent(content, metadata);
+
+    if (baseDraft.currentIndex < baseDraft.pages.length - 1) {
+      const nextIndex = baseDraft.currentIndex + 1;
+      const target = baseDraft.pages[nextIndex];
+      setChainDraft({ ...baseDraft, currentIndex: nextIndex, updatedAt: Date.now() });
+      setContent(target.content);
+      setMetadata(target.metadata);
+      return;
+    }
+
+    setChainDraft(baseDraft);
+    if (baseDraft.pages.length < BITTY_CHAIN_MAX_PAGES) {
+      setIsChainModalOpen(true);
+    }
+  }, [chainDraft, content, metadata]);
+
+  const handleCreateNextChainPage = useCallback((mode: 'clone' | 'scratch') => {
+    const baseDraft = chainDraft?.enabled
+      ? updateChainDraftPage(chainDraft, chainDraft.currentIndex, content, metadata)
+      : createChainDraftFromCurrent(content, metadata);
+    const nextDraft = createNextChainDraftPage(baseDraft, mode, content, metadata);
+    const target = nextDraft.pages[nextDraft.currentIndex];
+    setChainDraft(nextDraft);
+    setContent(target.content);
+    setMetadata(target.metadata);
+    setIsChainModalOpen(false);
+  }, [chainDraft, content, metadata]);
+
+  const handleGoToLastChainBox = useCallback(() => {
+    if (!chainDraft?.enabled) return;
+    goToChainPage(chainDraft.pages.length - 1);
+  }, [chainDraft, goToChainPage]);
+
+  const handleDeleteLastChainBox = useCallback(() => {
+    if (!chainDraft?.enabled || chainDraft.pages.length <= 1) return;
+    const persisted = updateChainDraftPage(chainDraft, chainDraft.currentIndex, content, metadata);
+    const updatedDraft = deleteChainDraftPage(persisted, persisted.pages.length - 1);
+    const target = updatedDraft.pages[updatedDraft.currentIndex];
+    setChainDraft(updatedDraft);
+    if (target) {
+      setContent(target.content);
+      setMetadata(target.metadata);
+    }
+  }, [chainDraft, content, metadata]);
+
+  const handleDeleteChainPage = useCallback((indexToDelete: number) => {
+    if (!chainDraft?.enabled || chainDraft.pages.length <= 1) return;
+    const persisted = updateChainDraftPage(chainDraft, chainDraft.currentIndex, content, metadata);
+    const updatedDraft = deleteChainDraftPage(persisted, indexToDelete);
+    const target = updatedDraft.pages[updatedDraft.currentIndex];
+    setChainDraft(updatedDraft);
+    if (target) {
+      setContent(target.content);
+      setMetadata(target.metadata);
+    }
+  }, [chainDraft, content, metadata]);
+
+  const handleReorderChainPages = useCallback((fromIndex: number, toIndex: number) => {
+    if (!chainDraft?.enabled || chainDraft.pages.length <= 1 || fromIndex === toIndex) return;
+    const persisted = updateChainDraftPage(chainDraft, chainDraft.currentIndex, content, metadata);
+    const updatedDraft = reorderChainDraftPages(persisted, fromIndex, toIndex);
+    const target = updatedDraft.pages[updatedDraft.currentIndex];
+    setChainDraft(updatedDraft);
+    if (target) {
+      setContent(target.content);
+      setMetadata(target.metadata);
+    }
+  }, [chainDraft, content, metadata]);
+
+  const handleGenerateChain = useCallback(async (currentContent: string, currentMetadata: BittyMetadata) => {
+    const baseDraft = chainDraft?.enabled
+      ? updateChainDraftPage(chainDraft, chainDraft.currentIndex, currentContent, currentMetadata)
+      : createChainDraftFromCurrent(currentContent, currentMetadata);
+    const urls = await generateChainedBittyUrls(baseDraft.pages, {
+      origin: window.location.origin,
+      chainId: baseDraft.chainId,
+    });
+    const entryUrl = urls[0] || '';
+    if (!entryUrl) return { entryUrl: '', urls };
+
+    const parsedEntry = parseBittyHash(new URL(entryUrl).hash);
+    setBittyUrl(entryUrl);
+    setHashFragment(parsedEntry.payload);
+    setChainDraft({ ...baseDraft, updatedAt: Date.now() });
+
+    const id = await hashString(entryUrl);
+    const totalByteSize = baseDraft.pages.reduce((sum, page) => sum + (page.content?.length || 0), 0);
+    const chainCreditCalculation = calculateTotalChainCreditCost(baseDraft.pages);
+    const chainCost = chainCreditCalculation.totalCost;
+
+    saveToHistory({
+      id,
+      url: entryUrl,
+      title: baseDraft.pages[0]?.metadata.title || currentMetadata.title || 'Chained Bitty Box',
+      description: baseDraft.pages[0]?.metadata.description || currentMetadata.description,
+      favicon: baseDraft.pages[0]?.metadata.favicon || currentMetadata.favicon || '📦',
+      image: baseDraft.pages[0]?.metadata.image || currentMetadata.image,
+      byteSize: totalByteSize,
+      compressedSize: entryUrl.length,
+      createdAt: Date.now(),
+      encrypted: baseDraft.pages.some(p => Boolean(p.metadata.password)),
+    });
+
+    if (account.isAuthenticated || account.user) {
+      await account.recordCreatedBox({
+        title: baseDraft.pages[0]?.metadata.title || currentMetadata.title || 'Chained Bitty Box',
+        url: entryUrl,
+        format: 'chain',
+        cost: chainCost,
+        boxBreakdowns: chainCreditCalculation.boxBreakdowns,
+        byteSize: totalByteSize,
+        compressedSize: entryUrl.length,
+        encrypted: baseDraft.pages.some(p => Boolean(p.metadata.password)),
+        locks: {
+          password: baseDraft.pages.some(p => Boolean(p.metadata.password)),
+          timeWindow: baseDraft.pages.some(p => Boolean(p.metadata.lockConfig?.timeWindow?.enabled)),
+          accessLimit: baseDraft.pages.some(p => Boolean(p.metadata.lockConfig?.openLimit?.enabled)),
+        },
+      });
+    }
+
+    try {
+      window.history.replaceState(null, '', '/#/edit');
+    } catch {}
+
+    return {
+      entryUrl,
+      urls,
+      creditCost: chainCost,
+      boxCreditBreakdowns: chainCreditCalculation.boxBreakdowns,
+    };
+  }, [chainDraft, saveToHistory, account]);
 
   const deleteHistoryItem = (id: string) => {
     setHistory(prev => {
@@ -589,6 +725,12 @@ export default function App() {
         return;
       }
 
+      if (hash === '#/agents' || hash === '#agents' || hash === '#/agent' || hash === '#agent') {
+        setShowSplash(false);
+        setCurrentView('agents');
+        return;
+      }
+
       if (hash === '#/studio') {
         setShowSplash(true);
         return;
@@ -607,15 +749,16 @@ export default function App() {
           setShowSplash(false);
           setHashFragment(payload);
           if (parsedMeta) {
-            setMetadata(prev => ({
-              ...prev,
-              title: parsedMeta.title || prev.title,
-              description: parsedMeta.description || prev.description,
-              favicon: parsedMeta.favicon || prev.favicon,
-              image: parsedMeta.image || prev.image,
-              boxId: parsedMeta.boxId || prev.boxId,
-              lockConfig: parsedMeta.lockConfig || prev.lockConfig,
-            }));
+            setMetadata({
+              title: parsedMeta.title || 'My Box',
+              description: parsedMeta.description || '',
+              favicon: parsedMeta.favicon || '📦',
+              image: parsedMeta.image,
+              boxId: parsedMeta.boxId,
+              lockConfig: parsedMeta.lockConfig,
+              chain: parsedMeta.chain,
+              includeMetadata: true,
+            });
           }
           decompressBittyData(payload).then(res => {
             if (!res.error && !res.needsPassword && res.content) {
@@ -634,6 +777,24 @@ export default function App() {
 
   // Generate & Copy action (opens generated URL in a new tab like OPEN TAB)
   const handleGenerate = async () => {
+    const hasPasscode = Boolean(metadata.password && metadata.password.trim().length > 0);
+    const hasTimeWindow = Boolean(metadata.lockConfig?.timeWindow?.enabled);
+    const hasAccessLimit = Boolean(metadata.lockConfig?.openLimit?.enabled);
+    let requiredCost = 0;
+    // Passcode is free (0 CR)
+    if (hasTimeWindow) requiredCost += 10;
+    if (hasAccessLimit) requiredCost += 10;
+
+    if (requiredCost > 0) {
+      const userIsPro = Boolean(proStatus.isPro || account.user?.tier === 'pro');
+      const curCredits = account.user?.credits ?? 0;
+      const canProceed = userIsPro || (account.isAuthenticated && curCredits >= requiredCost);
+      if (!canProceed) {
+        proStatus.openPaywall('Time & View Limit Locks (10 CR)');
+        return;
+      }
+    }
+
     // 1. Determine target URL synchronously so window.open executes within the user click gesture
     let targetUrl = bittyUrl;
     if (!metadata.password) {
@@ -645,12 +806,23 @@ export default function App() {
       } catch {}
     }
 
-    // 2. Open new tab synchronously in direct user gesture context
+    // 2. Open new tab directly in direct user gesture context if targetUrl is known
     let newTab: Window | null = null;
     if (targetUrl) {
-      newTab = window.open(targetUrl, '_blank');
-    } else {
-      newTab = window.open('', '_blank');
+      try {
+        newTab = window.open(targetUrl, '_blank');
+      } catch {}
+      if (!newTab) {
+        try {
+          const a = document.createElement('a');
+          a.href = targetUrl;
+          a.target = '_blank';
+          a.rel = 'noopener noreferrer';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        } catch {}
+      }
     }
 
     // 3. Complete async compression, state update, address bar update, history record & clipboard
@@ -720,7 +892,7 @@ export default function App() {
       const hasTimeWindow = Boolean(metadata.lockConfig?.timeWindow?.enabled);
       const hasAccessLimit = Boolean(metadata.lockConfig?.openLimit?.enabled);
       let cost = 0;
-      if (hasPasscode) cost += 5;
+      // Passcode is free (0 CR)
       if (hasTimeWindow) cost += 10;
       if (hasAccessLimit) cost += 10;
 
@@ -826,12 +998,12 @@ export default function App() {
     const newId = 'sess-' + Date.now();
     const newSession: BittySession = {
       id: newId,
-      title: 'My Webpage',
+      title: 'My Box',
       favicon: '📦',
       content: DEFAULT_STARTER_HTML,
       metadata: {
-        title: 'My Webpage',
-        description: 'A self-contained webpage living entirely in a URL',
+        title: 'My Box',
+        description: '',
         favicon: '📦',
         includeMetadata: true,
       },
@@ -910,6 +1082,7 @@ export default function App() {
         hashFragment={hashFragment}
         activeContent={hashFragment ? undefined : content}
         metadata={metadata}
+        onNextChainBox={metadata.chain?.nextUrl ? () => { window.location.href = metadata.chain!.nextUrl!; } : undefined}
         onEdit={handleEditFromViewer}
         onHome={handleGoToHomePage}
         onOpenQr={() => setIsQrOpen(true)}
@@ -920,18 +1093,19 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#050515] text-cyan-100 relative overflow-x-hidden font-sans">
+    <div className="min-h-screen flex flex-col bg-transparent text-cyan-100 relative overflow-x-hidden font-sans">
       {/* Background Animated Hologram FX */}
       <HoloBackground theme={workspaceTheme} />
-      {/* Global Interactive Quantum Click Spark FX */}
-      <ClickSparkEffect theme={workspaceTheme} />
 
-      {/* Edge Grip Handles on Center Top (PREVIEW) & Center Bottom (ACCOUNT) */}
+      {/* Edge Grip Handle on Center Top (PREVIEW) */}
       <EdgeGripHandles
         onOpenPreview={() => setIsPreviewDropdownOpen(true)}
-        onOpenAccount={() => setIsRightToolsPanelOpen(true)}
         isPreviewOpen={isPreviewDropdownOpen}
-        isAccountOpen={isRightToolsPanelOpen}
+        onOpenChainNext={handleOpenChainNext}
+        isChainNextVisible={currentView === 'editor' && chainEnabled && isLastEditorSlide}
+        chainNextLabel={isLastChainBox ? (chainTotal >= BITTY_CHAIN_MAX_PAGES ? 'MAX CHAIN' : 'ADD NEXT') : 'NEXT BOX'}
+        chainNextDisabled={chainEnabled && isLastChainBox && chainTotal >= BITTY_CHAIN_MAX_PAGES}
+        topClassName="top-[calc(6.75rem+env(safe-area-inset-top))] lg:top-[calc(4rem+env(safe-area-inset-top))]"
       />
 
       {/* Top Cyber Navigation Bar */}
@@ -956,94 +1130,162 @@ export default function App() {
         onModeChange={proStatus.setMode}
         isPro={proStatus.isPro}
         onOpenPaywall={proStatus.openPaywall}
-        lastSavedAt={lastSavedTimestamp}
-        isSaving={isSavingSession}
-        activeSessionTitle={metadata.title || 'My Webpage'}
-        onManualSave={handleManualSaveSession}
         user={account.user}
         isAuthenticated={account.isAuthenticated}
       />
 
-      {/* Main Content Body */}
-      <main className="flex-1 relative z-10">
-        {currentView === 'editor' && (
-          <BittyEditor
-            content={content}
-            onChangeContent={handleContentChange}
-            metadata={metadata}
-            onChangeMetadata={handleMetadataChange}
-            onGenerate={handleGenerate}
-            bittyUrl={bittyUrl}
-            originalBytes={originalBytes}
-            compressedBytes={compressedBytes}
-            isCopied={isCopied}
-            onSelectTemplate={handleSelectTemplate}
-            onCloseSession={handleRequestCloseSession}
-            sessions={sessions}
-            currentSessionId={currentSessionId}
-            onSwitchSession={handleSwitchSession}
-            onCloseSessionById={handleCloseSessionById}
-            onNewSession={handleNewBox}
-            onOpenTemplatesPanel={() => setIsLeftTemplatesPanelOpen(true)}
-            onOpenToolsPanel={() => setIsRightToolsPanelOpen(true)}
-            inlinePreviewActive={inlinePreviewActive}
-            onToggleInlinePreview={() => setInlinePreviewActive(prev => !prev)}
-            onExitInlinePreview={() => setInlinePreviewActive(false)}
-            mode={proStatus.mode}
-            isPro={proStatus.isPro}
-            onOpenPaywall={proStatus.openPaywall}
-          />
-        )}
+      {/* Main Content Body with Motion View Transitions */}
+      <main className="flex-1 relative z-10 pt-[calc(6.75rem+env(safe-area-inset-top))] lg:pt-[calc(4rem+env(safe-area-inset-top))] pb-[calc(4.5rem+env(safe-area-inset-bottom))] lg:pb-16">
+        <AnimatePresence mode="wait">
+          {currentView === 'editor' && (
+            <motion.div
+              key="view-editor"
+              initial={{ opacity: 0, y: 12, scale: 0.995 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -12, scale: 0.995 }}
+              transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <HomeSlideCarousel
+                content={content}
+                onChangeContent={handleContentChange}
+                metadata={metadata}
+                onChangeMetadata={handleMetadataChange}
+                bittyUrl={bittyUrl}
+                onReplaySplash={() => setShowSplash(true)}
+                onOpenTools={() => setIsRightToolsPanelOpen(true)}
+                onOpenTemplates={() => setIsLeftTemplatesPanelOpen(true)}
+                onOpenPreview={() => setIsPreviewDropdownOpen(true)}
+                isPreviewOpen={isPreviewDropdownOpen}
+                isToolsOpen={isRightToolsPanelOpen}
+                isTemplatesOpen={isLeftTemplatesPanelOpen}
+                chainEnabled={chainEnabled}
+                chainIndex={chainCurrentIndex}
+                chainTotal={chainTotal}
+                chainMax={BITTY_CHAIN_MAX_PAGES}
+                chainDraft={chainDraft}
+                isLastChainBox={isLastChainBox}
+                onToggleChain={handleSetChainEnabled}
+                onOpenChainNext={handleOpenChainNext}
+                onCreateNextChainPage={handleCreateNextChainPage}
+                onGoToLastChainBox={handleGoToLastChainBox}
+                onGoToChainPage={goToChainPage}
+                onDeleteLastChainBox={handleDeleteLastChainBox}
+                onDeleteChainPage={handleDeleteChainPage}
+                onReorderChainPages={handleReorderChainPages}
+                onGenerateChain={handleGenerateChain}
+                isPro={proStatus.isPro}
+                onOpenPaywall={proStatus.openPaywall}
+                onSlideChange={(_slideIndex, isLast) => setIsLastEditorSlide(isLast)}
+              />
+            </motion.div>
+          )}
 
-        {currentView === 'account' && (
-          <AccountDashboard
-            account={account}
-            onNavigateToSlide01={() => setShowSplash(true)}
-            onOpenQr={(url) => {
-              setBittyUrl(url);
-              setIsQrOpen(true);
-            }}
-          />
-        )}
+          {currentView === 'account' && (
+            <motion.div
+              key="view-account"
+              initial={{ opacity: 0, y: 12, scale: 0.995 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -12, scale: 0.995 }}
+              transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <AccountDashboard
+                account={account}
+                onNavigateToSlide01={() => setShowSplash(true)}
+                onOpenQr={(url) => {
+                  setBittyUrl(url);
+                  setIsQrOpen(true);
+                }}
+                lastSavedAt={lastSavedTimestamp}
+                isSaving={isSavingSession}
+                activeSessionTitle={metadata.title || 'My Box'}
+                onManualSave={handleManualSaveSession}
+              />
+            </motion.div>
+          )}
 
-        {currentView === 'viewer' && (
-          <BittyRenderer
-            hashFragment={hashFragment}
-            activeContent={hashFragment ? undefined : content}
-            metadata={metadata}
-            onEdit={handleEditFromViewer}
-            onHome={handleGoToHomePage}
-            onOpenQr={() => setIsQrOpen(true)}
-            onShare={handleShare}
-            onCloseSession={handleRequestCloseSession}
-          />
-        )}
+          {currentView === 'viewer' && (
+            <motion.div
+              key="view-viewer"
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <BittyRenderer
+                hashFragment={hashFragment}
+                activeContent={hashFragment ? undefined : content}
+                metadata={metadata}
+                onNextChainBox={metadata.chain?.nextUrl ? () => { window.location.href = metadata.chain!.nextUrl!; } : undefined}
+                onEdit={handleEditFromViewer}
+                onHome={handleGoToHomePage}
+                onOpenQr={() => setIsQrOpen(true)}
+                onShare={handleShare}
+                onCloseSession={handleRequestCloseSession}
+              />
+            </motion.div>
+          )}
 
-        {currentView === 'history' && (
-          <HistoryModal
-            history={history}
-            onSelect={item => {
-              window.location.href = item.url;
-              const { payload, metadata: parsedMeta } = parseBittyHash(item.url);
-              if (payload) setHashFragment(payload);
-              if (parsedMeta.title) {
-                setMetadata(prev => ({ ...prev, ...parsedMeta }));
-              }
-              setCurrentView('viewer');
-            }}
-            onDelete={deleteHistoryItem}
-            onClearAll={clearAllHistory}
-            onClose={() => setCurrentView('editor')}
-          />
-        )}
+          {currentView === 'history' && (
+            <motion.div
+              key="view-history"
+              initial={{ opacity: 0, y: 14, scale: 0.99 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -14, scale: 0.99 }}
+              transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <HistoryModal
+                history={history}
+                onSelect={item => {
+                  window.location.href = item.url;
+                  const { payload, metadata: parsedMeta } = parseBittyHash(item.url);
+                  if (payload) setHashFragment(payload);
+                  if (parsedMeta.title) {
+                    setMetadata(prev => ({ ...prev, ...parsedMeta }));
+                  }
+                  setCurrentView('viewer');
+                }}
+                onDelete={deleteHistoryItem}
+                onClearAll={clearAllHistory}
+                onClose={() => setCurrentView('editor')}
+              />
+            </motion.div>
+          )}
 
-        {currentView === 'about' && (
-          <AboutModal
-            onOpenEditor={() => setCurrentView('editor')}
-            onStartTour={handleStartTour}
-            onReplaySplash={() => setShowSplash(true)}
-          />
-        )}
+          {currentView === 'about' && (
+            <motion.div
+              key="view-about"
+              initial={{ opacity: 0, y: 14, scale: 0.99 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -14, scale: 0.99 }}
+              transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <AboutModal
+                onOpenEditor={() => setCurrentView('editor')}
+                onStartTour={handleStartTour}
+                onReplaySplash={() => setShowSplash(true)}
+              />
+            </motion.div>
+          )}
+
+          {currentView === 'agents' && (
+            <motion.div
+              key="view-agents"
+              initial={{ opacity: 0, y: 14, scale: 0.99 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -14, scale: 0.99 }}
+              transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <AgentsPage
+                onOpenEditor={() => setCurrentView('editor')}
+                onOpenAccount={() => setCurrentView('account')}
+                onOpenQr={(url) => {
+                  setBittyUrl(url);
+                  setIsQrOpen(true);
+                }}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </main>
 
       {/* Live Preview Dropdown Panel (Sliding down from Top) */}
@@ -1127,6 +1369,16 @@ export default function App() {
         sessionType={currentView === 'viewer' ? 'viewer' : 'editor'}
       />
 
+      <ChainNextModal
+        isOpen={isChainModalOpen}
+        onClose={() => setIsChainModalOpen(false)}
+        onCloneCurrent={() => handleCreateNextChainPage('clone')}
+        onStartBlank={() => handleCreateNextChainPage('scratch')}
+        currentTitle={metadata.title}
+        currentIndex={chainCurrentIndex}
+        maxPages={BITTY_CHAIN_MAX_PAGES}
+      />
+
       {/* BittyBox PRO Paywall & License Modal */}
       <ProPaywallModal
         isOpen={proStatus.isPaywallOpen}
@@ -1135,6 +1387,13 @@ export default function App() {
         paywallFeature={proStatus.paywallFeature}
         onUnlockLifetime={proStatus.unlockLifetimePro}
         onSwitchToPro={() => proStatus.setMode('pro')}
+      />
+
+      {/* Legal Modal (Terms of Service & Privacy Policy) */}
+      <LegalModal
+        isOpen={isLegalModalOpen}
+        initialTab={legalModalTab}
+        onClose={() => setIsLegalModalOpen(false)}
       />
     </div>
   );

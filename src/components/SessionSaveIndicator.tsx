@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { HardDrive, Check, RefreshCw, Database, Clock, Sparkles } from 'lucide-react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { HardDrive, Check, RefreshCw, Database, Sparkles } from 'lucide-react';
 
 export interface SessionSaveIndicatorProps {
   lastSavedAt?: number | null;
@@ -34,7 +34,9 @@ export const SessionSaveIndicator: React.FC<SessionSaveIndicatorProps> = ({
 }) => {
   const [timeText, setTimeText] = useState<string>(() => formatRelativeTime(lastSavedAt));
   const [isHovered, setIsHovered] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const [flashSaved, setFlashSaved] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Update relative time string every 3 seconds
   useEffect(() => {
@@ -53,6 +55,29 @@ export const SessionSaveIndicator: React.FC<SessionSaveIndicatorProps> = ({
       return () => clearTimeout(timer);
     }
   }, [lastSavedAt]);
+
+  // Close on outside click or Escape key
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent | TouchEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleOutsideClick);
+    document.addEventListener('touchstart', handleOutsideClick);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('touchstart', handleOutsideClick);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
 
   const formattedExactTime = useMemo(() => {
     if (!lastSavedAt) return 'Session stored in browser';
@@ -75,11 +100,15 @@ export const SessionSaveIndicator: React.FC<SessionSaveIndicatorProps> = ({
       setFlashSaved(true);
       setTimeout(() => setFlashSaved(false), 1500);
     }
+    setIsOpen(prev => !prev);
   };
+
+  const showDetails = isHovered || isOpen;
 
   return (
     <div
-      className={`relative inline-flex items-center ${className}`}
+      ref={containerRef}
+      className={`relative inline-flex items-center ${showDetails ? 'z-[100]' : 'z-20'} ${className}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -87,8 +116,8 @@ export const SessionSaveIndicator: React.FC<SessionSaveIndicatorProps> = ({
         type="button"
         id="session-save-status-btn"
         onClick={handleClick}
-        title="Session automatically saved to browser storage. Click to force save now."
-        className="group flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 py-1 rounded-lg bg-[#06182a]/90 hover:bg-[#09223c] border border-emerald-500/30 hover:border-emerald-400/60 text-emerald-300 hover:text-emerald-100 transition-all duration-200 shadow-[0_0_12px_rgba(16,185,129,0.15)] cursor-pointer active:scale-95"
+        title="Session automatically saved to browser storage. Click to force save or toggle details."
+        className="group flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 py-1 rounded-lg bg-[#06182a]/90 hover:bg-[#09223c] border border-emerald-500/30 hover:border-emerald-400/60 text-emerald-300 hover:text-emerald-100 transition-all duration-200 shadow-[0_0_12px_rgba(16,185,129,0.15)] cursor-pointer active:scale-95 relative z-10"
       >
         {/* Pulsing Status Dot or Spinner */}
         {isSaving ? (
@@ -117,9 +146,9 @@ export const SessionSaveIndicator: React.FC<SessionSaveIndicatorProps> = ({
         </span>
       </button>
 
-      {/* Futuristic Hover Tooltip Card */}
-      {isHovered && (
-        <div className="absolute top-full right-0 sm:left-1/2 sm:-translate-x-1/2 mt-2 w-64 p-3 rounded-xl bg-[#070b1a]/95 backdrop-blur-xl border border-emerald-500/40 shadow-[0_10px_35px_rgba(0,0,0,0.8),0_0_20px_rgba(16,185,129,0.25)] text-left font-mono z-50 animate-in fade-in-0 zoom-in-95 duration-150 pointer-events-none">
+      {/* Futuristic Hover / Click Details Window Card */}
+      {showDetails && (
+        <div className="absolute top-full right-0 sm:left-1/2 sm:-translate-x-1/2 mt-2 w-64 p-3 rounded-xl bg-[#070b1a]/98 backdrop-blur-xl border border-emerald-500/50 shadow-[0_20px_50px_rgba(0,0,0,0.95),0_0_30px_rgba(16,185,129,0.3)] text-left font-mono z-[100] animate-in fade-in-0 zoom-in-95 duration-150 pointer-events-auto">
           <div className="flex items-center justify-between border-b border-emerald-500/20 pb-1.5 mb-2">
             <div className="flex items-center gap-1.5 text-emerald-300 text-[11px] font-bold tracking-wider">
               <Database className="w-3.5 h-3.5 text-emerald-400" />
