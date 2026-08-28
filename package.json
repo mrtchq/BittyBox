@@ -1,15 +1,23 @@
 {
-  "name": "bitty-box",
+  "name": "bittybox-org",
   "version": "1.0.0",
-  "description": "Bitty box takes html (or other data), compresses it into a URL fragment, and provides a link that can be shared.",
+  "private": true,
+  "type": "module",
+  "main": "dist/server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js",
-    "lint": "node -c server.js",
-    "build": "echo 'Build complete'"
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server.js",
+    "dev": "tsx watch src/server.ts"
   },
   "dependencies": {
-    "brotli-wasm": "^1.1.0",
-    "sharp": "^0.31.3"
+    "express": "^4.19.2",
+    "zod": "^3.23.8",
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4",
+    "tsx": "^4.16.2",
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.14.10"
   }
 }

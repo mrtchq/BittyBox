@@ -1,6 +1,0 @@
-{
-  "name": "Bitty Box",
-  "description": "Bitty box compresses HTML or other data into a URL fragment and provides a link that can be rendered directly in the browser.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
