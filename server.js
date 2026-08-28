@@ -34,7 +34,8 @@ import { triggerN8nWebhook } from './lib/n8n-client.js';
 import { authMiddleware } from './lib/auth-middleware.js';
 import firebaseAdmin from './lib/firebase-admin.cjs';
 const { verifyFirebaseIdToken } = firebaseAdmin;
-import { createBox, getBox, listBoxes, updateLockConfig, incrementOpensUsed, publishBox, unpublishBox, deleteBox, setPasswordLock, setTimeWindowLock, setAccessLimitLock, setSessionLimitLock, setInviteOnlyLock, createTimeWindow, createOpenLimit, createSessionOpenLimit, createInviteOnly, evaluateAndRecord, touchSessionOpens, getSessionOpenCount } from './lib/box-store.js';
+import { createBox, getBox, listBoxes, updateLockConfig, incrementOpensUsed, publishBox, unpublishBox, deleteBox, setPasswordLock, setTimeWindowLock, setAccessLimitLock, setSessionLimitLock, setInviteOnlyLock, createTimeWindow, createOpenLimit, createSessionOpenLimit, createInviteOnly, evaluateAndRecord, touchSessionOpens, getSessionOpenCount, createChainedBoxes } from './lib/box-store.js';
+import { attachChainMeta } from './lib/chain.js';
 import { evaluatePolicy, createSessionGrant, verifySessionGrant, verifyPassword, createPasswordVerifier } from './lib/policy-evaluator.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -768,6 +769,50 @@ app.post('/api/boxes', async (req, res) => {
     // best-effort account attribution
     try { recordUnlockEvent; } catch (_) {}
     res.status(201).json({ success: true, boxId: box.id, box: publicBoxView(box) });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Create a linear chain of boxes (tail-first). Accepts either pre-built bitty
+// URLs (bittyUrl/bittyRelativeUrl) or raw content to render via createBittyLink.
+app.post('/api/boxes/chain', async (req, res) => {
+  try {
+    const user = req.user || getDefaultUser();
+    const specs = req.body?.boxes;
+    if (!Array.isArray(specs) || specs.length === 0) {
+      return res.status(400).json({ success: false, error: 'Provide a non-empty "boxes" array.' });
+    }
+    const createdBy = { type: 'api', userId: user.id || null, keyId: req.keyMeta?.id || null };
+    // Each spec may carry raw content OR a prebuilt bitty URL.
+    const renderBoxUrl = (spec) => {
+      if (spec.bittyUrl || spec.bittyRelativeUrl) return spec.bittyUrl || spec.bittyRelativeUrl;
+      const link = createBittyLink({
+        content: spec.content,
+        title: spec.title || 'Chain Box',
+        format: spec.format || 'auto',
+        language: spec.language,
+        theme: spec.theme || 'auto',
+        password: spec.password,
+        domain: req.body?.domain,
+      });
+      return link.url;
+    };
+    const chain = createChainedBoxes({ boxes: specs.map(s => ({ ...s, createdBy })), renderBoxUrl, createdBy });
+    // Denormalize per-box public view for the response.
+    const publicBoxes = chain.boxes.map(b => ({
+      index: b.index,
+      boxId: b.boxId,
+      url: b.url,
+      nextUrl: b.nextUrl,
+    }));
+    res.status(201).json({
+      success: true,
+      chainId: chain.chainId,
+      total: chain.total,
+      firstUrl: publicBoxes[0]?.url || null,
+      boxes: publicBoxes,
+    });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
