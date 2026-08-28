@@ -168,10 +168,7 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
   }, []);
 
-  const [showSplash, setShowSplash] = useState<boolean>(() => {
-    if (initialUrl.isViewer || initialUrl.isAuth || initialUrl.isAccount) return false;
-    return true;
-  });
+  const [showSplash, setShowSplash] = useState<boolean>(false);
   const [isVerifyingMagic, setIsVerifyingMagic] = useState<boolean>(() => Boolean(initialUrl.isAuth));
 
   // Apply workspace theme to document root & sync with localStorage
@@ -1071,10 +1068,6 @@ export default function App() {
     );
   }
 
-  if (showSplash) {
-    return <AnimatedSplash onComplete={() => setShowSplash(false)} />;
-  }
-
   // If in viewer mode (generated site / capsule URL), render only the pure preview iframe with zero Bittybox UI
   if (currentView === 'viewer') {
     return (
@@ -1395,6 +1388,13 @@ export default function App() {
         initialTab={legalModalTab}
         onClose={() => setIsLegalModalOpen(false)}
       />
+
+      {/* Intro / Demo Splash — demand-only overlay (opens via About "SEE DEMO" / REPLAY INTRO) */}
+      <AnimatePresence>
+        {showSplash && (
+          <AnimatedSplash onComplete={() => setShowSplash(false)} />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

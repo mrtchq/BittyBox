@@ -168,7 +168,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({ onOpenEditor, onStartTou
               className="flex items-center gap-2 px-5 py-3 rounded-xl bg-fuchsia-950/70 border border-fuchsia-400/50 text-fuchsia-200 hover:text-white hover:bg-fuchsia-900/80 font-cyber text-xs tracking-wider transition shadow-sm cursor-pointer"
             >
               <Zap className="w-4 h-4 text-fuchsia-300 animate-pulse" />
-              <span>REPLAY INTRO BOOT</span>
+              <span>SEE DEMO</span>
             </motion.button>
           )}
 

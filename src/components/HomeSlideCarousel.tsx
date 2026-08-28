@@ -186,8 +186,6 @@ export const HomeSlideCarousel: React.FC<HomeSlideCarouselProps> = ({
   const [isLegalModalOpen, setIsLegalModalOpen] = useState<boolean>(false);
   const [legalModalTab, setLegalModalTab] = useState<LegalTab>('terms');
 
-  const [slide1ViewMode, setSlide1ViewMode] = useState<'text' | 'split'>('text');
-
   const [timeLockEnabled, setTimeLockEnabled] = useState<boolean>(false);
   const [timeLockMode, setTimeLockMode] = useState<TimeLockMode>('expiry');
   const [timeExpiryHours, setTimeExpiryHours] = useState<number>(24);
@@ -806,7 +804,6 @@ export const HomeSlideCarousel: React.FC<HomeSlideCarouselProps> = ({
     handleContentUpdate(DEFAULT_STARTER_CODE);
     handleTitleUpdate('My Box');
     handleDescriptionUpdate('');
-    setSlide1ViewMode('text');
     setPasswordEnabled(false);
     setPasswordValue('');
     setShowPassword(false);
@@ -1307,132 +1304,122 @@ export const HomeSlideCarousel: React.FC<HomeSlideCarouselProps> = ({
                 }`}
               />
 
-              {/* Two-Column Responsive Grid Layout on Desktop */}
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6 items-stretch w-full">
-                {/* ─────────────────────────────────────────────────────────────
-                    LEFT COLUMN (md:col-span-6): Interactive Tool Panel
-                    ───────────────────────────────────────────────────────────── */}
+              {/* Slide 1: Full-Width Prominent Text Input Box / Slides 2-5: Two-Column Responsive Grid */}
+              {currentSlide === 0 ? (
+                /* =========================================================
+                   SLIDE 1 (Index 0): FULL-WIDTH PROMINENT TEXT INPUT COMPOSER
+                   ========================================================= */
                 <div
-                  className="md:col-span-6 flex flex-col justify-center min-h-0"
+                  className="w-full flex flex-col justify-between font-mono space-y-3 sm:space-y-4"
                   onPointerDown={e => e.stopPropagation()}
                   onClick={e => e.stopPropagation()}
                 >
-                  {/* =========================================================
-                      SLIDE 1 (Index 0): TEXT INPUT / COMPOSER FIELD (TEXT / SPLIT)
-                      ========================================================= */}
-                  {currentSlide === 0 && (
-                    <div className="w-full bg-[#050314]/90 border border-cyan-500/40 rounded-xl p-3 sm:p-3.5 shadow-[0_0_25px_rgba(0,242,255,0.15)] font-mono flex flex-col justify-between h-full min-h-[220px] md:min-h-[260px]">
-                      {/* Top Bar: Mode Tabs (TEXT / SPLIT) and Bytes Counter */}
-                      <div className="flex items-center justify-between border-b border-cyan-500/20 pb-2 mb-2 gap-2">
-                        <div className="flex items-center gap-1 bg-black/60 border border-cyan-500/30 rounded-lg p-0.5 text-[10px] font-mono">
-                          <button
-                            type="button"
-                            onClick={() => setSlide1ViewMode('text')}
-                            className={`px-2.5 py-1 rounded transition-all font-bold cursor-pointer ${
-                              slide1ViewMode === 'text'
-                                ? 'bg-cyan-950 text-cyan-200 border border-cyan-400/60 shadow-[0_0_8px_rgba(0,242,255,0.3)]'
-                                : 'text-cyan-400/60 hover:text-cyan-200'
-                            }`}
-                            title="Code / Text Editor only"
-                          >
-                            TEXT
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setSlide1ViewMode('split')}
-                            className={`px-2.5 py-1 rounded transition-all font-bold cursor-pointer ${
-                              slide1ViewMode === 'split'
-                                ? 'bg-cyan-950 text-cyan-200 border border-cyan-400/60 shadow-[0_0_8px_rgba(0,242,255,0.3)]'
-                                : 'text-cyan-400/60 hover:text-cyan-200'
-                            }`}
-                            title="Split View: Editor and Rendered Preview side-by-side"
-                          >
-                            SPLIT
-                          </button>
-                        </div>
-
-                        <span className="text-[10px] text-cyan-300 bg-cyan-950/80 border border-cyan-500/40 px-2 py-0.5 rounded font-bold shrink-0">
-                          {boxContent.length} BYTES
-                        </span>
+                  {/* Top Bar: Step Badge, Byte Counter & Metadata Inputs */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 border-b border-cyan-500/20">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-950/90 border border-cyan-400/50 text-cyan-300 font-mono text-xs tracking-wider shadow-[0_0_12px_rgba(0,242,255,0.25)]">
+                        <Radio className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+                        <CyberScrambleText text={activeSlideData.tag || 'STEP 01 // ADD YOUR CONTENT'} speed={20} />
                       </div>
+                      <span className="text-xs text-cyan-300 bg-cyan-950/80 border border-cyan-500/40 px-2.5 py-1 rounded-lg font-bold shadow-inner">
+                        {boxContent.length} BYTES
+                      </span>
+                    </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
-                        <label className="flex flex-col gap-1 text-[10px] font-bold uppercase tracking-[0.18em] text-cyan-300/80">
-                          Page title
-                          <input
-                            type="text"
-                            value={boxTitle}
-                            onChange={e => handleTitleUpdate(e.target.value)}
-                            onFocus={() => setIsAutoPlay(false)}
-                            onPointerDown={e => e.stopPropagation()}
-                            aria-label="Page title for your Bitty Box"
-                            placeholder="My Box"
-                            maxLength={80}
-                            className="w-full rounded-lg border border-cyan-400/30 bg-[#02010a] px-2.5 py-2 text-xs normal-case tracking-normal text-cyan-100 placeholder:text-cyan-400/40 outline-none transition focus:border-cyan-300 focus:ring-1 focus:ring-cyan-500/30 font-mono"
-                          />
-                        </label>
-                        <label className="flex flex-col gap-1 text-[10px] font-bold uppercase tracking-[0.18em] text-cyan-300/80">
-                          Page description
-                          <input
-                            type="text"
-                            value={boxDescription}
-                            onChange={e => handleDescriptionUpdate(e.target.value)}
-                            onFocus={() => setIsAutoPlay(false)}
-                            onPointerDown={e => e.stopPropagation()}
-                            aria-label="Page description for your Bitty Box"
-                            placeholder="Optional: describe what this Box contains. You can leave this blank and press Next."
-                            maxLength={180}
-                            className="w-full rounded-lg border border-cyan-400/30 bg-[#02010a] px-2.5 py-2 text-xs normal-case tracking-normal text-cyan-100 placeholder:text-cyan-400/40 outline-none transition focus:border-cyan-300 focus:ring-1 focus:ring-cyan-500/30 font-mono"
-                          />
-                        </label>
-                      </div>
-
-                      {/* Editor Textarea */}
-                      <textarea
-                        value={boxContent}
-                        onChange={e => handleContentUpdate(e.target.value)}
+                    <div className="flex items-center gap-2 w-full sm:w-auto flex-1 sm:max-w-md sm:justify-end">
+                      <input
+                        type="text"
+                        value={boxTitle}
+                        onChange={e => handleTitleUpdate(e.target.value)}
                         onFocus={() => setIsAutoPlay(false)}
                         onPointerDown={e => e.stopPropagation()}
-                        aria-label="Content for your Bitty Box"
-                        placeholder="Write text or paste HTML, CSS, or JavaScript code here. Press Next when you're ready to continue."
-                        className="w-full flex-1 min-h-[110px] sm:min-h-[130px] md:min-h-[140px] resize-none rounded-lg border border-cyan-400/30 bg-[#02010a] p-2.5 text-xs leading-5 text-cyan-100 placeholder:text-cyan-400/40 outline-none transition focus:border-cyan-300 focus:ring-1 focus:ring-cyan-500/30 font-mono"
+                        aria-label="Page title for your Bitty Box"
+                        placeholder="Page Title (e.g. My Box)"
+                        maxLength={80}
+                        className="w-1/2 sm:w-44 rounded-lg border border-cyan-400/30 bg-[#02010a] px-2.5 py-1.5 text-xs text-cyan-100 placeholder:text-cyan-400/40 outline-none transition focus:border-cyan-300 focus:ring-1 focus:ring-cyan-500/30 font-mono"
                       />
-
-                      <div className="flex flex-wrap items-center justify-between gap-1.5 mt-2 pt-2 border-t border-cyan-500/20 text-xs">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-cyan-400/60 text-[10px]">PRESET:</span>
-                          <button
-                            type="button"
-                            onClick={() => handleContentUpdate(DEFAULT_STARTER_CODE)}
-                            className="px-2 py-0.5 rounded bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 text-[10px] hover:bg-cyan-900 transition-colors"
-                          >
-                            Starter Box
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleContentUpdate('<h1>Secret Note</h1>\n<p>Only visible to those with the link.</p>')}
-                            className="px-2 py-0.5 rounded bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 text-[10px] hover:bg-cyan-900 transition-colors"
-                          >
-                            Note
-                          </button>
-                        </div>
-                        {boxContent && (
-                          <button
-                            type="button"
-                            onClick={() => handleContentUpdate('')}
-                            className="text-[10px] text-cyan-400/60 hover:text-rose-400 transition-colors"
-                          >
-                            Clear
-                          </button>
-                        )}
-                      </div>
+                      <input
+                        type="text"
+                        value={boxDescription}
+                        onChange={e => handleDescriptionUpdate(e.target.value)}
+                        onFocus={() => setIsAutoPlay(false)}
+                        onPointerDown={e => e.stopPropagation()}
+                        aria-label="Page description for your Bitty Box"
+                        placeholder="Optional Description"
+                        maxLength={180}
+                        className="w-1/2 sm:w-56 rounded-lg border border-cyan-400/30 bg-[#02010a] px-2.5 py-1.5 text-xs text-cyan-100 placeholder:text-cyan-400/40 outline-none transition focus:border-cyan-300 focus:ring-1 focus:ring-cyan-500/30 font-mono"
+                      />
                     </div>
-                  )}
+                  </div>
 
-                  {/* =========================================================
-                      SLIDE 2 (Index 1): NUMERICAL PASSCODE LOCK (OPTIONAL)
-                      ========================================================= */}
-                  {currentSlide === 1 && (
+                  {/* Massive, Prominent Full-Box Textarea */}
+                  <div className="w-full flex-1 relative flex flex-col min-h-[280px] sm:min-h-[340px] md:min-h-[400px]">
+                    <textarea
+                      value={boxContent}
+                      onChange={e => handleContentUpdate(e.target.value)}
+                      onFocus={() => setIsAutoPlay(false)}
+                      onPointerDown={e => e.stopPropagation()}
+                      aria-label="Content for your Bitty Box"
+                      placeholder="Type or paste what you want to share here... (HTML, JavaScript, CSS, Markdown, JSON, SVG, or plain text notes)"
+                      className="w-full flex-1 min-h-[280px] sm:min-h-[340px] md:min-h-[400px] resize-y rounded-xl border border-cyan-400/40 bg-[#02010a]/90 p-4 text-xs sm:text-sm md:text-base leading-relaxed text-cyan-100 placeholder:text-cyan-400/40 outline-none transition-all duration-200 focus:border-cyan-300 focus:ring-2 focus:ring-cyan-500/30 focus:shadow-[0_0_30px_rgba(0,242,255,0.25)] font-mono"
+                    />
+                  </div>
+
+                  {/* Bottom Bar: Presets & Navigation */}
+                  <div className="pt-2.5 border-t border-cyan-500/20 flex flex-wrap items-center justify-between gap-2.5">
+                    <div className="flex items-center gap-1.5 text-xs flex-wrap">
+                      <span className="text-cyan-400/60 text-[10px] sm:text-xs font-bold">PRESETS:</span>
+                      <button
+                        type="button"
+                        onClick={() => handleContentUpdate(DEFAULT_STARTER_CODE)}
+                        className="px-2.5 py-1 rounded-lg bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 text-xs hover:bg-cyan-900 hover:border-cyan-300 transition-all cursor-pointer"
+                      >
+                        Starter Box
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleContentUpdate('<h1>Secret Note</h1>\n<p>Only visible to those with the link.</p>')}
+                        className="px-2.5 py-1 rounded-lg bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 text-xs hover:bg-cyan-900 hover:border-cyan-300 transition-all cursor-pointer"
+                      >
+                        Note
+                      </button>
+                      {boxContent && (
+                        <button
+                          type="button"
+                          onClick={() => handleContentUpdate('')}
+                          className="px-2.5 py-1 text-xs text-cyan-400/60 hover:text-rose-400 transition-colors cursor-pointer ml-1"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2 ml-auto">
+                      <button
+                        onClick={nextSlide}
+                        className="py-2.5 px-6 rounded-xl bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-black font-mono font-bold text-xs sm:text-sm tracking-wider flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(0,242,255,0.4)] transition-all hover:scale-[1.02] active:scale-95 group cursor-pointer"
+                      >
+                        <span>{activeSlideData.cta || 'NEXT: PASSCODE LOCK →'}</span>
+                        <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform text-black" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* Two-Column Responsive Grid Layout on Desktop for Slides 2-5 */
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6 items-stretch w-full">
+                  {/* ─────────────────────────────────────────────────────────────
+                      LEFT COLUMN (md:col-span-6): Interactive Tool Panel
+                      ───────────────────────────────────────────────────────────── */}
+                  <div
+                    className="md:col-span-6 flex flex-col justify-center min-h-0"
+                    onPointerDown={e => e.stopPropagation()}
+                    onClick={e => e.stopPropagation()}
+                  >
+                    {/* =========================================================
+                        SLIDE 2 (Index 1): NUMERICAL PASSCODE LOCK (OPTIONAL)
+                        ========================================================= */}
+                    {currentSlide === 1 && (
                     <div className="w-full bg-[#050314]/90 border border-fuchsia-500/40 rounded-xl p-3 sm:p-4 shadow-[0_0_25px_rgba(189,0,255,0.18)] font-mono flex flex-col justify-between h-full min-h-[220px] md:min-h-[260px]">
                       <div className="flex items-center justify-between border-b border-fuchsia-500/20 pb-2.5 mb-2.5">
                         <div className="flex items-center gap-2 text-fuchsia-300 text-xs font-bold">
@@ -1938,32 +1925,8 @@ export const HomeSlideCarousel: React.FC<HomeSlideCarouselProps> = ({
                     RIGHT COLUMN (md:col-span-6): Slide Info & Actions
                     ───────────────────────────────────────────────────────────── */}
                 <div className="md:col-span-6 flex flex-col justify-between space-y-3 sm:space-y-4">
-                  {/* Slide 01 SPLIT Mode: Live Preview Window completely takes over right side */}
-                  {currentSlide === 0 && slide1ViewMode === 'split' ? (
-                    <div className="flex-1 w-full bg-[#050314]/90 border border-cyan-500/40 rounded-xl overflow-hidden shadow-[0_0_25px_rgba(0,242,255,0.2)] flex flex-col min-h-[220px] md:min-h-[260px] font-mono">
-                      <div className="flex items-center justify-between px-3 py-1.5 bg-[#09051f] border-b border-cyan-500/25 text-[10px] text-cyan-300">
-                        <div className="flex items-center gap-1.5 font-bold">
-                          <Eye className="w-3.5 h-3.5 text-cyan-400" />
-                          <CyberScrambleText text="PREVIEW" speed={20} />
-                        </div>
-                        <div className="flex items-center gap-1.5 text-[9px] text-emerald-400 font-bold">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                          <span>LIVE RENDERED OUTPUT</span>
-                        </div>
-                      </div>
-                      <div className="flex-1 w-full relative min-h-[160px] sm:min-h-[190px] bg-white">
-                        <iframe
-                          srcDoc={slidePreviewHtml}
-                          title="Slide 01 Live Rendered Output Preview"
-                          className="w-full h-full border-0 absolute inset-0 bg-white"
-                          sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-modals allow-downloads"
-                        />
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      {/* Slide Top Metadata Tag */}
-                      <div className="flex items-center justify-between gap-2 min-h-[32px]">
+                  {/* Slide Top Metadata Tag */}
+                  <div className="flex items-center justify-between gap-2 min-h-[32px]">
                         <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-400/40 text-cyan-300 font-mono text-[10px] sm:text-[11px] tracking-wider shadow-[0_0_12px_rgba(0,242,255,0.2)]">
                           <Radio className="w-3 h-3 text-emerald-400 animate-pulse" />
                           <CyberScrambleText text={activeSlideData.tag} speed={20} />
@@ -2405,8 +2368,6 @@ export const HomeSlideCarousel: React.FC<HomeSlideCarouselProps> = ({
                           )}
                         </div>
                       )}
-                    </>
-                  )}
 
                   {/* Action Buttons Bar */}
                   <div
@@ -2465,6 +2426,7 @@ export const HomeSlideCarousel: React.FC<HomeSlideCarouselProps> = ({
                   </div>
                 </div>
               </div>
+            )}
             </motion.div>
           </AnimatePresence>
         </div>
