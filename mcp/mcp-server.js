@@ -5,8 +5,10 @@ import {
   createBox, getBox, listBoxes, deleteBox,
   setPasswordLock, setTimeWindowLock, setAccessLimitLock, setSessionLimitLock, setInviteOnlyLock,
   createInviteOnly, createTimeWindow, createOpenLimit, createSessionOpenLimit,
-  evaluateAndRecord, getSessionOpenCount, touchSessionOpens, publishBox
+  evaluateAndRecord, getSessionOpenCount, touchSessionOpens, publishBox,
+  createChainedBoxes
 } from '../lib/box-store.js';
+import { attachChainMeta } from '../lib/chain.js';
 import { createPasswordVerifier, createSessionGrant } from '../lib/policy-evaluator.js';
 
 export function buildMcpServer() {
@@ -588,6 +590,69 @@ export function buildMcpServer() {
         return { content: [{ type: 'text', text: JSON.stringify({ success: true, boxId: args.boxId }, null, 2) }] };
       } catch (err) {
         return { isError: true, content: [{ type: 'text', text: `Error: ${err.message}` }] };
+      }
+    }
+  );
+
+  // Tool 16: Create a chained sequence of boxes (tail-first)
+  server.tool(
+    'create_chained_box',
+    'Create a linear chain of Bitty Boxes that an AI agent can walk like a human does. Boxes are generated TAIL-FIRST so each box links to the next; opening the first box walks forward to the last. Each entry may be raw content (rendered to a Bitty Link) or an existing bittyUrl/bittyRelativeUrl. Returns the chainId, the first box URL to open, and the per-box list with nextUrl pointers.',
+    {
+      boxes: z.array(z.object({
+        title: z.string().optional().describe('Box title'),
+        content: z.string().optional().describe('Raw content to render into a Bitty Link (markdown/code/html/json/text/svg/canvas)'),
+        format: z.enum(['auto', 'markdown', 'code', 'html', 'text', 'json', 'svg', 'canvas', 'recipe', 'raw']).optional().default('auto').describe('Render format when using content'),
+        language: z.string().optional().describe('Language if format is code'),
+        theme: z.enum(['auto', 'dark', 'light']).optional().default('auto').describe('Theme when using content'),
+        bittyUrl: z.string().optional().describe('Existing full Bitty Link URL to wrap instead of content'),
+        bittyRelativeUrl: z.string().optional().describe('Existing relative Bitty Link path instead of content'),
+        password: z.string().optional().describe('Optional AES-256-GCM password for the content payload'),
+        lockPassword: z.string().optional().describe('Optional box password lock (server stores only a verifier)'),
+        notBefore: z.string().optional().describe('ISO timestamp; box unavailable before (time lock)'),
+        notAfter: z.string().optional().describe('ISO timestamp; box unavailable after (time lock)'),
+        maxOpens: z.number().optional().describe('Max total opens (access limit)'),
+        maxSessionOpens: z.number().optional().describe('Max opens per session'),
+        invitedEmails: z.array(z.string()).optional().describe('Allowed emails if invite-only')
+      })).min(1).describe('Ordered list of boxes; box[0] is the first the viewer opens'),
+      domain: z.string().optional().describe('Base domain for generated links (default: server origin)')
+    },
+    async (args) => {
+      try {
+        const createdBy = { type: 'mcp', userId: null, keyId: null };
+        const renderBoxUrl = (spec) => {
+          if (spec.bittyUrl || spec.bittyRelativeUrl) return spec.bittyUrl || spec.bittyRelativeUrl;
+          const link = createBittyLink({
+            content: spec.content,
+            title: spec.title || 'Chain Box',
+            format: spec.format || 'auto',
+            language: spec.language,
+            theme: spec.theme || 'auto',
+            password: spec.password,
+            domain: args.domain || DEFAULT_DOMAIN
+          });
+          return link.url;
+        };
+        const specs = await Promise.all((args.boxes || []).map(async (s) => {
+          const lockConfig = { password: null, timeWindow: null, openLimit: null, sessionOpenLimit: null, inviteOnly: null };
+          if (s.lockPassword) lockConfig.password = { enabled: true, verifier: await createPasswordVerifier(s.lockPassword), hint: '' };
+          if (s.notBefore || s.notAfter) lockConfig.timeWindow = createTimeWindow({ notBefore: s.notBefore, notAfter: s.notAfter });
+          if (typeof s.maxOpens === 'number') lockConfig.openLimit = createOpenLimit({ maxOpens: s.maxOpens });
+          if (typeof s.maxSessionOpens === 'number') lockConfig.sessionOpenLimit = createSessionOpenLimit({ maxSessionOpens: s.maxSessionOpens });
+          if (Array.isArray(s.invitedEmails)) lockConfig.inviteOnly = createInviteOnly(s.invitedEmails);
+          return { ...s, lockConfig, createdBy };
+        }));
+        const chain = createChainedBoxes({ boxes: specs, renderBoxUrl, createdBy });
+        const out = {
+          success: true,
+          chainId: chain.chainId,
+          total: chain.total,
+          firstUrl: chain.boxes[0]?.url || null,
+          boxes: chain.boxes.map(b => ({ index: b.index, boxId: b.boxId, url: b.url, nextUrl: b.nextUrl }))
+        };
+        return { content: [{ type: 'text', text: JSON.stringify(out, null, 2) }] };
+      } catch (err) {
+        return { isError: true, content: [{ type: 'text', text: `Error creating chain: ${err.message}` }] };
       }
     }
   );
