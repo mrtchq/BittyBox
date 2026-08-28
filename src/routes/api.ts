@@ -1,12 +1,12 @@
 import { Router } from 'express';
 import { z } from 'zod';
 
-// Greenfield box store: minimal, file-backed, isolated from prod user data.
-// NOTE: prod data lives untouched at /var/lib/bittybox (preserved). New store
-// starts fresh here so the rebuild is a true clean slate for generated artifacts.
-const STORE_DIR = process.env.BITTYBOX_STORE_DIR ?? '/var/lib/bittybox-new';
-const STORE_FILE = `${STORE_DIR}/boxes.json`;
+import path from 'node:path';
 import fs from 'node:fs';
+
+// Greenfield box store: minimal, file-backed.
+const STORE_DIR = process.env.BITTYBOX_STORE_DIR ?? path.join(process.cwd(), '.data');
+const STORE_FILE = path.join(STORE_DIR, 'boxes.json');
 
 function readStore(): Record<string, any> {
   try {
@@ -23,7 +23,7 @@ function writeStore(s: Record<string, any>) {
 
 const boxSchema = z.object({
   content: z.string().min(1).max(1_000_000),
-  meta: z.record(z.any()).optional(),
+  meta: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const apiRouter = Router();

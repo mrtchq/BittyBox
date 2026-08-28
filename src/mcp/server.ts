@@ -10,7 +10,7 @@ import { apiRouter } from '../routes/api.js';
 import fs from 'node:fs';
 import path from 'node:path';
 
-const STORE_DIR = process.env.BITTYBOX_STORE_DIR ?? '/var/lib/bittybox-new';
+const STORE_DIR = process.env.BITTYBOX_STORE_DIR ?? path.join(process.cwd(), '.data');
 const STORE_FILE = path.join(STORE_DIR, 'boxes.json');
 function readStore(): Record<string, any> {
   try { return JSON.parse(fs.readFileSync(STORE_FILE, 'utf8')); } catch { return {}; }
@@ -24,23 +24,23 @@ function writeStore(s: Record<string, any>) {
 export function buildMcpServer(): McpServer {
   const mcp = new McpServer({ name: 'bittybox', version: '1.0.0' });
 
-  mcp.tool('create_box', 'Create a new portable BittyBox micro-site', {
+  (mcp as any).tool('create_box', 'Create a new portable BittyBox micro-site', {
     content: z.string().min(1).max(1_000_000),
-    meta: z.record(z.any()).optional(),
-  }, async ({ content, meta }) => {
+    meta: z.record(z.string(), z.any()).optional(),
+  }, async ({ content, meta }: { content: string; meta?: Record<string, any> }) => {
     const id = `box_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
     const rec = { id, content, meta: meta ?? {}, createdAt: Date.now() };
     const s = readStore(); s[id] = rec; writeStore(s);
     return { content: [{ type: 'text', text: JSON.stringify(rec) }] };
   });
 
-  mcp.tool('get_box', 'Fetch a stored box by id', { id: z.string() }, async ({ id }) => {
+  (mcp as any).tool('get_box', 'Fetch a stored box by id', { id: z.string() }, async ({ id }: { id: string }) => {
     const b = readStore()[id];
     if (!b) return { content: [{ type: 'text', text: JSON.stringify({ error: 'not_found' }) }] };
     return { content: [{ type: 'text', text: JSON.stringify(b) }] };
   });
 
-  mcp.tool('list_boxes', 'List stored boxes', {}, async () => {
+  (mcp as any).tool('list_boxes', 'List stored boxes', {}, async () => {
     return { content: [{ type: 'text', text: JSON.stringify(Object.values(readStore())) }] };
   });
 

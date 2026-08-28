@@ -1,7 +1,7 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 
-const base = process.env.BASE ?? 'http://127.0.0.1:3012';
+const base = process.env.BASE ?? 'http://127.0.0.1:3000';
 const transport = new SSEClientTransport(new URL(`${base}/mcp/sse`));
 const client = new Client({ name: 'smoke', version: '1.0.0' });
 await client.connect(transport);

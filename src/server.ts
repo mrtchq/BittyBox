@@ -6,7 +6,7 @@ import { registerMcp } from './mcp/server.js';
 import { serverStatus } from './meta/status.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const PORT = Number(process.env.PORT ?? 3012);
+const PORT = Number(process.env.PORT ?? 3000);
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 
 const app = express();
@@ -37,6 +37,6 @@ app.get(/^(?!\/(api|mcp|\.well-known)\/).*/, (_req, res) => {
 // --- Health ---
 app.get('/api/health', (_req, res) => res.json({ ok: true, ts: Date.now() }));
 
-app.listen(PORT, () => {
-  console.log(`[bittybox] unified server listening on :${PORT} (landing+/api+/mcp)`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`[bittybox] unified server listening on http://0.0.0.0:${PORT} (landing+/api+/mcp)`);
 });

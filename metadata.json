@@ -1,0 +1,6 @@
+{
+  "name": "bittybox",
+  "description": "bittybox is being rebuilt. High class, luxury, 100% private capsules for the micro-web — locked, timed, or burned.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
