@@ -6,6 +6,7 @@ import { BittyRenderer } from './components/BittyRenderer';
 import { HistoryModal } from './components/HistoryModal';
 import { AboutModal } from './components/AboutModal';
 import { AgentsPage } from './components/AgentsPage';
+import { OpenMoltConsole } from './components/OpenMoltConsole';
 import { QrModal } from './components/QrModal';
 import { LegalModal, LegalTab } from './components/LegalModal';
 import { BittyMetadata, BittyHistoryItem, AppView, TemplatePreset, WorkspaceTheme, BittySession, BittyChainDraft } from './types';
@@ -1276,6 +1277,7 @@ export default function App() {
                   setIsQrOpen(true);
                 }}
               />
+              <OpenMoltConsole />
             </motion.div>
           )}
         </AnimatePresence>
