@@ -1,4 +1,5 @@
 import express from 'express';
+import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { apiRouter } from './routes/api.js';
@@ -18,6 +19,21 @@ app.use('/api', express.json({ limit: '2mb' }));
 // sub-routes are not shadowed by the SPA fallback or the boxes router.
 app.use('/api/openmolt', openmoltRouter);
 app.use('/api', apiRouter);
+
+// --- Firebase Config Endpoint ---
+app.get('/firebase-config', (_req, res) => {
+  try {
+    const configPath = path.join(__dirname, '..', 'firebase-applet-config.json');
+    if (fs.existsSync(configPath)) {
+      const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+      res.json(config);
+    } else {
+      res.status(404).json({ error: 'Config not found' });
+    }
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to load Firebase config' });
+  }
+});
 
 // --- MCP surface (agent-native) ---
 // Streamable HTTP requests are JSON-RPC, so parse only this route's body.

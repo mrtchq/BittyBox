@@ -1,0 +1,49 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile authenticated with Google Firebase Auth",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The user's unique Firebase Auth UID",
+          "maxLength": 128
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "The user's Google account email address",
+          "maxLength": 256
+        },
+        "displayName": {
+          "type": "string",
+          "description": "The user's display name",
+          "maxLength": 128
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "URL to the user's avatar image",
+          "maxLength": 1024
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO timestamp when the user first signed in"
+        },
+        "lastLoginAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO timestamp of the most recent login"
+        }
+      },
+      "required": ["id", "email"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User account document stored under their unique UID"
+    }
+  }
+}
