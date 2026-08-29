@@ -2,6 +2,7 @@ import express from 'express';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { apiRouter } from './routes/api.js';
+import { openmoltRouter } from './routes/openmolt.js';
 import { registerMcp } from './mcp/server.js';
 import { serverStatus } from './meta/status.js';
 
@@ -13,6 +14,9 @@ const app = express();
 
 // --- API surface ---
 app.use('/api', express.json({ limit: '2mb' }));
+// OpenMolt bridge MUST be mounted before the generic /api router so its
+// sub-routes are not shadowed by the SPA fallback or the boxes router.
+app.use('/api/openmolt', openmoltRouter);
 app.use('/api', apiRouter);
 
 // --- MCP surface (agent-native) ---
