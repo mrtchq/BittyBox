@@ -74,8 +74,10 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    width: 17.5rem;
-    height: 17.5rem;
+    width: 25rem;
+    height: 25rem;
+    max-width: 85vw;
+    max-height: 85vw;
     overflow: hidden;
     background-size: 700% 700%;
     backdrop-filter: blur(1rem);
@@ -93,41 +95,6 @@
     outline: none;
     user-select: none;
     -webkit-user-select: none;
-  }
-
-  /* Status dot placed top-right inside the button */
-  .status-dot {
-    position: absolute;
-    top: 24px;
-    right: 28px;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    z-index: 10;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .status-dot.idle {
-    background-color: #71717a;
-    box-shadow: 0 0 6px rgba(113, 113, 122, 0.6);
-  }
-
-  .status-dot.active {
-    background-color: #10b981;
-    box-shadow: 0 0 10px rgba(16, 185, 129, 0.9), 0 0 18px rgba(16, 185, 129, 0.5);
-    animation: pulse-dot 2s infinite ease-in-out;
-  }
-
-  @keyframes pulse-dot {
-    0%, 100% {
-      transform: scale(1);
-      opacity: 0.9;
-    }
-    50% {
-      transform: scale(1.3);
-      opacity: 1;
-      box-shadow: 0 0 14px rgba(16, 185, 129, 1), 0 0 24px rgba(16, 185, 129, 0.7);
-    }
   }
 
   /* Subtle border pulse animation when clicked */
@@ -190,8 +157,8 @@
   strong {
     z-index: 2;
     font-family: 'Poppins', 'Lato', sans-serif;
-    font-size: 22px;
-    letter-spacing: 3.5px;
+    font-size: 28px;
+    letter-spacing: 4.5px;
     color: #FFFFFF;
     text-shadow: 0 0 6px rgba(0, 0, 0, 0.9), 0 0 12px rgba(0, 0, 0, 0.8);
     pointer-events: none;
@@ -457,19 +424,17 @@
     #stars,#stars2,#stars3,#stars:after,#stars2:after,#stars3:after,.circle{animation:none;}
   }
   @media (max-width:520px){
-    .stage{padding:42px 22px 34px;border-radius:24px;}
-    .btn{width:13.5rem;height:13.5rem;}
-    strong{font-size:18px;letter-spacing:2.5px;}
+    .stage{padding:36px 18px 28px;border-radius:24px;}
+    .btn{width:min(18.5rem, 80vw);height:min(18.5rem, 80vw);}
+    strong{font-size:20px;letter-spacing:3px;}
     .auth-actions{margin-top:24px;}
-    .status-dot{top:18px;right:22px;}
   }
 </style>
 </head>
 <body>
   <main class="stage" role="main">
-    <button type="button" class="btn" id="get-started-btn" aria-label="Get Started with Bitty Box">
-      <span id="btn-status-dot" class="status-dot idle" title="Status: Idle (Sign in to activate)"></span>
-      <strong id="btn-text">GET STARTED</strong>
+    <button type="button" class="btn" id="get-started-btn" aria-label="Build a Box">
+      <strong id="btn-text">BUILD A BOX</strong>
       <div id="container-stars">
         <div id="stars"></div>
         <div id="stars2"></div>
@@ -604,7 +569,6 @@
     // DOM References
     const getStartedBtn = document.getElementById('get-started-btn');
     const btnText = document.getElementById('btn-text');
-    const statusDot = document.getElementById('btn-status-dot');
     const authContainer = document.getElementById('auth-container');
     const toast = document.getElementById('toast');
     const authModal = document.getElementById('auth-modal');
@@ -653,19 +617,9 @@
       if (isLoading) {
         getStartedBtn.classList.add('loading');
         btnText.textContent = customText;
-        statusDot.className = 'status-dot active';
-        statusDot.title = 'Status: Active / Processing';
       } else {
         getStartedBtn.classList.remove('loading');
-        if (currentUser) {
-          btnText.textContent = 'ENTER BITTYBOX';
-          statusDot.className = 'status-dot active';
-          statusDot.title = `Connected: ${currentUser.email}`;
-        } else {
-          btnText.textContent = 'GET STARTED';
-          statusDot.className = 'status-dot idle';
-          statusDot.title = 'Status: Idle (Sign in to activate)';
-        }
+        btnText.textContent = 'BUILD A BOX';
       }
     }
 
@@ -737,11 +691,9 @@
     }
 
     function renderAuthState(user) {
-      if (user) {
-        statusDot.className = 'status-dot active';
-        statusDot.title = `Connected: ${user.email}`;
-        btnText.textContent = 'ENTER BITTYBOX';
+      btnText.textContent = 'BUILD A BOX';
 
+      if (user) {
         const avatar = user.photoURL || 'https://www.gstatic.com/images/branding/product/1x/avatar_square_blue_512dp.png';
         const name = user.displayName || user.email?.split('@')[0] || 'User';
 
@@ -762,10 +714,6 @@
 
         document.getElementById('signout-btn')?.addEventListener('click', handleSignOut);
       } else {
-        statusDot.className = 'status-dot idle';
-        statusDot.title = 'Status: Idle (Sign in to activate)';
-        btnText.textContent = 'GET STARTED';
-
         authContainer.innerHTML = `
           <button
             id="google-signin-btn"
@@ -904,7 +852,7 @@
       showToast('Signed out successfully');
     }
 
-    // Main "GET STARTED" button click handler
+    // Main "BUILD A BOX" button click handler
     getStartedBtn.addEventListener('click', async () => {
       triggerBorderPulse();
 
