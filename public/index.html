@@ -337,6 +337,69 @@
     }
   }
 
+  /* Black and Gold Luxury Google Sign In Button */
+  .google-luxury-btn {
+    position: relative;
+    background: linear-gradient(135deg, #d3b683 0%, #7a5c2d 35%, #181510 65%, #d3b683 100%);
+    background-size: 250% 250%;
+    animation: gold-shimmer 8s ease infinite;
+    padding: 2px;
+    border-radius: 9999px;
+    display: inline-flex;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.7), 0 0 12px rgba(211, 182, 131, 0.12);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    cursor: pointer;
+    text-decoration: none;
+    user-select: none;
+  }
+
+  .google-luxury-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.85), 0 0 22px rgba(211, 182, 131, 0.35);
+  }
+
+  .google-luxury-btn:active {
+    transform: scale(0.96);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.9), 0 0 8px rgba(211, 182, 131, 0.2);
+  }
+
+  .google-luxury-inner {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to top, #09090b, #151310);
+    border-radius: 9999px;
+    padding: 2px;
+    box-shadow: inset 0 1px 1px rgba(211, 182, 131, 0.35), 0 2px 4px rgba(0, 0, 0, 0.6);
+  }
+
+  .google-luxury-content {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 7px 18px;
+    border-radius: 9999px;
+    background: linear-gradient(180deg, #181613 0%, #0c0c0e 100%);
+    color: #f5eedd;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    transition: all 0.25s ease;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+  }
+
+  .google-luxury-btn:hover .google-luxury-content {
+    background: linear-gradient(180deg, #221f1a 0%, #121113 100%);
+    color: #ffdca3;
+    text-shadow: 0 0 8px rgba(211, 182, 131, 0.5);
+  }
+
+  @keyframes gold-shimmer {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
   .auth-actions {
     margin-top: 36px;
     display: flex;
@@ -420,19 +483,15 @@
     </button>
 
     <div id="auth-container" class="auth-actions">
-      <!-- Default: Sign In with Google -->
+      <!-- Default: Black & Gold Luxury Sign In with Google -->
       <button
         id="google-signin-btn"
         type="button"
-        class="bg-[linear-gradient(#e9e9e9,#e9e9e9_50%,#fff)] group inline-flex transition-all duration-300 overflow-visible p-[2px] rounded-full hover:scale-105 active:scale-95 shadow-sm cursor-pointer"
+        class="google-luxury-btn group"
         aria-label="Sign In with Google"
       >
-        <div
-          class="w-full h-full bg-[linear-gradient(to_top,#ececec,#fff)] overflow-hidden shadow-[0_0_1px_rgba(0,0,0,0.07),0_0_1px_rgba(0,0,0,0.05),0_2px_4px_rgba(0,0,0,0.15),0_1px_2px_rgba(0,0,0,0.08)] p-[2px] rounded-full hover:shadow-none duration-300"
-        >
-          <div
-            class="w-full h-full justify-center text-[#101010] bg-[linear-gradient(#f4f4f4,#fefefe)] group-hover:bg-[linear-gradient(#e2e2e2,#fefefe)] duration-200 items-center text-[13px] font-medium gap-2.5 inline-flex overflow-hidden px-3.5 py-1.5 rounded-full group-hover:text-blue-600 cursor-pointer"
-          >
+        <div class="google-luxury-inner">
+          <div class="google-luxury-content">
             <svg
               xmlns:xlink="http://www.w3.org/1999/xlink"
               xmlns="http://www.w3.org/2000/svg"
@@ -440,24 +499,45 @@
               viewBox="0 0 64 64"
               height="18px"
               width="18px"
-              class="shrink-0"
+              class="shrink-0 transition-transform duration-300 group-hover:scale-110"
             >
+              <defs>
+                <linearGradient id="google-gold-1" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#fcedd2"/>
+                  <stop offset="50%" stop-color="#d3b683"/>
+                  <stop offset="100%" stop-color="#a07840"/>
+                </linearGradient>
+                <linearGradient id="google-gold-2" x1="0%" y1="100%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#8c642e"/>
+                  <stop offset="60%" stop-color="#c4a46e"/>
+                  <stop offset="100%" stop-color="#f5deb3"/>
+                </linearGradient>
+                <linearGradient id="google-gold-3" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#fae2b8"/>
+                  <stop offset="100%" stop-color="#ab8248"/>
+                </linearGradient>
+                <linearGradient id="google-gold-4" x1="100%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stop-color="#fdeed8"/>
+                  <stop offset="60%" stop-color="#d8ba88"/>
+                  <stop offset="100%" stop-color="#9a7138"/>
+                </linearGradient>
+              </defs>
               <g fill-rule="evenodd" fill="none" stroke-width="1" stroke="none">
                 <g fill-rule="nonzero" transform="translate(3.000000, 2.000000)">
                   <path
-                    fill="#4285F4"
+                    fill="url(#google-gold-1)"
                     d="M57.8123233,30.1515267 C57.8123233,27.7263183 57.6155321,25.9565533 57.1896408,24.1212666 L29.4960833,24.1212666 L29.4960833,35.0674653 L45.7515771,35.0674653 C45.4239683,37.7877475 43.6542033,41.8844383 39.7213169,44.6372555 L39.6661883,45.0037254 L48.4223791,51.7870338 L49.0290201,51.8475849 C54.6004021,46.7020943 57.8123233,39.1313952 57.8123233,30.1515267"
                   ></path>
                   <path
-                    fill="#34A853"
+                    fill="url(#google-gold-2)"
                     d="M29.4960833,58.9921667 C37.4599129,58.9921667 44.1456164,56.3701671 49.0290201,51.8475849 L39.7213169,44.6372555 C37.2305867,46.3742596 33.887622,47.5868638 29.4960833,47.5868638 C21.6960582,47.5868638 15.0758763,42.4415991 12.7159637,35.3297782 L12.3700541,35.3591501 L3.26524241,42.4054492 L3.14617358,42.736447 C7.9965904,52.3717589 17.959737,58.9921667 29.4960833,58.9921667"
                   ></path>
                   <path
-                    fill="#FBBC05"
+                    fill="url(#google-gold-3)"
                     d="M12.7159637,35.3297782 C12.0932812,33.4944915 11.7329116,31.5279353 11.7329116,29.4960833 C11.7329116,27.4640054 12.0932812,25.4976752 12.6832029,23.6623884 L12.6667095,23.2715173 L3.44779955,16.1120237 L3.14617358,16.2554937 C1.14708246,20.2539019 0,24.7439491 0,29.4960833 C0,34.2482175 1.14708246,38.7380388 3.14617358,42.736447 L12.7159637,35.3297782"
                   ></path>
                   <path
-                    fill="#EB4335"
+                    fill="url(#google-gold-4)"
                     d="M29.4960833,11.4050769 C35.0347044,11.4050769 38.7707997,13.7975244 40.9011602,15.7968415 L49.2255853,7.66898166 C44.1130815,2.91684746 37.4599129,0 29.4960833,0 C17.959737,0 7.9965904,6.62018183 3.14617358,16.2554937 L12.6832029,23.6623884 C15.0758763,16.5505675 21.6960582,11.4050769 29.4960833,11.4050769"
                   ></path>
                 </g>
@@ -690,15 +770,11 @@
           <button
             id="google-signin-btn"
             type="button"
-            class="bg-[linear-gradient(#e9e9e9,#e9e9e9_50%,#fff)] group inline-flex transition-all duration-300 overflow-visible p-[2px] rounded-full hover:scale-105 active:scale-95 shadow-sm cursor-pointer"
+            class="google-luxury-btn group"
             aria-label="Sign In with Google"
           >
-            <div
-              class="w-full h-full bg-[linear-gradient(to_top,#ececec,#fff)] overflow-hidden shadow-[0_0_1px_rgba(0,0,0,0.07),0_0_1px_rgba(0,0,0,0.05),0_2px_4px_rgba(0,0,0,0.15),0_1px_2px_rgba(0,0,0,0.08)] p-[2px] rounded-full hover:shadow-none duration-300"
-            >
-              <div
-                class="w-full h-full justify-center text-[#101010] bg-[linear-gradient(#f4f4f4,#fefefe)] group-hover:bg-[linear-gradient(#e2e2e2,#fefefe)] duration-200 items-center text-[13px] font-medium gap-2.5 inline-flex overflow-hidden px-3.5 py-1.5 rounded-full group-hover:text-blue-600 cursor-pointer"
-              >
+            <div class="google-luxury-inner">
+              <div class="google-luxury-content">
                 <svg
                   xmlns:xlink="http://www.w3.org/1999/xlink"
                   xmlns="http://www.w3.org/2000/svg"
@@ -706,24 +782,45 @@
                   viewBox="0 0 64 64"
                   height="18px"
                   width="18px"
-                  class="shrink-0"
+                  class="shrink-0 transition-transform duration-300 group-hover:scale-110"
                 >
+                  <defs>
+                    <linearGradient id="google-gold-1-dyn" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stop-color="#fcedd2"/>
+                      <stop offset="50%" stop-color="#d3b683"/>
+                      <stop offset="100%" stop-color="#a07840"/>
+                    </linearGradient>
+                    <linearGradient id="google-gold-2-dyn" x1="0%" y1="100%" x2="100%" y2="0%">
+                      <stop offset="0%" stop-color="#8c642e"/>
+                      <stop offset="60%" stop-color="#c4a46e"/>
+                      <stop offset="100%" stop-color="#f5deb3"/>
+                    </linearGradient>
+                    <linearGradient id="google-gold-3-dyn" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stop-color="#fae2b8"/>
+                      <stop offset="100%" stop-color="#ab8248"/>
+                    </linearGradient>
+                    <linearGradient id="google-gold-4-dyn" x1="100%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stop-color="#fdeed8"/>
+                      <stop offset="60%" stop-color="#d8ba88"/>
+                      <stop offset="100%" stop-color="#9a7138"/>
+                    </linearGradient>
+                  </defs>
                   <g fill-rule="evenodd" fill="none" stroke-width="1" stroke="none">
                     <g fill-rule="nonzero" transform="translate(3.000000, 2.000000)">
                       <path
-                        fill="#4285F4"
+                        fill="url(#google-gold-1-dyn)"
                         d="M57.8123233,30.1515267 C57.8123233,27.7263183 57.6155321,25.9565533 57.1896408,24.1212666 L29.4960833,24.1212666 L29.4960833,35.0674653 L45.7515771,35.0674653 C45.4239683,37.7877475 43.6542033,41.8844383 39.7213169,44.6372555 L39.6661883,45.0037254 L48.4223791,51.7870338 L49.0290201,51.8475849 C54.6004021,46.7020943 57.8123233,39.1313952 57.8123233,30.1515267"
                       ></path>
                       <path
-                        fill="#34A853"
+                        fill="url(#google-gold-2-dyn)"
                         d="M29.4960833,58.9921667 C37.4599129,58.9921667 44.1456164,56.3701671 49.0290201,51.8475849 L39.7213169,44.6372555 C37.2305867,46.3742596 33.887622,47.5868638 29.4960833,47.5868638 C21.6960582,47.5868638 15.0758763,42.4415991 12.7159637,35.3297782 L12.3700541,35.3591501 L3.26524241,42.4054492 L3.14617358,42.736447 C7.9965904,52.3717589 17.959737,58.9921667 29.4960833,58.9921667"
                       ></path>
                       <path
-                        fill="#FBBC05"
+                        fill="url(#google-gold-3-dyn)"
                         d="M12.7159637,35.3297782 C12.0932812,33.4944915 11.7329116,31.5279353 11.7329116,29.4960833 C11.7329116,27.4640054 12.0932812,25.4976752 12.6832029,23.6623884 L12.6667095,23.2715173 L3.44779955,16.1120237 L3.14617358,16.2554937 C1.14708246,20.2539019 0,24.7439491 0,29.4960833 C0,34.2482175 1.14708246,38.7380388 3.14617358,42.736447 L12.7159637,35.3297782"
                       ></path>
                       <path
-                        fill="#EB4335"
+                        fill="url(#google-gold-4-dyn)"
                         d="M29.4960833,11.4050769 C35.0347044,11.4050769 38.7707997,13.7975244 40.9011602,15.7968415 L49.2255853,7.66898166 C44.1130815,2.91684746 37.4599129,0 29.4960833,0 C17.959737,0 7.9965904,6.62018183 3.14617358,16.2554937 L12.6832029,23.6623884 C15.0758763,16.5505675 21.6960582,11.4050769 29.4960833,11.4050769"
                       ></path>
                     </g>
