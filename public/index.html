@@ -136,49 +136,23 @@
     pointer-events: none;
   }
 
-  .spinner {
+  .btn-logo {
     position: relative;
     z-index: 2;
     pointer-events: none;
-    width: 70.4px;
-    height: 70.4px;
-    --clr: rgb(247, 197, 159);
-    --clr-alpha: rgb(247, 197, 159,.1);
-    animation: spinner 8.6s infinite ease;
-    transform-style: preserve-3d;
-  }
-
-  .spinner > div {
-    background-color: var(--clr-alpha);
-    height: 100%;
-    position: absolute;
-    width: 100%;
-    border: 3.5px solid var(--clr);
-  }
-
-  .spinner div:nth-of-type(1) { transform: translateZ(-35.2px) rotateY(180deg); }
-  .spinner div:nth-of-type(2) { transform: rotateY(-270deg) translateX(50%); transform-origin: top right; }
-  .spinner div:nth-of-type(3) { transform: rotateY(270deg) translateX(-50%); transform-origin: center left; }
-  .spinner div:nth-of-type(4) { transform: rotateX(90deg) translateY(-50%); transform-origin: top center; }
-  .spinner div:nth-of-type(5) { transform: rotateX(-90deg) translateY(50%); transform-origin: bottom center; }
-  .spinner div:nth-of-type(6) { transform: translateZ(35.2px); }
-
-  .spinner-core {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 46px;
-    height: 46px;
-    transform: translate(-50%, -50%) translateZ(0);
+    width: min(15.5rem, 62%);
+    max-width: 250px;
+    height: auto;
     object-fit: contain;
-    pointer-events: none;
-    filter: drop-shadow(0 0 8px rgba(211, 182, 131, 0.45));
+    filter: drop-shadow(0 0 16px rgba(211, 182, 131, 0.4)) drop-shadow(0 4px 12px rgba(0, 0, 0, 0.8));
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), filter 0.4s ease;
+    user-select: none;
+    -webkit-user-select: none;
   }
 
-  @keyframes spinner {
-    0% { transform: rotate(45deg) rotateX(-25deg) rotateY(25deg); }
-    50% { transform: rotate(45deg) rotateX(-385deg) rotateY(25deg); }
-    100% { transform: rotate(45deg) rotateX(-385deg) rotateY(385deg); }
+  .btn:hover .btn-logo {
+    transform: scale(1.04);
+    filter: drop-shadow(0 0 24px rgba(211, 182, 131, 0.65)) drop-shadow(0 4px 16px rgba(0, 0, 0, 0.9));
   }
 
   #glow {
@@ -1611,19 +1585,11 @@
   <!-- ============================================================ -->
   <main class="stage" role="main">
     <button type="button" class="btn" id="get-started-btn" aria-label="Build a Box">
-      <div class="spinner">
-        <div></div>
-        <div></div>
-        <div></div>
-        <div></div>
-        <div></div>
-        <div></div>
-        <img
-          class="spinner-core"
-          src="https://subpagebucket.s3.eu-north-1.amazonaws.com/library/934/42248d79-dfe0-4a02-b513-e76f38b9c3bb.png"
-          alt="bittybox"
-        />
-      </div>
+      <img
+        class="btn-logo"
+        src="https://subpagebucket.s3.eu-north-1.amazonaws.com/library/934/3540bb57-788d-45a5-8a42-6b63f0913bf3.png"
+        alt="Bitty Box Logo"
+      />
       <div id="container-stars">
         <div id="stars"></div>
         <div id="stars2"></div>
