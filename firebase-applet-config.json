@@ -1,7 +1,7 @@
 {
   "projectId": "rosy-cache-478313-a2",
   "appId": "1:801547964838:web:0a8b40ed9a2a97a6903f67",
-  "apiKey": "AIzaSyDwfAaVHzBJLbq15O2DTu21w7Ks4VZNXoE",
+  "apiKey": "__FIREBASE_WEB_API_KEY__",
   "authDomain": "rosy-cache-478313-a2.firebaseapp.com",
   "firestoreDatabaseId": "ai-studio-bittyboxstarter-7f674841-7d8e-4afa-97fa-823ad4632cc7",
   "storageBucket": "rosy-cache-478313-a2.firebasestorage.app",

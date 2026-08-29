@@ -1,12 +1,18 @@
 {
   "name": "Bitty Box",
-  "short_name": "BittyBox",
+  "short_name": "Bitty Box",
   "description": "Whole Webpages in a URL - Zero Server Persistence",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#090314",
   "theme_color": "#0d0419",
   "icons": [
+    {
+      "src": "https://subpagebucket.s3.eu-north-1.amazonaws.com/library/934/42248d79-dfe0-4a02-b513-e76f38b9c3bb.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    },
     {
       "src": "/icon-192.png",
       "type": "image/png",

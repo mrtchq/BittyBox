@@ -9,7 +9,7 @@ export interface BittyTool {
 // machine-readable discovery doc. The landing page build can read it too so
 // the human homepage can never drift from the agent interface.
 export const TOOLS: BittyTool[] = [
-  { name: 'create_box', description: 'Create a new portable BittyBox micro-site', kind: 'both', path: '/api/boxes' },
+  { name: 'create_box', description: 'Create a new portable Bitty Box micro-site', kind: 'both', path: '/api/boxes' },
   { name: 'get_box', description: 'Fetch a stored box by id', kind: 'both', path: '/api/boxes/:id' },
   { name: 'list_boxes', description: 'List stored boxes', kind: 'both', path: '/api/boxes' },
 ];

@@ -24,7 +24,7 @@ function writeStore(s: Record<string, any>) {
 export function buildMcpServer(): McpServer {
   const mcp = new McpServer({ name: 'bittybox', version: '1.0.0' });
 
-  (mcp as any).tool('create_box', 'Create a new portable BittyBox micro-site', {
+  (mcp as any).tool('create_box', 'Create a new portable Bitty Box micro-site', {
     content: z.string().min(1).max(1_000_000),
     meta: z.record(z.string(), z.any()).optional(),
   }, async ({ content, meta }: { content: string; meta?: Record<string, any> }) => {
