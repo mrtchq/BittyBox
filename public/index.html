@@ -302,6 +302,184 @@
     color: #f4f1ea !important;
   }
 
+  /* Ghost-inspired EditorJS Blocks: HTML, Embed, Audio */
+  .bitty-block-card {
+    background: #09090e;
+    border: 1px solid rgba(211, 182, 131, 0.28);
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin: 8px 0;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .bitty-block-card:focus-within {
+    border-color: rgba(211, 182, 131, 0.6);
+    box-shadow: 0 0 15px rgba(211, 182, 131, 0.1);
+  }
+  .bitty-block-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(211, 182, 131, 0.15);
+  }
+  .bitty-block-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #d3b683;
+  }
+  .bitty-block-badge svg {
+    width: 14px;
+    height: 14px;
+  }
+  .bitty-block-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .bitty-block-btn {
+    background: rgba(211, 182, 131, 0.1);
+    border: 1px solid rgba(211, 182, 131, 0.3);
+    color: #eeddc1;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .bitty-block-btn:hover {
+    background: rgba(211, 182, 131, 0.25);
+    color: #ffffff;
+    border-color: rgba(211, 182, 131, 0.7);
+  }
+  .bitty-block-btn.active {
+    background: #d3b683;
+    color: #09090e;
+    border-color: #d3b683;
+  }
+  .bitty-block-input,
+  .bitty-block-textarea {
+    width: 100%;
+    background: #050508;
+    border: 1px solid rgba(211, 182, 131, 0.2);
+    border-radius: 8px;
+    color: #f4f1ea;
+    font-family: inherit;
+    font-size: 13px;
+    padding: 8px 12px;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease;
+  }
+  .bitty-block-input:focus,
+  .bitty-block-textarea:focus {
+    border-color: #d3b683;
+  }
+  .bitty-block-textarea {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: #38bdf8;
+    min-height: 90px;
+    resize: vertical;
+  }
+  .bitty-block-preview {
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px dashed rgba(211, 182, 131, 0.25);
+    border-radius: 8px;
+    padding: 12px;
+    min-height: 60px;
+    overflow: auto;
+  }
+  .bitty-block-caption {
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 1px dashed rgba(211, 182, 131, 0.25);
+    color: #a1a1aa;
+    font-size: 12px;
+    padding: 6px 4px;
+    margin-top: 8px;
+    outline: none;
+    text-align: center;
+    box-sizing: border-box;
+  }
+  .bitty-block-caption:focus {
+    border-bottom-color: #d3b683;
+    color: #e4e4e7;
+  }
+  /* Ghost Audio Block Styles */
+  .bitty-audio-body {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .bitty-audio-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(211, 182, 131, 0.25), rgba(211, 182, 131, 0.05));
+    border: 1px solid rgba(211, 182, 131, 0.4);
+    color: #d3b683;
+  }
+  .bitty-audio-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
+  }
+  .bitty-audio-title-input {
+    font-size: 14px;
+    font-weight: 600;
+    color: #f5eedd !important;
+  }
+  .bitty-audio-artist-input {
+    font-size: 12px;
+    color: #d3b683 !important;
+  }
+  .bitty-audio-player {
+    width: 100%;
+    height: 36px;
+    margin-top: 4px;
+    accent-color: #d3b683;
+  }
+  /* Ghost Embed Frame */
+  .bitty-embed-frame-wrapper {
+    position: relative;
+    width: 100%;
+    padding-top: 56.25%;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #000;
+    border: 1px solid rgba(211, 182, 131, 0.2);
+  }
+  .bitty-embed-frame-wrapper.audio-embed {
+    padding-top: 0;
+    min-height: 152px;
+  }
+  .bitty-embed-frame-wrapper iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+  .bitty-embed-frame-wrapper.audio-embed iframe {
+    position: static;
+  }
+
   .btn {
     position: relative;
     display: flex;
@@ -4752,6 +4930,37 @@
         </div>
 
         <div class="flex items-center gap-2 text-xs">
+          <!-- Quick Insert Ghost CMS Blocks -->
+          <div class="flex items-center gap-1.5 mr-1">
+            <button
+              id="editorjs-add-html-btn"
+              type="button"
+              class="px-2 py-1 rounded-lg bg-black/50 hover:bg-[#181822] text-[#eeddc1] hover:text-[#d3b683] border border-[#d3b683]/30 hover:border-[#d3b683]/70 text-[11px] font-mono transition-all cursor-pointer flex items-center gap-1 shadow-sm"
+              title="Insert Ghost HTML Block"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-[#d3b683]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+              <span>+ HTML</span>
+            </button>
+            <button
+              id="editorjs-add-embed-btn"
+              type="button"
+              class="px-2 py-1 rounded-lg bg-black/50 hover:bg-[#181822] text-[#eeddc1] hover:text-[#d3b683] border border-[#d3b683]/30 hover:border-[#d3b683]/70 text-[11px] font-mono transition-all cursor-pointer flex items-center gap-1 shadow-sm"
+              title="Insert Ghost Embed Block"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-[#d3b683]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+              <span>+ Embed</span>
+            </button>
+            <button
+              id="editorjs-add-audio-btn"
+              type="button"
+              class="px-2 py-1 rounded-lg bg-black/50 hover:bg-[#181822] text-[#eeddc1] hover:text-[#d3b683] border border-[#d3b683]/30 hover:border-[#d3b683]/70 text-[11px] font-mono transition-all cursor-pointer flex items-center gap-1 shadow-sm"
+              title="Insert Ghost Audio Block"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-[#d3b683]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+              <span>+ Audio</span>
+            </button>
+          </div>
+
           <div id="editorjs-stats" class="hidden sm:inline-block px-2.5 py-1 rounded-lg bg-black/60 border border-zinc-800 text-[11px] font-mono text-zinc-400">
             0 words • 0 chars
           </div>
@@ -6737,6 +6946,505 @@ setInterval(()=>{
     })();
 
     // ============================================================
+    // GHOST CMS COMPATIBLE BLOCKS (HTML, EMBED, AUDIO)
+    // ============================================================
+    function parseEmbedUrl(rawUrl) {
+      if (!rawUrl) return { url: '', embedHtml: '', service: 'generic' };
+      const str = String(rawUrl).trim();
+
+      // Check if raw iframe code was provided
+      if (str.startsWith('<iframe') && str.includes('</iframe>')) {
+        const srcMatch = str.match(/src=["']([^"']+)["']/i);
+        const url = srcMatch ? srcMatch[1] : '';
+        return { url, embedHtml: str, service: 'iframe' };
+      }
+
+      // YouTube
+      const ytMatch = str.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
+      if (ytMatch) {
+        const id = ytMatch[1];
+        const embedUrl = `https://www.youtube.com/embed/${id}`;
+        const embedHtml = `<iframe src="${embedUrl}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
+        return { url: str, embedHtml, service: 'youtube' };
+      }
+
+      // Vimeo
+      const vimeoMatch = str.match(/(?:vimeo\.com\/(?:channels\/(?:\w+\/)?|groups\/([^\/]*)\/videos\/|album\/(\d+)\/video\/|video\/|)(\d+))/i);
+      if (vimeoMatch) {
+        const id = vimeoMatch[3];
+        const embedUrl = `https://player.vimeo.com/video/${id}`;
+        const embedHtml = `<iframe src="${embedUrl}" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`;
+        return { url: str, embedHtml, service: 'vimeo' };
+      }
+
+      // Spotify
+      const spotifyMatch = str.match(/open\.spotify\.com\/(track|playlist|album|episode|show)\/([a-zA-Z0-9]+)/i);
+      if (spotifyMatch) {
+        const embedUrl = `https://open.spotify.com/embed/${spotifyMatch[1]}/${spotifyMatch[2]}`;
+        const embedHtml = `<iframe src="${embedUrl}" width="100%" height="152" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>`;
+        return { url: str, embedHtml, service: 'spotify' };
+      }
+
+      // SoundCloud
+      if (str.includes('soundcloud.com/')) {
+        const embedUrl = `https://w.soundcloud.com/player/?url=${encodeURIComponent(str)}&color=%23d3b683&auto_play=false&hide_related=true&show_comments=true&show_user=true&show_reposts=false&show_teaser=true`;
+        const embedHtml = `<iframe width="100%" height="166" scrolling="no" frameborder="no" allow="autoplay" src="${embedUrl}"></iframe>`;
+        return { url: str, embedHtml, service: 'soundcloud' };
+      }
+
+      // CodePen
+      const codepenMatch = str.match(/codepen\.io\/([^\/]+)\/pen\/([^\/\?]+)/i);
+      if (codepenMatch) {
+        const embedUrl = `https://codepen.io/${codepenMatch[1]}/embed/${codepenMatch[2]}?default-tab=html%2Cresult&theme-id=dark`;
+        const embedHtml = `<iframe height="380" style="width: 100%;" scrolling="no" src="${embedUrl}" frameborder="no" loading="lazy" allowtransparency="true" allowfullscreen="true"></iframe>`;
+        return { url: str, embedHtml, service: 'codepen' };
+      }
+
+      // Generic URL fallback
+      const embedHtml = `<iframe src="${str}" style="width:100%; height:100%; border:0;" frameborder="0" allowfullscreen></iframe>`;
+      return { url: str, embedHtml, service: 'generic' };
+    }
+
+    class GhostHTMLTool {
+      static get isReadOnlySupported() { return true; }
+      static get enableLineBreaks() { return true; }
+
+      static get toolbox() {
+        return {
+          title: 'HTML',
+          icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>'
+        };
+      }
+
+      constructor({ data, api, readOnly }) {
+        this.api = api;
+        this.readOnly = readOnly;
+        this.data = { html: (data && data.html) || '' };
+        this.wrapper = null;
+        this.textarea = null;
+        this.previewEl = null;
+        this.mode = 'edit';
+      }
+
+      render() {
+        this.wrapper = document.createElement('div');
+        this.wrapper.classList.add('bitty-block-card', 'bitty-html-card');
+
+        // Header
+        const header = document.createElement('div');
+        header.classList.add('bitty-block-header');
+
+        const badge = document.createElement('div');
+        badge.classList.add('bitty-block-badge');
+        badge.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>HTML</span>`;
+
+        const actions = document.createElement('div');
+        actions.classList.add('bitty-block-actions');
+
+        const editBtn = document.createElement('button');
+        editBtn.type = 'button';
+        editBtn.classList.add('bitty-block-btn', 'active');
+        editBtn.textContent = 'Edit';
+
+        const previewBtn = document.createElement('button');
+        previewBtn.type = 'button';
+        previewBtn.classList.add('bitty-block-btn');
+        previewBtn.textContent = 'Preview';
+
+        actions.appendChild(editBtn);
+        actions.appendChild(previewBtn);
+        header.appendChild(badge);
+        header.appendChild(actions);
+
+        // Edit Area
+        this.textarea = document.createElement('textarea');
+        this.textarea.classList.add('bitty-block-textarea');
+        this.textarea.placeholder = 'Type or paste raw HTML, scripts, SVG, or embed code...';
+        this.textarea.value = this.data.html;
+        this.textarea.spellcheck = false;
+
+        this.textarea.addEventListener('keydown', (e) => e.stopPropagation());
+        this.textarea.addEventListener('input', () => {
+          this.data.html = this.textarea.value;
+          this.textarea.style.height = 'auto';
+          this.textarea.style.height = `${Math.max(90, this.textarea.scrollHeight)}px`;
+        });
+
+        // Preview Area
+        this.previewEl = document.createElement('div');
+        this.previewEl.classList.add('bitty-block-preview');
+        this.previewEl.style.display = 'none';
+
+        const updatePreview = () => {
+          const val = this.textarea.value.trim();
+          if (!val) {
+            this.previewEl.innerHTML = '<span style="color: #71717a; font-style: italic; font-size: 12px;">(Empty HTML card. Switch to Edit to write HTML.)</span>';
+          } else {
+            this.previewEl.innerHTML = val;
+          }
+        };
+
+        editBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.mode = 'edit';
+          editBtn.classList.add('active');
+          previewBtn.classList.remove('active');
+          this.textarea.style.display = 'block';
+          this.previewEl.style.display = 'none';
+        });
+
+        previewBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.mode = 'preview';
+          previewBtn.classList.add('active');
+          editBtn.classList.remove('active');
+          updatePreview();
+          this.textarea.style.display = 'none';
+          this.previewEl.style.display = 'block';
+        });
+
+        this.wrapper.appendChild(header);
+        this.wrapper.appendChild(this.textarea);
+        this.wrapper.appendChild(this.previewEl);
+
+        setTimeout(() => {
+          if (this.textarea) {
+            this.textarea.style.height = `${Math.max(90, this.textarea.scrollHeight)}px`;
+          }
+        }, 0);
+
+        return this.wrapper;
+      }
+
+      save() {
+        return {
+          html: this.textarea ? this.textarea.value : (this.data.html || '')
+        };
+      }
+    }
+
+    class GhostEmbedTool {
+      static get isReadOnlySupported() { return true; }
+
+      static get toolbox() {
+        return {
+          title: 'Embed',
+          icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>'
+        };
+      }
+
+      constructor({ data, api, readOnly }) {
+        this.api = api;
+        this.readOnly = readOnly;
+        this.data = {
+          url: (data && (data.url || data.source)) || '',
+          caption: (data && data.caption) || '',
+          service: (data && data.service) || '',
+          embed: (data && data.embed) || ''
+        };
+        this.wrapper = null;
+        this.input = null;
+        this.captionInput = null;
+        this.previewContainer = null;
+      }
+
+      render() {
+        this.wrapper = document.createElement('div');
+        this.wrapper.classList.add('bitty-block-card', 'bitty-embed-card');
+
+        // Header
+        const header = document.createElement('div');
+        header.classList.add('bitty-block-header');
+
+        const badge = document.createElement('div');
+        badge.classList.add('bitty-block-badge');
+        badge.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><span id="embed-header-label">${this.data.service ? this.data.service.toUpperCase() : 'EMBED'}</span>`;
+
+        const actions = document.createElement('div');
+        actions.classList.add('bitty-block-actions');
+
+        const changeBtn = document.createElement('button');
+        changeBtn.type = 'button';
+        changeBtn.classList.add('bitty-block-btn');
+        changeBtn.textContent = 'Edit URL';
+        changeBtn.style.display = this.data.url ? 'inline-block' : 'none';
+
+        actions.appendChild(changeBtn);
+        header.appendChild(badge);
+        header.appendChild(actions);
+
+        // Input Setup Form
+        const form = document.createElement('div');
+        form.classList.add('bitty-embed-form');
+        form.style.display = this.data.url ? 'none' : 'flex';
+        form.style.flexDirection = 'column';
+        form.style.gap = '8px';
+
+        const inputRow = document.createElement('div');
+        inputRow.style.display = 'flex';
+        inputRow.style.gap = '8px';
+
+        this.input = document.createElement('input');
+        this.input.type = 'text';
+        this.input.classList.add('bitty-block-input');
+        this.input.placeholder = 'Paste URL to embed (YouTube, Vimeo, Spotify, SoundCloud, etc.) and press Enter...';
+        this.input.value = this.data.url;
+        this.input.addEventListener('keydown', (e) => {
+          e.stopPropagation();
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            applyEmbed();
+          }
+        });
+
+        const embedBtn = document.createElement('button');
+        embedBtn.type = 'button';
+        embedBtn.classList.add('bitty-block-btn', 'active');
+        embedBtn.textContent = 'Embed';
+        embedBtn.style.padding = '8px 14px';
+
+        inputRow.appendChild(this.input);
+        inputRow.appendChild(embedBtn);
+
+        const hint = document.createElement('div');
+        hint.style.fontSize = '11px';
+        hint.style.color = '#71717a';
+        hint.textContent = 'Supports YouTube, Vimeo, Spotify, SoundCloud, CodePen, and custom iframe codes.';
+
+        form.appendChild(inputRow);
+        form.appendChild(hint);
+
+        // Embed Preview Container
+        this.previewContainer = document.createElement('div');
+        this.previewContainer.classList.add('bitty-embed-view');
+        this.previewContainer.style.display = this.data.url ? 'block' : 'none';
+
+        const frameWrapper = document.createElement('div');
+        frameWrapper.classList.add('bitty-embed-frame-wrapper');
+
+        this.captionInput = document.createElement('input');
+        this.captionInput.type = 'text';
+        this.captionInput.classList.add('bitty-block-caption');
+        this.captionInput.placeholder = 'Add a caption (optional)...';
+        this.captionInput.value = this.data.caption;
+        this.captionInput.addEventListener('keydown', (e) => e.stopPropagation());
+        this.captionInput.addEventListener('input', () => {
+          this.data.caption = this.captionInput.value;
+        });
+
+        this.previewContainer.appendChild(frameWrapper);
+        this.previewContainer.appendChild(this.captionInput);
+
+        const renderFrame = () => {
+          const parsed = parseEmbedUrl(this.data.url);
+          this.data.service = parsed.service;
+          this.data.embed = parsed.embedHtml;
+          badge.querySelector('span').textContent = parsed.service.toUpperCase();
+
+          const isAudio = parsed.service === 'spotify' || parsed.service === 'soundcloud';
+          frameWrapper.className = 'bitty-embed-frame-wrapper' + (isAudio ? ' audio-embed' : '');
+          frameWrapper.innerHTML = parsed.embedHtml;
+        };
+
+        const applyEmbed = () => {
+          const val = this.input.value.trim();
+          if (!val) return;
+          this.data.url = val;
+          renderFrame();
+          form.style.display = 'none';
+          this.previewContainer.style.display = 'block';
+          changeBtn.style.display = 'inline-block';
+        };
+
+        embedBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          applyEmbed();
+        });
+
+        changeBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          form.style.display = 'flex';
+          this.previewContainer.style.display = 'none';
+          changeBtn.style.display = 'none';
+          this.input.focus();
+        });
+
+        if (this.data.url) {
+          renderFrame();
+        }
+
+        this.wrapper.appendChild(header);
+        this.wrapper.appendChild(form);
+        this.wrapper.appendChild(this.previewContainer);
+
+        return this.wrapper;
+      }
+
+      save() {
+        return {
+          url: this.data.url || (this.input ? this.input.value.trim() : ''),
+          caption: this.captionInput ? this.captionInput.value.trim() : (this.data.caption || ''),
+          service: this.data.service || 'generic',
+          embed: this.data.embed || ''
+        };
+      }
+    }
+
+    class GhostAudioTool {
+      static get isReadOnlySupported() { return true; }
+
+      static get toolbox() {
+        return {
+          title: 'Audio',
+          icon: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>'
+        };
+      }
+
+      constructor({ data, api, readOnly }) {
+        this.api = api;
+        this.readOnly = readOnly;
+        this.data = {
+          src: (data && data.src) || '',
+          title: (data && data.title) || '',
+          artist: (data && data.artist) || '',
+          caption: (data && data.caption) || ''
+        };
+        this.wrapper = null;
+        this.titleInput = null;
+        this.artistInput = null;
+        this.srcInput = null;
+        this.captionInput = null;
+        this.audioEl = null;
+      }
+
+      render() {
+        this.wrapper = document.createElement('div');
+        this.wrapper.classList.add('bitty-block-card', 'bitty-audio-card');
+
+        // Header
+        const header = document.createElement('div');
+        header.classList.add('bitty-block-header');
+
+        const badge = document.createElement('div');
+        badge.classList.add('bitty-block-badge');
+        badge.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg><span>AUDIO</span>`;
+
+        const actions = document.createElement('div');
+        actions.classList.add('bitty-block-actions');
+
+        const srcToggleBtn = document.createElement('button');
+        srcToggleBtn.type = 'button';
+        srcToggleBtn.classList.add('bitty-block-btn');
+        srcToggleBtn.textContent = this.data.src ? 'Edit Audio URL' : 'Enter Audio URL';
+
+        actions.appendChild(srcToggleBtn);
+        header.appendChild(badge);
+        header.appendChild(actions);
+
+        // Body
+        const body = document.createElement('div');
+        body.classList.add('bitty-audio-body');
+
+        // Left Icon
+        const iconContainer = document.createElement('div');
+        iconContainer.classList.add('bitty-audio-icon');
+        iconContainer.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>`;
+
+        // Right Fields
+        const fields = document.createElement('div');
+        fields.classList.add('bitty-audio-fields');
+
+        this.titleInput = document.createElement('input');
+        this.titleInput.type = 'text';
+        this.titleInput.classList.add('bitty-block-input', 'bitty-audio-title-input');
+        this.titleInput.placeholder = 'Audio Track Title...';
+        this.titleInput.value = this.data.title;
+        this.titleInput.addEventListener('keydown', (e) => e.stopPropagation());
+        this.titleInput.addEventListener('input', () => {
+          this.data.title = this.titleInput.value;
+        });
+
+        this.artistInput = document.createElement('input');
+        this.artistInput.type = 'text';
+        this.artistInput.classList.add('bitty-block-input', 'bitty-audio-artist-input');
+        this.artistInput.placeholder = 'Artist or Creator (optional)...';
+        this.artistInput.value = this.data.artist;
+        this.artistInput.addEventListener('keydown', (e) => e.stopPropagation());
+        this.artistInput.addEventListener('input', () => {
+          this.data.artist = this.artistInput.value;
+        });
+
+        // Audio URL input
+        const srcRow = document.createElement('div');
+        srcRow.style.display = this.data.src ? 'none' : 'flex';
+        srcRow.style.gap = '8px';
+        srcRow.style.marginTop = '4px';
+
+        this.srcInput = document.createElement('input');
+        this.srcInput.type = 'url';
+        this.srcInput.classList.add('bitty-block-input');
+        this.srcInput.placeholder = 'Direct audio URL (MP3, OGG, WAV, or stream)...';
+        this.srcInput.value = this.data.src;
+        this.srcInput.addEventListener('keydown', (e) => e.stopPropagation());
+        this.srcInput.addEventListener('input', () => {
+          this.data.src = this.srcInput.value.trim();
+          if (this.audioEl) this.audioEl.src = this.data.src;
+        });
+
+        srcRow.appendChild(this.srcInput);
+
+        srcToggleBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const isHidden = srcRow.style.display === 'none';
+          srcRow.style.display = isHidden ? 'flex' : 'none';
+          srcToggleBtn.textContent = isHidden ? 'Hide URL' : 'Edit Audio URL';
+          if (isHidden) this.srcInput.focus();
+        });
+
+        // Audio Player Element
+        this.audioEl = document.createElement('audio');
+        this.audioEl.classList.add('bitty-audio-player');
+        this.audioEl.controls = true;
+        this.audioEl.preload = 'metadata';
+        if (this.data.src) this.audioEl.src = this.data.src;
+
+        fields.appendChild(this.titleInput);
+        fields.appendChild(this.artistInput);
+        fields.appendChild(srcRow);
+        fields.appendChild(this.audioEl);
+
+        body.appendChild(iconContainer);
+        body.appendChild(fields);
+
+        // Caption Input
+        this.captionInput = document.createElement('input');
+        this.captionInput.type = 'text';
+        this.captionInput.classList.add('bitty-block-caption');
+        this.captionInput.placeholder = 'Add audio notes or caption (optional)...';
+        this.captionInput.value = this.data.caption;
+        this.captionInput.addEventListener('keydown', (e) => e.stopPropagation());
+        this.captionInput.addEventListener('input', () => {
+          this.data.caption = this.captionInput.value;
+        });
+
+        this.wrapper.appendChild(header);
+        this.wrapper.appendChild(body);
+        this.wrapper.appendChild(this.captionInput);
+
+        return this.wrapper;
+      }
+
+      save() {
+        return {
+          src: this.srcInput ? this.srcInput.value.trim() : (this.data.src || ''),
+          title: this.titleInput ? this.titleInput.value.trim() : (this.data.title || ''),
+          artist: this.artistInput ? this.artistInput.value.trim() : (this.data.artist || ''),
+          caption: this.captionInput ? this.captionInput.value.trim() : (this.data.caption || '')
+        };
+      }
+    }
+
+    // ============================================================
     // EDITJS (EDITOR.JS) RICH TEXT AREA CONTROLLER & TRANSFORM
     // ============================================================
     let editorInstance = null;
@@ -6756,6 +7464,10 @@ setInterval(()=>{
             });
           }
           if (typeof b.data.code === 'string') text += ' ' + b.data.code;
+          if (typeof b.data.html === 'string') text += ' ' + b.data.html.replace(/<[^>]*>/g, '');
+          if (typeof b.data.title === 'string') text += ' ' + b.data.title;
+          if (typeof b.data.artist === 'string') text += ' ' + b.data.artist;
+          if (typeof b.data.caption === 'string') text += ' ' + b.data.caption;
           if (Array.isArray(b.data.content)) {
             b.data.content.forEach(row => {
               if (Array.isArray(row)) row.forEach(c => text += ' ' + String(c).replace(/<[^>]*>/g, ''));
@@ -6820,6 +7532,54 @@ setInterval(()=>{
             });
             html += `</table>\n`;
             break;
+          case 'html':
+          case 'raw':
+            html += `<div class="kg-card kg-html-card">\n${block.data.html || ''}\n</div>\n`;
+            break;
+          case 'embed': {
+            const url = block.data.url || block.data.source || '';
+            const caption = block.data.caption || '';
+            let embedHtml = block.data.embed || '';
+            let service = block.data.service || '';
+            if (!embedHtml && url) {
+              const parsed = parseEmbedUrl(url);
+              embedHtml = parsed.embedHtml;
+              service = parsed.service;
+            }
+            const isAudioEmbed = service === 'spotify' || service === 'soundcloud';
+            const containerClass = isAudioEmbed ? 'kg-embed-container kg-embed-audio' : 'kg-embed-container';
+            html += `<figure class="kg-card kg-embed-card">\n`;
+            html += `  <div class="${containerClass}">\n    ${embedHtml}\n  </div>\n`;
+            if (caption) {
+              html += `  <figcaption>${caption}</figcaption>\n`;
+            }
+            html += `</figure>\n`;
+            break;
+          }
+          case 'audio': {
+            const title = (block.data.title || 'Audio Track').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            const artist = (block.data.artist || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            const src = block.data.src || '';
+            const caption = block.data.caption || '';
+            html += `<div class="kg-card kg-audio-card">\n`;
+            html += `  <div class="kg-audio-thumbnail placeholder">\n`;
+            html += `    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>\n`;
+            html += `  </div>\n`;
+            html += `  <div class="kg-audio-player-container">\n`;
+            html += `    <div class="kg-audio-header">\n`;
+            html += `      <div class="kg-audio-title">${title}</div>\n`;
+            if (artist) {
+              html += `      <div class="kg-audio-artist">${artist}</div>\n`;
+            }
+            html += `    </div>\n`;
+            html += `    <audio controls src="${src}" preload="metadata"></audio>\n`;
+            html += `  </div>\n`;
+            html += `</div>\n`;
+            if (caption) {
+              html += `<div class="kg-audio-caption">${caption}</div>\n`;
+            }
+            break;
+          }
           default:
             if (block.data && block.data.text) html += `<p>${block.data.text}</p>\n`;
             break;
@@ -6837,6 +7597,13 @@ setInterval(()=>{
         try {
           initialData = JSON.parse(savedDraft);
         } catch {}
+      }
+
+      // Convert legacy raw blocks to html
+      if (initialData && Array.isArray(initialData.blocks)) {
+        initialData.blocks.forEach(b => {
+          if (b.type === 'raw') b.type = 'html';
+        });
       }
 
       if (!initialData || !initialData.blocks || initialData.blocks.length === 0) {
@@ -6930,6 +7697,17 @@ setInterval(()=>{
           };
         }
 
+        // Ghost CMS Compatible Tools (HTML, Embed, Audio)
+        tools.html = {
+          class: GhostHTMLTool
+        };
+        tools.embed = {
+          class: GhostEmbedTool
+        };
+        tools.audio = {
+          class: GhostAudioTool
+        };
+
         editorInstance = new window.EditorJS({
           holder: 'editorjs',
           placeholder: 'Click here or press Tab to start writing in your private capsule...',
@@ -7013,6 +7791,37 @@ setInterval(()=>{
         showToast('📋 Rich text HTML copied to clipboard');
       } catch {
         showToast('Failed to copy to clipboard');
+      }
+    });
+
+    // Hook Quick Insert Buttons for Ghost CMS Blocks
+    document.getElementById('editorjs-add-html-btn')?.addEventListener('click', async () => {
+      if (!editorInstance) return;
+      try {
+        await editorInstance.blocks.insert('html', { html: '' });
+        showToast('Inserted Ghost HTML Block');
+      } catch (err) {
+        console.warn('Insert HTML error:', err);
+      }
+    });
+
+    document.getElementById('editorjs-add-embed-btn')?.addEventListener('click', async () => {
+      if (!editorInstance) return;
+      try {
+        await editorInstance.blocks.insert('embed', { url: '' });
+        showToast('Inserted Ghost Embed Block');
+      } catch (err) {
+        console.warn('Insert Embed error:', err);
+      }
+    });
+
+    document.getElementById('editorjs-add-audio-btn')?.addEventListener('click', async () => {
+      if (!editorInstance) return;
+      try {
+        await editorInstance.blocks.insert('audio', { src: '', title: '', artist: '' });
+        showToast('Inserted Ghost Audio Block');
+      } catch (err) {
+        console.warn('Insert Audio error:', err);
       }
     });
 
@@ -7435,6 +8244,109 @@ setInterval(()=>{
     th { background: rgba(211,182,131,0.1); color: #d3b683; }
     hr { border: 0; height: 1px; background: radial-gradient(circle, #d3b683 0%, transparent 80%); margin: 2rem 0; }
     mark { background: rgba(211,182,131,0.35); color: #fff; padding: 0.1em 0.3em; border-radius: 3px; }
+    /* Ghost CMS Cards: HTML, Embed, Audio */
+    .kg-card { margin: 1.8em 0; }
+    .kg-html-card { width: 100%; }
+    .kg-embed-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      margin: 1.8em 0;
+    }
+    .kg-embed-container {
+      position: relative;
+      width: 100%;
+      padding-top: 56.25%;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #000;
+      border: 1px solid rgba(211, 182, 131, 0.25);
+    }
+    .kg-embed-container.kg-embed-audio {
+      padding-top: 0;
+      min-height: 152px;
+    }
+    .kg-embed-container iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+    .kg-embed-container.kg-embed-audio iframe {
+      position: static;
+    }
+    .kg-embed-card figcaption, .kg-audio-caption {
+      margin-top: 0.6em;
+      font-size: 0.85em;
+      color: #a1a1aa;
+      text-align: center;
+    }
+    .kg-audio-card {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 1.25rem;
+      background: #0e0e14;
+      border: 1px solid rgba(211, 182, 131, 0.3);
+      border-radius: 14px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      margin: 1.8em 0;
+    }
+    .kg-audio-thumbnail {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 50px;
+      height: 50px;
+      min-width: 50px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, rgba(211, 182, 131, 0.25), rgba(211, 182, 131, 0.05));
+      border: 1px solid rgba(211, 182, 131, 0.4);
+      color: #d3b683;
+    }
+    .kg-audio-thumbnail svg {
+      width: 24px;
+      height: 24px;
+    }
+    .kg-audio-player-container {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-width: 0;
+      gap: 0.4rem;
+    }
+    .kg-audio-header {
+      display: flex;
+      flex-direction: column;
+    }
+    .kg-audio-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #f5eedd;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .kg-audio-artist {
+      font-size: 0.82rem;
+      color: #d3b683;
+      opacity: 0.85;
+    }
+    .kg-audio-player-container audio {
+      width: 100%;
+      height: 36px;
+      border-radius: 8px;
+      accent-color: #d3b683;
+    }
+    @media (prefers-color-scheme: light) {
+      .kg-audio-card { background: #f4f4f6 !important; border-color: #e4e4e7 !important; }
+      .kg-audio-title { color: #18181b !important; }
+      .kg-audio-artist { color: #8a6c38 !important; }
+      .kg-embed-container { background: #f4f4f6 !important; border-color: #e4e4e7 !important; }
+    }
   </style>
 </head>
 <body>
