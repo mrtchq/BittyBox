@@ -444,22 +444,8 @@ apiRouter.get('/credits/balance', (req, res) => {
 });
 
 apiRouter.post('/credits/purchase', (req, res) => {
-  try {
-    const { tier, credits, amount } = req.body;
-    if (!credits) {
-      res.status(400).json({ error: 'Credit amount is required' });
-      return;
-    }
-    const receiptId = `rcpt_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
-    res.json({
-      success: true,
-      receiptId,
-      tier: tier || 'Custom Pack',
-      creditedAmount: Number(credits),
-      paidAmount: amount || '$0.00',
-      timestamp: new Date().toISOString(),
-    });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Purchase failed' });
-  }
+  res.status(410).json({
+    error: 'Credit purchases are unavailable during the verified billing rebuild.',
+    code: 'VERIFIED_BILLING_REBUILD',
+  });
 });

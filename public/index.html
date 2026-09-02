@@ -20,6 +20,16 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700" rel="stylesheet" type="text/css">
 <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@editorjs/editorjs@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/@editorjs/header@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/@editorjs/list@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/@editorjs/checklist@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/@editorjs/quote@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/@editorjs/code@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/@editorjs/inline-code@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/@editorjs/marker@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/@editorjs/delimiter@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/@editorjs/table@latest"></script>
 <style>
   :root{
     /* Dark Theme (Default & Only Theme) */
@@ -64,6 +74,231 @@
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
     z-index: 10;
+    transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1), padding 0.5s cubic-bezier(0.16, 1, 0.3, 1), border-radius 0.5s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.4s ease, box-shadow 0.4s ease;
+  }
+
+  .stage.editor-mode {
+    width: min(980px, 96vw);
+    padding: 28px 32px 36px;
+    border-radius: 24px;
+    border-color: rgba(211, 182, 131, 0.45);
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.95), 0 0 70px rgba(211, 182, 131, 0.12);
+  }
+  .stage.editor-mode .box1-container,
+  .stage.editor-mode .button-container {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+  @media (max-width: 640px) {
+    .stage.editor-mode {
+      padding: 20px 14px 28px;
+    }
+  }
+
+  /* Stage View Transitions */
+  #hero-stage-view {
+    transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    opacity: 1;
+    transform: scale(1);
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  #hero-stage-view.stage-view-hidden {
+    opacity: 0;
+    transform: scale(0.92);
+    pointer-events: none;
+    display: none !important;
+  }
+  #editorjs-stage-view {
+    transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    opacity: 1;
+    transform: scale(1);
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  #editorjs-stage-view.stage-view-hidden {
+    opacity: 0;
+    transform: scale(0.96);
+    pointer-events: none;
+    display: none !important;
+  }
+
+  /* EditorJS Luxury Theme Overrides */
+  .custom-editor-scroll::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-editor-scroll::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.3);
+  }
+  .custom-editor-scroll::-webkit-scrollbar-thumb {
+    background: rgba(211, 182, 131, 0.3);
+    border-radius: 3px;
+  }
+  .custom-editor-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(211, 182, 131, 0.6);
+  }
+
+  #editorjs {
+    color: #f4f1ea;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+  }
+  #editorjs .codex-editor {
+    color: #f4f1ea;
+  }
+  #editorjs .ce-block__content {
+    max-width: 760px;
+    margin: 0 auto;
+  }
+  #editorjs .ce-paragraph {
+    font-size: 15px;
+    line-height: 1.75;
+    color: #e4e4e7;
+  }
+  #editorjs .ce-paragraph[data-placeholder]:empty::before {
+    color: #52525b !important;
+  }
+  #editorjs .ce-header {
+    font-weight: 600;
+    color: #f5eedd;
+    margin-top: 1.3em;
+    margin-bottom: 0.5em;
+    letter-spacing: -0.01em;
+  }
+  #editorjs h1.ce-header { font-size: 1.85rem; color: #fdfbf7; }
+  #editorjs h2.ce-header { font-size: 1.5rem; color: #d3b683; }
+  #editorjs h3.ce-header { font-size: 1.25rem; color: #eeddc1; }
+  #editorjs h4.ce-header { font-size: 1.1rem; color: #d1d5db; }
+
+  /* Toolbar buttons */
+  #editorjs .ce-toolbar__plus,
+  #editorjs .ce-toolbar__settings-btn {
+    color: #d3b683 !important;
+    background: #141419 !important;
+    border: 1px solid rgba(211, 182, 131, 0.3) !important;
+    border-radius: 8px !important;
+    transition: all 0.2s ease !important;
+  }
+  #editorjs .ce-toolbar__plus:hover,
+  #editorjs .ce-toolbar__settings-btn:hover {
+    background: rgba(211, 182, 131, 0.2) !important;
+    color: #ffffff !important;
+    border-color: rgba(211, 182, 131, 0.6) !important;
+  }
+  #editorjs .ce-toolbar__actions {
+    background: transparent;
+  }
+
+  /* Popover menus */
+  .ce-popover {
+    background: #121217 !important;
+    border: 1px solid rgba(211, 182, 131, 0.35) !important;
+    border-radius: 14px !important;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.9), 0 0 20px rgba(211, 182, 131, 0.08) !important;
+    color: #f4f1ea !important;
+  }
+  .ce-popover__search {
+    background: #09090d !important;
+    border-bottom: 1px solid rgba(211, 182, 131, 0.2) !important;
+    color: #ffffff !important;
+  }
+  .ce-popover__search input {
+    color: #ffffff !important;
+  }
+  .ce-popover-item {
+    color: #d1d5db !important;
+    border-radius: 8px !important;
+    transition: all 0.15s ease !important;
+  }
+  .ce-popover-item:hover,
+  .ce-popover-item--focused {
+    background: rgba(211, 182, 131, 0.16) !important;
+    color: #ffffff !important;
+  }
+  .ce-popover-item__icon {
+    background: rgba(211, 182, 131, 0.12) !important;
+    color: #d3b683 !important;
+    border-radius: 6px !important;
+  }
+
+  /* Inline Toolbar */
+  .ce-inline-toolbar {
+    background: #121217 !important;
+    border: 1px solid rgba(211, 182, 131, 0.35) !important;
+    border-radius: 10px !important;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.85) !important;
+    color: #ffffff !important;
+  }
+  .ce-inline-tool {
+    color: #d1d5db !important;
+  }
+  .ce-inline-tool:hover,
+  .ce-inline-tool--active {
+    color: #d3b683 !important;
+    background: rgba(211, 182, 131, 0.2) !important;
+  }
+  .ce-conversion-toolbar {
+    background: #121217 !important;
+    border: 1px solid rgba(211, 182, 131, 0.35) !important;
+    color: #ffffff !important;
+  }
+
+  /* Quotes, Code, Delimiters, Checklists, Tables */
+  #editorjs .cdx-quote {
+    border-left: 3px solid #d3b683 !important;
+    background: rgba(211, 182, 131, 0.05) !important;
+    border-radius: 0 8px 8px 0 !important;
+    padding: 12px 18px !important;
+  }
+  #editorjs .cdx-quote__text {
+    font-style: italic !important;
+    color: #f4f1ea !important;
+  }
+  #editorjs .cdx-quote__caption {
+    color: #a1a1aa !important;
+  }
+  #editorjs .ce-code__textarea {
+    background: #050507 !important;
+    border: 1px solid rgba(211, 182, 131, 0.25) !important;
+    color: #38bdf8 !important;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+    border-radius: 10px !important;
+    padding: 14px 16px !important;
+    font-size: 13px !important;
+  }
+  #editorjs .cdx-checklist__item-checkbox {
+    border: 2px solid rgba(211, 182, 131, 0.4) !important;
+    background: #09090b !important;
+    border-radius: 6px !important;
+  }
+  #editorjs .cdx-checklist__item--checked .cdx-checklist__item-checkbox {
+    background: #d3b683 !important;
+    border-color: #d3b683 !important;
+  }
+  #editorjs .cdx-checklist__item-text {
+    color: #e4e4e7 !important;
+  }
+  #editorjs .cdx-marker {
+    background: rgba(211, 182, 131, 0.35) !important;
+    color: #ffffff !important;
+    padding: 2px 4px !important;
+    border-radius: 4px !important;
+  }
+  #editorjs .ce-delimiter::before {
+    color: #d3b683 !important;
+  }
+  #editorjs .tc-table {
+    border: 1px solid rgba(211, 182, 131, 0.25) !important;
+  }
+  #editorjs .tc-row {
+    border-bottom: 1px solid rgba(211, 182, 131, 0.2) !important;
+  }
+  #editorjs .tc-cell {
+    border-right: 1px solid rgba(211, 182, 131, 0.2) !important;
+    color: #f4f1ea !important;
   }
 
   .btn {
@@ -4502,26 +4737,96 @@
         </svg>
       </button>
     </div>
-    <button type="button" class="btn" id="get-started-btn" aria-label="Build a Box">
-      <img
-        class="btn-logo"
-        src="https://subpagebucket.s3.eu-north-1.amazonaws.com/library/934/3540bb57-788d-45a5-8a42-6b63f0913bf3.png"
-        alt="Bitty Box Logo"
-      />
-      <div id="container-stars">
-        <div id="stars"></div>
-        <div id="stars2"></div>
-        <div id="stars3"></div>
+    <!-- Hero Stage View (Center Button & Auth) -->
+    <div id="hero-stage-view">
+      <button type="button" class="btn" id="get-started-btn" aria-label="Build a Box">
+        <img
+          class="btn-logo"
+          src="https://subpagebucket.s3.eu-north-1.amazonaws.com/library/934/3540bb57-788d-45a5-8a42-6b63f0913bf3.png"
+          alt="Bitty Box Logo"
+        />
+        <div id="container-stars">
+          <div id="stars"></div>
+          <div id="stars2"></div>
+          <div id="stars3"></div>
+        </div>
+
+        <div id="glow">
+          <div class="circle"></div>
+          <div class="circle"></div>
+        </div>
+      </button>
+
+      <div id="auth-container" class="auth-actions">
+        <!-- Injected dynamically based on auth state -->
+      </div>
+    </div>
+
+    <!-- EditJS Rich Text Workspace (Transformed View) -->
+    <div id="editorjs-stage-view" class="stage-view-hidden">
+      <!-- Editor Header -->
+      <div class="flex flex-wrap items-center justify-between gap-3 pb-3 mb-3 border-b border-[#d3b683]/20 w-full text-left">
+        <div class="flex items-center gap-3">
+          <button
+            id="editorjs-back-btn"
+            type="button"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/50 border border-[#d3b683]/30 hover:border-[#d3b683]/80 hover:bg-[#181820] text-[#d3b683] text-xs font-semibold tracking-wide transition-all cursor-pointer shadow-sm"
+            title="Return to Landing Hero"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            <span>Landing</span>
+          </button>
+
+          <div class="relative flex items-center">
+            <input
+              id="editorjs-title-input"
+              type="text"
+              placeholder="Capsule Title..."
+              value="My Bitty Note"
+              class="bg-transparent border-b border-zinc-700 focus:border-[#d3b683] text-sm md:text-base font-semibold text-white placeholder-zinc-500 px-1 py-0.5 focus:outline-none transition-colors w-36 sm:w-52 md:w-60"
+            />
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 text-xs">
+          <div id="editorjs-stats" class="hidden sm:inline-block px-2.5 py-1 rounded-lg bg-black/60 border border-zinc-800 text-[11px] font-mono text-zinc-400">
+            0 words • 0 chars
+          </div>
+
+          <button
+            id="editorjs-clear-btn"
+            type="button"
+            class="px-2.5 py-1.5 rounded-lg bg-zinc-900/80 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 border border-zinc-800 text-[11px] transition-all cursor-pointer"
+            title="Clear all blocks"
+          >
+            Clear
+          </button>
+
+          <button
+            id="editorjs-copy-btn"
+            type="button"
+            class="px-3 py-1.5 rounded-lg bg-[#191920] hover:bg-[#23232c] text-[#d3b683] border border-[#d3b683]/30 hover:border-[#d3b683]/60 text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5"
+            title="Copy as Rich HTML"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+            <span>Copy</span>
+          </button>
+
+          <button
+            id="editorjs-seal-btn"
+            type="button"
+            class="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-[#d3b683] to-[#b3955d] hover:from-[#e3c794] hover:to-[#c3a56e] text-black font-semibold text-xs transition-all cursor-pointer shadow-lg shadow-[#d3b683]/20 flex items-center gap-1.5"
+            title="Seal into a stateless shareable Bitty Box capsule URL"
+          >
+            <span>⚡ Seal Capsule</span>
+          </button>
+        </div>
       </div>
 
-      <div id="glow">
-        <div class="circle"></div>
-        <div class="circle"></div>
+      <!-- Editor Canvas -->
+      <div class="relative w-full rounded-2xl bg-[#09090d]/80 border border-zinc-800/90 p-4 sm:p-6 md:p-8 min-h-[380px] max-h-[62vh] overflow-y-auto text-left shadow-inner custom-editor-scroll">
+        <div id="editorjs"></div>
       </div>
-    </button>
-
-    <div id="auth-container" class="auth-actions">
-      <!-- Injected dynamically based on auth state -->
     </div>
   </main>
 
@@ -4896,34 +5201,13 @@
       switchBottomTab('credits');
     });
 
-    // Buy Credits Flow
+    // Credit purchasing is intentionally paused until server-created Creem
+    // checkout and signed-webhook verification become the only source of truth.
     document.querySelectorAll('.buy-credits-btn').forEach((btn) => {
-      btn.addEventListener('click', async () => {
-        const tier = btn.getAttribute('data-tier') || 'Credit Pack';
-        const credits = parseInt(btn.getAttribute('data-credits') || '1000', 10);
-        const price = btn.getAttribute('data-price') || '$9';
-        
-        btn.textContent = 'Processing...';
-        btn.disabled = true;
-
-        try {
-          await fetch('/api/credits/purchase', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tier, credits, amount: price })
-          });
-        } catch {
-          // graceful offline simulation fallback
-        }
-
-        setTimeout(() => {
-          const current = getStoredCredits();
-          const updated = current + credits;
-          setStoredCredits(updated);
-          btn.textContent = `Purchase ${credits.toLocaleString()} Credits`;
-          btn.disabled = false;
-          showToast(`⚡ Successfully purchased ${tier}! Added +${credits.toLocaleString()} Credits.`);
-        }, 350);
+      btn.textContent = 'Billing Rebuild in Progress';
+      btn.setAttribute('aria-disabled', 'true');
+      btn.addEventListener('click', () => {
+        showToast('Billing is paused while verified checkout is rebuilt. No credits were added.');
       });
     });
 
@@ -6449,14 +6733,401 @@ setInterval(()=>{
       progressTimer = requestAnimationFrame(updateProgress);
     })();
 
-    // Main Center Circular Button
-    getStartedBtn?.addEventListener('click', () => {
-      if (!currentUser) {
-        handleGoogleSignIn();
-      } else {
-        openRightPanel();
-        showToast('Capsule Forge Studio open. Choose a template or prompt.');
+    // ============================================================
+    // EDITJS (EDITOR.JS) RICH TEXT AREA CONTROLLER & TRANSFORM
+    // ============================================================
+    let editorInstance = null;
+    let editorInitialized = false;
+
+    function updateEditorStats(data) {
+      const statsEl = document.getElementById('editorjs-stats');
+      if (!statsEl || !data || !data.blocks) return;
+      let text = '';
+      data.blocks.forEach(b => {
+        if (b.data) {
+          if (typeof b.data.text === 'string') text += ' ' + b.data.text.replace(/<[^>]*>/g, '');
+          if (Array.isArray(b.data.items)) {
+            b.data.items.forEach(it => {
+              const itText = typeof it === 'string' ? it : it.text || '';
+              text += ' ' + itText.replace(/<[^>]*>/g, '');
+            });
+          }
+          if (typeof b.data.code === 'string') text += ' ' + b.data.code;
+          if (Array.isArray(b.data.content)) {
+            b.data.content.forEach(row => {
+              if (Array.isArray(row)) row.forEach(c => text += ' ' + String(c).replace(/<[^>]*>/g, ''));
+            });
+          }
+        }
+      });
+      const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+      const chars = text.length;
+      statsEl.textContent = `${words} word${words === 1 ? '' : 's'} • ${chars} char${chars === 1 ? '' : 's'}`;
+    }
+
+    function convertEditorJSToHTML(data) {
+      if (!data || !data.blocks) return '';
+      let html = '';
+      data.blocks.forEach(block => {
+        switch (block.type) {
+          case 'header':
+            html += `<h${block.data.level}>${block.data.text}</h${block.data.level}>\n`;
+            break;
+          case 'paragraph':
+            html += `<p>${block.data.text}</p>\n`;
+            break;
+          case 'list': {
+            const tag = block.data.style === 'ordered' ? 'ol' : 'ul';
+            html += `<${tag}>\n`;
+            (block.data.items || []).forEach(item => {
+              const text = typeof item === 'string' ? item : item.content || item.text || '';
+              html += `  <li>${text}</li>\n`;
+            });
+            html += `</${tag}>\n`;
+            break;
+          }
+          case 'checklist':
+            html += `<ul class="checklist">\n`;
+            (block.data.items || []).forEach(item => {
+              const checked = item.checked ? 'checked' : '';
+              html += `  <li><input type="checkbox" disabled ${checked}> ${item.text}</li>\n`;
+            });
+            html += `</ul>\n`;
+            break;
+          case 'quote':
+            html += `<blockquote>\n  <p>${block.data.text}</p>\n`;
+            if (block.data.caption) html += `  <cite>${block.data.caption}</cite>\n`;
+            html += `</blockquote>\n`;
+            break;
+          case 'code':
+            html += `<pre><code>${(block.data.code || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code></pre>\n`;
+            break;
+          case 'delimiter':
+            html += `<hr />\n`;
+            break;
+          case 'table':
+            html += `<table>\n`;
+            (block.data.content || []).forEach((row, rowIndex) => {
+              html += `  <tr>\n`;
+              row.forEach(cell => {
+                const cellTag = (rowIndex === 0 && block.data.withHeadings) ? 'th' : 'td';
+                html += `    <${cellTag}>${cell}</${cellTag}>\n`;
+              });
+              html += `  </tr>\n`;
+            });
+            html += `</table>\n`;
+            break;
+          default:
+            if (block.data && block.data.text) html += `<p>${block.data.text}</p>\n`;
+            break;
+        }
+      });
+      return html;
+    }
+
+    async function initEditorJS() {
+      if (editorInitialized && editorInstance) return;
+
+      const savedDraft = localStorage.getItem('bittybox_editorjs_draft');
+      let initialData = null;
+      if (savedDraft) {
+        try {
+          initialData = JSON.parse(savedDraft);
+        } catch {}
       }
+
+      if (!initialData || !initialData.blocks || initialData.blocks.length === 0) {
+        initialData = {
+          time: Date.now(),
+          blocks: [
+            {
+              type: 'header',
+              data: {
+                text: 'Welcome to your Bitty Box Capsule',
+                level: 2
+              }
+            },
+            {
+              type: 'paragraph',
+              data: {
+                text: 'Start writing your rich text notes, private memo, or micro-app content. Press Tab or click the + icon to add blocks.'
+              }
+            }
+          ]
+        };
+      }
+
+      try {
+        const tools = {};
+        if (typeof window.Header === 'function') {
+          tools.header = {
+            class: window.Header,
+            inlineToolbar: ['link', 'marker'],
+            config: {
+              placeholder: 'Heading...',
+              levels: [1, 2, 3, 4],
+              defaultLevel: 2
+            }
+          };
+        }
+        if (typeof window.EditorjsList === 'function') {
+          tools.list = {
+            class: window.EditorjsList,
+            inlineToolbar: true,
+            config: { defaultStyle: 'unordered' }
+          };
+        }
+        if (typeof window.Checklist === 'function') {
+          tools.checklist = {
+            class: window.Checklist,
+            inlineToolbar: true
+          };
+        }
+        if (typeof window.Quote === 'function') {
+          tools.quote = {
+            class: window.Quote,
+            inlineToolbar: true,
+            config: {
+              quotePlaceholder: 'Enter quote...',
+              captionPlaceholder: 'Quote author'
+            }
+          };
+        }
+        if (typeof window.CodeTool === 'function') {
+          tools.code = {
+            class: window.CodeTool,
+            config: {
+              placeholder: 'Enter code snippet...'
+            }
+          };
+        }
+        if (typeof window.Delimiter === 'function') {
+          tools.delimiter = window.Delimiter;
+        }
+        if (typeof window.Table === 'function') {
+          tools.table = {
+            class: window.Table,
+            inlineToolbar: true,
+            config: {
+              rows: 2,
+              cols: 3
+            }
+          };
+        }
+        if (typeof window.InlineCode === 'function') {
+          tools.inlineCode = {
+            class: window.InlineCode,
+            shortcut: 'CMD+SHIFT+M'
+          };
+        }
+        if (typeof window.Marker === 'function') {
+          tools.marker = {
+            class: window.Marker,
+            shortcut: 'CMD+SHIFT+H'
+          };
+        }
+
+        editorInstance = new window.EditorJS({
+          holder: 'editorjs',
+          placeholder: 'Click here or press Tab to start writing in your private capsule...',
+          data: initialData,
+          tools: tools,
+          onChange: async () => {
+            try {
+              const outputData = await editorInstance.save();
+              localStorage.setItem('bittybox_editorjs_draft', JSON.stringify(outputData));
+              updateEditorStats(outputData);
+            } catch (err) {
+              console.warn('Editor auto-save note:', err);
+            }
+          }
+        });
+
+        await editorInstance.isReady;
+        editorInitialized = true;
+        window.editorInstance = editorInstance;
+        updateEditorStats(initialData);
+      } catch (e) {
+        console.error('Failed to initialize EditorJS:', e);
+      }
+    }
+
+    window.transformToEditor = transformToEditor;
+    window.transformToHero = transformToHero;
+
+    async function transformToEditor() {
+      const stage = document.querySelector('.stage');
+      const heroView = document.getElementById('hero-stage-view');
+      const editorView = document.getElementById('editorjs-stage-view');
+
+      if (!stage || !heroView || !editorView) return;
+
+      heroView.classList.add('stage-view-hidden');
+      stage.classList.add('editor-mode');
+      editorView.classList.remove('stage-view-hidden');
+
+      await initEditorJS();
+      showToast('EditJS Rich Text Studio active. Write your capsule.');
+    }
+
+    function transformToHero() {
+      const stage = document.querySelector('.stage');
+      const heroView = document.getElementById('hero-stage-view');
+      const editorView = document.getElementById('editorjs-stage-view');
+
+      if (!stage || !heroView || !editorView) return;
+
+      editorView.classList.add('stage-view-hidden');
+      stage.classList.remove('editor-mode');
+      heroView.classList.remove('stage-view-hidden');
+    }
+
+    // Hook Back Button
+    document.getElementById('editorjs-back-btn')?.addEventListener('click', () => {
+      transformToHero();
+    });
+
+    // Hook Clear Button
+    document.getElementById('editorjs-clear-btn')?.addEventListener('click', async () => {
+      if (!editorInstance) return;
+      try {
+        await editorInstance.clear();
+        localStorage.removeItem('bittybox_editorjs_draft');
+        updateEditorStats({ blocks: [] });
+        showToast('Editor canvas cleared');
+      } catch (err) {
+        console.warn('Clear error:', err);
+      }
+    });
+
+    // Hook Copy Button
+    document.getElementById('editorjs-copy-btn')?.addEventListener('click', async () => {
+      if (!editorInstance) return;
+      try {
+        const outputData = await editorInstance.save();
+        const html = convertEditorJSToHTML(outputData);
+        await navigator.clipboard.writeText(html);
+        showToast('📋 Rich text HTML copied to clipboard');
+      } catch {
+        showToast('Failed to copy to clipboard');
+      }
+    });
+
+    // Hook Seal Capsule Button
+    document.getElementById('editorjs-seal-btn')?.addEventListener('click', async () => {
+      if (!editorInstance) return;
+      try {
+        const outputData = await editorInstance.save();
+        const htmlBody = convertEditorJSToHTML(outputData);
+        if (!htmlBody.trim()) {
+          showToast('Write something in your capsule before sealing');
+          return;
+        }
+
+        const title = document.getElementById('editorjs-title-input')?.value.trim() || 'Untitled Capsule';
+        const fullHTML = `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${title}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@300;400;500;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root { color-scheme: dark; }
+    body {
+      background: #08080b;
+      color: #e4e4e7;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      line-height: 1.7;
+      margin: 0;
+      padding: 2.5rem 1.5rem;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+    }
+    .capsule-wrapper {
+      max-width: 740px;
+      width: 100%;
+    }
+    h1, h2, h3, h4 {
+      font-family: 'Cinzel', serif;
+      color: #f5eedd;
+      margin-top: 1.6em;
+      margin-bottom: 0.6em;
+      letter-spacing: 0.02em;
+    }
+    h1 { font-size: 2.2rem; border-bottom: 1px solid rgba(211,182,131,0.25); padding-bottom: 0.5rem; }
+    h2 { font-size: 1.6rem; color: #d3b683; }
+    h3 { font-size: 1.25rem; }
+    p { margin: 1em 0; }
+    a { color: #d3b683; text-decoration: underline; }
+    blockquote {
+      border-left: 3px solid #d3b683;
+      background: rgba(211,182,131,0.06);
+      margin: 1.5em 0;
+      padding: 1rem 1.25rem;
+      border-radius: 0 8px 8px 0;
+      font-style: italic;
+    }
+    blockquote cite { display: block; margin-top: 0.5rem; font-size: 0.85em; color: #a1a1aa; font-style: normal; }
+    pre {
+      background: #040406;
+      border: 1px solid rgba(211,182,131,0.2);
+      border-radius: 10px;
+      padding: 1rem;
+      overflow-x: auto;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.9em;
+      color: #38bdf8;
+    }
+    code { font-family: 'Fira Code', monospace; background: rgba(255,255,255,0.08); padding: 0.2em 0.4em; border-radius: 4px; font-size: 0.88em; }
+    ul, ol { padding-left: 1.5rem; margin: 1em 0; }
+    li { margin: 0.4em 0; }
+    .checklist { list-style: none; padding-left: 0; }
+    .checklist li { display: flex; align-items: center; gap: 0.5rem; }
+    table { width: 100%; border-collapse: collapse; margin: 1.5em 0; border: 1px solid rgba(211,182,131,0.2); }
+    th, td { border: 1px solid rgba(211,182,131,0.2); padding: 0.6rem 0.8rem; text-align: left; }
+    th { background: rgba(211,182,131,0.1); color: #d3b683; }
+    hr { border: 0; height: 1px; background: radial-gradient(circle, #d3b683 0%, transparent 80%); margin: 2rem 0; }
+    mark { background: rgba(211,182,131,0.35); color: #fff; padding: 0.1em 0.3em; border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <div class="capsule-wrapper">
+    ${htmlBody}
+  </div>
+</body>
+</html>`;
+
+        const { bytes: compBytes, base64 } = await compressPayload(fullHTML);
+        const generatedUrl = `${window.location.origin}/#${base64}`;
+
+        if (resultUrlDisplay) resultUrlDisplay.value = generatedUrl;
+        if (resultOpenBtn) resultOpenBtn.href = generatedUrl;
+        if (forgeResultCard) forgeResultCard.classList.remove('hidden');
+
+        if (boxContentInput) boxContentInput.value = fullHTML;
+        if (boxTitleInput) boxTitleInput.value = title;
+
+        try {
+          await navigator.clipboard.writeText(generatedUrl);
+          showToast('⚡ Capsule Sealed! URL copied to clipboard.');
+        } catch {
+          showToast('⚡ Capsule Sealed! URL generated.');
+        }
+
+        openRightPanel();
+      } catch (err) {
+        console.error('Sealing error:', err);
+        showToast('Failed to seal capsule: ' + err.message);
+      }
+    });
+
+    // Main Center Circular Button: Transform to EditJS
+    getStartedBtn?.addEventListener('click', () => {
+      transformToEditor();
     });
 
     initFirebase();
