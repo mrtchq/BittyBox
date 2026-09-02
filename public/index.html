@@ -987,8 +987,10 @@
   .bottom-panel {
     position: fixed;
     inset: 0;
-    width: 100vw;
-    height: 100vh;
+    width: 100%;
+    height: 100vh; /* fallback for browsers without dvh */
+    height: 100dvh; /* dynamic viewport height: respects mobile URL/toolbar chrome */
+    max-height: 100dvh;
     z-index: 60;
     background: radial-gradient(120% 100% at 50% 0%, #151311 0%, #0c0c0e 60%, #070709 100%);
     border-top: 1px solid rgba(211, 182, 131, 0.35);
@@ -1000,6 +1002,19 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+  }
+
+  /* Mobile-safe scrolling inside the full-page locks panel: keep the last
+     content above the home indicator / URL bar so it stays reachable. */
+  .bottom-panel .panel-scroll {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  /* The scrollable panel body must leave room for the mobile home indicator
+     and URL bar, otherwise the lowest controls are clipped and unreachable. */
+  .bottom-panel > .overflow-y-auto {
+    min-height: 0;
+    padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
   }
   .bottom-panel.open {
     transform: translateY(0);
