@@ -1246,39 +1246,6 @@
     transform: scale(0.96);
   }
 
-  /* Replay Button in homepage corner */
-  .replay-splash-trigger {
-    position: fixed;
-    top: 16px;
-    right: 16px;
-    z-index: 45;
-    background: rgba(14, 14, 17, 0.85);
-    border: 1px solid rgba(211, 182, 131, 0.35);
-    color: #d3b683;
-    font-family: monospace;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    padding: 7px 14px;
-    border-radius: 999px;
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.6);
-    transition: all 0.25s ease;
-  }
-
-  .replay-splash-trigger:hover {
-    border-color: #d3b683;
-    color: #ffffff;
-    background: rgba(211, 182, 131, 0.18);
-    box-shadow: 0 0 20px rgba(211, 182, 131, 0.4);
-    transform: scale(1.04);
-  }
-
   /* BEGIN USER-SUPPLIED PAGE STARFIELD */
 .space-background {
   position: fixed;
@@ -3725,11 +3692,6 @@
       </div>
     </div>
   </div>
-
-  <!-- Replay Splash Button on Homepage -->
-  <button id="replay-splash-btn" type="button" class="replay-splash-trigger" title="Replay Holographic Splash Intro">
-    <span>⚡</span><span>INTRO</span>
-  </button>
 
   <!-- Backdrop for side & bottom drawers -->
   <div id="panel-backdrop" class="panel-backdrop"></div>
@@ -6428,9 +6390,7 @@ setInterval(()=>{
       const soundBtn = document.getElementById('splash-sound-toggle');
       const soundLabel = document.getElementById('splash-sound-label');
       const soundIcon = document.getElementById('splash-sound-icon');
-      const replayBtn = document.getElementById('replay-splash-btn');
       const targetHomepageBtn = document.getElementById('get-started-btn');
-
       if (!overlay || !canvas) return;
 
       // Web Audio Synthesizer (Zero asset dependencies)
@@ -6767,32 +6727,6 @@ setInterval(()=>{
         }
       });
 
-      // Replay functionality
-      function triggerReplay() {
-        if (progressTimer) cancelAnimationFrame(progressTimer);
-        if (animFrameId) cancelAnimationFrame(animFrameId);
-        clearInterval(scrambleTimer);
-        hasCompleted = false;
-        isWarping = false;
-        warpSpeed = 1;
-        phraseIdx = 0;
-        startTime = Date.now();
-        overlay.classList.remove('splash-hidden', 'warp-out');
-        overlay.style.opacity = '';
-        overlay.style.transform = '';
-        overlay.style.filter = '';
-        overlay.style.display = '';
-        void overlay.offsetWidth;
-        initParticles();
-        renderCanvas();
-        cycleTelemetry();
-        progressTimer = requestAnimationFrame(updateProgress);
-      }
-
-      replayBtn?.addEventListener('click', (e) => {
-        e.stopPropagation();
-        triggerReplay();
-      });
 
       // Start Splash
       resizeCanvas();

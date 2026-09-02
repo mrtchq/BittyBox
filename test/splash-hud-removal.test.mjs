@@ -22,3 +22,10 @@ test('splash omits the circled top-left and top-right HUD items', async () => {
   assert.match(html.slice(coreOpening), /id="splash-gyro-wrapper"/);
   assert.match(html.slice(coreOpening), /id="splash-enter-btn"/);
 });
+
+test('landing page omits the replay splash Intro button', async () => {
+  const html = await readFile(landingPath, 'utf8');
+  assert.doesNotMatch(html, /id="replay-splash-btn"/);
+  assert.doesNotMatch(html, /class="replay-splash-trigger"/);
+  assert.doesNotMatch(html, /<span>INTRO<\/span>/);
+});
