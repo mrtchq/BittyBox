@@ -397,6 +397,25 @@
     min-height: 60px;
     overflow: auto;
   }
+  .bitty-html-preview-frame {
+    display: block;
+    width: 100%;
+    min-height: 240px;
+    border: 0;
+    border-radius: 6px;
+    background: #ffffff;
+  }
+  .bitty-block-empty,
+  .bitty-block-error {
+    display: block;
+    padding: 10px;
+    color: #71717a;
+    font-size: 12px;
+    font-style: italic;
+  }
+  .bitty-block-error {
+    color: #fca5a5;
+  }
   .bitty-block-caption {
     width: 100%;
     background: transparent;
@@ -5033,7 +5052,7 @@
 
     <!-- Capsule iframe viewport -->
     <div class="flex-1 w-full h-full relative overflow-hidden bg-[#08080b]">
-      <iframe id="capsule-viewer-frame" class="w-full h-full border-0" sandbox="allow-scripts allow-forms allow-popups allow-modals allow-same-origin" title="Self-Contained Bitty Capsule"></iframe>
+      <iframe id="capsule-viewer-frame" class="w-full h-full border-0" sandbox="allow-scripts allow-forms allow-popups allow-modals" title="Self-Contained Bitty Capsule"></iframe>
     </div>
   </div>
 
@@ -6948,61 +6967,111 @@ setInterval(()=>{
     // ============================================================
     // GHOST CMS COMPATIBLE BLOCKS (HTML, EMBED, AUDIO)
     // ============================================================
+    function escapeCardText(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function toSafeHttpUrl(rawUrl) {
+      const value = String(rawUrl ?? '').trim();
+      if (!value) return '';
+      try {
+        const parsed = new URL(value);
+        if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return '';
+        return parsed.href;
+      } catch {
+        return '';
+      }
+    }
+
+    function buildEmbedIframe(src, service, title) {
+      const safeSrc = toSafeHttpUrl(src);
+      if (!safeSrc) return '';
+      const trustedMediaService = ['youtube', 'vimeo', 'spotify', 'soundcloud', 'codepen'].includes(service);
+      const sandbox = trustedMediaService
+        ? 'allow-scripts allow-forms allow-popups allow-presentation allow-same-origin'
+        : 'allow-scripts allow-forms allow-popups allow-presentation';
+      const allow = service === 'spotify' || service === 'soundcloud'
+        ? 'autoplay; encrypted-media'
+        : 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+      return `<iframe src="${escapeCardText(safeSrc)}" title="${escapeCardText(title || 'Embedded content')}" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" sandbox="${sandbox}" allow="${allow}" allowfullscreen></iframe>`;
+    }
+
     function parseEmbedUrl(rawUrl) {
-      if (!rawUrl) return { url: '', embedHtml: '', service: 'generic' };
-      const str = String(rawUrl).trim();
+      if (!rawUrl) return { url: '', embedHtml: '', service: 'invalid' };
+      let value = String(rawUrl).trim();
+      let iframeInput = false;
 
-      // Check if raw iframe code was provided
-      if (str.startsWith('<iframe') && str.includes('</iframe>')) {
-        const srcMatch = str.match(/src=["']([^"']+)["']/i);
-        const url = srcMatch ? srcMatch[1] : '';
-        return { url, embedHtml: str, service: 'iframe' };
+      if (/^<iframe\b/i.test(value)) {
+        const srcMatch = value.match(/\bsrc\s*=\s*["']([^"']+)["']/i);
+        if (!srcMatch) return { url: '', embedHtml: '', service: 'invalid' };
+        value = srcMatch[1];
+        iframeInput = true;
       }
 
-      // YouTube
-      const ytMatch = str.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
-      if (ytMatch) {
-        const id = ytMatch[1];
-        const embedUrl = `https://www.youtube.com/embed/${id}`;
-        const embedHtml = `<iframe src="${embedUrl}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
-        return { url: str, embedHtml, service: 'youtube' };
+      const safeUrl = toSafeHttpUrl(value);
+      if (!safeUrl) return { url: '', embedHtml: '', service: 'invalid' };
+
+      const parsed = new URL(safeUrl);
+      const host = parsed.hostname.toLowerCase();
+
+      if (iframeInput) {
+        return {
+          url: safeUrl,
+          embedHtml: buildEmbedIframe(safeUrl, 'iframe', 'Embedded content'),
+          service: 'iframe'
+        };
       }
 
-      // Vimeo
-      const vimeoMatch = str.match(/(?:vimeo\.com\/(?:channels\/(?:\w+\/)?|groups\/([^\/]*)\/videos\/|album\/(\d+)\/video\/|video\/|)(\d+))/i);
-      if (vimeoMatch) {
-        const id = vimeoMatch[3];
-        const embedUrl = `https://player.vimeo.com/video/${id}`;
-        const embedHtml = `<iframe src="${embedUrl}" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`;
-        return { url: str, embedHtml, service: 'vimeo' };
+      if (host === 'youtu.be' || host === 'youtube.com' || host.endsWith('.youtube.com')) {
+        const pathParts = parsed.pathname.split('/').filter(Boolean);
+        const id = host === 'youtu.be'
+          ? pathParts[0]
+          : (parsed.searchParams.get('v') || (['embed', 'shorts', 'live'].includes(pathParts[0]) ? pathParts[1] : ''));
+        if (id && /^[A-Za-z0-9_-]{11}$/.test(id)) {
+          const embedUrl = `https://www.youtube.com/embed/${id}`;
+          return { url: safeUrl, embedHtml: buildEmbedIframe(embedUrl, 'youtube', 'YouTube video player'), service: 'youtube' };
+        }
       }
 
-      // Spotify
-      const spotifyMatch = str.match(/open\.spotify\.com\/(track|playlist|album|episode|show)\/([a-zA-Z0-9]+)/i);
-      if (spotifyMatch) {
-        const embedUrl = `https://open.spotify.com/embed/${spotifyMatch[1]}/${spotifyMatch[2]}`;
-        const embedHtml = `<iframe src="${embedUrl}" width="100%" height="152" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>`;
-        return { url: str, embedHtml, service: 'spotify' };
+      if (host === 'vimeo.com' || host.endsWith('.vimeo.com')) {
+        const id = parsed.pathname.split('/').filter(Boolean).reverse().find(part => /^\d+$/.test(part));
+        if (id) {
+          const embedUrl = `https://player.vimeo.com/video/${id}`;
+          return { url: safeUrl, embedHtml: buildEmbedIframe(embedUrl, 'vimeo', 'Vimeo video player'), service: 'vimeo' };
+        }
       }
 
-      // SoundCloud
-      if (str.includes('soundcloud.com/')) {
-        const embedUrl = `https://w.soundcloud.com/player/?url=${encodeURIComponent(str)}&color=%23d3b683&auto_play=false&hide_related=true&show_comments=true&show_user=true&show_reposts=false&show_teaser=true`;
-        const embedHtml = `<iframe width="100%" height="166" scrolling="no" frameborder="no" allow="autoplay" src="${embedUrl}"></iframe>`;
-        return { url: str, embedHtml, service: 'soundcloud' };
+      if (host === 'open.spotify.com') {
+        const parts = parsed.pathname.split('/').filter(Boolean);
+        if (['track', 'playlist', 'album', 'episode', 'show'].includes(parts[0]) && /^[A-Za-z0-9]+$/.test(parts[1] || '')) {
+          const embedUrl = `https://open.spotify.com/embed/${parts[0]}/${parts[1]}`;
+          return { url: safeUrl, embedHtml: buildEmbedIframe(embedUrl, 'spotify', 'Spotify player'), service: 'spotify' };
+        }
       }
 
-      // CodePen
-      const codepenMatch = str.match(/codepen\.io\/([^\/]+)\/pen\/([^\/\?]+)/i);
-      if (codepenMatch) {
-        const embedUrl = `https://codepen.io/${codepenMatch[1]}/embed/${codepenMatch[2]}?default-tab=html%2Cresult&theme-id=dark`;
-        const embedHtml = `<iframe height="380" style="width: 100%;" scrolling="no" src="${embedUrl}" frameborder="no" loading="lazy" allowtransparency="true" allowfullscreen="true"></iframe>`;
-        return { url: str, embedHtml, service: 'codepen' };
+      if (host === 'soundcloud.com' || host.endsWith('.soundcloud.com')) {
+        const embedUrl = `https://w.soundcloud.com/player/?url=${encodeURIComponent(safeUrl)}&color=%23d3b683&auto_play=false&hide_related=true&show_comments=true&show_user=true&show_reposts=false&show_teaser=true`;
+        return { url: safeUrl, embedHtml: buildEmbedIframe(embedUrl, 'soundcloud', 'SoundCloud player'), service: 'soundcloud' };
       }
 
-      // Generic URL fallback
-      const embedHtml = `<iframe src="${str}" style="width:100%; height:100%; border:0;" frameborder="0" allowfullscreen></iframe>`;
-      return { url: str, embedHtml, service: 'generic' };
+      if (host === 'codepen.io') {
+        const parts = parsed.pathname.split('/').filter(Boolean);
+        if (parts[1] === 'pen' && parts[0] && /^[A-Za-z0-9_-]+$/.test(parts[2] || '')) {
+          const embedUrl = `https://codepen.io/${encodeURIComponent(parts[0])}/embed/${parts[2]}?default-tab=html%2Cresult&theme-id=dark`;
+          return { url: safeUrl, embedHtml: buildEmbedIframe(embedUrl, 'codepen', 'CodePen embed'), service: 'codepen' };
+        }
+      }
+
+      return {
+        url: safeUrl,
+        embedHtml: buildEmbedIframe(safeUrl, 'generic', 'Embedded web content'),
+        service: 'generic'
+      };
     }
 
     class GhostHTMLTool {
@@ -7077,10 +7146,20 @@ setInterval(()=>{
 
         const updatePreview = () => {
           const val = this.textarea.value.trim();
+          this.previewEl.replaceChildren();
           if (!val) {
-            this.previewEl.innerHTML = '<span style="color: #71717a; font-style: italic; font-size: 12px;">(Empty HTML card. Switch to Edit to write HTML.)</span>';
+            const emptyState = document.createElement('span');
+            emptyState.classList.add('bitty-block-empty');
+            emptyState.textContent = '(Empty HTML card. Switch to Edit to write HTML.)';
+            this.previewEl.appendChild(emptyState);
           } else {
-            this.previewEl.innerHTML = val;
+            const previewFrame = document.createElement('iframe');
+            previewFrame.classList.add('bitty-html-preview-frame');
+            previewFrame.setAttribute('sandbox', '');
+            previewFrame.setAttribute('referrerpolicy', 'no-referrer');
+            previewFrame.title = 'HTML block preview';
+            previewFrame.srcdoc = val;
+            this.previewEl.appendChild(previewFrame);
           }
         };
 
@@ -7158,7 +7237,10 @@ setInterval(()=>{
 
         const badge = document.createElement('div');
         badge.classList.add('bitty-block-badge');
-        badge.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><span id="embed-header-label">${this.data.service ? this.data.service.toUpperCase() : 'EMBED'}</span>`;
+        badge.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><span>EMBED</span>`;
+        badge.querySelector('span').textContent = /^[a-z0-9-]+$/i.test(this.data.service)
+          ? this.data.service.toUpperCase()
+          : 'EMBED';
 
         const actions = document.createElement('div');
         actions.classList.add('bitty-block-actions');
@@ -7209,7 +7291,7 @@ setInterval(()=>{
         const hint = document.createElement('div');
         hint.style.fontSize = '11px';
         hint.style.color = '#71717a';
-        hint.textContent = 'Supports YouTube, Vimeo, Spotify, SoundCloud, CodePen, and custom iframe codes.';
+        hint.textContent = 'Paste an HTTP(S) URL or iframe code. Custom iframe attributes are stripped for safety.';
 
         form.appendChild(inputRow);
         form.appendChild(hint);
@@ -7237,6 +7319,14 @@ setInterval(()=>{
 
         const renderFrame = () => {
           const parsed = parseEmbedUrl(this.data.url);
+          frameWrapper.replaceChildren();
+          if (!parsed.embedHtml) {
+            const error = document.createElement('span');
+            error.classList.add('bitty-block-error');
+            error.textContent = 'Enter a valid HTTP(S) URL. Use an HTML block for custom scripts or markup.';
+            frameWrapper.appendChild(error);
+            return false;
+          }
           this.data.service = parsed.service;
           this.data.embed = parsed.embedHtml;
           badge.querySelector('span').textContent = parsed.service.toUpperCase();
@@ -7244,13 +7334,19 @@ setInterval(()=>{
           const isAudio = parsed.service === 'spotify' || parsed.service === 'soundcloud';
           frameWrapper.className = 'bitty-embed-frame-wrapper' + (isAudio ? ' audio-embed' : '');
           frameWrapper.innerHTML = parsed.embedHtml;
+          return true;
         };
 
         const applyEmbed = () => {
           const val = this.input.value.trim();
           if (!val) return;
           this.data.url = val;
-          renderFrame();
+          if (!renderFrame()) {
+            form.style.display = 'flex';
+            this.previewContainer.style.display = 'block';
+            changeBtn.style.display = 'none';
+            return;
+          }
           form.style.display = 'none';
           this.previewContainer.style.display = 'block';
           changeBtn.style.display = 'inline-block';
@@ -7281,11 +7377,12 @@ setInterval(()=>{
       }
 
       save() {
+        const parsed = parseEmbedUrl(this.data.url || (this.input ? this.input.value.trim() : ''));
         return {
-          url: this.data.url || (this.input ? this.input.value.trim() : ''),
+          url: parsed.url,
           caption: this.captionInput ? this.captionInput.value.trim() : (this.data.caption || ''),
-          service: this.data.service || 'generic',
-          embed: this.data.embed || ''
+          service: parsed.service,
+          embed: parsed.embedHtml
         };
       }
     }
@@ -7388,7 +7485,11 @@ setInterval(()=>{
         this.srcInput.addEventListener('keydown', (e) => e.stopPropagation());
         this.srcInput.addEventListener('input', () => {
           this.data.src = this.srcInput.value.trim();
-          if (this.audioEl) this.audioEl.src = this.data.src;
+          const safeSrc = toSafeHttpUrl(this.data.src);
+          if (this.audioEl) {
+            if (safeSrc) this.audioEl.src = safeSrc;
+            else this.audioEl.removeAttribute('src');
+          }
         });
 
         srcRow.appendChild(this.srcInput);
@@ -7406,7 +7507,8 @@ setInterval(()=>{
         this.audioEl.classList.add('bitty-audio-player');
         this.audioEl.controls = true;
         this.audioEl.preload = 'metadata';
-        if (this.data.src) this.audioEl.src = this.data.src;
+        const initialAudioSrc = toSafeHttpUrl(this.data.src);
+        if (initialAudioSrc) this.audioEl.src = initialAudioSrc;
 
         fields.appendChild(this.titleInput);
         fields.appendChild(this.artistInput);
@@ -7436,7 +7538,7 @@ setInterval(()=>{
 
       save() {
         return {
-          src: this.srcInput ? this.srcInput.value.trim() : (this.data.src || ''),
+          src: toSafeHttpUrl(this.srcInput ? this.srcInput.value.trim() : (this.data.src || '')),
           title: this.titleInput ? this.titleInput.value.trim() : (this.data.title || ''),
           artist: this.artistInput ? this.artistInput.value.trim() : (this.data.artist || ''),
           caption: this.captionInput ? this.captionInput.value.trim() : (this.data.caption || '')
@@ -7538,14 +7640,11 @@ setInterval(()=>{
             break;
           case 'embed': {
             const url = block.data.url || block.data.source || '';
-            const caption = block.data.caption || '';
-            let embedHtml = block.data.embed || '';
-            let service = block.data.service || '';
-            if (!embedHtml && url) {
-              const parsed = parseEmbedUrl(url);
-              embedHtml = parsed.embedHtml;
-              service = parsed.service;
-            }
+            const caption = escapeCardText(block.data.caption || '');
+            const parsed = parseEmbedUrl(url);
+            const embedHtml = parsed.embedHtml;
+            const service = parsed.service;
+            if (!embedHtml) break;
             const isAudioEmbed = service === 'spotify' || service === 'soundcloud';
             const containerClass = isAudioEmbed ? 'kg-embed-container kg-embed-audio' : 'kg-embed-container';
             html += `<figure class="kg-card kg-embed-card">\n`;
@@ -7557,10 +7656,10 @@ setInterval(()=>{
             break;
           }
           case 'audio': {
-            const title = (block.data.title || 'Audio Track').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            const artist = (block.data.artist || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            const src = block.data.src || '';
-            const caption = block.data.caption || '';
+            const title = escapeCardText(block.data.title || 'Audio Track');
+            const artist = escapeCardText(block.data.artist || '');
+            const src = toSafeHttpUrl(block.data.src || '');
+            const caption = escapeCardText(block.data.caption || '');
             html += `<div class="kg-card kg-audio-card">\n`;
             html += `  <div class="kg-audio-thumbnail placeholder">\n`;
             html += `    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>\n`;
@@ -7572,7 +7671,11 @@ setInterval(()=>{
               html += `      <div class="kg-audio-artist">${artist}</div>\n`;
             }
             html += `    </div>\n`;
-            html += `    <audio controls src="${src}" preload="metadata"></audio>\n`;
+            if (src) {
+              html += `    <audio controls src="${escapeCardText(src)}" preload="metadata"></audio>\n`;
+            } else {
+              html += `    <div class="kg-audio-missing">Audio URL unavailable</div>\n`;
+            }
             html += `  </div>\n`;
             html += `</div>\n`;
             if (caption) {
@@ -8042,7 +8145,7 @@ setInterval(()=>{
               blocks.push({ type: 'list', data: { style: tag === 'ol' ? 'ordered' : 'unordered', items } });
             } else if (tag === 'table') {
               const withHeadings = Boolean(node.querySelector('th'));
-              const rows = Array.from(node.querySelectorAll('tr')).map(tr => 
+              const rows = Array.from(node.querySelectorAll('tr')).map(tr =>
                 Array.from(tr.querySelectorAll('th, td')).map(td => td.innerHTML.trim())
               );
               if (rows.length > 0) {
@@ -8170,7 +8273,7 @@ setInterval(()=>{
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${title}</title>
+  <title>${escapeCardText(title)}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@300;400;500;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
