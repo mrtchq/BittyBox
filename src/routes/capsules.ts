@@ -151,6 +151,9 @@ capsulesRouter.get('/capsules/:id', (req, res) => {
     id: rec.id,
     title: rec.title,
     hasPassword: Boolean(rec.locks?.password?.enabled),
+    // PBKDF2 salt is non-secret derivation context; the viewer needs it to
+    // derive the same verifier from the entered passphrase.
+    pwSalt: rec.pwSalt,
     pwHint: rec.pwHint,
     time: rec.locks?.time ?? { enabled: false },
     visits: rec.locks?.visits?.enabled

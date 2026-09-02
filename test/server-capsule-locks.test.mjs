@@ -77,6 +77,9 @@ test('zero-knowledge password flow: verifier check then release (no plaintext at
   assert.equal(meta.status, 200);
   assert.equal(meta.json.envelope, undefined);
   assert.equal(meta.json.pwVerifier, undefined);
+  // The PBKDF2 salt is public context, not a secret; the viewer needs it to
+  // derive the same verifier for the entered passphrase.
+  assert.equal(meta.json.pwSalt, salt);
   assert.equal(meta.json.hasPassword, true);
 
   // Fresh capsule for the wrong-then-right sequence so the rate limiter does
@@ -96,6 +99,29 @@ test('zero-knowledge password flow: verifier check then release (no plaintext at
   assert.equal(ok.status, 200);
   assert.equal(ok.json.envelope, 'CIPHERTEXT');
   assert.equal(ok.json.pwVerifier, undefined);
+});
+
+test('passcode 123456789 derives the same verifier and unlocks', async () => {
+  const app = await makeApp();
+  const passcode = '123456789';
+  const salt = crypto.randomBytes(16);
+  const key = crypto.pbkdf2Sync(passcode, salt, 150000, 32, 'sha256');
+  // This is the browser fallback used by both creator and viewer when the
+  // non-extractable AES-GCM key cannot be exported.
+  const verifier = crypto.pbkdf2Sync(passcode, salt, 150001, 32, 'sha256').toString('hex');
+  const saltHex = salt.toString('hex');
+  const created = await request(app, 'POST', '/api/capsules', {
+    title: 'Exact passcode regression', envelope: 'CIPHERTEXT',
+    pwVerifier: verifier, pwSalt: saltHex,
+    locks: { password: { enabled: true }, time: { enabled: false }, visits: { enabled: false } },
+  });
+  assert.equal(created.status, 201);
+  const meta = await request(app, 'GET', `/api/capsules/${created.json.id}`);
+  assert.equal(meta.json.pwSalt, saltHex);
+  const unlocked = await request(app, 'POST', `/api/capsules/${created.json.id}/access`, { pwVerifier: verifier });
+  assert.equal(unlocked.status, 200);
+  assert.equal(unlocked.json.envelope, 'CIPHERTEXT');
+  assert.notEqual(key.toString('hex'), verifier);
 });
 
 test('time lock withholds envelope until open window', async () => {
