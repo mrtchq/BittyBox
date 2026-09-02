@@ -10172,9 +10172,90 @@ setInterval(()=>{
       }
     });
 
+    async function renderServerEnvelope(id, fragmentKey) {
+      showToast('⚡ Opening server-enforced capsule...');
+      let meta;
+      try {
+        const m = await fetch(`/api/capsules/${id}`);
+        if (!m.ok) { showToast('Capsule not found'); return; }
+        meta = await m.json();
+      } catch {
+        showToast('Could not reach capsule service'); return;
+      }
+
+      const shell = document.getElementById('capsule-viewer-shell');
+      const viewerFrame = document.getElementById('capsule-viewer-frame');
+      if (!shell || !viewerFrame) return;
+      shell.classList.remove('hidden');
+      const stage = document.querySelector('.stage');
+      if (stage) stage.classList.add('hidden');
+      document.getElementById('bottom-grip-btn')?.classList.add('edge-grip-hidden');
+      viewerFrame.srcdoc = '<div style="display:flex;height:100%;align-items:center;justify-content:center;color:#a1a1aa;font-family:monospace">Loading capsule…</div>';
+
+      const requestAccess = async (pwVerifier) => {
+        const body = pwVerifier ? JSON.stringify({ pwVerifier }) : '{}';
+        const r = await fetch(`/api/capsules/${id}/access`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body
+        });
+        return { status: r.status, json: await r.json().catch(() => ({})) };
+      };
+
+      const decryptAndRender = async (envelopeB64, ivArr, keyMaterial) => {
+        try {
+          const bin = atob(envelopeB64);
+          const all = new Uint8Array(bin.length);
+          for (let i = 0; i < bin.length; i++) all[i] = bin.charCodeAt(i);
+          const iv = ivArr ? new Uint8Array(ivArr) : all.slice(0, 12);
+          const ct = ivArr ? all : all.slice(12);
+          const plainBuf = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, keyMaterial, ct);
+          const html = new TextDecoder().decode(plainBuf);
+          renderCapsuleInViewer(meta.title || 'Protected Capsule', html, { enabled: false });
+        } catch {
+          showToast('Decryption failed — wrong passphrase or tampered capsule');
+        }
+      };
+
+      if (meta.hasPassword) {
+        // Prompt, derive verifier client-side, let server validate constant-time.
+        const submitted = window.prompt(meta.pwHint ? `Passphrase hint: ${meta.pwHint}\nEnter passphrase:` : 'Enter passphrase to unlock:');
+        if (!submitted) { showToast('Unlock cancelled'); return; }
+        // Derive the SAME verifier the creator used (PBKDF2 salt from meta.pwSalt).
+        const salt = new Uint8Array((meta.pwSalt || '').match(/.{2}/g)?.map(h => parseInt(h, 16)) || []);
+        const baseKey = await crypto.subtle.importKey('raw', new TextEncoder().encode(submitted), 'PBKDF2', false, ['deriveKey']);
+        const derived = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: 150000, hash: 'SHA-256' }, baseKey, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+        const verifyBuf = await crypto.subtle.sign({ name: 'HMAC', hash: 'SHA-256' }, await crypto.subtle.importKey('raw', salt, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']), await crypto.subtle.exportKey('raw', derived)).catch(async () => new Uint8Array(await crypto.subtle.deriveBits({ name: 'PBKDF2', salt, iterations: 150001, hash: 'SHA-256' }, baseKey, 256)));
+        const pwVerifier = [...new Uint8Array(verifyBuf)].map(b => b.toString(16).padStart(2, '0')).join('');
+        const acc = await requestAccess(pwVerifier);
+        if (acc.status !== 200) { showToast(acc.json.msg || 'Unlock denied'); return; }
+        await decryptAndRender(acc.json.envelope, null, derived);
+        return;
+      }
+
+      // Non-password envelope: key travels in the URL fragment (never sent to server).
+      const acc = await requestAccess();
+      if (acc.status !== 200) { showToast(acc.json.msg || 'Capsule locked'); return; }
+      if (fragmentKey) {
+        try {
+          const keyImport = await crypto.subtle.importKey('raw', new Uint8Array((fragmentKey.match(/.{2}/g) || []).map(h => parseInt(h, 16))), { name: 'AES-GCM', length: 256 }, true, ['decrypt']);
+          await decryptAndRender(acc.json.envelope, null, keyImport);
+          return;
+        } catch { /* fall through to session key */ }
+      }
+      const sessionKey = window.__bittyEnvelopeKeys?.[id];
+      if (sessionKey) { await decryptAndRender(acc.json.envelope, sessionKey.iv, sessionKey.key); return; }
+      showToast('This capsule key is missing — open the original share link.');
+    }
+
     async function checkAndRenderCapsuleFromURL() {
       const pathname = window.location.pathname;
       const hash = window.location.hash;
+
+      // Server-enforced zero-knowledge envelope viewer: /c/:id[#.key]
+      const capMatch = pathname.match(/^\/c\/([A-Za-z0-9_-]+)$/);
+      if (capMatch) {
+        await renderServerEnvelope(capMatch[1], hash.replace(/^#/, ''));
+        return;
+      }
 
       if (pathname === '/edit' || hash === '#/edit' || hash === '#edit') {
         hideCapsuleViewer();
@@ -10451,6 +10532,91 @@ setInterval(()=>{
   <\/script>`;
     }
 
+    // --- Zero-knowledge capsule envelope storage ---
+    // Encrypts capsule content with a password-derived AES-256-GCM key, then sends ONLY
+    // ciphertext + a password verifier (never the password or plaintext) to the server.
+    async function storeServerEnvelope({ title, fullHTML, currentConfig }) {
+      const enc = new TextEncoder();
+      const salt = crypto.getRandomValues(new Uint8Array(16));
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+
+      // Derive key: password-locked capsules use PBKDF2; otherwise a random key (time/visit-only).
+      let keyMaterial;
+      let pwVerifier = undefined;
+      let pwSaltB64 = undefined;
+      const isPw = Boolean(currentConfig.password?.enabled && currentConfig.password.val);
+      if (isPw) {
+        const baseKey = await crypto.subtle.importKey('raw', enc.encode(currentConfig.password.val), 'PBKDF2', false, ['deriveKey']);
+        keyMaterial = await crypto.subtle.deriveKey(
+          { name: 'PBKDF2', salt, iterations: 150000, hash: 'SHA-256' },
+          baseKey, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
+        );
+        // Verifier lets the server validate the passphrase WITHOUT learning it.
+        const verifyBuf = await crypto.subtle.sign(
+          { name: 'HMAC', hash: 'SHA-256' },
+          await crypto.subtle.importKey('raw', salt, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']),
+          await crypto.subtle.exportKey('raw', keyMaterial)
+        ).catch(async () => {
+          // Fallback: derive a verifier from PBKDF2 output bytes for server constant-time check.
+          const raw = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt, iterations: 150001, hash: 'SHA-256' }, baseKey, 256);
+          return raw;
+        });
+        pwVerifier = [...new Uint8Array(verifyBuf)].map(b => b.toString(16).padStart(2, '0')).join('');
+        pwSaltB64 = [...salt].map(b => b.toString(16).padStart(2, '0')).join('');
+      } else {
+        keyMaterial = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
+      }
+
+      const cipherBuf = await crypto.subtle.encrypt(
+        { name: 'AES-GCM', iv }, keyMaterial, enc.encode(fullHTML)
+      );
+      const bytes = new Uint8Array(cipherBuf);
+      const b64 = (arr) => {
+        let s = '';
+        const chunk = 0x8000;
+        for (let i = 0; i < arr.length; i += chunk) s += btoa(String.fromCharCode(...arr.subarray(i, i + chunk)));
+        return s;
+      };
+      const ivBytes = [...iv];
+      const envelope = b64([...ivBytes, ...bytes]); // iv || ciphertext
+      // For non-password envelopes, the raw key travels in the URL fragment so the
+      // link is shareable without the server ever holding it.
+      let keyFragment = undefined;
+      if (!isPw) {
+        const rawKey = new Uint8Array(await crypto.subtle.exportKey('raw', keyMaterial));
+        keyFragment = [...rawKey].map(b => b.toString(16).padStart(2, '0')).join('');
+      }
+
+      const payload = {
+        title: title || 'Protected Capsule',
+        envelope,
+        pwVerifier,
+        pwSalt: pwSaltB64,
+        pwHint: currentConfig.password?.hint || null,
+        locks: {
+          password: { enabled: isPw, hint: currentConfig.password?.hint || '' },
+          time: currentConfig.time || { enabled: false },
+          visits: currentConfig.visits || { enabled: false },
+        }
+      };
+
+      const res = await fetch('/api/capsules', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || err.error || 'envelope store failed');
+      }
+      const data = await res.json();
+      // Stash decryption key locally only for this session's viewer convenience.
+      window.__bittyEnvelopeKeys = window.__bittyEnvelopeKeys || {};
+      window.__bittyEnvelopeKeys[data.id] = { key: keyMaterial, iv: ivBytes };
+      if (keyFragment) data.keyFragment = keyFragment;
+      return data;
+    }
+
     async function handleGenerateSelfContainedPage() {
       if (!editorInstance) return;
       const generateBtn = document.getElementById('editorjs-generate-btn') || document.getElementById('editorjs-seal-btn');
@@ -10692,6 +10858,37 @@ setInterval(()=>{
 
         const currentConfig = getActiveLockConfig(title);
         currentGeneratedCapsule = { title, html: fullHTML, url: generatedUrl, config: currentConfig };
+
+        // SERVER-SIDE ZERO-KNOWLEDGE ENFORCEMENT
+        // If any lock is active, the capsule content is encrypted client-side and stored as a
+        // server envelope (/c/:id). The shareable URL carries no plaintext and no lock metadata;
+        // the server enforces time/visits and verifies the password before releasing ciphertext.
+        const hasAnyLock = Boolean(currentConfig && (
+          currentConfig.password?.enabled || currentConfig.time?.enabled || currentConfig.visits?.enabled
+        ));
+        if (hasAnyLock) {
+          try {
+            const envelope = await storeServerEnvelope({ title, fullHTML, currentConfig });
+            const fragment = envelope.keyFragment ? `#${envelope.keyFragment}` : '';
+            const envelopeUrl = `${window.location.origin}/c/${envelope.id}${fragment}`;
+            if (resultUrlDisplay) resultUrlDisplay.value = envelopeUrl;
+            if (resultOpenBtn) resultOpenBtn.href = envelopeUrl;
+            if (payloadWindow && !payloadWindow.closed) {
+              if (typeof payloadWindow.location?.replace === 'function') payloadWindow.location.replace(envelopeUrl);
+              else payloadWindow.location.href = envelopeUrl;
+            } else {
+              window.open(envelopeUrl, '_blank');
+            }
+            try { await navigator.clipboard.writeText(envelopeUrl); showToast('⚡ Locked capsule stored — server-enforced URL copied!'); }
+            catch { showToast('⚡ Locked capsule stored — server-enforced URL opened!'); }
+            if (generatedUrlInput) generatedUrlInput.value = envelopeUrl;
+            // Do not fall through to stateless hash generation.
+            return;
+          } catch (envErr) {
+            console.error('Envelope store error:', envErr);
+            showToast('Failed to store locked capsule: ' + (envErr?.message || envErr));
+          }
+        }
 
         // Open resulting long URL in a new browser tab
         if (payloadWindow && !payloadWindow.closed) {

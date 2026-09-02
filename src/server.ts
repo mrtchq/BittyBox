@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { apiRouter } from './routes/api.js';
 import { createMagicAuthRouter } from './routes/magic-auth.js';
 import { openmoltRouter } from './routes/openmolt.js';
+import { capsulesRouter } from './routes/capsules.js';
 import { registerMcp } from './mcp/server.js';
 import { serverStatus } from './meta/status.js';
 
@@ -29,6 +30,8 @@ app.use('/api/accounts/magic', magicAuthRouter);
 // sub-routes are not shadowed by the SPA fallback or the boxes router.
 app.use('/api/openmolt', openmoltRouter);
 app.use('/api', apiRouter);
+// Zero-knowledge capsule lock enforcement (server holds only ciphertext + verifier).
+app.use('/api', capsulesRouter);
 
 // --- Firebase Config Endpoint ---
 app.get('/firebase-config', (_req, res) => {
