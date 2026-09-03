@@ -1088,211 +1088,6 @@
       justify-content: center;
     }
   }
-
-  /* ============================================================ */
-  /* MOBILE-FIRST COMPOSE VIEW (default home)                    */
-  /* ============================================================ */
-  #compose-view {
-    position: relative;
-    width: 100%;
-    max-width: 760px;
-    margin: 0 auto;
-    padding: clamp(16px, 4vw, 32px) clamp(14px, 4vw, 24px) calc(120px + env(safe-area-inset-bottom, 0px));
-    min-height: 100vh;
-    min-height: 100dvh;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    box-sizing: border-box;
-  }
-  #compose-view.compose-hidden { display: none !important; }
-
-  .compose-brand {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-  }
-  .compose-brand h1 {
-    font-family: 'Cinzel', serif;
-    font-size: clamp(1.3rem, 5vw, 1.9rem);
-    color: #f5eedd;
-    letter-spacing: 0.04em;
-    margin: 0;
-  }
-  .compose-brand .sub {
-    font-size: 11px;
-    color: #a1a1aa;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-  }
-
-  .compose-title-input {
-    width: 100%;
-    background: rgba(0,0,0,0.45);
-    border: 1px solid rgba(211,182,131,0.22);
-    border-radius: 14px;
-    padding: 14px 16px;
-    color: #f5eedd;
-    font-size: 1.05rem;
-    font-weight: 600;
-    font-family: inherit;
-    box-sizing: border-box;
-    outline: none;
-  }
-  .compose-title-input:focus { border-color: rgba(211,182,131,0.6); }
-  .compose-title-input::placeholder { color: #6b6b73; font-weight: 500; }
-
-  .compose-textarea {
-    width: 100%;
-    min-height: 38vh;
-    resize: vertical;
-    background: rgba(0,0,0,0.35);
-    border: 1px solid rgba(211,182,131,0.18);
-    border-radius: 16px;
-    padding: 16px;
-    color: #e4e4e7;
-    font-size: 1rem;
-    line-height: 1.6;
-    font-family: 'Inter', system-ui, sans-serif;
-    box-sizing: border-box;
-    outline: none;
-    -webkit-overflow-scrolling: touch;
-  }
-  .compose-textarea:focus { border-color: rgba(211,182,131,0.5); }
-  .compose-textarea::placeholder { color: #6b6b73; }
-
-  /* Inline lock chip bar — replaces the floating bottom panel for the common path */
-  .compose-locks {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  .lock-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 9px 13px;
-    border-radius: 9999px;
-    border: 1px solid rgba(211,182,131,0.3);
-    background: rgba(211,182,131,0.06);
-    color: #e4e4e7;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.18s ease;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .lock-chip:active { transform: scale(0.96); }
-  .lock-chip.active {
-    background: rgba(211,182,131,0.18);
-    border-color: #d3b683;
-    color: #f5eedd;
-    box-shadow: 0 0 18px rgba(211,182,131,0.25);
-  }
-  .lock-chip .dot {
-    width: 7px; height: 7px; border-radius: 9999px;
-    background: #52525b; transition: background 0.18s ease;
-  }
-  .lock-chip.active .dot { background: #d3b683; box-shadow: 0 0 8px #d3b683; }
-
-  .lock-detail {
-    border: 1px solid rgba(211,182,131,0.2);
-    border-radius: 16px;
-    background: rgba(0,0,0,0.4);
-    padding: 14px 16px;
-    display: none;
-    flex-direction: column;
-    gap: 10px;
-  }
-  .lock-detail.open { display: flex; }
-  .lock-detail label { font-size: 12px; color: #a1a1aa; font-weight: 600; }
-  .lock-detail input {
-    width: 100%;
-    background: rgba(0,0,0,0.5);
-    border: 1px solid rgba(211,182,131,0.2);
-    border-radius: 10px;
-    padding: 11px 13px;
-    color: #e4e4e7;
-    font-size: 14px;
-    box-sizing: border-box;
-    outline: none;
-  }
-  .lock-detail input:focus { border-color: rgba(211,182,131,0.55); }
-
-  .compose-actions {
-    position: fixed;
-    left: 0; right: 0; bottom: 0;
-    padding: 14px clamp(14px, 4vw, 24px) calc(14px + env(safe-area-inset-bottom, 0px));
-    background: linear-gradient(to top, #0c0c0e 70%, rgba(12,12,14,0));
-    display: flex;
-    gap: 10px;
-    z-index: 40;
-  }
-  .btn-seal {
-    flex: 1;
-    padding: 16px 20px;
-    border-radius: 16px;
-    border: none;
-    background: linear-gradient(135deg, #d3b683, #b8945a);
-    color: #0c0c0e;
-    font-size: 1.05rem;
-    font-weight: 800;
-    letter-spacing: 0.02em;
-    cursor: pointer;
-    box-shadow: 0 10px 30px rgba(211,182,131,0.35);
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .btn-seal:active { transform: scale(0.98); box-shadow: 0 6px 18px rgba(211,182,131,0.25); }
-  .btn-seal:disabled { opacity: 0.6; cursor: progress; }
-  .btn-ghost {
-    padding: 16px 18px;
-    border-radius: 16px;
-    border: 1px solid rgba(211,182,131,0.3);
-    background: rgba(211,182,131,0.05);
-    color: #e4e4e7;
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  /* Result card after sealing */
-  .compose-result {
-    border: 1px solid rgba(211,182,131,0.35);
-    border-radius: 16px;
-    background: rgba(211,182,131,0.07);
-    padding: 16px;
-    display: none;
-    flex-direction: column;
-    gap: 12px;
-  }
-  .compose-result.open { display: flex; }
-  .compose-result .url-box {
-    font-family: 'Fira Code', monospace;
-    font-size: 12px;
-    color: #d3b683;
-    background: rgba(0,0,0,0.5);
-    border: 1px solid rgba(211,182,131,0.2);
-    border-radius: 10px;
-    padding: 10px 12px;
-    word-break: break-all;
-    max-height: 90px;
-    overflow-y: auto;
-  }
-  .compose-result .result-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-  .compose-result .result-actions button {
-    flex: 1; min-width: 90px;
-    padding: 11px; border-radius: 12px; border: 1px solid rgba(211,182,131,0.3);
-    background: rgba(211,182,131,0.08); color: #f5eedd; font-weight: 700; font-size: 13px; cursor: pointer;
-  }
-  .compose-result .result-actions button.primary { background: #d3b683; color: #0c0c0e; border-color: #d3b683; }
-
-  @media (min-width: 768px) {
-    .compose-actions { position: static; background: none; padding: 0; }
-    .compose-actions .btn-seal { flex: 0 0 auto; padding: 16px 40px; }
-  }
   @media (max-width:520px){
     body { padding: 16px 10px; }
     .stage{
@@ -4507,10 +4302,10 @@
     <img id="right-grip-icon" class="grip-icon-img" src="" alt="Grip" />
   </button>
 
-  <!-- Bottom Edge Grip Button (Advanced editor only; compose view handles locks inline) -->
+  <!-- Bottom Edge Grip Button (Open Full-Page Panel for Password, Time & Max Visits Locks) -->
   <button
     id="bottom-grip-btn"
-    class="edge-grip-bottom group hidden"
+    class="edge-grip-bottom group"
     type="button"
     title="Open Capsule Access Locks (Password, Time & Max Visits)"
     aria-label="Toggle Bottom Panel"
@@ -5704,66 +5499,8 @@
         </svg>
       </button>
     </div>
-    <!-- ============================================================ -->
-    <!-- MOBILE-FIRST COMPOSE VIEW (default landing)                 -->
-    <!-- ============================================================ -->
-    <section id="compose-view" aria-label="Compose a Capsule">
-      <div class="compose-brand">
-        <div>
-          <h1>BittyBox</h1>
-          <div class="sub">Seal it · Send it · Self-destructs on your terms</div>
-        </div>
-        <button id="compose-advanced-toggle" class="btn-ghost" type="button" style="padding:10px 14px;font-size:12px;">⚙ Advanced</button>
-      </div>
-
-      <input id="compose-title" class="compose-title-input" type="text" placeholder="Title your capsule…" maxlength="120" autocomplete="off" />
-
-      <textarea id="compose-body" class="compose-textarea" placeholder="Write a note, paste HTML, drop a link, or draft a micro-app. Then seal it into a URL."></textarea>
-
-      <!-- Inline lock chips: tap to expand in place (no full-screen panel) -->
-      <div class="compose-locks" id="compose-locks">
-        <button class="lock-chip" type="button" data-lock="password"><span class="dot"></span>🔒 Password</button>
-        <button class="lock-chip" type="button" data-lock="time"><span class="dot"></span>⏱ Time</button>
-        <button class="lock-chip" type="button" data-lock="visits"><span class="dot"></span>👁 Visits</button>
-      </div>
-
-      <div class="lock-detail" id="lock-detail-password">
-        <label>Unlock password</label>
-        <input id="compose-pw" type="password" placeholder="Passphrase to decrypt" autocomplete="new-password" />
-        <label>Hint (optional)</label>
-        <input id="compose-pw-hint" type="text" placeholder="Shown if they forget" maxlength="80" />
-      </div>
-
-      <div class="lock-detail" id="lock-detail-time">
-        <label>Unlock after (optional datetime)</label>
-        <input id="compose-time-open" type="datetime-local" />
-        <label>Auto-lock after (optional datetime)</label>
-        <input id="compose-time-expire" type="datetime-local" />
-      </div>
-
-      <div class="lock-detail" id="lock-detail-visits">
-        <label>Maximum opens before it locks</label>
-        <input id="compose-visits-max" type="number" min="1" max="9999" value="1" />
-      </div>
-
-      <!-- Result card (appears after sealing) -->
-      <div class="compose-result" id="compose-result">
-        <div class="url-box" id="compose-result-url"></div>
-        <div class="result-actions">
-          <button class="primary" id="compose-copy-btn" type="button">Copy Link</button>
-          <button id="compose-open-btn" type="button">Open</button>
-          <button id="compose-fork-btn" type="button">Fork</button>
-        </div>
-      </div>
-
-      <div class="compose-actions">
-        <button class="btn-ghost" id="compose-clear-btn" type="button">Clear</button>
-        <button class="btn-seal" id="compose-seal-btn" type="button">⚡ Seal &amp; Copy Link</button>
-      </div>
-    </section>
-
     <!-- Hero Stage View (Center Button & Auth) -->
-    <div id="hero-stage-view" class="stage-view-hidden">
+    <div id="hero-stage-view">
       <button type="button" class="btn" id="get-started-btn" aria-label="Build a Box">
         <img
           class="btn-logo"
@@ -8125,16 +7862,11 @@ setInterval(()=>{
       const targetHomepageBtn = document.getElementById('get-started-btn');
       if (!overlay || !canvas) return;
 
-      // Default landing is the mobile-first compose view. Only show the cinematic
-      // splash when explicitly requested (?intro) or when opening a capsule URL.
+      // Do not load splash screen when viewing a capsule URL
       const initialHash = window.location.hash;
-      const wantsIntro = new URLSearchParams(window.location.search).has('intro');
-      if (!wantsIntro && !(initialHash && initialHash.length > 2 && initialHash !== '#edit' && initialHash !== '#/edit')) {
+      if (initialHash && initialHash.length > 2 && initialHash !== '#edit' && initialHash !== '#/edit') {
         overlay.classList.add('splash-hidden');
         overlay.style.display = 'none';
-        // Boot directly into the compose view (edge grips stay hidden until advanced/signed-in).
-        document.getElementById('compose-view')?.classList.remove('compose-hidden');
-        document.getElementById('hero-stage-view')?.classList.add('stage-view-hidden');
         return;
       }
 
@@ -10900,41 +10632,6 @@ setInterval(()=>{
       return data;
     }
 
-    /**
-     * Shared capsule sealer used by BOTH the rich editor (handleGenerateSelfContainedPage)
-     * and the mobile-first compose view (sealFromCompose). Guarantes identical
-     * zero-knowledge enforcement for every entry point.
-     * Returns the final shareable URL.
-     */
-    async function buildAndSealCapsule({ title, htmlBody, openTab = false }) {
-      const prettyTitle = encodeURIComponent(title.replace(/\s+/g, '-').replace(/[!'()*]/g, c => '%' + c.charCodeAt(0).toString(16)));
-      const fullHTML = `<!doctype html>\n<html lang="en">\n<head>\n  <meta charset="utf-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <title>${escapeCardText(title)}</title>\n</head>\n<body>\n  ${wrapHtmlWithActiveLocks(htmlBody, title)}\n</body>\n</html>`;
-      const rawBytes = new TextEncoder().encode(fullHTML).length;
-      const { bytes: compBytes, base64 } = await compressPayload(fullHTML);
-      const hashFragment = `#/${prettyTitle}#data:text/html;charset=utf-8;format=gz;base64,${base64}`;
-      const generatedUrl = `${window.location.origin}/${hashFragment}`;
-
-      const currentConfig = getActiveLockConfig(title);
-      const hasAnyLock = Boolean(currentConfig && (
-        currentConfig.password?.enabled || currentConfig.time?.enabled || currentConfig.visits?.enabled
-      ));
-
-      if (hasAnyLock) {
-        const envelope = await storeServerEnvelope({ title, fullHTML, currentConfig });
-        const fragment = envelope.keyFragment ? `#${envelope.keyFragment}` : '';
-        const envelopeUrl = `${window.location.origin}/c/${envelope.id}${fragment}`;
-        if (openTab) window.open(envelopeUrl, '_blank');
-        try { await navigator.clipboard.writeText(envelopeUrl); showToast('⚡ Locked capsule stored — server-enforced URL copied!'); }
-        catch { if (openTab) {} else showToast('⚡ Locked capsule stored — server-enforced URL ready!'); }
-        return envelopeUrl;
-      }
-
-      if (openTab) window.open(generatedUrl, '_blank');
-      try { await navigator.clipboard.writeText(generatedUrl); showToast('⚡ Self-contained URL copied to clipboard!'); }
-      catch { if (!openTab) window.open(generatedUrl, '_blank'); }
-      return generatedUrl;
-    }
-
     async function handleGenerateSelfContainedPage() {
       if (!editorInstance) return;
       const generateBtn = document.getElementById('editorjs-generate-btn') || document.getElementById('editorjs-seal-btn');
@@ -11176,18 +10873,69 @@ setInterval(()=>{
 
         const currentConfig = getActiveLockConfig(title);
         currentGeneratedCapsule = { title, html: fullHTML, url: generatedUrl, config: currentConfig };
-        if (resultUrlDisplay) resultUrlDisplay.value = generatedUrl;
-        if (resultOpenBtn) resultOpenBtn.href = generatedUrl;
-        if (boxContentInput) boxContentInput.value = fullHTML;
-        if (boxTitleInput) boxTitleInput.value = title;
-        if (generatedUrlInput) generatedUrlInput.value = generatedUrl;
 
-        // Delegate the seal + zero-knowledge enforcement to the shared sealer.
-        const finalUrl = await buildAndSealCapsule({ title, htmlBody, openTab: false });
-        if (resultUrlDisplay) resultUrlDisplay.value = finalUrl;
-        if (resultOpenBtn) resultOpenBtn.href = finalUrl;
-        if (generatedUrlInput) generatedUrlInput.value = finalUrl;
-        currentGeneratedCapsule.url = finalUrl;
+        // SERVER-SIDE ZERO-KNOWLEDGE ENFORCEMENT
+        // If any lock is active, the capsule content is encrypted client-side and stored as a
+        // server envelope (/c/:id). The shareable URL carries no plaintext and no lock metadata;
+        // the server enforces time/visits and verifies the password before releasing ciphertext.
+        const hasAnyLock = Boolean(currentConfig && (
+          currentConfig.password?.enabled || currentConfig.time?.enabled || currentConfig.visits?.enabled
+        ));
+        if (hasAnyLock) {
+          try {
+            const envelope = await storeServerEnvelope({ title, fullHTML, currentConfig });
+            const fragment = envelope.keyFragment ? `#${envelope.keyFragment}` : '';
+            const envelopeUrl = `${window.location.origin}/c/${envelope.id}${fragment}`;
+            if (resultUrlDisplay) resultUrlDisplay.value = envelopeUrl;
+            if (resultOpenBtn) resultOpenBtn.href = envelopeUrl;
+            if (payloadWindow && !payloadWindow.closed) {
+              if (typeof payloadWindow.location?.replace === 'function') payloadWindow.location.replace(envelopeUrl);
+              else payloadWindow.location.href = envelopeUrl;
+            } else {
+              window.open(envelopeUrl, '_blank');
+            }
+            try { await navigator.clipboard.writeText(envelopeUrl); showToast('⚡ Locked capsule stored — server-enforced URL copied!'); }
+            catch { showToast('⚡ Locked capsule stored — server-enforced URL opened!'); }
+            if (generatedUrlInput) generatedUrlInput.value = envelopeUrl;
+            // Do not fall through to stateless hash generation.
+            return;
+          } catch (envErr) {
+            console.error('Envelope store error:', envErr);
+            showToast('Failed to store locked capsule: ' + (envErr?.message || envErr));
+          }
+        }
+
+        // Open resulting long URL in a new browser tab
+        if (payloadWindow && !payloadWindow.closed) {
+          if (typeof payloadWindow.location?.replace === 'function') {
+            payloadWindow.location.replace(generatedUrl);
+          } else {
+            payloadWindow.location.href = generatedUrl;
+          }
+        } else {
+          window.open(generatedUrl, '_blank');
+        }
+
+        let copied = false;
+        try {
+          await navigator.clipboard.writeText(generatedUrl);
+          copied = true;
+          showToast('⚡ Self-contained URL opened in new tab & copied to clipboard!');
+        } catch {
+          showToast('⚡ Self-contained URL opened in new tab!');
+        }
+
+        // Keep modal inputs populated if modal is opened later
+        if (generatedUrlInput) generatedUrlInput.value = generatedUrl;
+        const savings = rawBytes > 0 ? Math.max(0, Math.round(((rawBytes - compBytes) / rawBytes) * 100)) : 0;
+        const rawKb = (rawBytes / 1024).toFixed(1) + ' KB';
+        const compKb = compBytes > 1024 ? (compBytes / 1024).toFixed(1) + ' KB' : compBytes + ' B';
+        if (modalStatsSpan) {
+          modalStatsSpan.textContent = `${rawKb} raw → ${compKb} (${savings}% saved)`;
+        }
+
+        // Do not load the splash screen or header UI in this view (stay in editor workspace)
+
       } catch (err) {
         if (payloadWindow && !payloadWindow.closed) {
           payloadWindow.close();
@@ -11205,118 +10953,6 @@ setInterval(()=>{
     document.getElementById('editorjs-generate-btn')?.addEventListener('click', handleGenerateSelfContainedPage);
     document.getElementById('editorjs-seal-btn')?.addEventListener('click', handleGenerateSelfContainedPage);
 
-    // ============================================================
-    // MOBILE-FIRST COMPOSE VIEW CONTROLLER
-    // ============================================================
-    const composeView = document.getElementById('compose-view');
-    const composeBody = document.getElementById('compose-body');
-    const composeTitle = document.getElementById('compose-title');
-    const composeSealBtn = document.getElementById('compose-seal-btn');
-    const composeClearBtn = document.getElementById('compose-clear-btn');
-    const composeAdvancedToggle = document.getElementById('compose-advanced-toggle');
-    const composeResult = document.getElementById('compose-result');
-    const composeResultUrl = document.getElementById('compose-result-url');
-
-    function syncComposeLocksToState() {
-      // Password
-      const pwEnabled = document.getElementById('lock-detail-password').classList.contains('open');
-      lockState.password.enabled = pwEnabled;
-      lockState.password.val = document.getElementById('compose-pw')?.value || '';
-      lockState.password.hint = document.getElementById('compose-pw-hint')?.value || '';
-      // Time
-      const timeEnabled = document.getElementById('lock-detail-time').classList.contains('open');
-      lockState.time.enabled = timeEnabled;
-      lockState.time.open.enabled = Boolean(document.getElementById('compose-time-open')?.value);
-      lockState.time.open.datetime = document.getElementById('compose-time-open')?.value || '';
-      lockState.time.expire.enabled = Boolean(document.getElementById('compose-time-expire')?.value);
-      lockState.time.expire.datetime = document.getElementById('compose-time-expire')?.value || '';
-      // Visits
-      const visitsEnabled = document.getElementById('lock-detail-visits').classList.contains('open');
-      lockState.visits.enabled = visitsEnabled;
-      const vmax = parseInt(document.getElementById('compose-visits-max')?.value || '1', 10);
-      lockState.visits.max = Number.isFinite(vmax) && vmax > 0 ? vmax : 1;
-    }
-
-    function composeBodyToHTML() {
-      const raw = (composeBody?.value || '').trim();
-      if (!raw) return '';
-      // Wrap plain text into a clean HTML doc (mirrors EditorJS output shape).
-      const escaped = escapeCardText(raw).replace(/\n{2,}/g, '</p><p>').replace(/\n/g, '<br>');
-      return `<p>${escaped}</p>`;
-    }
-
-    async function sealFromCompose() {
-      if (!composeBody || !composeBody.value.trim()) {
-        showToast('Write something in your capsule before sealing');
-        composeBody?.focus();
-        return;
-      }
-      const title = (composeTitle?.value || '').trim() || 'My Bitty Note';
-      const htmlBody = composeBodyToHTML();
-      if (composeSealBtn) { composeSealBtn.disabled = true; composeSealBtn.textContent = '⚡ Sealing…'; }
-      try {
-        syncComposeLocksToState();
-        const finalUrl = await buildAndSealCapsule({ title, htmlBody, openTab: false });
-        if (composeResult && composeResultUrl) {
-          composeResultUrl.textContent = finalUrl;
-          composeResult.classList.add('open');
-        }
-      } catch (e) {
-        console.error('Compose seal error:', e);
-        showToast('Failed to seal capsule: ' + (e?.message || e));
-      } finally {
-        if (composeSealBtn) { composeSealBtn.disabled = false; composeSealBtn.innerHTML = '⚡ Seal &amp; Copy Link'; }
-      }
-    }
-
-    // Inline lock chip toggles
-    document.getElementById('compose-locks')?.querySelectorAll('.lock-chip').forEach(chip => {
-      chip.addEventListener('click', () => {
-        const kind = chip.getAttribute('data-lock');
-        const detail = document.getElementById('lock-detail-' + kind);
-        if (!detail) return;
-        const willOpen = !detail.classList.contains('open');
-        detail.classList.toggle('open');
-        chip.classList.toggle('active', willOpen);
-      });
-    });
-
-    composeSealBtn?.addEventListener('click', sealFromCompose);
-    composeClearBtn?.addEventListener('click', () => {
-      if (composeBody) composeBody.value = '';
-      if (composeTitle) composeTitle.value = '';
-      document.querySelectorAll('.lock-detail.open').forEach(d => d.classList.remove('open'));
-      document.querySelectorAll('.lock-chip.active').forEach(c => c.classList.remove('active'));
-      composeResult?.classList.remove('open');
-      if (composeBody) composeBody.focus();
-    });
-    document.getElementById('compose-copy-btn')?.addEventListener('click', async () => {
-      const url = composeResultUrl?.textContent || '';
-      if (!url) return;
-      try { await navigator.clipboard.writeText(url); showToast('Link copied!'); }
-      catch { showToast('Copy failed — long-press the link'); }
-    });
-    document.getElementById('compose-open-btn')?.addEventListener('click', () => {
-      const url = composeResultUrl?.textContent || '';
-      if (url) window.open(url, '_blank');
-    });
-    document.getElementById('compose-fork-btn')?.addEventListener('click', () => {
-      // Fork = load the same content back into the editor for remixing.
-      if (composeAdvancedToggle) composeAdvancedToggle.click();
-      if (composeBody) { /* content already in compose-body */ }
-      showToast('Switch to Advanced editor to remix this capsule.');
-    });
-    composeAdvancedToggle?.addEventListener('click', () => {
-      // Push compose content into the rich editor, then reveal it.
-      if (composeBody && composeBody.value.trim()) {
-        try { localStorage.setItem('bittybox_editorjs_draft', JSON.stringify({ time: Date.now(), blocks: [{ type: 'paragraph', data: { text: composeBody.value } }] })); } catch {}
-      }
-      composeView?.classList.add('compose-hidden');
-      document.getElementById('editorjs-stage-view')?.classList.remove('stage-view-hidden');
-      document.getElementById('bottom-grip-btn')?.classList.remove('hidden');
-      initEditorJS();
-    });
-
     // Main Center Circular Button: Transform to EditJS
     getStartedBtn?.addEventListener('click', () => {
       transformToEditor();
@@ -11328,15 +10964,8 @@ setInterval(()=>{
     // Initial Routing
     if (window.location.pathname === '/edit' || window.location.hash === '#/edit' || window.location.hash === '#edit') {
       transformToEditor();
-      document.getElementById('compose-view')?.classList.add('compose-hidden');
-      document.getElementById('bottom-grip-btn')?.classList.remove('hidden');
     } else if (window.location.hash && window.location.hash.length > 2) {
       checkAndRenderCapsuleFromURL();
-    } else {
-      // Guaranteed compose-first landing for a normal visit.
-      document.getElementById('compose-view')?.classList.remove('compose-hidden');
-      document.getElementById('hero-stage-view')?.classList.add('stage-view-hidden');
-      document.getElementById('editorjs-stage-view')?.classList.add('stage-view-hidden');
     }
 
     initFirebase();
