@@ -4,6 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { apiRouter } from './routes/api.js';
 import { createMagicAuthRouter } from './routes/magic-auth.js';
+import { createAccountsRouter } from './routes/accounts.js';
 import { openmoltRouter } from './routes/openmolt.js';
 import { capsulesRouter } from './routes/capsules.js';
 import { registerMcp } from './mcp/server.js';
@@ -20,12 +21,27 @@ function firebaseWebApiKey(): string | null {
 }
 
 const app = express();
+app.disable('x-powered-by');
+
+// Baseline hardening headers for every response, including API and MCP.
+app.use((_req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'no-referrer');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  // State-changing API responses must never be cached.
+  res.setHeader('Cache-Control', 'no-store');
+  next();
+});
+
 const magicAuthRouter = createMagicAuthRouter();
+const accountsRouter = createAccountsRouter();
 
 // --- API surface ---
 app.use('/api', express.json({ limit: '2mb' }));
 // Account-auth sub-router must come before generic /api router.
 app.use('/api/accounts/magic', magicAuthRouter);
+app.use('/api/accounts', accountsRouter);
 // OpenMolt bridge MUST be mounted before the generic /api router so its
 // sub-routes are not shadowed by the SPA fallback or the boxes router.
 app.use('/api/openmolt', openmoltRouter);

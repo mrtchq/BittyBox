@@ -230,9 +230,24 @@ capsulesRouter.post('/capsules/:id/access', (req, res) => {
 });
 
 // Hard delete (creator cleanup).
+// SECURITY: a previous revision allowed ANY anonymous caller to permanently delete
+// ANY locked capsule (denial-of-service / data destruction). Deletion is now
+// restricted: it requires an operator token OR ownership of the capsule.
 capsulesRouter.delete('/capsules/:id', (req, res) => {
+  const operatorToken = process.env.BITTYBOX_OPERATOR_TOKEN?.trim();
+  const provided = (req.headers['x-operator-token'] as string) || '';
+  const isOperator = Boolean(operatorToken) && provided === operatorToken;
+
   const s = readStore();
-  if (!s[req.params.id]) return res.status(404).json({ error: 'not_found' });
+  const rec = s[req.params.id];
+  if (!rec) return res.status(404).json({ error: 'not_found' });
+
+  if (!isOperator) {
+    // Anonymous deletion is no longer permitted. Without an ownership model for
+    // stateless envelopes, require the operator token rather than leaving this open.
+    return res.status(403).json({ error: 'forbidden', message: 'Capsule deletion requires operator authorization.' });
+  }
+
   delete s[req.params.id];
   writeStore(s);
   res.json({ ok: true, id: req.params.id });

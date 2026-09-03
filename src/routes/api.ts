@@ -4,21 +4,22 @@ import path from 'node:path';
 import fs from 'node:fs';
 
 // Greenfield box store: minimal, file-backed.
-const STORE_DIR = process.env.BITTYBOX_STORE_DIR ?? path.join(process.cwd(), '.data');
-const STORE_FILE = path.join(STORE_DIR, 'boxes.json');
+function getStoreDir() { return process.env.BITTYBOX_STORE_DIR ?? path.join(process.cwd(), '.data'); }
+function getStoreFile() { return path.join(getStoreDir(), 'boxes.json'); }
+function getAccountsFile() { return process.env.BITTYBOX_ACCOUNTS_FILE ?? '/var/lib/bittybox/accounts.json'; }
 
 function readStore(): Record<string, any> {
   try {
-    fs.mkdirSync(STORE_DIR, { recursive: true });
-    return JSON.parse(fs.readFileSync(STORE_FILE, 'utf8'));
+    fs.mkdirSync(getStoreDir(), { recursive: true });
+    return JSON.parse(fs.readFileSync(getStoreFile(), 'utf8'));
   } catch {
     return {};
   }
 }
 
 function writeStore(s: Record<string, any>) {
-  fs.mkdirSync(STORE_DIR, { recursive: true });
-  fs.writeFileSync(STORE_FILE, JSON.stringify(s, null, 2));
+  fs.mkdirSync(getStoreDir(), { recursive: true });
+  fs.writeFileSync(getStoreFile(), JSON.stringify(s, null, 2));
 }
 
 const boxSchema = z.object({
@@ -29,16 +30,38 @@ const boxSchema = z.object({
   meta: z.record(z.string(), z.unknown()).optional(),
 });
 
+import { authenticateUserFromRequest } from './accounts.js';
+import { readAccounts, saveAccounts } from './magic-auth.js';
+
 export const apiRouter = Router();
 
 apiRouter.get('/boxes', (req, res) => {
-  const userId = req.query.userId as string | undefined;
-  const store = Object.values(readStore());
-  if (userId) {
-    res.json(store.filter((b: any) => b.userId === userId || b.meta?.userId === userId));
-  } else {
-    res.json(store);
+  // Authentication is REQUIRED. A previous revision returned every stored capsule
+  // to anonymous callers whenever no userId filter was supplied (full data dump).
+  let auth: ReturnType<typeof authenticateUserFromRequest> = null;
+  try {
+    const accounts = readAccounts(getAccountsFile());
+    auth = authenticateUserFromRequest(req, accounts);
+    const authHeader = (req.headers.authorization || '').trim();
+    const xApiKey = ((req.headers['x-api-key'] as string) || '').trim();
+    const queryApiKey = ((req.query.apiKey as string) || '').trim();
+    const hasKey = authHeader.includes('bb_live_') || xApiKey.startsWith('bb_live_') || queryApiKey.startsWith('bb_live_');
+
+    if (hasKey && !auth) {
+      return res.status(401).json({ error: 'invalid_api_key', message: 'The provided API key is invalid or revoked.' });
+    }
+    if (!auth) {
+      return res.status(401).json({ error: 'unauthorized', message: 'Sign in or provide a valid API key to list boxes.' });
+    }
+    saveAccounts(getAccountsFile(), accounts);
+  } catch {
+    return res.status(503).json({ error: 'account_service_unavailable' });
   }
+
+  // Scope strictly to the authenticated user; never enumerate other users' boxes.
+  const authUserId = auth!.user.id as string;
+  const store = Object.values(readStore());
+  res.json(store.filter((b: any) => b.userId === authUserId || b.meta?.userId === authUserId));
 });
 
 apiRouter.get('/boxes/:id', (req, res) => {
@@ -53,21 +76,96 @@ apiRouter.post('/boxes', (req, res) => {
   if (!parsed.success) {
     return res.status(400).json({ error: 'invalid', details: parsed.error.flatten() });
   }
+
+  // Check API Key or Session
+  let authUser: Record<string, any> | null = null;
+  try {
+    const accounts = readAccounts(getAccountsFile());
+    const auth = authenticateUserFromRequest(req, accounts);
+    const authHeader = (req.headers.authorization || '').trim();
+    const xApiKey = ((req.headers['x-api-key'] as string) || '').trim();
+    const queryApiKey = ((req.query.apiKey as string) || '').trim();
+    const hasKey = authHeader.includes('bb_live_') || xApiKey.startsWith('bb_live_') || queryApiKey.startsWith('bb_live_');
+
+    if (hasKey && !auth) {
+      return res.status(401).json({ error: 'invalid_api_key', message: 'The provided API key is invalid or revoked.' });
+    }
+    if (auth) {
+      authUser = auth.user;
+      saveAccounts(getAccountsFile(), accounts);
+    }
+  } catch {}
+
+  // A previous revision trusted a caller-supplied `userId`, letting anyone write
+  // capsules into another user's vault. Ownership now comes ONLY from the credential.
+  const userId = authUser?.id ?? null;
   const id = `box_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
-  const rec = { id, ...parsed.data, createdAt: Date.now() };
+  const { userId: _untrustedUserId, ...safeData } = parsed.data;
+  const rec = { id, ...safeData, userId, createdAt: Date.now() };
   const s = readStore();
   s[id] = rec;
   writeStore(s);
+
+  // If created by an authenticated user, log to user's links in accounts.json
+  if (authUser) {
+    try {
+      const accounts = readAccounts(getAccountsFile());
+      const user = accounts.users?.[authUser.id];
+      if (user) {
+        const links = Array.isArray(user.links) ? user.links : [];
+        user.links = links;
+        (links as any[]).unshift({
+          id,
+          title: rec.title || 'Untitled Capsule',
+          url: (rec.meta as any)?.url || `https://bittybox.org/#${id}`,
+          format: rec.format || 'html',
+          byteSize: Buffer.byteLength(rec.content, 'utf8'),
+          compressedSize: (rec.meta as any)?.compressedBytes || 0,
+          encrypted: Boolean((rec.meta as any)?.isEncrypted),
+          createdAt: new Date().toISOString(),
+        });
+        saveAccounts(getAccountsFile(), accounts);
+      }
+    } catch {}
+  }
+
   res.status(201).json(rec);
 });
 
 apiRouter.delete('/boxes/:id', (req, res) => {
+  // A previous revision let ANY anonymous caller delete ANY box (no auth, no ownership).
+  let auth: ReturnType<typeof authenticateUserFromRequest> = null;
+  try {
+    const accounts = readAccounts(getAccountsFile());
+    auth = authenticateUserFromRequest(req, accounts);
+    const authHeader = (req.headers.authorization || '').trim();
+    const xApiKey = ((req.headers['x-api-key'] as string) || '').trim();
+    const queryApiKey = ((req.query.apiKey as string) || '').trim();
+    const hasKey = authHeader.includes('bb_live_') || xApiKey.startsWith('bb_live_') || queryApiKey.startsWith('bb_live_');
+    if (hasKey && !auth) {
+      return res.status(401).json({ error: 'invalid_api_key', message: 'The provided API key is invalid or revoked.' });
+    }
+    if (!auth) {
+      return res.status(401).json({ error: 'unauthorized', message: 'Sign in or provide a valid API key to delete a box.' });
+    }
+  } catch {
+    return res.status(503).json({ error: 'account_service_unavailable' });
+  }
+
   const s = readStore();
-  if (!s[req.params.id]) return res.status(404).json({ error: 'not_found' });
-  const deleted = s[req.params.id];
+  const target = s[req.params.id];
+  if (!target) return res.status(404).json({ error: 'not_found' });
+
+  const authUserId = auth!.user.id as string;
+  const owns = target.userId === authUserId || target.meta?.userId === authUserId;
+  if (!owns) {
+    // Do not confirm existence of other users' boxes.
+    return res.status(404).json({ error: 'not_found' });
+  }
+
   delete s[req.params.id];
   writeStore(s);
-  res.json({ ok: true, id: req.params.id, deleted });
+  res.json({ ok: true, id: req.params.id });
 });
 
 // --- AI Feature Endpoints ---
