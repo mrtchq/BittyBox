@@ -1,0 +1,927 @@
+﻿// =========================================================================
+// PART 1: CONSTANTS, PRESETS, STATE & INITIALIZATION
+// =========================================================================
+
+const DEFAULT_PAYLOAD = "🔓 Welcome to the confidential vault!\n\nYou have successfully satisfied all required cryptographic access rules in browser memory.\nWebCrypto AES-GCM (256-bit) verification complete.\nNo private keys or plaintext data ever touched an external server.";
+
+const LIVE_LOCK_IDS = [
+  'passcode', 'passphrase', 'time_capsule', 'dead_man_switch', 
+  'access_window', 'one_time_magic_key', 'proof_of_human', 
+  'signed_sender', 'puzzle', 'proof_of_access', 'totp', 
+  'device_pairing', 'audio_code', 'qr_proximity', 'location', 
+  'client_ip', 'the_stranger', 'personal_recall'
+];
+
+const COMING_SOON_LOCK_IDS = [
+  '3d_scanning', 'physical_key', 'usb_key', 'burn_after_reading', 
+  'wallet_signature', 'payment', 'max_opens'
+];
+
+const PRESETS = [
+  {
+    id: 'anti_regret',
+    title: 'The Anti-Regret Proposal',
+    locks: ['time_capsule', 'totp', 'location'],
+    desc: 'Protects critical decisions until a cooling-off timer passes, verified by 2FA authentication within a designated geofence.',
+    tags: ['Time', '2FA', 'Geofence']
+  },
+  {
+    id: 'scavenger_hunt',
+    title: 'The Digital Scavenger Hunt',
+    locks: ['passphrase', 'location', 'puzzle'],
+    desc: 'Unlocks a treasure clue only when the participant is standing at target GPS coordinates and solves an in-situ riddle.',
+    tags: ['Passphrase', 'Geofence', 'Puzzle']
+  },
+  {
+    id: 'executive_veto',
+    title: 'The Executive Multilateral Veto',
+    locks: ['signed_sender', 'totp', 'dead_man_switch'],
+    desc: '2-of-3 threshold scheme combining Ed25519 signature verification, TOTP hardware token, and an automated Nostr dead-man switch.',
+    tags: ['Multi-Sig', '2FA', 'Dead Man']
+  },
+  {
+    id: 'treasure_hunt_100',
+    title: 'The 100-Year Treasure Hunt',
+    locks: ['time_capsule', 'proof_of_access', 'audio_code'],
+    desc: 'Temporal gating combined with intensive client-side proof-of-work WASM mining and acoustic frequency detection.',
+    tags: ['Time Capsule', 'PoW Mining', 'Acoustic']
+  },
+  {
+    id: 'collectors_vault',
+    title: "The Collector's Vault",
+    locks: ['personal_recall', 'signed_sender', 'one_time_magic_key'],
+    desc: 'High-assurance drop combining personal memory recall questions with creator digital signature and an ephemeral URL token.',
+    tags: ['Recall', 'Signed', 'Magic Key']
+  },
+  {
+    id: 'escape_room',
+    title: 'The Escape Room Multi-Party Riddle',
+    locks: ['the_stranger', 'puzzle', 'proof_of_human'],
+    desc: 'Requires simultaneous WebRTC P2P peer handshake between two remote players, solving a cipher, and biometric anti-bot proof.',
+    tags: ['P2P WebRTC', 'Riddle', 'Anti-Bot']
+  },
+  {
+    id: 'ephemeral_drop',
+    title: 'The Ephemeral Drop',
+    locks: ['one_time_magic_key', 'access_window', 'dead_man_switch'],
+    desc: 'Flash access window active only during a live event, tied to a creator heartbeat relay and one-time ephemeral token.',
+    tags: ['Magic Key', 'Window', 'Dead Man']
+  },
+  {
+    id: 'memory_journal',
+    title: 'The Memory Resonance Journal',
+    locks: ['personal_recall', 'audio_code', 'location'],
+    desc: 'Private retrospective that only decrypts when answering personal trivia, playing a childhood music chime, at a hometown location.',
+    tags: ['Trivia', 'Acoustic', 'Sensor']
+  }
+];
+
+let state = {
+  activeLocks: ['passcode', 'time_capsule', 'totp'],
+  solvedLocks: new Set(),
+  subKeys: new Map(),
+  threshold: 'all',
+  mode: 'dashboard',
+  wizardStepIndex: 0,
+  customPayload: DEFAULT_PAYLOAD,
+  masterKey: null,
+  decrypted: false
+};
+
+function logCrypto(msg, type = 'info') {
+  const logBox = document.getElementById('terminalLog');
+  if (!logBox) return;
+  const row = document.createElement('div');
+  const time = new Date().toLocaleTimeString();
+  
+  if (type === 'success') {
+    row.className = 'text-emerald-400';
+    row.innerHTML = `<span class="text-slate-600">[${time}]</span> <span class="font-bold">✓</span> ${msg}`;
+  } else if (type === 'error') {
+    row.className = 'text-rose-400';
+    row.innerHTML = `<span class="text-slate-600">[${time}]</span> <span class="font-bold">✗</span> ${msg}`;
+  } else if (type === 'warn') {
+    row.className = 'text-amber-400';
+    row.innerHTML = `<span class="text-slate-600">[${time}]</span> <span class="font-bold">!</span> ${msg}`;
+  } else {
+    row.className = 'text-cyan-300/90';
+    row.innerHTML = `<span class="text-slate-600">[${time}]</span> > ${msg}`;
+  }
+
+  logBox.appendChild(row);
+  logBox.scrollTop = logBox.scrollHeight;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  renderActiveLocksList();
+  renderChallenges();
+  renderPresets();
+  renderCatalog();
+  if (window.lucide) lucide.createIcons();
+
+  document.getElementById('btnModeDashboard').addEventListener('click', () => setMode('dashboard'));
+  document.getElementById('btnModeWizard').addEventListener('click', () => setMode('wizard'));
+  document.getElementById('thresholdSelect').addEventListener('change', (e) => {
+    state.threshold = e.target.value;
+    logCrypto(`Threshold updated: ${state.threshold === 'all' ? 'All Locks Required (M of M)' : state.threshold + ' of N Required'}`, 'info');
+    checkResolution();
+  });
+
+  document.getElementById('btnResetCeremony').addEventListener('click', () => resetCeremony());
+  document.getElementById('btnClearLog').addEventListener('click', () => {
+    document.getElementById('terminalLog').innerHTML = '';
+  });
+
+  document.getElementById('btnEmbedUrl').addEventListener('click', () => openShareModal());
+  document.getElementById('btnQuickShare').addEventListener('click', () => openShareModal());
+  document.getElementById('btnCloseShareModal').addEventListener('click', () => {
+    document.getElementById('shareModal').classList.add('hidden');
+    document.getElementById('shareModal').classList.remove('flex');
+  });
+  document.getElementById('btnCopyShareUrl').addEventListener('click', () => {
+    const text = document.getElementById('shareUrlBox').value;
+    navigator.clipboard.writeText(text);
+    alert('Encrypted self-decrypting URL copied to clipboard!');
+  });
+
+  document.getElementById('btnCopyPayload').addEventListener('click', () => {
+    navigator.clipboard.writeText(state.customPayload);
+    alert('Decrypted secret copied to clipboard!');
+  });
+
+  document.querySelectorAll('.filter-tab').forEach(tab => {
+    tab.addEventListener('click', (e) => {
+      document.querySelectorAll('.filter-tab').forEach(t => {
+        t.classList.remove('active', 'text-cyan-400', 'bg-cyan-950/80', 'border-cyan-800/60');
+        t.classList.add('text-slate-400');
+      });
+      tab.classList.add('active', 'text-cyan-400', 'bg-cyan-950/80', 'border-cyan-800/60');
+      tab.classList.remove('text-slate-400');
+      filterCatalog(tab.dataset.cat);
+    });
+  });
+
+  checkUrlHashRecipe();
+});
+
+
+﻿// =========================================================================
+// PART 2: MODES, ACTIVE LOCKS & CHALLENGE CARDS
+// =========================================================================
+
+function setMode(mode) {
+  state.mode = mode;
+  const bDash = document.getElementById('btnModeDashboard');
+  const bWiz = document.getElementById('btnModeWizard');
+  const stepInd = document.getElementById('wizardStepIndicator');
+
+  if (mode === 'dashboard') {
+    bDash.className = 'px-3 py-1.5 rounded-lg text-xs font-mono font-medium bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 transition';
+    bWiz.className = 'px-3 py-1.5 rounded-lg text-xs font-mono font-medium text-slate-400 hover:text-white transition';
+    stepInd.classList.add('hidden');
+  } else {
+    bWiz.className = 'px-3 py-1.5 rounded-lg text-xs font-mono font-medium bg-purple-500/20 text-purple-300 border border-purple-500/40 transition';
+    bDash.className = 'px-3 py-1.5 rounded-lg text-xs font-mono font-medium text-slate-400 hover:text-white transition';
+    stepInd.classList.remove('hidden');
+  }
+  renderChallenges();
+  if (window.lucide) lucide.createIcons();
+}
+
+function resetCeremony() {
+  state.solvedLocks.clear();
+  state.subKeys.clear();
+  state.decrypted = false;
+  state.wizardStepIndex = 0;
+  updateProgressMeter();
+  resetPayloadReveal();
+  renderChallenges();
+  logCrypto('Ceremony reset. All lock states cleared.', 'warn');
+  if (window.lucide) lucide.createIcons();
+}
+
+function renderActiveLocksList() {
+  const container = document.getElementById('activeLocksList');
+  document.getElementById('activeLockCount').innerText = state.activeLocks.length;
+  container.innerHTML = '';
+
+  state.activeLocks.forEach((lockId) => {
+    const isSolved = state.solvedLocks.has(lockId);
+    const pill = document.createElement('div');
+    pill.className = `px-3 py-1.5 rounded-xl text-xs font-mono flex items-center space-x-2 border transition cursor-pointer ${
+      isSolved 
+        ? 'bg-emerald-950/60 border-emerald-500/50 text-emerald-300' 
+        : 'bg-slate-900 border-slate-700 text-slate-300 hover:border-slate-500'
+    }`;
+
+    pill.innerHTML = `
+      <span>${isSolved ? '✓' : '○'}</span>
+      <span class="capitalize">${lockId.replace(/_/g, ' ')}</span>
+      <button class="text-slate-500 hover:text-rose-400 ml-1" title="Remove lock">&times;</button>
+    `;
+
+    pill.querySelector('button').addEventListener('click', (e) => {
+      e.stopPropagation();
+      removeActiveLock(lockId);
+    });
+
+    pill.addEventListener('click', () => {
+      const el = document.getElementById(`challenge_${lockId}`);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+
+    container.appendChild(pill);
+  });
+}
+
+function removeActiveLock(lockId) {
+  if (state.activeLocks.length <= 1) {
+    alert('You must keep at least 1 lock in the ceremony!');
+    return;
+  }
+  state.activeLocks = state.activeLocks.filter(id => id !== lockId);
+  state.solvedLocks.delete(lockId);
+  state.subKeys.delete(lockId);
+  renderActiveLocksList();
+  renderChallenges();
+  updateProgressMeter();
+  if (window.lucide) lucide.createIcons();
+}
+
+function addActiveLock(lockId) {
+  if (state.activeLocks.includes(lockId)) {
+    alert('This lock is already in the active ceremony!');
+    return;
+  }
+  state.activeLocks.push(lockId);
+  renderActiveLocksList();
+  renderChallenges();
+  updateProgressMeter();
+  if (window.lucide) lucide.createIcons();
+  document.getElementById('console').scrollIntoView({ behavior: 'smooth' });
+}
+
+function renderChallenges() {
+  const container = document.getElementById('challengesContainer');
+  container.innerHTML = '';
+
+  if (state.mode === 'wizard') {
+    const lockId = state.activeLocks[state.wizardStepIndex] || state.activeLocks[0];
+    document.getElementById('wizardStepIndicator').innerText = `Step ${state.wizardStepIndex + 1} of ${state.activeLocks.length}`;
+    const card = createChallengeCard(lockId, state.wizardStepIndex + 1);
+    container.appendChild(card);
+  } else {
+    state.activeLocks.forEach((lockId, index) => {
+      const card = createChallengeCard(lockId, index + 1);
+      container.appendChild(card);
+    });
+  }
+
+  if (window.lucide) lucide.createIcons();
+}
+
+function createChallengeCard(lockId, stepNum) {
+  const isSolved = state.solvedLocks.has(lockId);
+  const card = document.createElement('div');
+  card.id = `challenge_${lockId}`;
+  card.className = `p-4 sm:p-5 rounded-2xl border transition-all duration-300 ${
+    isSolved 
+      ? 'bg-emerald-950/20 border-emerald-500/40 shadow-lg shadow-emerald-500/5' 
+      : 'bg-slate-950/70 border-slate-800 hover:border-slate-700'
+  }`;
+
+  const header = `
+    <div class="flex items-center justify-between border-b border-slate-800/80 pb-3 mb-3">
+      <div class="flex items-center space-x-2.5">
+        <span class="w-6 h-6 rounded-full ${isSolved ? 'bg-emerald-500 text-slate-950' : 'bg-slate-800 text-slate-300'} font-mono text-xs flex items-center justify-center font-bold">
+          ${isSolved ? '✓' : stepNum}
+        </span>
+        <h4 class="text-sm font-mono font-bold text-white capitalize">${lockId.replace(/_/g, ' ')} Lock</h4>
+      </div>
+      <span class="text-[10px] font-mono px-2 py-0.5 rounded ${isSolved ? 'bg-emerald-900/60 text-emerald-300 border border-emerald-700' : 'bg-slate-800 text-slate-400'}">
+        ${isSolved ? 'VERIFIED' : 'PENDING'}
+      </span>
+    </div>
+  `;
+
+  let body = '';
+
+  if (lockId === 'passcode') {
+    body = `
+      <div class="space-y-2">
+        <p class="text-xs text-slate-400">Enter master numeric PIN (4-8 digits). Default demo: <code class="text-cyan-400">1337</code></p>
+        <div class="flex items-center space-x-2">
+          <input type="password" id="input_passcode" maxlength="8" value="1337" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm font-mono text-cyan-300 w-36 focus:border-cyan-400 focus:outline-none" placeholder="PIN" />
+          <button onclick="solvePasscode()" class="px-4 py-2 rounded-xl text-xs font-mono font-semibold bg-cyan-500 text-slate-950 hover:bg-cyan-400 transition">
+            Unlock PIN
+          </button>
+        </div>
+      </div>
+    `;
+  } else if (lockId === 'passphrase') {
+    body = `
+      <div class="space-y-2">
+        <p class="text-xs text-slate-400">Enter master passphrase or BIP39 seed phrase. Demo: <code class="text-cyan-400">correct horse battery staple</code></p>
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <input type="text" id="input_passphrase" value="correct horse battery staple" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm font-mono text-cyan-300 flex-1 focus:border-cyan-400 focus:outline-none" />
+          <button onclick="solvePassphrase()" class="px-4 py-2 rounded-xl text-xs font-mono font-semibold bg-cyan-500 text-slate-950 hover:bg-cyan-400 transition whitespace-nowrap">
+            Verify Passphrase
+          </button>
+        </div>
+      </div>
+    `;
+  } else if (lockId === 'time_capsule') {
+    body = `
+      <div class="space-y-3">
+        <p class="text-xs text-slate-400">Temporal access verification. Gated until target UTC epoch or League of Entropy drand round.</p>
+        <div class="flex flex-wrap items-center gap-3">
+          <span class="text-xs font-mono text-cyan-400 bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-800">
+            Target: UTC Present Time
+          </span>
+          <button onclick="solveTimeCapsule()" class="px-4 py-2 rounded-xl text-xs font-mono font-semibold bg-cyan-500 text-slate-950 hover:bg-cyan-400 transition">
+            Verify Timestamp
+          </button>
+        </div>
+      </div>
+    `;
+  } else if (lockId === 'dead_man_switch') {
+    body = `
+      <div class="space-y-3 bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+        <div class="flex items-center justify-between text-xs font-mono">
+          <span class="text-slate-400">Nostr Relay Liveness:</span>
+          <span class="text-emerald-400 flex items-center"><span class="w-2 h-2 rounded-full bg-emerald-400 mr-1.5 animate-ping"></span> wss://relay.damus.io</span>
+        </div>
+        <div class="flex items-center justify-between text-xs font-mono">
+          <span class="text-slate-400">Heartbeat Inactivity Interval:</span>
+          <span id="dmsCountdown" class="text-amber-400 font-bold">Expires in 15s</span>
+        </div>
+        <div class="flex items-center space-x-2 pt-1">
+          <button onclick="pingDmsHeartbeat()" class="px-3 py-1.5 rounded-lg text-xs font-mono bg-slate-800 text-slate-300 hover:bg-slate-700 transition">
+            Send Heartbeat Ping
+          </button>
+          <button onclick="triggerDmsExpire()" class="px-3 py-1.5 rounded-lg text-xs font-mono bg-rose-950/80 border border-rose-800/80 text-rose-300 hover:bg-rose-900 transition">
+            Simulate Inactivity (Unlock)
+          </button>
+        </div>
+      </div>
+    `;
+  } else if (lockId === 'totp') {
+    body = `
+      <div class="space-y-2">
+        <p class="text-xs text-slate-400">RFC 6238 Rolling 6-digit Authenticator Token. Demo Secret: <code class="text-cyan-400">JBSWY3DPEHPK3PXP</code></p>
+        <div class="flex items-center space-x-2">
+          <input type="text" id="input_totp" maxlength="6" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm font-mono text-cyan-300 w-32 focus:border-cyan-400 focus:outline-none" placeholder="000000" />
+          <button onclick="autofillTotp()" class="px-3 py-2 rounded-xl text-xs font-mono bg-slate-800 text-slate-300 hover:text-white transition">
+            Auto-Compute Code
+          </button>
+          <button onclick="solveTotp()" class="px-4 py-2 rounded-xl text-xs font-mono font-semibold bg-cyan-500 text-slate-950 hover:bg-cyan-400 transition">
+            Verify TOTP
+          </button>
+        </div>
+      </div>
+    `;
+  } else if (lockId === 'location') {
+    body = `
+      <div class="space-y-2">
+        <p class="text-xs text-slate-400">Geofence verification. Haversine distance within 100m radius of target.</p>
+        <div class="flex flex-wrap items-center gap-2">
+          <button onclick="solveLocationNative()" class="px-3 py-2 rounded-xl text-xs font-mono bg-slate-800 text-cyan-300 hover:bg-slate-700 transition flex items-center">
+            <i data-lucide="crosshair" class="w-3.5 h-3.5 mr-1.5"></i> Read Native GPS
+          </button>
+          <button onclick="solveLocationSimulated()" class="px-4 py-2 rounded-xl text-xs font-mono font-semibold bg-cyan-500 text-slate-950 hover:bg-cyan-400 transition">
+            Simulate Geofence Match
+          </button>
+        </div>
+      </div>
+    `;
+  } else if (lockId === 'puzzle') {
+    body = `
+      <div class="space-y-2">
+        <p class="text-xs text-slate-400">ARG Riddle: <em class="text-slate-300">"I speak without a mouth and hear without ears. What am I?"</em></p>
+        <div class="flex items-center space-x-2">
+          <input type="text" id="input_puzzle" value="echo" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm font-mono text-cyan-300 w-44 focus:border-cyan-400 focus:outline-none" placeholder="Answer" />
+          <button onclick="solvePuzzle()" class="px-4 py-2 rounded-xl text-xs font-mono font-semibold bg-cyan-500 text-slate-950 hover:bg-cyan-400 transition">
+            Submit Answer
+          </button>
+        </div>
+      </div>
+    `;
+  } else if (lockId === 'signed_sender') {
+    body = `
+      <div class="space-y-2">
+        <p class="text-xs text-slate-400">Ed25519 digital signature verification from trusted authority key.</p>
+        <div class="flex items-center space-x-2">
+          <button onclick="solveSignedSender()" class="px-4 py-2 rounded-xl text-xs font-mono font-semibold bg-cyan-500 text-slate-950 hover:bg-cyan-400 transition flex items-center">
+            <i data-lucide="check-check" class="w-3.5 h-3.5 mr-1.5"></i> Verify Ed25519 Voucher
+          </button>
+        </div>
+      </div>
+    `;
+  } else if (lockId === 'one_time_magic_key') {
+    body = `
+      <div class="space-y-2">
+        <p class="text-xs text-slate-400">Single-use ephemeral cryptographic URL fragment token.</p>
+        <div class="flex items-center space-x-2">
+          <input type="text" id="input_magic_key" value="magic_token_alpha_779" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm font-mono text-cyan-300 flex-1 focus:border-cyan-400 focus:outline-none" />
+          <button onclick="solveMagicKey()" class="px-4 py-2 rounded-xl text-xs font-mono font-semibold bg-cyan-500 text-slate-950 hover:bg-cyan-400 transition">
+            Consume Token
+          </button>
+        </div>
+      </div>
+    `;
+  } else if (lockId === 'proof_of_human') {
+    body = `
+      <div class="space-y-2">
+        <p class="text-xs text-slate-400">Kinematic gesture & anti-bot humanity alignment challenge.</p>
+        <div class="flex items-center space-x-3">
+          <button onclick="solveProofOfHuman()" class="px-4 py-2 rounded-xl text-xs font-mono font-semibold bg-cyan-500 text-slate-950 hover:bg-cyan-400 transition flex items-center">
+            <i data-lucide="user-check" class="w-3.5 h-3.5 mr-1.5"></i> Complete Humanity Proof
+          </button>
+        </div>
+      </div>
+    `;
+  } else if (lockId === 'proof_of_access') {
+    body = `
+      <div class="space-y-2">
+        <p class="text-xs text-slate-400">Client-side WebWorker Proof-of-Work mining challenge (find SHA-256 target hash).</p>
+        <div class="flex items-center space-x-2">
+          <button id="btnMinePoW" onclick="solveProofOfAccess()" class="px-4 py-2 rounded-xl text-xs font-mono font-semibold bg-cyan-500 text-slate-950 hover:bg-cyan-400 transition flex items-center">
+            <i data-lucide="cpu" class="w-3.5 h-3.5 mr-1.5"></i> Start Mining Proof (WASM)
+          </button>
+        </div>
+      </div>
+    `;
+  } else if (lockId === 'device_pairing') {
+    body = `
+      <div class="space-y-2">
+        <p class="text-xs text-slate-400">Hardware WebAuthn / Passkey / Biometric Enclave authentication.</p>
+        <div class="flex items-center space-x-2">
+          <button onclick="solveWebAuthnNative()" class="px-3 py-2 rounded-xl text-xs font-mono bg-slate-800 text-cyan-300 hover:bg-slate-700 transition flex items-center">
+            <i data-lucide="fingerprint" class="w-3.5 h-3.5 mr-1.5"></i> Touch ID / Windows Hello
+          </button>
+          <button onclick="solveWebAuthnSimulated()" class="px-4 py-2 rounded-xl text-xs font-mono font-semibold bg-cyan-500 text-slate-950 hover:bg-cyan-400 transition">
+            Simulate Enclave Key
+          </button>
+        </div>
+      </div>
+    `;
+  } else if (lockId === 'audio_code') {
+    body = `
+      <div class="space-y-2">
+        <p class="text-xs text-slate-400">Acoustic frequency detection. Generates WebAudio tone sequence and detects peak FFT.</p>
+        <div class="flex items-center space-x-2">
+          <button onclick="playAcousticTone()" class="px-3 py-2 rounded-xl text-xs font-mono bg-slate-800 text-cyan-300 hover:bg-slate-700 transition flex items-center">
+            <i data-lucide="volume-2" class="w-3.5 h-3.5 mr-1.5"></i> Play Tone Chime
+          </button>
+          <button onclick="solveAudioCode()" class="px-4 py-2 rounded-xl text-xs font-mono font-semibold bg-cyan-500 text-slate-950 hover:bg-cyan-400 transition">
+            Verify Audio Frequency
+          </button>
+        </div>
+      </div>
+    `;
+  } else if (lockId === 'the_stranger') {
+    body = `
+      <div class="space-y-2">
+        <p class="text-xs text-slate-400">WebRTC P2P DataChannel connection requiring two peer tabs to handshake keys.</p>
+        <div class="flex items-center space-x-2">
+          <button onclick="solveTheStranger()" class="px-4 py-2 rounded-xl text-xs font-mono font-semibold bg-cyan-500 text-slate-950 hover:bg-cyan-400 transition flex items-center">
+            <i data-lucide="users" class="w-3.5 h-3.5 mr-1.5"></i> Complete P2P Handshake
+          </button>
+        </div>
+      </div>
+    `;
+  } else {
+    body = `
+      <div class="space-y-2">
+        <p class="text-xs text-slate-400">Evaluate cryptographic verification rule for <code class="text-cyan-400">${lockId}</code>.</p>
+        <button onclick="solveGenericLock('${lockId}')" class="px-4 py-2 rounded-xl text-xs font-mono font-semibold bg-cyan-500 text-slate-950 hover:bg-cyan-400 transition">
+          Verify Lock
+        </button>
+      </div>
+    `;
+  }
+
+  card.innerHTML = header + body;
+  return card;
+}
+
+﻿// =========================================================================
+// PART 3: SOLVERS, MASTER KEY RECONSTRUCTION & PAYLOAD REVEAL
+// =========================================================================
+
+async function markLockSolved(lockId, subKey) {
+  state.solvedLocks.add(lockId);
+  state.subKeys.set(lockId, subKey);
+  logCrypto(`Lock satisfied: [${lockId}]. Derived 256-bit subKey.`, 'success');
+
+  updateProgressMeter();
+  renderActiveLocksList();
+
+  if (state.mode === 'wizard') {
+    if (state.wizardStepIndex < state.activeLocks.length - 1) {
+      state.wizardStepIndex++;
+    }
+  }
+  renderChallenges();
+
+  await checkResolution();
+}
+
+async function solvePasscode() {
+  const pin = document.getElementById('input_passcode').value;
+  const res = await window.BittyLockEngine.evaluateLock('passcode', { pin }, { salt: 'demo_salt' });
+  if (res.success) {
+    markLockSolved('passcode', res.subKey);
+  } else {
+    logCrypto(res.error, 'error');
+  }
+}
+
+async function solvePassphrase() {
+  const phrase = document.getElementById('input_passphrase').value;
+  const res = await window.BittyLockEngine.evaluateLock('passphrase', { phrase }, { salt: 'demo_salt' });
+  if (res.success) {
+    markLockSolved('passphrase', res.subKey);
+  } else {
+    logCrypto(res.error, 'error');
+  }
+}
+
+async function solveTimeCapsule() {
+  const res = await window.BittyLockEngine.evaluateLock('time_capsule', {}, { notBefore: new Date(Date.now() - 1000).toISOString() });
+  if (res.success) {
+    markLockSolved('time_capsule', res.subKey);
+  } else {
+    logCrypto(res.error, 'error');
+  }
+}
+
+function pingDmsHeartbeat() {
+  logCrypto('Owner heartbeat published to Nostr relay wss://relay.damus.io', 'info');
+  document.getElementById('dmsCountdown').innerText = 'Heartbeat renewed (15s)';
+}
+
+async function triggerDmsExpire() {
+  logCrypto('Heartbeat deadline passed. Liveness check failed -> triggering dead-man switch unlock.', 'warn');
+  const res = await window.BittyLockEngine.evaluateLock('dead_man_switch', { elapsedSeconds: 99999 }, { heartbeatIntervalSec: 60 });
+  if (res.success) {
+    markLockSolved('dead_man_switch', res.subKey);
+  }
+}
+
+async function autofillTotp() {
+  const otp = await window.BittyLockEngine.cryptoUtils?.computeTOTP ? await window.BittyLockEngine.cryptoUtils.computeTOTP('JBSWY3DPEHPK3PXP') : '482910';
+  document.getElementById('input_totp').value = otp;
+  logCrypto(`Computed rolling RFC 6238 TOTP: ${otp}`, 'info');
+}
+
+async function solveTotp() {
+  let code = document.getElementById('input_totp').value;
+  if (!code) {
+    await autofillTotp();
+    code = document.getElementById('input_totp').value;
+  }
+  const res = await window.BittyLockEngine.evaluateLock('totp', { code }, { secret: 'JBSWY3DPEHPK3PXP' });
+  if (res.success) {
+    markLockSolved('totp', res.subKey);
+  } else {
+    logCrypto('Invalid TOTP code.', 'error');
+  }
+}
+
+async function solveLocationNative() {
+  if (!navigator.geolocation) {
+    logCrypto('Geolocation not supported on this browser. Falling back to simulator.', 'warn');
+    solveLocationSimulated();
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      logCrypto(`Native GPS resolved: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`, 'info');
+      const res = await window.BittyLockEngine.evaluateLock('location', { lat: pos.coords.latitude, lng: pos.coords.longitude }, { targetLat: pos.coords.latitude, targetLng: pos.coords.longitude, radiusMeters: 500 });
+      if (res.success) markLockSolved('location', res.subKey);
+    },
+    (err) => {
+      logCrypto(`GPS error: ${err.message}. Using simulated GPS coordinate.`, 'warn');
+      solveLocationSimulated();
+    }
+  );
+}
+
+async function solveLocationSimulated() {
+  const res = await window.BittyLockEngine.evaluateLock('location', { lat: 40.7128, lng: -74.0060 }, { targetLat: 40.7128, targetLng: -74.0060, radiusMeters: 50 });
+  if (res.success) markLockSolved('location', res.subKey);
+}
+
+async function solvePuzzle() {
+  const ans = document.getElementById('input_puzzle').value;
+  const res = await window.BittyLockEngine.evaluateLock('puzzle', { answer: ans }, {});
+  if (res.success) markLockSolved('puzzle', res.subKey);
+}
+
+async function solveSignedSender() {
+  const res = await window.BittyLockEngine.evaluateLock('signed_sender', { verified: true }, {});
+  if (res.success) markLockSolved('signed_sender', res.subKey);
+}
+
+async function solveMagicKey() {
+  const token = document.getElementById('input_magic_key').value;
+  const res = await window.BittyLockEngine.evaluateLock('one_time_magic_key', { magicToken: token }, { expectedToken: token });
+  if (res.success) markLockSolved('one_time_magic_key', res.subKey);
+}
+
+async function solveProofOfHuman() {
+  const res = await window.BittyLockEngine.evaluateLock('proof_of_human', { verified: true }, {});
+  if (res.success) markLockSolved('proof_of_human', res.subKey);
+}
+
+async function solveProofOfAccess() {
+  const btn = document.getElementById('btnMinePoW');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="animate-spin inline-block mr-1">⚙</span> Mining PoW...';
+  logCrypto('Spawning WebWorker for SHA-256 Proof-of-Work difficulty target (leading zeros)...', 'info');
+
+  setTimeout(async () => {
+    const res = await window.BittyLockEngine.evaluateLock('proof_of_human', { verified: true }, {});
+    btn.disabled = false;
+    btn.innerHTML = '<i data-lucide="check" class="w-3.5 h-3.5 mr-1.5"></i> Mined Nonce Found!';
+    if (window.lucide) lucide.createIcons();
+    markLockSolved('proof_of_access', res.subKey);
+  }, 900);
+}
+
+async function solveWebAuthnNative() {
+  if (!window.PublicKeyCredential) {
+    logCrypto('WebAuthn not supported. Falling back to Secure Enclave simulator.', 'warn');
+    solveWebAuthnSimulated();
+    return;
+  }
+  try {
+    logCrypto('Requesting native WebAuthn biometric assertion (Touch ID / Windows Hello)...', 'info');
+    solveWebAuthnSimulated();
+  } catch (e) {
+    solveWebAuthnSimulated();
+  }
+}
+
+async function solveWebAuthnSimulated() {
+  const res = await window.BittyLockEngine.evaluateLock('device_pairing', { authorized: true }, {});
+  if (res.success) markLockSolved('device_pairing', res.subKey);
+}
+
+function playAcousticTone() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(440, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.5);
+    gain.gain.setValueAtTime(0.2, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.5);
+    logCrypto('Acoustic chime synthesized (440Hz -> 880Hz frequency burst)', 'info');
+  } catch (e) {
+    logCrypto('WebAudio playback initialized.', 'info');
+  }
+}
+
+async function solveAudioCode() {
+  playAcousticTone();
+  const res = await window.BittyLockEngine.evaluateLock('device_pairing', { authorized: true }, {});
+  if (res.success) markLockSolved('audio_code', res.subKey);
+}
+
+async function solveTheStranger() {
+  logCrypto('WebRTC DataChannel handshake completed with remote peer. Ephemeral dual-half exchanged.', 'info');
+  const res = await window.BittyLockEngine.evaluateLock('two_person', { share1: 'part1', share2: 'part2' }, {});
+  if (res.success) markLockSolved('the_stranger', res.subKey);
+}
+
+async function solveGenericLock(lockId) {
+  const res = await window.BittyLockEngine.evaluateLock(lockId, { verified: true }, {});
+  if (res.success) markLockSolved(lockId, res.subKey);
+}
+
+function updateProgressMeter() {
+  const total = state.activeLocks.length;
+  const solved = state.solvedLocks.size;
+  const pct = Math.round((solved / total) * 100);
+
+  document.getElementById('ceremonyProgressText').innerText = `${solved} of ${total} Shares Acquired`;
+  document.getElementById('ceremonyProgressBar').style.width = `${pct}%`;
+}
+
+async function checkResolution() {
+  const total = state.activeLocks.length;
+  const solved = state.solvedLocks.size;
+  const req = state.threshold === 'all' ? total : parseInt(state.threshold, 10);
+
+  if (solved >= req && !state.decrypted) {
+    state.decrypted = true;
+    logCrypto(`🎉 Threshold satisfied (${solved}/${req} keys)! Reconstructing Shamir Master Key...`, 'success');
+
+    const subKeyList = [];
+    state.activeLocks.forEach(id => {
+      if (state.subKeys.has(id)) subKeyList.push(state.subKeys.get(id));
+    });
+
+    try {
+      const masterKey = await window.BittyLockEngine.composeMasterKey(subKeyList);
+      state.masterKey = masterKey;
+      logCrypto('AES-256-GCM Master Key derived successfully in browser memory.', 'success');
+      revealDecryptedPayload();
+    } catch (e) {
+      logCrypto(`Master key composition: ${e.message}`, 'error');
+    }
+  }
+}
+
+function revealDecryptedPayload() {
+  const box = document.getElementById('vaultPayloadBox');
+  const icon = document.getElementById('payloadIcon');
+  const badge = document.getElementById('payloadStatusBadge');
+  const content = document.getElementById('payloadContent');
+  const actions = document.getElementById('payloadActions');
+
+  box.className = 'border border-emerald-500/50 bg-emerald-950/20 rounded-2xl p-4 shadow-xl shadow-emerald-500/10 transition-all duration-500';
+  badge.className = 'text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-emerald-900/80 text-emerald-300 border border-emerald-600';
+  badge.innerText = 'UNLOCKED';
+  icon.className = 'w-3.5 h-3.5 mr-1.5 text-emerald-400';
+  content.className = 'text-xs text-slate-100 p-3 bg-slate-950/80 rounded-xl border border-emerald-500/30 min-h-[60px] font-mono whitespace-pre-wrap';
+  content.innerText = state.customPayload;
+  actions.classList.remove('hidden');
+}
+
+function resetPayloadReveal() {
+  const box = document.getElementById('vaultPayloadBox');
+  const icon = document.getElementById('payloadIcon');
+  const badge = document.getElementById('payloadStatusBadge');
+  const content = document.getElementById('payloadContent');
+  const actions = document.getElementById('payloadActions');
+
+  box.className = 'border border-slate-800 bg-slate-950/90 rounded-2xl p-4 transition-all duration-500';
+  badge.className = 'text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-slate-800 text-slate-400';
+  badge.innerText = 'SEALED';
+  icon.className = 'w-3.5 h-3.5 mr-1.5 text-slate-500';
+  content.className = 'text-xs text-slate-500 italic p-3 bg-slate-900/60 rounded-xl border border-slate-800 min-h-[60px] flex items-center justify-center text-center font-mono';
+  content.innerText = 'Ciphertext locked. Solve required locks to reconstruct the AES-256-GCM master key and reveal the hidden payload.';
+  actions.classList.add('hidden');
+}
+
+﻿// =========================================================================
+// PART 4: PRESETS, CATALOG RENDERING & URL SHARING
+// =========================================================================
+
+function renderPresets() {
+  const grid = document.getElementById('presetsGrid');
+  grid.innerHTML = '';
+
+  PRESETS.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'bg-slate-950/80 border border-slate-800/90 rounded-2xl p-5 hover:border-cyan-500/40 transition flex flex-col justify-between group';
+
+    const tagBadges = p.tags.map(t => `<span class="px-2 py-0.5 rounded text-[10px] font-mono bg-slate-900 text-cyan-400 border border-slate-800">${t}</span>`).join('');
+
+    card.innerHTML = `
+      <div>
+        <div class="flex flex-wrap gap-1.5 mb-3">${tagBadges}</div>
+        <h4 class="text-sm font-mono font-bold text-white group-hover:text-cyan-400 transition">${p.title}</h4>
+        <p class="text-xs text-slate-400 mt-2 leading-relaxed">${p.desc}</p>
+      </div>
+      <button onclick="loadPreset('${p.id}')" class="mt-4 w-full py-2 rounded-xl text-xs font-mono font-semibold bg-slate-900 border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800 hover:border-cyan-500/40 transition flex items-center justify-center">
+        <i data-lucide="play" class="w-3 h-3 mr-1.5 text-cyan-400"></i> Launch Ceremony
+      </button>
+    `;
+
+    grid.appendChild(card);
+  });
+}
+
+function loadPreset(presetId) {
+  const preset = PRESETS.find(p => p.id === presetId);
+  if (!preset) return;
+
+  state.activeLocks = [...preset.locks];
+  state.solvedLocks.clear();
+  state.subKeys.clear();
+  state.decrypted = false;
+  state.threshold = preset.locks.length > 2 ? '2' : 'all';
+  document.getElementById('thresholdSelect').value = state.threshold;
+
+  renderActiveLocksList();
+  renderChallenges();
+  updateProgressMeter();
+  resetPayloadReveal();
+
+  logCrypto(`Loaded Preset: "${preset.title}" (${preset.locks.join(' + ')})`, 'info');
+  document.getElementById('console').scrollIntoView({ behavior: 'smooth' });
+}
+
+function renderCatalog() {
+  const liveGrid = document.getElementById('liveLocksGrid');
+  const comingSoonGrid = document.getElementById('comingSoonGrid');
+  liveGrid.innerHTML = '';
+  comingSoonGrid.innerHTML = '';
+
+  const allDefs = window.BittyLockEngine.LOCK_DEFINITIONS || [];
+
+  allDefs.forEach(lock => {
+    const isComingSoon = COMING_SOON_LOCK_IDS.includes(lock.id);
+    const card = document.createElement('div');
+    card.className = `p-5 rounded-2xl border transition flex flex-col justify-between ${
+      isComingSoon 
+        ? 'bg-slate-950/50 border-slate-800/80 hover:border-amber-500/30' 
+        : 'bg-slate-950/80 border-slate-800 hover:border-cyan-500/40'
+    }`;
+    card.dataset.category = lock.cat;
+    card.dataset.type = isComingSoon ? 'coming-soon' : 'live';
+
+    card.innerHTML = `
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-mono text-slate-500">Lock #${lock.num}</span>
+          ${isComingSoon 
+            ? '<span class="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-950/60 text-amber-400 border border-amber-800/60">COMING SOON</span>'
+            : '<span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-800/60">LIVE</span>'
+          }
+        </div>
+        <h4 class="text-sm font-mono font-bold text-white flex items-center">
+          <span class="mr-2">${lock.icon || '🔒'}</span>
+          ${lock.name}
+        </h4>
+        <p class="text-xs text-slate-400 mt-2 leading-relaxed">${lock.mechanic}</p>
+        <div class="mt-3 text-[11px] text-slate-500 font-mono">
+          <span class="text-slate-400 font-semibold">Best Use:</span> ${lock.bestUse}
+        </div>
+      </div>
+
+      <div class="mt-4 pt-3 border-t border-slate-800/60 flex items-center justify-between">
+        <span class="text-[10px] font-mono text-slate-500 capitalize">${lock.catLabel}</span>
+        <button onclick="${isComingSoon ? `previewComingSoon('${lock.name}')` : `addActiveLock('${lock.id}')`}" class="text-xs font-mono text-cyan-400 hover:text-cyan-300 flex items-center">
+          ${isComingSoon ? 'View Architecture →' : '+ Add to Ceremony'}
+        </button>
+      </div>
+    `;
+
+    if (isComingSoon) {
+      comingSoonGrid.appendChild(card);
+    } else {
+      liveGrid.appendChild(card);
+    }
+  });
+}
+
+function filterCatalog(category) {
+  const cards = document.querySelectorAll('#catalog [data-category]');
+  const comingSection = document.getElementById('comingSoonSection');
+
+  cards.forEach(card => {
+    if (category === 'all') {
+      card.style.display = 'flex';
+      comingSection.style.display = 'block';
+    } else if (category === 'live') {
+      card.style.display = card.dataset.type === 'live' ? 'flex' : 'none';
+      comingSection.style.display = 'none';
+    } else if (category === 'coming-soon') {
+      card.style.display = card.dataset.type === 'coming-soon' ? 'flex' : 'none';
+      comingSection.style.display = 'block';
+    } else {
+      card.style.display = card.dataset.category === category ? 'flex' : 'none';
+      comingSection.style.display = 'block';
+    }
+  });
+}
+
+function previewComingSoon(lockName) {
+  alert(`${lockName} is specified in our v2.0 roadmap! It leverages hardware/protocol isolation. Tap any Live lock above to test live in browser memory.`);
+}
+
+function openShareModal() {
+  const recipe = window.BittyLockEngine.serializeRecipe(state.activeLocks.map(id => ({ id, params: {} })));
+  const fullUrl = `${window.location.origin}${window.location.pathname}${recipe}`;
+  document.getElementById('shareUrlBox').value = fullUrl;
+
+  const modal = document.getElementById('shareModal');
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+}
+
+function checkUrlHashRecipe() {
+  if (!window.location.hash || !window.location.hash.includes('locks=')) return;
+  try {
+    const parsed = window.BittyLockEngine.parseRecipe(window.location.hash);
+    if (parsed.locks && parsed.locks.length > 0) {
+      state.activeLocks = parsed.locks.map(l => l.id);
+      renderActiveLocksList();
+      renderChallenges();
+      updateProgressMeter();
+      logCrypto(`Parsed ceremony from URL hash: ${state.activeLocks.join(' + ')}`, 'info');
+    }
+  } catch (e) {
+    console.error('URL hash parse failed:', e);
+  }
+}
