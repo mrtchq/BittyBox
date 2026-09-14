@@ -1,13 +1,13 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { BittyStage, EtherTransition } from '../BittyStage';
 import { useStage, StageMode, StageProvider } from '../../stores/stageStore';
 import { StageEditor } from './StageEditor';
 import { PasswordLockStage } from './PasswordLockStage';
 import { TimeLockStage } from './TimeLockStage';
 import { AccessLimitStage } from './AccessLimitStage';
-import { EncryptionStage } from './EncryptionStage';
-import { AgenticLockStage } from './AgenticLockStage';
 import { PreviewStage } from './PreviewStage';
+import { PaymentPolicyDraft } from '../PaymentPolicyLockPanel';
+import { buildTimeWindow } from '../../utils/timeWindow';
 import type { UseAccountResult } from '../../hooks/useAccount';
 import type { BittyMetadata, BittyChainDraft } from '../../types';
 
@@ -30,19 +30,29 @@ export interface BittyStageViewProps {
   onCreateNextChainPage?: (mode: 'clone' | 'scratch') => void;
   onGoToChainPage?: (index: number) => void;
   onDeleteLastChainBox?: () => void;
+  onDeleteChainPage?: (index: number) => void;
   account?: UseAccountResult;
   isPro?: boolean;
   onOpenPaywall?: (featureName?: string) => void;
+  paymentPolicy?: PaymentPolicyDraft;
+  onPaymentPolicyChange?: (value?: PaymentPolicyDraft) => void;
 }
 
 const StageDispatcher: React.FC<BittyStageViewProps> = (props) => {
   const { state, setContent, setTitle, setDescription, syncFromExternal, discardDraft, exitMode } = useStage();
 
-  // Sync incoming props to stage store
+  // Tracks the last content value we forwarded to the parent so the
+  // parent-to-child echo of our own keystrokes never clobbers newer
+  // local typing with a stale parent value (dropped characters).
+  const lastForwardedContent = useRef(props.content);
+
+  // Sync incoming props to stage store — external changes only
+  // (session switch, template select). Skips the echo of our own edits.
   useEffect(() => {
-    if (props.content !== state.content) {
+    if (props.content !== lastForwardedContent.current && props.content !== state.content) {
       setContent(props.content);
     }
+    lastForwardedContent.current = props.content;
   }, [props.content]);
 
   useEffect(() => {
@@ -51,7 +61,8 @@ const StageDispatcher: React.FC<BittyStageViewProps> = (props) => {
       description: props.metadata.description || '',
       favicon: props.metadata.favicon || '📦',
       password: props.metadata.password || '',
-      timeLockEnabled: Boolean(props.metadata.lockConfig?.timeWindow?.mode),
+      boxId: props.metadata.boxId,
+      timeLockEnabled: Boolean(props.metadata.lockConfig?.timeWindow?.enabled || props.metadata.lockConfig?.timeWindow?.mode),
       accessLimitEnabled: Boolean(props.metadata.lockConfig?.openLimit?.enabled),
       accessLimitMaxOpens: props.metadata.lockConfig?.openLimit?.maxOpens || 1,
       showRemainingAccessCount: props.metadata.lockConfig?.openLimit?.showRemainingCount ?? true,
@@ -81,24 +92,32 @@ const StageDispatcher: React.FC<BittyStageViewProps> = (props) => {
   // Sync state changes back up to parent
   useEffect(() => {
     if (state.content !== props.content) {
+      lastForwardedContent.current = state.content;
       props.onChangeContent?.(state.content);
     }
   }, [state.content]);
 
   useEffect(() => {
     const nextLockConfig: Record<string, any> = { ...(props.metadata.lockConfig || {}) };
+    // Retired Editor lock types must not persist or reappear from older drafts.
+    delete nextLockConfig.encryption;
+    delete nextLockConfig.agentic;
 
     if (state.timeLockEnabled) {
-      nextLockConfig.timeWindow = {
+      const tw = buildTimeWindow({
+        enabled: true,
         mode: state.timeLockMode,
-        durationHours: state.timeLockMode === 'expiry' ? state.timeExpiryHours : undefined,
-        delayHours: state.timeLockMode === 'delay' ? state.timeDelayHours : undefined,
-        openAt: state.timeLockMode === 'range' ? state.timeOpenAt : undefined,
-        lockAt: state.timeLockMode === 'range' ? state.timeLockAt : undefined,
-        hybridRevealMode: state.timeLockMode === 'hybrid' ? state.hybridRevealMode : undefined,
-        hybridSelfDestructHours: state.timeLockMode === 'hybrid' ? state.hybridSelfDestructHours : undefined,
+        expiryHours: state.timeExpiryHours,
+        delayHours: state.timeDelayHours,
+        openAt: state.timeOpenAt,
+        lockAt: state.timeLockAt,
+        hybridRevealMode: state.hybridRevealMode,
+        hybridSelfDestructHours: state.hybridSelfDestructHours,
         showCountdown: state.showTimeCountdown,
-      };
+      });
+      if (tw) {
+        nextLockConfig.timeWindow = tw;
+      }
     } else {
       delete nextLockConfig.timeWindow;
     }
@@ -113,15 +132,8 @@ const StageDispatcher: React.FC<BittyStageViewProps> = (props) => {
       delete nextLockConfig.openLimit;
     }
 
-    if (state.agenticEnabled) {
-      nextLockConfig.agentic = {
-        enabled: true,
-        requireMcp: state.agenticRequireMcp,
-        roleFilter: state.agenticRoleFilter || undefined,
-      };
-    } else {
-      delete nextLockConfig.agentic;
-    }
+    if (props.paymentPolicy) nextLockConfig.paymentPolicy = props.paymentPolicy;
+    else delete nextLockConfig.paymentPolicy;
 
     const hasAnyLock = Object.keys(nextLockConfig).length > 0;
 
@@ -152,9 +164,7 @@ const StageDispatcher: React.FC<BittyStageViewProps> = (props) => {
     state.accessLimitEnabled,
     state.accessLimitMaxOpens,
     state.showRemainingAccessCount,
-    state.agenticEnabled,
-    state.agenticRequireMcp,
-    state.agenticRoleFilter,
+    props.paymentPolicy,
   ]);
 
   const renderStageView = (mode: StageMode) => {
@@ -165,10 +175,6 @@ const StageDispatcher: React.FC<BittyStageViewProps> = (props) => {
         return <TimeLockStage />;
       case 'accessLimitLock':
         return <AccessLimitStage />;
-      case 'encryption':
-        return <EncryptionStage />;
-      case 'agenticLock':
-        return <AgenticLockStage />;
       case 'preview':
         return <PreviewStage />;
       case 'editor':
@@ -189,9 +195,12 @@ const StageDispatcher: React.FC<BittyStageViewProps> = (props) => {
             onCreateNextChainPage={props.onCreateNextChainPage}
             onGoToChainPage={props.onGoToChainPage}
             onDeleteLastChainBox={props.onDeleteLastChainBox}
+            onDeleteChainPage={props.onDeleteChainPage}
             account={props.account}
             isPro={props.isPro}
             onOpenPaywall={props.onOpenPaywall}
+            paymentPolicy={props.paymentPolicy}
+            onPaymentPolicyChange={props.onPaymentPolicyChange}
           />
         );
     }
@@ -215,7 +224,7 @@ export const BittyStageView: React.FC<BittyStageViewProps> = (props) => {
         description: props.metadata.description || '',
         favicon: props.metadata.favicon || '📦',
         password: props.metadata.password || '',
-        timeLockEnabled: Boolean(props.metadata.lockConfig?.timeWindow?.mode),
+        timeLockEnabled: Boolean(props.metadata.lockConfig?.timeWindow?.enabled || props.metadata.lockConfig?.timeWindow?.mode),
         accessLimitEnabled: Boolean(props.metadata.lockConfig?.openLimit?.enabled),
         accessLimitMaxOpens: props.metadata.lockConfig?.openLimit?.maxOpens || 1,
         showRemainingAccessCount: props.metadata.lockConfig?.openLimit?.showRemainingCount ?? true,

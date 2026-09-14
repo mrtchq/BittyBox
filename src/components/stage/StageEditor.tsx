@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   Link2,
   Copy,
@@ -7,6 +8,7 @@ import {
   Zap,
   Radio,
   GripVertical,
+  X,
 } from 'lucide-react';
 import { useStage, StageMode } from '../../stores/stageStore';
 import { ActiveLockChips } from './ActiveLockChips';
@@ -32,6 +34,7 @@ interface StageEditorProps {
   onCreateNextChainPage?: (mode: 'clone' | 'scratch') => void;
   onGoToChainPage?: (index: number) => void;
   onDeleteLastChainBox?: () => void;
+  onDeleteChainPage?: (index: number) => void;
   account?: UseAccountResult;
   isPro?: boolean;
   onOpenPaywall?: (featureName?: string) => void;
@@ -88,6 +91,7 @@ export const StageEditor: React.FC<StageEditorProps> = ({
   onCreateNextChainPage,
   onGoToChainPage,
   onDeleteLastChainBox,
+  onDeleteChainPage,
   account,
   isPro = false,
   onOpenPaywall,
@@ -97,6 +101,16 @@ export const StageEditor: React.FC<StageEditorProps> = ({
   const { state, setTitle, setDescription, setContent, enterMode } = useStage();
   const [isCopied, setIsCopied] = useState(false);
   const [paymentPanelOpen, setPaymentPanelOpen] = useState(false);
+  const [deleteConfirmIndex, setDeleteConfirmIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (deleteConfirmIndex === null) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setDeleteConfirmIndex(null);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [deleteConfirmIndex]);
 
   const handleGenerateClick = () => {
     if (state.password.length > 0 && state.password.length < 8) {
@@ -229,34 +243,137 @@ export const StageEditor: React.FC<StageEditorProps> = ({
             <span>Box {chainIndex + 1} of {chainTotal}</span>
           </div>
 
-          <div className="flex items-center gap-1">
-            {Array.from({ length: chainTotal }).map((_, idx) => (
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1">
+              {Array.from({ length: chainTotal }).map((_, idx) => (
+                <div key={idx} className="inline-flex items-center">
+                  <button
+                    type="button"
+                    onClick={() => onGoToChainPage?.(idx)}
+                    className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all cursor-pointer ${
+                      idx === chainIndex
+                        ? 'bg-cyan-400 text-black shadow-[0_0_8px_rgba(0,242,255,0.6)]'
+                        : 'bg-cyan-950/70 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-900/50'
+                    }`}
+                    title={`Switch to Box ${idx + 1}`}
+                  >
+                    {idx + 1}
+                  </button>
+                  {chainTotal > 1 && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDeleteConfirmIndex(idx);
+                      }}
+                      className="ml-0.5 p-0.5 rounded text-rose-400/60 hover:text-rose-300 hover:bg-rose-950/80 transition-colors cursor-pointer"
+                      title={`Delete Box ${idx + 1} from sequence`}
+                      aria-label={`Delete Box ${idx + 1}`}
+                    >
+                      <Trash2 className="w-2.5 h-2.5" />
+                    </button>
+                  )}
+                </div>
+              ))}
+              {chainTotal < chainMax && (
+                <button
+                  type="button"
+                  onClick={() => onCreateNextChainPage?.('clone')}
+                  className="p-1 rounded bg-cyan-950 border border-cyan-400/40 text-cyan-300 hover:bg-cyan-900 transition-colors cursor-pointer"
+                  title="Add next box in chain"
+                >
+                  <FilePlus2 className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+
+            {chainTotal > 1 && (
               <button
-                key={idx}
                 type="button"
-                onClick={() => onGoToChainPage?.(idx)}
-                className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all cursor-pointer ${
-                  idx === chainIndex
-                    ? 'bg-cyan-400 text-black shadow-[0_0_8px_rgba(0,242,255,0.6)]'
-                    : 'bg-cyan-950/70 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-900/50'
-                }`}
+                onClick={() => setDeleteConfirmIndex(chainIndex)}
+                className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-rose-950/60 border border-rose-500/40 text-rose-300 hover:bg-rose-900/80 hover:border-rose-400 hover:text-white transition-all cursor-pointer text-[10px] font-bold"
+                title={`Delete current Box ${chainIndex + 1}`}
               >
-                {idx + 1}
-              </button>
-            ))}
-            {chainTotal < chainMax && (
-              <button
-                type="button"
-                onClick={() => onCreateNextChainPage?.('clone')}
-                className="p-1 rounded bg-cyan-950 border border-cyan-400/40 text-cyan-300 hover:bg-cyan-900 transition-colors cursor-pointer"
-                title="Add next box in chain"
-              >
-                <FilePlus2 className="w-3 h-3" />
+                <Trash2 className="w-3 h-3 text-rose-400" />
+                <span>Delete Box {chainIndex + 1}</span>
               </button>
             )}
           </div>
         </div>
       )}
+
+      {/* Pop-up confirmation prompt for deleting a chained box */}
+      <AnimatePresence>
+        {deleteConfirmIndex !== null && (
+          <div
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4"
+            onClick={() => setDeleteConfirmIndex(null)}
+          >
+            <motion.div
+              role="alertdialog"
+              aria-modal="true"
+              aria-labelledby="delete-chain-title"
+              aria-describedby="delete-chain-desc"
+              initial={{ opacity: 0, scale: 0.92, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: 12 }}
+              transition={{ type: 'spring', stiffness: 450, damping: 30 }}
+              onClick={e => e.stopPropagation()}
+              className="relative w-full max-w-md rounded-2xl border border-rose-500/50 bg-[#070314] p-5 font-mono text-cyan-100 shadow-[0_0_50px_rgba(244,63,94,0.3)]"
+            >
+              <button
+                type="button"
+                onClick={() => setDeleteConfirmIndex(null)}
+                className="absolute top-3 right-3 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors cursor-pointer"
+                aria-label="Close dialog"
+              >
+                <X className="w-4 h-4" />
+              </button>
+
+              <div className="flex items-start gap-3.5">
+                <div className="p-3 rounded-xl bg-rose-950/80 border border-rose-500/40 text-rose-400 shrink-0">
+                  <Trash2 className="w-5 h-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 id="delete-chain-title" className="text-base font-bold text-white leading-tight">
+                    Delete Chained Box {deleteConfirmIndex + 1}?
+                  </h3>
+                  <p id="delete-chain-desc" className="text-xs text-rose-200/80 mt-2 leading-relaxed">
+                    Are you sure you want to delete <strong className="text-white">Box {deleteConfirmIndex + 1}</strong> from this chained sequence?
+                    All text content, title, and lock configurations configured for this box will be permanently removed from the sequence.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5 mt-5 pt-3.5 border-t border-rose-500/20">
+                <button
+                  type="button"
+                  onClick={() => setDeleteConfirmIndex(null)}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-300 bg-slate-900 border border-slate-700 hover:bg-slate-800 hover:text-white transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const idx = deleteConfirmIndex;
+                    setDeleteConfirmIndex(null);
+                    if (onDeleteChainPage) {
+                      onDeleteChainPage(idx);
+                    } else if (onDeleteLastChainBox) {
+                      onDeleteLastChainBox();
+                    }
+                  }}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.5)] transition-all cursor-pointer flex items-center gap-1.5"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Delete Box</span>
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Generation & Credit Cost Footer - Mobile optimized */}
       <div className="pt-2 sm:pt-3 border-t border-cyan-500/20 flex flex-col items-center justify-center gap-2 text-center">

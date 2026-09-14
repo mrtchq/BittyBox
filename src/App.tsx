@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { BittyNavbar } from './components/BittyNavbar';
 import { HoloBackground } from './components/HoloBackground';
+import { ConfettiClickFX } from './components/ConfettiClickFX';
 import { BittyStageView } from './components/stage/BittyStageView';
 import { BittyRenderer } from './components/BittyRenderer';
 import { HistoryModal } from './components/HistoryModal';
@@ -1094,6 +1095,7 @@ export default function App() {
     <div className="min-h-screen flex flex-col bg-transparent text-cyan-100 relative overflow-x-hidden font-sans">
       {/* Background Animated Hologram FX */}
       <HoloBackground theme={workspaceTheme} />
+      <ConfettiClickFX />
 
       {/* Edge Grip Handle on Center Top (PREVIEW) */}
       <EdgeGripHandles
@@ -1162,6 +1164,7 @@ export default function App() {
                 onCreateNextChainPage={handleCreateNextChainPage}
                 onGoToChainPage={goToChainPage}
                 onDeleteLastChainBox={handleDeleteLastChainBox}
+                onDeleteChainPage={handleDeleteChainPage}
                 isPro={proStatus.isPro}
                 onOpenPaywall={proStatus.openPaywall}
               />
