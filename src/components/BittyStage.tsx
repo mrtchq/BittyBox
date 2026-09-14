@@ -95,7 +95,7 @@ interface BittyStageProps {
 export function BittyStage({ children, className = '' }: BittyStageProps) {
   return (
     <section
-      className={`bitty-stage relative w-full max-w-5xl mx-auto rounded-2xl bg-[#07041a]/90 border border-cyan-500/30 p-3 sm:p-5 md:p-6 shadow-[0_0_40px_rgba(0,0,0,0.85),inset_0_0_20px_rgba(0,242,255,0.06)] backdrop-blur-2xl flex flex-col min-h-[480px] transition-all duration-300 ${className}`}
+      className={`bitty-stage relative isolate w-full max-w-5xl mx-auto rounded-2xl bg-[#07041a]/90 border border-cyan-500/30 p-2.5 sm:p-5 md:p-6 shadow-[0_0_40px_rgba(0,0,0,0.85),inset_0_0_20px_rgba(0,242,255,0.06)] backdrop-blur-md flex flex-col min-h-[320px] sm:min-h-[460px] transition-colors duration-300 ${className}`}
       aria-label="Bitty Stage"
     >
       {/* Precision Corner Accents */}

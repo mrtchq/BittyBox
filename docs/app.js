@@ -1,20 +1,134 @@
-﻿// =========================================================================
+// =========================================================================
 // PART 1: CONSTANTS, PRESETS, STATE & INITIALIZATION
 // =========================================================================
 
 const DEFAULT_PAYLOAD = "🔓 Welcome to the confidential vault!\n\nYou have successfully satisfied all required cryptographic access rules in browser memory.\nWebCrypto AES-GCM (256-bit) verification complete.\nNo private keys or plaintext data ever touched an external server.";
 
 const LIVE_LOCK_IDS = [
-  'passcode', 'passphrase', 'time_capsule', 'dead_man_switch', 
-  'access_window', 'one_time_magic_key', 'proof_of_human', 
-  'signed_sender', 'puzzle', 'proof_of_access', 'totp', 
-  'device_pairing', 'audio_code', 'qr_proximity', 'location', 
-  'client_ip', 'the_stranger', 'personal_recall'
+  'passcode', 'passphrase', 'time_capsule', 'access_window',
+  'countdown', 'tap_unseal', 'chain_key', 'one_time_magic_key',
+  'totp', 'signed_sender', 'invite_code', 'two_person',
+  'location', 'browser_key', 'puzzle', 'proof_of_human'
 ];
 
-const COMING_SOON_LOCK_IDS = [
-  '3d_scanning', 'physical_key', 'usb_key', 'burn_after_reading', 
-  'wallet_signature', 'payment', 'max_opens'
+const ROADMAP_LOCKS = [
+  {
+    id: 'burn_after_reading',
+    num: '04',
+    name: 'Burn-After-Reading Lock',
+    icon: '🔥',
+    category: 'Special Software Engineering',
+    blockerType: 'software',
+    badgeClass: 'bg-blue-950/60 text-blue-400 border-blue-800/60',
+    reason: 'Requires server-side atomic destruction state or edge coordinator.',
+    desc: 'Self-destructs ciphertext and in-memory decryption context after first open.',
+    whyNotToday: 'A decentralized client-side URL vault cannot enforce single-read destruction across multiple browser clients without a centralized or edge state store to coordinate atomic burn.',
+    plannedArch: 'Cloudflare Worker KV / Redis ephemeral atomic burn counter with one-time decryption token release.'
+  },
+  {
+    id: 'max_opens',
+    num: '05',
+    name: 'Max Opens Lock',
+    icon: '🎟️',
+    category: 'Special Software Engineering',
+    blockerType: 'software',
+    badgeClass: 'bg-blue-950/60 text-blue-400 border-blue-800/60',
+    reason: 'Requires authoritative server-side counter ceiling database.',
+    desc: 'Enforces a strict counter ceiling; permanently locks after N successful views across recipients.',
+    whyNotToday: 'In a purely client-side URL vault, client localStorage cannot prevent other recipients or incognito tabs from opening the vault repeatedly.',
+    plannedArch: 'Edge-synchronized atomic increment quota service verifying signed open tickets before releasing decryption key.'
+  },
+  {
+    id: 'recipient_email',
+    num: '13',
+    name: 'Recipient Email Lock',
+    icon: '📧',
+    category: 'Special Software Engineering',
+    blockerType: 'software',
+    badgeClass: 'bg-blue-950/60 text-blue-400 border-blue-800/60',
+    reason: 'Requires transactional email delivery backend & OTP auth verification.',
+    desc: 'Dispatches a signed one-time verification token to one designated email address.',
+    whyNotToday: 'Sending emails and validating OTP challenges requires a backend server with transactional email API (e.g. Resend/SendGrid) and rate-limited verification endpoints.',
+    plannedArch: 'Resend API backend integration with DKIM/SPF signed magic link verification service.'
+  },
+  {
+    id: 'wallet_signature',
+    num: '14',
+    name: 'Wallet Signature Lock',
+    icon: '👛',
+    category: 'Special Software Engineering',
+    blockerType: 'software',
+    badgeClass: 'bg-blue-950/60 text-blue-400 border-blue-800/60',
+    reason: 'Requires Web3 browser wallet provider injection & RPC node verification.',
+    desc: 'Recipient signs a cryptographic challenge proving custody of a designated Web3/Ethereum address.',
+    whyNotToday: 'Requires Web3 wallet extension dependencies (EIP-1193 provider like MetaMask or WalletConnect modal) and Ethereum JSON-RPC signature verification logic.',
+    plannedArch: 'EIP-712 typed data signing with Viem/Wagmi and multi-chain RPC verification.'
+  },
+  {
+    id: 'approval',
+    num: '16',
+    name: 'Approval Lock',
+    icon: '🛡️',
+    category: 'Special Software Engineering',
+    blockerType: 'software',
+    badgeClass: 'bg-blue-950/60 text-blue-400 border-blue-800/60',
+    reason: 'Requires real-time creator notification relay & approval authorization server.',
+    desc: 'Creator manually reviews and cryptographically approves unlock requests in real-time.',
+    whyNotToday: 'Requires an asynchronous push notification protocol (Web Push / Telegram / email), an active inbox for the creator, and a secure approval callback relay.',
+    plannedArch: 'WebPush / Telegram bot integration with Ed25519 creator signature authorization tokens.'
+  },
+  {
+    id: 'dead_man_switch',
+    num: '18',
+    name: 'Dead-Man Switch Lock',
+    icon: '⚠️',
+    category: 'Special Software Engineering',
+    blockerType: 'software',
+    badgeClass: 'bg-blue-950/60 text-blue-400 border-blue-800/60',
+    reason: 'Requires external heartbeat daemon, cron monitor, or Nostr relay watcher.',
+    desc: 'Reveals contents only if creator fails to confirm liveness over a designated interval.',
+    whyNotToday: 'A recipient browser cannot reliably determine creator inactivity without a persistent server-side cron service or decentralized Nostr relay daemon that tracks heartbeat timestamps.',
+    plannedArch: 'Automated Nostr NIP-01 relay listener paired with serverless heartbeat verification cron.'
+  },
+  {
+    id: 'qr_proximity',
+    num: '20',
+    name: 'QR Proximity Lock',
+    icon: '📷',
+    category: 'Physical Hardware',
+    blockerType: 'hardware',
+    badgeClass: 'bg-purple-950/60 text-purple-400 border-purple-800/60',
+    reason: 'Requires companion physical printed QR tags, optical packaging, or NFC tags.',
+    desc: 'Requires optical scanning of a companion physical QR code or physical NFC proximity sticker.',
+    whyNotToday: 'Requires physical companion hardware tags (printed security tokens, NFC chips, physical installation hardware) deployed in the real world.',
+    plannedArch: 'Web NFC API (NDEFReader) and BarcodeDetector API for physical hardware scanning.'
+  },
+  {
+    id: 'device_pairing',
+    num: '21',
+    name: 'Device Pairing Lock',
+    icon: '💻',
+    category: 'Physical Hardware',
+    blockerType: 'hardware',
+    badgeClass: 'bg-purple-950/60 text-purple-400 border-purple-800/60',
+    reason: 'Requires biometric Secure Enclave hardware (Touch ID, Face ID, or YubiKey).',
+    desc: 'Binds encryption key material to the hardware Secure Enclave / WebAuthn token of the 1st device.',
+    whyNotToday: 'Requires platform hardware authenticators (Apple Secure Enclave, Android StrongBox, Windows Hello, or FIDO2 YubiKey USB token).',
+    plannedArch: 'W3C WebAuthn Level 3 credentials.create() with PRF extension for hardware key derivation.'
+  },
+  {
+    id: 'payment',
+    num: '25',
+    name: 'Payment Lock',
+    icon: '💳',
+    category: 'Special Software Engineering',
+    blockerType: 'software',
+    badgeClass: 'bg-blue-950/60 text-blue-400 border-blue-800/60',
+    reason: 'Requires payment gateway rails, Lightning Network HTLCs, or Stripe webhook processing.',
+    desc: 'Releases decryption secret key upon confirmed payment or microtransaction.',
+    whyNotToday: 'Requires integration with financial rails, payment service provider webhooks (Stripe / L402 Lightning Network), or crypto payment settle-to-unlock pipelines.',
+    plannedArch: 'HTTP 402 Payment Required protocol with Bitcoin Lightning LNURL/L402 preimage verification and Stripe Checkout webhooks.'
+  }
 ];
 
 const PRESETS = [
@@ -35,44 +149,44 @@ const PRESETS = [
   {
     id: 'executive_veto',
     title: 'The Executive Multilateral Veto',
-    locks: ['signed_sender', 'totp', 'dead_man_switch'],
-    desc: '2-of-3 threshold scheme combining Ed25519 signature verification, TOTP hardware token, and an automated Nostr dead-man switch.',
-    tags: ['Multi-Sig', '2FA', 'Dead Man']
+    locks: ['signed_sender', 'totp', 'two_person'],
+    desc: '2-of-3 threshold scheme combining Ed25519 signature verification, TOTP hardware token, and dual-custody Shamir keyholders.',
+    tags: ['Multi-Sig', '2FA', '2-Person']
   },
   {
     id: 'treasure_hunt_100',
     title: 'The 100-Year Treasure Hunt',
-    locks: ['time_capsule', 'proof_of_access', 'audio_code'],
-    desc: 'Temporal gating combined with intensive client-side proof-of-work WASM mining and acoustic frequency detection.',
-    tags: ['Time Capsule', 'PoW Mining', 'Acoustic']
+    locks: ['time_capsule', 'puzzle', 'countdown'],
+    desc: 'Temporal gating combined with in-browser cryptography puzzles and a cinematic countdown reveal timer.',
+    tags: ['Time Capsule', 'Puzzle', 'Countdown']
   },
   {
     id: 'collectors_vault',
     title: "The Collector's Vault",
-    locks: ['personal_recall', 'signed_sender', 'one_time_magic_key'],
-    desc: 'High-assurance drop combining personal memory recall questions with creator digital signature and an ephemeral URL token.',
-    tags: ['Recall', 'Signed', 'Magic Key']
+    locks: ['one_time_magic_key', 'signed_sender', 'passphrase'],
+    desc: 'High-assurance drop combining single-use ephemeral URL fragment key with creator digital signature and master passphrase.',
+    tags: ['Magic Key', 'Signed', 'Passphrase']
   },
   {
     id: 'escape_room',
     title: 'The Escape Room Multi-Party Riddle',
-    locks: ['the_stranger', 'puzzle', 'proof_of_human'],
-    desc: 'Requires simultaneous WebRTC P2P peer handshake between two remote players, solving a cipher, and biometric anti-bot proof.',
-    tags: ['P2P WebRTC', 'Riddle', 'Anti-Bot']
+    locks: ['puzzle', 'proof_of_human', 'two_person'],
+    desc: 'Requires solving an interactive cipher, completing biometric anti-bot proof, and recombining 2-party Shamir shares.',
+    tags: ['Riddle', 'Anti-Bot', '2-Person']
   },
   {
     id: 'ephemeral_drop',
     title: 'The Ephemeral Drop',
-    locks: ['one_time_magic_key', 'access_window', 'dead_man_switch'],
-    desc: 'Flash access window active only during a live event, tied to a creator heartbeat relay and one-time ephemeral token.',
-    tags: ['Magic Key', 'Window', 'Dead Man']
+    locks: ['one_time_magic_key', 'access_window', 'tap_unseal'],
+    desc: 'Flash access window active only during a live event, tied to a tactile wax seal unsealing and ephemeral token.',
+    tags: ['Magic Key', 'Window', 'Tap Unseal']
   },
   {
     id: 'memory_journal',
     title: 'The Memory Resonance Journal',
-    locks: ['personal_recall', 'audio_code', 'location'],
-    desc: 'Private retrospective that only decrypts when answering personal trivia, playing a childhood music chime, at a hometown location.',
-    tags: ['Trivia', 'Acoustic', 'Sensor']
+    locks: ['passphrase', 'tap_unseal', 'browser_key'],
+    desc: 'Private retrospective that decrypts via master passphrase, intentional unseal gesture, and persistent device storage.',
+    tags: ['Passphrase', 'Tactile', 'Browser Key']
   }
 ];
 
@@ -117,6 +231,8 @@ document.addEventListener('DOMContentLoaded', () => {
   renderChallenges();
   renderPresets();
   renderCatalog();
+  renderRoadmapModal();
+  initMarquees();
   if (window.lucide) lucide.createIcons();
 
   document.getElementById('btnModeDashboard').addEventListener('click', () => setMode('dashboard'));
@@ -147,6 +263,40 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btnCopyPayload').addEventListener('click', () => {
     navigator.clipboard.writeText(state.customPayload);
     alert('Decrypted secret copied to clipboard!');
+  });
+
+  // Roadmap modal openers and closers
+  const openRoadmap = () => openRoadmapModal();
+  document.getElementById('btnNavRoadmap')?.addEventListener('click', openRoadmap);
+  document.getElementById('btnOpenRoadmapTab')?.addEventListener('click', openRoadmap);
+  document.getElementById('btnOpenRoadmapHeader')?.addEventListener('click', openRoadmap);
+  document.getElementById('btnCloseRoadmapModal')?.addEventListener('click', closeRoadmapModal);
+  document.getElementById('btnDismissRoadmapModal')?.addEventListener('click', closeRoadmapModal);
+
+  // Close modal when clicking backdrop
+  document.getElementById('roadmapModal')?.addEventListener('click', (e) => {
+    if (e.target === document.getElementById('roadmapModal')) closeRoadmapModal();
+  });
+
+  // Roadmap filter tabs inside modal
+  document.querySelectorAll('.roadmap-filter').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.roadmap-filter').forEach(b => {
+        b.classList.remove('bg-amber-950/70', 'border-amber-800/70', 'text-amber-300');
+        b.classList.add('text-slate-400');
+      });
+      btn.classList.add('bg-amber-950/70', 'border-amber-800/70', 'text-amber-300');
+      btn.classList.remove('text-slate-400');
+      filterRoadmap(btn.dataset.rf);
+    });
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeRoadmapModal();
+      document.getElementById('shareModal')?.classList.add('hidden');
+      document.getElementById('shareModal')?.classList.remove('flex');
+    }
   });
 
   document.querySelectorAll('.filter-tab').forEach(tab => {
@@ -440,52 +590,82 @@ function createChallengeCard(lockId, stepNum) {
         </div>
       </div>
     `;
-  } else if (lockId === 'proof_of_access') {
+  } else if (lockId === 'countdown') {
     body = `
       <div class="space-y-2">
-        <p class="text-xs text-slate-400">Client-side WebWorker Proof-of-Work mining challenge (find SHA-256 target hash).</p>
+        <p class="text-xs text-slate-400">Cinematic countdown timer. Enforces temporal wait before release.</p>
         <div class="flex items-center space-x-2">
-          <button id="btnMinePoW" onclick="solveProofOfAccess()" class="px-4 py-2 rounded-xl text-xs font-mono font-semibold bg-cyan-500 text-slate-950 hover:bg-cyan-400 transition flex items-center">
-            <i data-lucide="cpu" class="w-3.5 h-3.5 mr-1.5"></i> Start Mining Proof (WASM)
+          <button id="btn_countdown" onclick="startCountdown()" class="px-4 py-2 rounded-xl text-xs font-mono font-semibold bg-cyan-500 text-slate-950 hover:bg-cyan-400 transition">
+            Start 5s Countdown
+          </button>
+          <span id="countdown_status" class="text-xs font-mono text-cyan-400">Awaiting start...</span>
+        </div>
+      </div>
+    `;
+  } else if (lockId === 'tap_unseal') {
+    body = `
+      <div class="space-y-2">
+        <p class="text-xs text-slate-400">Tactile seal verification. Requires deliberate user interaction to break wax seal.</p>
+        <div class="flex items-center space-x-2">
+          <button onclick="solveTapUnseal()" class="px-4 py-2 rounded-xl text-xs font-mono font-semibold bg-gradient-to-r from-amber-500 to-rose-500 text-slate-950 hover:brightness-110 transition flex items-center">
+            <span class="mr-1.5">🔥</span> Break Wax Seal
           </button>
         </div>
       </div>
     `;
-  } else if (lockId === 'device_pairing') {
+  } else if (lockId === 'chain_key') {
     body = `
       <div class="space-y-2">
-        <p class="text-xs text-slate-400">Hardware WebAuthn / Passkey / Biometric Enclave authentication.</p>
+        <p class="text-xs text-slate-400">Chained token from prior Bitty Box. Demo: <code class="text-cyan-400">bitty_chain_alpha_442</code></p>
         <div class="flex items-center space-x-2">
-          <button onclick="solveWebAuthnNative()" class="px-3 py-2 rounded-xl text-xs font-mono bg-slate-800 text-cyan-300 hover:bg-slate-700 transition flex items-center">
-            <i data-lucide="fingerprint" class="w-3.5 h-3.5 mr-1.5"></i> Touch ID / Windows Hello
-          </button>
-          <button onclick="solveWebAuthnSimulated()" class="px-4 py-2 rounded-xl text-xs font-mono font-semibold bg-cyan-500 text-slate-950 hover:bg-cyan-400 transition">
-            Simulate Enclave Key
+          <input type="text" id="input_chain_key" value="bitty_chain_alpha_442" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm font-mono text-cyan-300 flex-1 focus:border-cyan-400 focus:outline-none" />
+          <button onclick="solveChainKey()" class="px-4 py-2 rounded-xl text-xs font-mono font-semibold bg-cyan-500 text-slate-950 hover:bg-cyan-400 transition">
+            Verify Chain
           </button>
         </div>
       </div>
     `;
-  } else if (lockId === 'audio_code') {
+  } else if (lockId === 'access_window') {
     body = `
       <div class="space-y-2">
-        <p class="text-xs text-slate-400">Acoustic frequency detection. Generates WebAudio tone sequence and detects peak FFT.</p>
+        <p class="text-xs text-slate-400">Temporal access window. Verifies current time falls within active release schedule.</p>
         <div class="flex items-center space-x-2">
-          <button onclick="playAcousticTone()" class="px-3 py-2 rounded-xl text-xs font-mono bg-slate-800 text-cyan-300 hover:bg-slate-700 transition flex items-center">
-            <i data-lucide="volume-2" class="w-3.5 h-3.5 mr-1.5"></i> Play Tone Chime
-          </button>
-          <button onclick="solveAudioCode()" class="px-4 py-2 rounded-xl text-xs font-mono font-semibold bg-cyan-500 text-slate-950 hover:bg-cyan-400 transition">
-            Verify Audio Frequency
+          <button onclick="solveAccessWindow()" class="px-4 py-2 rounded-xl text-xs font-mono font-semibold bg-cyan-500 text-slate-950 hover:bg-cyan-400 transition flex items-center">
+            <i data-lucide="calendar" class="w-3.5 h-3.5 mr-1.5"></i> Verify Active Window
           </button>
         </div>
       </div>
     `;
-  } else if (lockId === 'the_stranger') {
+  } else if (lockId === 'invite_code') {
     body = `
       <div class="space-y-2">
-        <p class="text-xs text-slate-400">WebRTC P2P DataChannel connection requiring two peer tabs to handshake keys.</p>
+        <p class="text-xs text-slate-400">Restricted invite authorization token. Demo: <code class="text-cyan-400">BITTY-VIP-2026</code></p>
         <div class="flex items-center space-x-2">
-          <button onclick="solveTheStranger()" class="px-4 py-2 rounded-xl text-xs font-mono font-semibold bg-cyan-500 text-slate-950 hover:bg-cyan-400 transition flex items-center">
-            <i data-lucide="users" class="w-3.5 h-3.5 mr-1.5"></i> Complete P2P Handshake
+          <input type="text" id="input_invite_code" value="BITTY-VIP-2026" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm font-mono text-cyan-300 w-44 focus:border-cyan-400 focus:outline-none uppercase" />
+          <button onclick="solveInviteCode()" class="px-4 py-2 rounded-xl text-xs font-mono font-semibold bg-cyan-500 text-slate-950 hover:bg-cyan-400 transition">
+            Verify Invite
+          </button>
+        </div>
+      </div>
+    `;
+  } else if (lockId === 'two_person') {
+    body = `
+      <div class="space-y-2">
+        <p class="text-xs text-slate-400">Dual-custody Shamir 2-of-2 secret sharing reconstruction in browser memory.</p>
+        <div class="flex items-center space-x-2">
+          <button onclick="solveTwoPerson()" class="px-4 py-2 rounded-xl text-xs font-mono font-semibold bg-cyan-500 text-slate-950 hover:bg-cyan-400 transition flex items-center">
+            <i data-lucide="users" class="w-3.5 h-3.5 mr-1.5"></i> Combine 2-Person Shares
+          </button>
+        </div>
+      </div>
+    `;
+  } else if (lockId === 'browser_key') {
+    body = `
+      <div class="space-y-2">
+        <p class="text-xs text-slate-400">IndexedDB persistent browser credential authorization.</p>
+        <div class="flex items-center space-x-2">
+          <button onclick="solveBrowserKey()" class="px-4 py-2 rounded-xl text-xs font-mono font-semibold bg-cyan-500 text-slate-950 hover:bg-cyan-400 transition flex items-center">
+            <i data-lucide="shield-check" class="w-3.5 h-3.5 mr-1.5"></i> Read Browser Key
           </button>
         </div>
       </div>
@@ -701,6 +881,87 @@ async function solveTheStranger() {
   if (res.success) markLockSolved('the_stranger', res.subKey);
 }
 
+let countdownInterval = null;
+function startCountdown() {
+  const btn = document.getElementById('btn_countdown');
+  const span = document.getElementById('countdown_status');
+  if (!btn || !span) return;
+  if (countdownInterval) clearInterval(countdownInterval);
+  btn.disabled = true;
+  btn.classList.add('opacity-50', 'cursor-not-allowed');
+  let sec = 5;
+  span.innerText = `Wait ${sec}s...`;
+  countdownInterval = setInterval(async () => {
+    sec--;
+    if (sec > 0) {
+      span.innerText = `Wait ${sec}s...`;
+    } else {
+      clearInterval(countdownInterval);
+      countdownInterval = null;
+      span.innerText = 'Unlocked!';
+      const res = await window.BittyLockEngine.evaluateLock('countdown', { completed: true, elapsedMs: 5000 }, { delaySec: 5 });
+      if (res.success) markLockSolved('countdown', res.subKey);
+      else logCrypto(res.error, 'error');
+    }
+  }, 1000);
+}
+
+async function solveTapUnseal() {
+  const res = await window.BittyLockEngine.evaluateLock('tap_unseal', { tapped: true }, { sealType: 'wax' });
+  if (res.success) {
+    logCrypto('Tactile wax seal successfully broken.', 'info');
+    markLockSolved('tap_unseal', res.subKey);
+  } else logCrypto(res.error, 'error');
+}
+
+async function solveChainKey() {
+  const token = (document.getElementById('input_chain_key')?.value || 'bitty_chain_alpha_442').trim();
+  const res = await window.BittyLockEngine.evaluateLock('chain_key', { prevToken: token }, {});
+  if (res.success) {
+    logCrypto(`Chain key validated with predecessor token: ${token}`, 'info');
+    markLockSolved('chain_key', res.subKey);
+  } else logCrypto(res.error, 'error');
+}
+
+async function solveAccessWindow() {
+  const now = Date.now();
+  const res = await window.BittyLockEngine.evaluateLock('access_window', { timestamp: now }, {
+    openAt: new Date(now - 3600000).toISOString(),
+    lockAt: new Date(now + 3600000).toISOString()
+  });
+  if (res.success) {
+    logCrypto('Access window validated: current time is within open ceremony slot.', 'info');
+    markLockSolved('access_window', res.subKey);
+  } else logCrypto(res.error, 'error');
+}
+
+async function solveInviteCode() {
+  const code = (document.getElementById('input_invite_code')?.value || 'BITTY-VIP-2026').trim();
+  const res = await window.BittyLockEngine.evaluateLock('invite_code', { code }, {});
+  if (res.success) {
+    logCrypto(`Invite code accepted: [${code}].`, 'info');
+    markLockSolved('invite_code', res.subKey);
+  } else logCrypto(res.error, 'error');
+}
+
+async function solveTwoPerson() {
+  const s1 = new Uint8Array(32).fill(0xaa);
+  const s2 = new Uint8Array(32).fill(0x55);
+  const res = await window.BittyLockEngine.evaluateLock('two_person', { share1: s1, share2: s2 }, {});
+  if (res.success) {
+    logCrypto('2-of-2 Shamir secret shares combined successfully in browser.', 'info');
+    markLockSolved('two_person', res.subKey);
+  } else logCrypto(res.error, 'error');
+}
+
+async function solveBrowserKey() {
+  const res = await window.BittyLockEngine.evaluateLock('browser_key', { authorized: true }, { keyId: 'browser_vault_key' });
+  if (res.success) {
+    logCrypto('Persistent private key retrieved from browser storage.', 'info');
+    markLockSolved('browser_key', res.subKey);
+  } else logCrypto(res.error, 'error');
+}
+
 async function solveGenericLock(lockId) {
   const res = await window.BittyLockEngine.evaluateLock(lockId, { verified: true }, {});
   if (res.success) markLockSolved(lockId, res.subKey);
@@ -823,76 +1084,191 @@ function loadPreset(presetId) {
 
 function renderCatalog() {
   const liveGrid = document.getElementById('liveLocksGrid');
-  const comingSoonGrid = document.getElementById('comingSoonGrid');
+  if (!liveGrid) return;
   liveGrid.innerHTML = '';
-  comingSoonGrid.innerHTML = '';
 
   const allDefs = window.BittyLockEngine.LOCK_DEFINITIONS || [];
+  const liveDefs = allDefs.filter(lock => LIVE_LOCK_IDS.includes(lock.id));
 
-  allDefs.forEach(lock => {
-    const isComingSoon = COMING_SOON_LOCK_IDS.includes(lock.id);
+  liveDefs.forEach(lock => {
     const card = document.createElement('div');
-    card.className = `p-5 rounded-2xl border transition flex flex-col justify-between ${
-      isComingSoon 
-        ? 'bg-slate-950/50 border-slate-800/80 hover:border-amber-500/30' 
-        : 'bg-slate-950/80 border-slate-800 hover:border-cyan-500/40'
-    }`;
+    card.className = 'p-4 sm:p-5 rounded-2xl border transition flex flex-col justify-between bg-slate-950/80 border-slate-800 hover:border-cyan-500/40';
     card.dataset.category = lock.cat;
-    card.dataset.type = isComingSoon ? 'coming-soon' : 'live';
+    card.dataset.id = lock.id;
 
     card.innerHTML = `
       <div>
         <div class="flex items-center justify-between mb-2">
           <span class="text-xs font-mono text-slate-500">Lock #${lock.num}</span>
-          ${isComingSoon 
-            ? '<span class="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-950/60 text-amber-400 border border-amber-800/60">COMING SOON</span>'
-            : '<span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-800/60">LIVE</span>'
-          }
+          <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-800/60 font-semibold">LIVE</span>
         </div>
         <h4 class="text-sm font-mono font-bold text-white flex items-center">
           <span class="mr-2">${lock.icon || '🔒'}</span>
           ${lock.name}
         </h4>
         <p class="text-xs text-slate-400 mt-2 leading-relaxed">${lock.mechanic}</p>
-        <div class="mt-3 text-[11px] text-slate-500 font-mono">
+        <div class="mt-2.5 text-[11px] text-slate-500 font-mono">
           <span class="text-slate-400 font-semibold">Best Use:</span> ${lock.bestUse}
         </div>
       </div>
 
-      <div class="mt-4 pt-3 border-t border-slate-800/60 flex items-center justify-between">
+      <div class="mt-3.5 pt-3 border-t border-slate-800/60 flex items-center justify-between">
         <span class="text-[10px] font-mono text-slate-500 capitalize">${lock.catLabel}</span>
-        <button onclick="${isComingSoon ? `previewComingSoon('${lock.name}')` : `addActiveLock('${lock.id}')`}" class="text-xs font-mono text-cyan-400 hover:text-cyan-300 flex items-center">
-          ${isComingSoon ? 'View Architecture →' : '+ Add to Ceremony'}
+        <button onclick="addActiveLock('${lock.id}')" class="text-xs font-mono text-cyan-400 hover:text-cyan-300 flex items-center font-semibold">
+          + Add to Ceremony
         </button>
       </div>
     `;
 
-    if (isComingSoon) {
-      comingSoonGrid.appendChild(card);
+    liveGrid.appendChild(card);
+  });
+}
+
+function renderRoadmapModal() {
+  const container = document.getElementById('roadmapLocksList');
+  if (!container) return;
+  container.innerHTML = '';
+
+  ROADMAP_LOCKS.forEach(lock => {
+    const card = document.createElement('div');
+    card.className = 'p-4 sm:p-5 rounded-2xl border transition bg-slate-950/80 border-slate-800/90 hover:border-amber-500/40';
+    card.dataset.blocker = lock.blockerType;
+
+    card.innerHTML = `
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-3 mb-3">
+        <div class="flex items-center space-x-2.5">
+          <span class="text-xl">${lock.icon}</span>
+          <div>
+            <div class="flex items-center space-x-2">
+              <span class="text-[11px] font-mono text-slate-500">Lock #${lock.num}</span>
+              <h4 class="text-sm font-mono font-bold text-white">${lock.name}</h4>
+            </div>
+            <p class="text-xs text-slate-400 mt-0.5">${lock.desc}</p>
+          </div>
+        </div>
+        <span class="text-[10px] font-mono uppercase px-2.5 py-1 rounded-lg border font-semibold self-start sm:self-center shrink-0 ${lock.badgeClass}">
+          ${lock.category}
+        </span>
+      </div>
+
+      <div class="space-y-2 text-xs">
+        <div class="bg-amber-950/20 border border-amber-900/30 rounded-xl p-2.5 sm:p-3 font-mono">
+          <span class="text-amber-400 font-semibold block mb-0.5">⚠️ Why it cannot go live today:</span>
+          <span class="text-slate-300 leading-relaxed">${lock.whyNotToday}</span>
+        </div>
+        <div class="bg-slate-900/60 border border-slate-800/80 rounded-xl p-2.5 sm:p-3 font-mono">
+          <span class="text-cyan-400 font-semibold block mb-0.5">🛠️ Target Architecture / Prerequisites:</span>
+          <span class="text-slate-400 leading-relaxed">${lock.plannedArch}</span>
+        </div>
+      </div>
+    `;
+
+    container.appendChild(card);
+  });
+}
+
+function openRoadmapModal() {
+  const modal = document.getElementById('roadmapModal');
+  if (!modal) return;
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+  document.body.style.overflow = 'hidden';
+  if (window.lucide) lucide.createIcons();
+}
+
+function closeRoadmapModal() {
+  const modal = document.getElementById('roadmapModal');
+  if (!modal) return;
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+  document.body.style.overflow = '';
+}
+
+function filterRoadmap(blockerType) {
+  const cards = document.querySelectorAll('#roadmapLocksList > [data-blocker]');
+  cards.forEach(card => {
+    if (blockerType === 'all') {
+      card.style.display = 'block';
     } else {
-      liveGrid.appendChild(card);
+      card.style.display = card.dataset.blocker === blockerType ? 'block' : 'none';
     }
   });
 }
 
 function filterCatalog(category) {
-  const cards = document.querySelectorAll('#catalog [data-category]');
-  const comingSection = document.getElementById('comingSoonSection');
+  const cards = document.querySelectorAll('#liveLocksGrid > [data-category]');
 
   cards.forEach(card => {
-    if (category === 'all') {
+    if (category === 'all' || category === 'live') {
       card.style.display = 'flex';
-      comingSection.style.display = 'block';
-    } else if (category === 'live') {
-      card.style.display = card.dataset.type === 'live' ? 'flex' : 'none';
-      comingSection.style.display = 'none';
-    } else if (category === 'coming-soon') {
-      card.style.display = card.dataset.type === 'coming-soon' ? 'flex' : 'none';
-      comingSection.style.display = 'block';
     } else {
       card.style.display = card.dataset.category === category ? 'flex' : 'none';
-      comingSection.style.display = 'block';
     }
+  });
+
+  const rail = document.getElementById('liveLocksGrid');
+  if (rail) rail.scrollTo({ left: 0, behavior: 'smooth' });
+}
+
+// =========================================================================
+// PART 5: HORIZONTAL MARQUEE RAILS (swipeable card rows)
+// =========================================================================
+
+function initMarquees() {
+  const rails = ['presetsGrid', 'liveLocksGrid', 'comingSoonGrid']
+    .map(id => document.getElementById(id))
+    .filter(Boolean);
+  const reduceMotion = window.matchMedia &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  rails.forEach(rail => {
+    let paused = false;
+    rail.addEventListener('pointerdown', () => { paused = true; });
+    rail.addEventListener('wheel', () => { paused = true; }, { passive: true });
+    rail.addEventListener('touchstart', () => { paused = true; }, { passive: true });
+    rail.addEventListener('mouseenter', () => { paused = true; });
+    rail.addEventListener('mouseleave', () => { paused = false; });
+    rail.addEventListener('focusin', () => { paused = true; });
+    rail.addEventListener('focusout', () => { paused = false; });
+
+    // Mouse drag-to-scroll (touch swipe works natively)
+    let dragging = false, startX = 0, startLeft = 0;
+    rail.addEventListener('pointerdown', (e) => {
+      if (e.pointerType !== 'mouse' || e.button !== 0) return;
+      dragging = true;
+      startX = e.clientX;
+      startLeft = rail.scrollLeft;
+      rail.classList.add('dragging');
+    });
+    window.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      rail.scrollLeft = startLeft - (e.clientX - startX);
+    });
+    window.addEventListener('pointerup', () => {
+      dragging = false;
+      rail.classList.remove('dragging');
+    });
+
+    // Gentle auto-marquee drift; loops back at the end, pauses on touch
+    if (!reduceMotion) {
+      setInterval(() => {
+        if (paused || dragging || document.hidden) return;
+        if (rail.scrollWidth <= rail.clientWidth + 8) return;
+        const step = Math.min(320, rail.clientWidth * 0.8);
+        const atEnd = rail.scrollLeft + rail.clientWidth >= rail.scrollWidth - 24;
+        rail.scrollTo({ left: atEnd ? 0 : rail.scrollLeft + step, behavior: 'smooth' });
+      }, 3500);
+    }
+  });
+
+  // Desktop arrow buttons scroll a rail by ~2 cards
+  document.querySelectorAll('.marquee-nav').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const rail = document.getElementById(btn.dataset.target);
+      if (!rail) return;
+      const dir = Number(btn.dataset.dir || 1);
+      rail.scrollBy({ left: dir * Math.min(640, rail.clientWidth * 0.9), behavior: 'smooth' });
+    });
   });
 }
 
