@@ -151,7 +151,10 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
   const [quotaReason, setQuotaReason] = useState<string | null>(null);
 
   const loadData = async (passcode?: string) => {
-    const targetHash = hashFragment || (typeof window !== 'undefined' ? window.location.hash : '');
+    // `window.location.hash` also contains internal editor routes such as
+    // `#/studio`. Those are not Bitty payloads; treating them as one clears
+    // the active preview content and makes the lock preview fail after unlock.
+    const targetHash = effectiveHash;
     if (!targetHash || !targetHash.trim()) {
       if (activeContent) {
         setContent(activeContent);
@@ -240,7 +243,7 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
   };
 
   useEffect(() => {
-    const targetHash = hashFragment || (typeof window !== 'undefined' ? window.location.hash : '');
+    const targetHash = effectiveHash;
     setIsEncrypted(hasPasswordLock);
     setNeedsPassword(hasPasswordLock);
     setPasswordInput('');
@@ -268,7 +271,7 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
       return;
     }
 
-    const targetHash = hashFragment || (typeof window !== 'undefined' ? window.location.hash : '');
+    const targetHash = effectiveHash;
     // Preview mode: activeContent provided without cipher fragment
     if ((!targetHash || !isEncryptedFragment) && activeContent && metadata?.password) {
       if (passwordInput.trim() !== metadata.password.trim()) {
