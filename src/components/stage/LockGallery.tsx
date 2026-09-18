@@ -206,6 +206,18 @@ const DEFAULT_THEME: LockColorTheme = {
   activeBadge: 'bg-cyan-400',
 };
 
+const EXCLUDED_LOCK_IDS = new Set([
+  'time-capsule',
+  'tap-to-unseal',
+  'totp',
+  'signed-sender',
+  'two-person',
+  'location',
+  'browser-key',
+  'puzzle',
+  'proof-of-human',
+]);
+
 export const LockGallery: React.FC<LockGalleryProps> = ({
   chainEnabled = false,
   onToggleChain,
@@ -217,7 +229,7 @@ export const LockGallery: React.FC<LockGalleryProps> = ({
   const [isRoadmapOpen, setIsRoadmapOpen] = useState<boolean>(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const liveLocks = LOCK_TYPES.filter(l => l.canGoLiveToday);
+  const liveLocks = LOCK_TYPES.filter(l => l.canGoLiveToday && !EXCLUDED_LOCK_IDS.has(l.id));
   const roadmapLocks = LOCK_TYPES.filter(l => !l.canGoLiveToday);
 
   const handlePress = (def: LockTypeDef) => {
@@ -236,7 +248,7 @@ export const LockGallery: React.FC<LockGalleryProps> = ({
 
   return (
     <div className="flex flex-col gap-1.5 pt-1 border-t border-cyan-500/20 font-mono select-none">
-      {/* Header Bar with Live Badge & Roadmap Launcher */}
+      {/* Header Bar with Live Badge & Chevrons */}
       <div className="flex items-center justify-between gap-2 px-0.5 pt-1">
         <div className="flex items-center gap-1.5 min-w-0">
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
@@ -250,17 +262,6 @@ export const LockGallery: React.FC<LockGalleryProps> = ({
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
-          {/* Roadmap Modal Trigger Button */}
-          <button
-            type="button"
-            onClick={() => setIsRoadmapOpen(true)}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold text-amber-300 bg-amber-950/70 border border-amber-500/50 hover:bg-amber-900/80 hover:border-amber-400 transition-all shadow-[0_0_10px_rgba(245,158,11,0.2)] cursor-pointer"
-            title="View locks deferred to roadmap"
-          >
-            <Map className="w-3 h-3 text-amber-400" />
-            <span>Roadmap ({roadmapLocks.length})</span>
-          </button>
-
           {/* Marquee Navigation Chevrons */}
           <div className="hidden sm:flex items-center gap-0.5">
             <button
@@ -328,31 +329,11 @@ export const LockGallery: React.FC<LockGalleryProps> = ({
             </button>
           );
         })}
-
-        {/* Roadmap Modal End-Card */}
-        <button
-          type="button"
-          onClick={() => setIsRoadmapOpen(true)}
-          className="relative flex items-center gap-2 p-2 rounded-xl border border-amber-500/40 bg-amber-950/40 hover:bg-amber-900/60 hover:border-amber-400 text-amber-200 transition-all cursor-pointer snap-start shrink-0 w-36 sm:w-42 shadow-[0_0_10px_rgba(245,158,11,0.15)] select-none"
-          title="View all 9 locks requiring hardware or special software engineering"
-        >
-          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg border border-amber-500/40 bg-amber-950/90 flex items-center justify-center shrink-0 text-amber-400">
-            <Map className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="text-[10px] sm:text-[11px] font-bold leading-tight truncate text-amber-300">
-              Roadmap ({roadmapLocks.length})
-            </div>
-            <div className="text-[8px] sm:text-[9px] opacity-80 truncate text-amber-400/80">
-              HW &amp; Engineering
-            </div>
-          </div>
-        </button>
       </div>
 
       {/* Swipe Hint for Mobile */}
       <div className="text-[9px] text-cyan-400/40 text-center uppercase tracking-wider sm:hidden">
-        ← swipe horizontally for all 16 live locks →
+        ← swipe horizontally for all {liveLocks.length} live locks →
       </div>
 
       {/* Lock Configuration Modal */}
