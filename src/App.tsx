@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { BittyNavbar } from './components/BittyNavbar';
 import { HoloBackground } from './components/HoloBackground';
-import { ConfettiClickFX } from './components/ConfettiClickFX';
 import { BittyStageView } from './components/stage/BittyStageView';
 import { PaymentPolicyDraft } from './components/PaymentPolicyLockPanel';
 import { BittyRenderer } from './components/BittyRenderer';
@@ -999,6 +998,14 @@ export default function App() {
   }, [chainDraft, content, metadata]);
 
   const handleGenerateChain = useCallback(async (currentContent: string, currentMetadata: BittyMetadata) => {
+    // Reserve the new tab synchronously while the click gesture is still active.
+    // Chain URL generation is async; opening only after compression completes is
+    // commonly blocked by popup protection and makes GENERATE BOX appear inert.
+    let newTab: Window | null = null;
+    try {
+      newTab = window.open('about:blank', '_blank');
+    } catch {}
+
     const baseDraft = chainDraft?.enabled
       ? updateChainDraftPage(chainDraft, chainDraft.currentIndex, currentContent, currentMetadata)
       : createChainDraftFromCurrent(currentContent, currentMetadata);
@@ -1007,7 +1014,28 @@ export default function App() {
       chainId: baseDraft.chainId,
     });
     const entryUrl = urls[0] || '';
-    if (!entryUrl) return { entryUrl: '', urls };
+    if (!entryUrl) {
+      try { newTab?.close(); } catch {}
+      return { entryUrl: '', urls };
+    }
+
+    if (newTab) {
+      try {
+        newTab.location.href = entryUrl;
+      } catch {}
+    } else {
+      // Preserve the normal GENERATE BOX fallback if the browser did not
+      // return a window handle (for example, a stricter popup policy).
+      try {
+        const anchor = document.createElement('a');
+        anchor.href = entryUrl;
+        anchor.target = '_blank';
+        anchor.rel = 'noopener noreferrer';
+        document.body.appendChild(anchor);
+        anchor.click();
+        document.body.removeChild(anchor);
+      } catch {}
+    }
 
     const parsedEntry = parseBittyHash(new URL(entryUrl).hash);
     setBittyUrl(entryUrl);
@@ -1546,7 +1574,6 @@ export default function App() {
         )}
 
         {/* Experimental P2P chat retained in source but disabled for launch. */}
-        <ConfettiClickFX />
       </div>
     );
   }
@@ -1555,7 +1582,6 @@ export default function App() {
     <div className="min-h-screen flex flex-col bg-transparent text-cyan-100 relative overflow-x-hidden font-sans">
       {/* Background Animated Hologram FX */}
       <HoloBackground theme={workspaceTheme} />
-      <ConfettiClickFX />
 
       {/* Edge Grip Handle on Center Top (PREVIEW) */}
       <EdgeGripHandles
