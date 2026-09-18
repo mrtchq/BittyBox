@@ -67,6 +67,14 @@ if [ "$DO_BUILD" = "1" ]; then
     echo "  build failed (rc=$rc); see /tmp/bb-parity-build.log"; exit 2
   fi
   note "build ok -> $SCRATCH"
+  # The Firebase config is read at module init and throws if absent, which ships
+  # a blank editor page. Check it here so the gate catches that class of bug too.
+  if ( cd "$REPO" && node ops/verify-build-config.mjs "$SCRATCH" ) >>/tmp/bb-parity-build.log 2>&1; then
+    note "firebase config baked into the scratch bundle"
+  else
+    echo "  firebase config missing from the scratch bundle (would render blank); see /tmp/bb-parity-build.log"
+    exit 2
+  fi
   # Apply the same staging step `npm run build` uses, so the gate inspects what
   # would actually be promoted (shell staged as editor.html).
   if ( cd "$REPO" && node ops/stage-build.mjs "$SCRATCH" ) >>/tmp/bb-parity-build.log 2>&1; then
