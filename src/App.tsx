@@ -33,11 +33,8 @@ import {
   inviteCodeFromBoxId,
   INVITE_LISTEN_MS
 } from './bitty-live/invite';
-import { BittyLiveBadge } from './components/BittyLiveBadge';
-import { BittyLiveChat } from './components/BittyLiveChat';
 import { createBittyTour } from './components/OnboardingTour';
 import { ConfirmCloseSessionModal } from './components/ConfirmCloseSessionModal';
-import { AnimatedSplash } from './components/AnimatedSplash';
 import { CyberScrambleText } from './components/CyberScrambleText';
 import { Zap, RefreshCw } from 'lucide-react';
 import { useProStatus } from './hooks/useProStatus';
@@ -528,7 +525,6 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
   }, []);
 
-  const [showSplash, setShowSplash] = useState<boolean>(false);
   const [isVerifyingMagic, setIsVerifyingMagic] = useState<boolean>(() => Boolean(initialUrl.isAuth));
 
   // Apply workspace theme to document root & sync with localStorage
@@ -560,11 +556,10 @@ export default function App() {
 
     if (token) {
       setIsVerifyingMagic(true);
-      setShowSplash(false);
       account.verifyMagicLink(token).then(success => {
         setIsVerifyingMagic(false);
         if (success) {
-          setShowSplash(true);
+          setCurrentView('account');
           window.history.replaceState(null, '', window.location.pathname);
         }
       }).catch(() => {
@@ -1121,25 +1116,22 @@ export default function App() {
       const search = window.location.search || '';
 
       if (hash.includes('auth/verify') || hash.includes('token=') || search.includes('token=')) {
-        setShowSplash(false);
         setCurrentView('account');
         return;
       }
 
       if (hash === '#/account') {
-        setShowSplash(false);
         setCurrentView('account');
         return;
       }
 
       if (hash === '#/agents' || hash === '#agents' || hash === '#/agent' || hash === '#agent') {
-        setShowSplash(false);
         setCurrentView('agents');
         return;
       }
 
       if (hash === '#/studio') {
-        setShowSplash(true);
+        setCurrentView('editor');
         return;
       }
 
@@ -1153,7 +1145,6 @@ export default function App() {
         const { payload, metadata: parsedMeta } = parseBittyHash(hash);
 
         if (payload) {
-          setShowSplash(false);
           setHashFragment(payload);
           if (parsedMeta) {
             setMetadata({
@@ -1541,20 +1532,9 @@ export default function App() {
           onUnlock={(pw) => setMetadata(prev => ({ ...prev, password: pw }))}
         />
 
-        {/* Floating Live P2P Overlay for Viewer Mode */}
+        {/* Experimental P2P controls disabled for launch; the Edit Box affordance is preserved. */}
         {currentBoxId && (
           <div className="fixed top-3 left-3 z-[70] flex items-center gap-2 select-none">
-            <BittyLiveBadge
-              peerCount={livePeers.length}
-              peers={livePeers}
-              roomId={liveRoomId}
-              boxId={currentBoxId}
-              onEnableLive={handleEnableLive}
-              onSwitchToPrivate={handleSwitchToPrivate}
-              onToggleChat={handleToggleChat}
-              unreadChatCount={unreadChatCount}
-              shareUrl={liveShareUrl}
-            />
             <button
               onClick={() => handleEditFromViewer(content, metadata)}
               className="px-2.5 py-1 rounded-full bg-slate-900/80 hover:bg-slate-800 border border-cyan-500/40 text-cyan-300 text-xs font-semibold flex items-center gap-1 cursor-pointer transition-all shadow-sm shadow-cyan-500/10 backdrop-blur-md"
@@ -1565,21 +1545,7 @@ export default function App() {
           </div>
         )}
 
-        {/* Live Ephemeral P2P Chat in Viewer Mode */}
-        <BittyLiveChat
-          isLive={Boolean(liveBoxId)}
-          isOpen={isChatOpen}
-          onClose={() => setIsChatOpen(false)}
-          onToggle={handleToggleChat}
-          messages={chatMessages}
-          onSendMessage={handleSendChatMessage}
-          peerCount={livePeers.length}
-          peers={livePeers}
-          onSwitchToPrivate={handleSwitchToPrivate}
-          unreadCount={unreadChatCount}
-          boxId={liveBoxId}
-          {...inviteChatProps}
-        />
+        {/* Experimental P2P chat retained in source but disabled for launch. */}
         <ConfettiClickFX />
       </div>
     );
@@ -1616,7 +1582,6 @@ export default function App() {
         onOpenTemplates={() => setIsLeftTemplatesPanelOpen(true)}
         onOpenTools={() => setIsRightToolsPanelOpen(true)}
         onStartTour={handleStartTour}
-        onReplaySplash={() => setShowSplash(true)}
         isEncrypted={!!metadata.password}
         hasContent={content.trim().length > 0}
         theme={workspaceTheme}
@@ -1627,15 +1592,6 @@ export default function App() {
         onOpenPaywall={proStatus.openPaywall}
         user={account.user}
         isAuthenticated={account.isAuthenticated}
-        livePeerCount={livePeers.length}
-        livePeers={livePeers}
-        liveRoomId={liveRoomId}
-        liveBoxId={currentBoxId}
-        onEnableLive={handleEnableLive}
-        onSwitchToPrivate={handleSwitchToPrivate}
-        onToggleChat={handleToggleChat}
-        unreadChatCount={unreadChatCount}
-        liveShareUrl={liveShareUrl}
       />
 
       {/* Main Content Body with Motion View Transitions */}
@@ -1687,7 +1643,7 @@ export default function App() {
             >
               <AccountDashboard
                 account={account}
-                onNavigateToSlide01={() => setShowSplash(true)}
+                onNavigateToSlide01={() => setCurrentView('editor')}
                 onOpenQr={(url) => {
                   setBittyUrl(url);
                   setIsQrOpen(true);
@@ -1760,7 +1716,6 @@ export default function App() {
               <AboutModal
                 onOpenEditor={() => setCurrentView('editor')}
                 onStartTour={handleStartTour}
-                onReplaySplash={() => setShowSplash(true)}
               />
             </motion.div>
           )}
@@ -1846,7 +1801,6 @@ export default function App() {
         onNewBox={handleNewBox}
         onCloseSession={handleRequestCloseSession}
         onStartTour={handleStartTour}
-        onReplaySplash={() => setShowSplash(true)}
         metadata={metadata}
         theme={workspaceTheme}
         onThemeChange={setWorkspaceTheme}
@@ -1909,28 +1863,8 @@ export default function App() {
         onClose={() => setIsLegalModalOpen(false)}
       />
 
-      {/* Intro / Demo Splash — demand-only overlay (opens via About "SEE DEMO" / REPLAY INTRO) */}
-      <AnimatePresence>
-        {showSplash && (
-          <AnimatedSplash onComplete={() => setShowSplash(false)} />
-        )}
-      </AnimatePresence>
-
       {/* Live Ephemeral P2P Chat */}
-      <BittyLiveChat
-        isLive={Boolean(liveBoxId)}
-        isOpen={isChatOpen}
-        onClose={() => setIsChatOpen(false)}
-        onToggle={handleToggleChat}
-        messages={chatMessages}
-        onSendMessage={handleSendChatMessage}
-        peerCount={livePeers.length}
-        peers={livePeers}
-        onSwitchToPrivate={handleSwitchToPrivate}
-        unreadCount={unreadChatCount}
-        boxId={liveBoxId}
-        {...inviteChatProps}
-      />
+      {/* P2P chat implementation remains available in source for a future relaunch. */}
     </div>
   );
 }

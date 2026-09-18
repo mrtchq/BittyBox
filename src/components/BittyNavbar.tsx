@@ -22,8 +22,6 @@ import {
 import { AppView, WorkspaceTheme, WorkspaceMode, BittyUser } from '../types';
 import { GRIP_ICON_DATA_URL } from './EdgeGripHandles';
 import { UserAvatar } from './UserAvatar';
-import { BittyLiveBadge } from './BittyLiveBadge';
-import type { BittyPeer } from '../bitty-live';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface BittyNavbarProps {
@@ -38,7 +36,6 @@ interface BittyNavbarProps {
   onOpenTemplates?: () => void;
   onOpenTools?: () => void;
   onStartTour?: () => void;
-  onReplaySplash?: () => void;
   isEncrypted: boolean;
   hasContent: boolean;
   theme: WorkspaceTheme;
@@ -59,12 +56,7 @@ interface BittyNavbarProps {
   // User Profile Account props
   user?: BittyUser | null;
   isAuthenticated?: boolean;
-  livePeerCount?: number;
-  livePeers?: BittyPeer[];
-  liveRoomId?: string;
-  liveBoxId?: string | null;
   onEnableLive?: () => void;
-  liveShareUrl?: string;
   onSwitchToPrivate?: () => void;
   onToggleChat?: () => void;
   unreadChatCount?: number;
@@ -82,7 +74,6 @@ export const BittyNavbar: React.FC<BittyNavbarProps> = ({
   onOpenTemplates,
   onOpenTools,
   onStartTour,
-  onReplaySplash,
   isEncrypted,
   theme,
   onThemeChange,
@@ -99,15 +90,6 @@ export const BittyNavbar: React.FC<BittyNavbarProps> = ({
   onManualSave,
   user,
   isAuthenticated,
-  livePeerCount = 0,
-  livePeers = [],
-  liveRoomId,
-  liveBoxId,
-  onEnableLive,
-  onSwitchToPrivate,
-  onToggleChat,
-  unreadChatCount = 0,
-  liveShareUrl,
 }) => {
   return (
     <header className="fixed inset-x-0 top-0 z-40 w-full pt-[env(safe-area-inset-top)] backdrop-blur-xl bg-[#0a0316]/90 border-b border-cyan-500/20 shadow-[0_4px_30px_rgba(0,0,0,0.6)]">
@@ -281,19 +263,6 @@ export const BittyNavbar: React.FC<BittyNavbarProps> = ({
               <span className="relative z-10">PRO</span>
             </motion.button>
           </div>
-
-          {/* Bitty Live P2P Status Indicator */}
-          <BittyLiveBadge
-            peerCount={livePeerCount}
-            peers={livePeers}
-            roomId={liveRoomId}
-            boxId={liveBoxId}
-            onEnableLive={onEnableLive}
-            onSwitchToPrivate={onSwitchToPrivate}
-            onToggleChat={onToggleChat}
-            unreadChatCount={unreadChatCount}
-            shareUrl={liveShareUrl}
-          />
 
           {/* User Profile Avatar Top-Right Trigger */}
           <motion.button

@@ -628,7 +628,7 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
                   className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-cyan-500/20 via-teal-500/20 to-cyan-500/20 border border-cyan-400/60 hover:border-cyan-300 text-cyan-100 hover:text-white text-xs font-cyber font-bold flex items-center gap-1.5 transition cursor-pointer shadow-[0_0_15px_rgba(0,242,255,0.25)] hover:scale-105 active:scale-95 whitespace-nowrap"
                 >
                   <Plus className="w-4 h-4 text-cyan-300" />
-                  <span>LAUNCH STUDIO BUILDER</span>
+                  <span>BUILD A BOX</span>
                 </button>
               )}
               <button
@@ -817,7 +817,7 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
                 <p className="text-xs text-cyan-300/70 max-w-sm mx-auto">
                   {boxSearchQuery
                     ? "No boxes matched your search query."
-                    : "Create a Bitty Box in the studio builder while logged in, and it will appear here automatically!"}
+                    : "Create a Bitty Box in the editor while logged in, and it will appear here automatically!"}
                 </p>
                 {onNavigateToSlide01 && (
                   <button

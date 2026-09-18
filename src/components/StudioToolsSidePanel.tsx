@@ -67,7 +67,6 @@ interface StudioToolsSidePanelProps {
   onPreviewInTab?: () => void;
   onExportZip?: () => void;
   onNewBox?: () => void;
-  onReplaySplash?: () => void;
   onNavigateToSlide01?: () => void;
   theme?: WorkspaceTheme;
   onThemeChange?: (theme: WorkspaceTheme) => void;
@@ -113,7 +112,6 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
   onPreviewInTab,
   onExportZip,
   onNewBox,
-  onReplaySplash,
   onNavigateToSlide01,
   theme = 'synthwave',
   onThemeChange,
@@ -417,7 +415,7 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
                 <div className="-m-4 sm:-m-6">
                   <AccountDashboard
                     account={account}
-                    onNavigateToSlide01={onNavigateToSlide01 || onReplaySplash || (() => {})}
+                    onNavigateToSlide01={onNavigateToSlide01 || (() => {})}
                     onOpenQr={onOpenQr}
                   />
                 </div>
