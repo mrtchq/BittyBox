@@ -161,75 +161,123 @@ export const PreviewDropdownPanel: React.FC<PreviewDropdownPanelProps> = ({
             {/* Ambient Neon Beam at Top */}
             <div className="h-1 w-full bg-gradient-to-r from-fuchsia-500 via-purple-400 to-cyan-400 shadow-[0_0_12px_#ff00de]" />
 
-            {/* Organized Clean Dropdown Header */}
-            <div className="px-3 sm:px-6 py-2.5 sm:py-3 border-b border-fuchsia-500/20 bg-[#0a0524]/95 flex flex-wrap items-center justify-between gap-2.5 sm:gap-4 shrink-0">
-              {/* Left Column: Icon, Title & Byte info */}
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-fuchsia-950 to-purple-900 border border-fuchsia-400/50 flex items-center justify-center shrink-0 shadow-[0_0_12px_rgba(217,70,239,0.3)]">
-                  {hasAnyLocks && viewMode === 'lock' ? (
-                    <Lock className="w-4 h-4 text-amber-300 drop-shadow-[0_0_6px_rgba(245,158,11,0.8)]" />
-                  ) : (
-                    <Eye className="w-4 h-4 text-fuchsia-300 drop-shadow-[0_0_6px_rgba(217,70,239,0.8)]" />
-                  )}
-                </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h2 className="text-xs sm:text-sm font-cyber font-bold text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-200 via-pink-200 to-cyan-200 tracking-wider">
-                      <CyberScrambleText text={hasAnyLocks && viewMode === 'lock' ? "LOCK GATE PREVIEW" : "LIVE PREVIEW"} speed={20} />
-                    </h2>
-                    {hasAnyLocks ? (
-                      <span className="text-[10px] font-mono font-bold bg-amber-950/80 text-amber-300 px-2 py-0.5 rounded-full border border-amber-500/40 flex items-center gap-1 shadow-sm">
-                        <Lock className="w-2.5 h-2.5 text-amber-400" />
-                        <span>{activeLockCount} {activeLockCount === 1 ? 'LOCK' : 'LOCKS'}</span>
-                      </span>
+            {/* Organized Dropdown Header: Row 1 = identity + actions, Row 2 = view toolbar */}
+            <div className="border-b border-fuchsia-500/20 bg-[#0a0524]/95 shrink-0">
+              {/* Row 1: identity + primary actions (single row, never wraps) */}
+              <div className="px-3 sm:px-6 py-2 sm:py-2.5 flex items-center justify-between gap-2 sm:gap-3">
+                {/* Left: Icon, Title & Byte info */}
+                <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 shrink">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-tr from-fuchsia-950 to-purple-900 border border-fuchsia-400/50 flex items-center justify-center shrink-0 shadow-[0_0_10px_rgba(217,70,239,0.3)]">
+                    {hasAnyLocks && viewMode === 'lock' ? (
+                      <Lock className="w-3.5 h-3.5 text-amber-300 drop-shadow-[0_0_6px_rgba(245,158,11,0.8)]" />
                     ) : (
-                      <span className="text-[10px] font-mono font-bold bg-cyan-950/80 text-cyan-300 px-2 py-0.5 rounded-full border border-cyan-500/40 shadow-sm">
-                        SANDBOX
-                      </span>
+                      <Eye className="w-3.5 h-3.5 text-fuchsia-300 drop-shadow-[0_0_6px_rgba(217,70,239,0.8)]" />
                     )}
-                    <span className="text-[10px] text-purple-300/60 font-mono tabular-nums hidden sm:inline">
-                      {content.length.toLocaleString()} B
-                    </span>
                   </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+                      <h2 className="text-xs sm:text-sm font-cyber font-bold text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-200 via-pink-200 to-cyan-200 tracking-wider truncate">
+                        <CyberScrambleText text={hasAnyLocks && viewMode === 'lock' ? "LOCK GATE PREVIEW" : "LIVE PREVIEW"} speed={20} />
+                      </h2>
+                      {hasAnyLocks ? (
+                        <span className="text-[10px] font-mono font-bold bg-amber-950/80 text-amber-300 px-2 py-0.5 rounded-full border border-amber-500/40 flex items-center gap-1 shadow-sm shrink-0">
+                          <Lock className="w-2.5 h-2.5 text-amber-400" />
+                          <span>{activeLockCount} {activeLockCount === 1 ? 'LOCK' : 'LOCKS'}</span>
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-mono font-bold bg-cyan-950/80 text-cyan-300 px-1.5 sm:px-2 py-0.5 rounded-full border border-cyan-500/40 shadow-sm shrink-0">
+                          SANDBOX
+                        </span>
+                      )}
+                      <span className="text-[10px] text-purple-300/60 font-mono tabular-nums hidden sm:inline shrink-0">
+                        {content.length.toLocaleString()} B
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right: primary actions only */}
+                <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={handleRefresh}
+                    className={`h-8 w-8 rounded-lg bg-purple-950/50 hover:bg-purple-900/70 border border-purple-500/35 text-purple-200 hover:text-white transition-all flex items-center justify-center text-xs font-mono cursor-pointer active:scale-[0.96] ${
+                      isRefreshing ? 'animate-spin' : ''
+                    }`}
+                    title="Refresh Render Preview"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleOpenInNewTab}
+                    className="h-8 px-2.5 rounded-lg bg-purple-950/50 hover:bg-purple-900/70 border border-purple-500/35 text-purple-200 hover:text-white transition-all flex items-center gap-1.5 text-xs font-mono font-medium cursor-pointer active:scale-[0.96]"
+                    title="Open Preview in New Tab"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5 text-cyan-400" />
+                    <span className="hidden sm:inline">Popout</span>
+                  </button>
+
+                  <div className="h-4 w-px bg-fuchsia-500/20 mx-0.5" />
+
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="h-8 px-2.5 sm:px-3 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 border border-rose-500/40 hover:border-rose-400 text-rose-200 hover:text-white transition-all flex items-center gap-1.5 text-xs font-mono font-semibold cursor-pointer active:scale-[0.96] shadow-sm"
+                    title="Close Preview (Esc)"
+                    aria-label="Close preview"
+                  >
+                    <X className="w-4 h-4" />
+                    <span className="hidden sm:inline">Close</span>
+                    <kbd className="hidden md:inline-block px-1 py-0.2 text-[9px] bg-black/40 rounded border border-rose-500/30 text-rose-300/80">ESC</kbd>
+                  </button>
                 </div>
               </div>
 
-              {/* Center Column: Clean Segmented Switchers */}
-              <div className="flex items-center gap-2">
-                {/* Lock Gate vs Unlocked Switcher */}
+              {/* Row 2: view controls toolbar (one scrollable strip, never wraps) */}
+              <div className="px-3 sm:px-6 pb-2 flex items-center gap-2 overflow-x-auto">
                 {hasAnyLocks && (
-                  <div className="inline-flex items-center p-0.5 rounded-xl bg-black/60 border border-amber-500/35 text-xs font-mono">
-                    <button
-                      type="button"
-                      onClick={() => setViewMode('lock')}
-                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                        viewMode === 'lock'
-                          ? 'bg-amber-950 text-amber-200 border border-amber-400/60 shadow-[0_0_8px_rgba(245,158,11,0.35)]'
-                          : 'text-amber-300/60 hover:text-amber-200'
-                      }`}
-                      title="Recipient Lock Gate View"
-                    >
-                      <Lock className="w-3.5 h-3.5 text-amber-400" />
-                      <span className="hidden sm:inline">Lock Gate</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setViewMode('content')}
-                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                        viewMode === 'content'
-                          ? 'bg-fuchsia-950 text-fuchsia-200 border border-fuchsia-400/60 shadow-[0_0_8px_rgba(217,70,239,0.35)]'
-                          : 'text-purple-300/60 hover:text-fuchsia-200'
-                      }`}
-                      title="Direct Content View"
-                    >
-                      <Eye className="w-3.5 h-3.5 text-cyan-400" />
-                      <span className="hidden sm:inline">Unlocked</span>
-                    </button>
-                  </div>
+                  <>
+                    <span className="text-[9px] font-mono font-bold uppercase tracking-widest text-amber-400/70 shrink-0">
+                      View
+                    </span>
+                    <div className="inline-flex items-center p-0.5 rounded-xl bg-black/60 border border-amber-500/35 text-xs font-mono shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => setViewMode('lock')}
+                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                          viewMode === 'lock'
+                            ? 'bg-amber-950 text-amber-200 border border-amber-400/60 shadow-[0_0_8px_rgba(245,158,11,0.35)]'
+                            : 'text-amber-300/60 hover:text-amber-200'
+                        }`}
+                        title="Recipient Lock Gate View"
+                      >
+                        <Lock className="w-3.5 h-3.5 text-amber-400" />
+                        <span className="hidden sm:inline">Lock Gate</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setViewMode('content')}
+                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                          viewMode === 'content'
+                            ? 'bg-fuchsia-950 text-fuchsia-200 border border-fuchsia-400/60 shadow-[0_0_8px_rgba(217,70,239,0.35)]'
+                            : 'text-purple-300/60 hover:text-fuchsia-200'
+                        }`}
+                        title="Direct Content View"
+                      >
+                        <Eye className="w-3.5 h-3.5 text-cyan-400" />
+                        <span className="hidden sm:inline">Unlocked</span>
+                      </button>
+                    </div>
+                    <div className="h-4 w-px bg-amber-500/20 shrink-0" />
+                  </>
                 )}
 
-                {/* Viewport Mode Switcher */}
-                <div className="inline-flex items-center p-0.5 rounded-xl bg-black/60 border border-fuchsia-500/30 text-xs font-mono">
+                <span className="text-[9px] font-mono font-bold uppercase tracking-widest text-fuchsia-300/60 shrink-0">
+                  Device
+                </span>
+                <div className="inline-flex items-center p-0.5 rounded-xl bg-black/60 border border-fuchsia-500/30 text-xs font-mono shrink-0">
                   <button
                     type="button"
                     onClick={() => setViewportMode('desktop')}
@@ -241,7 +289,7 @@ export const PreviewDropdownPanel: React.FC<PreviewDropdownPanelProps> = ({
                     title="Desktop View"
                   >
                     <Monitor className="w-3.5 h-3.5" />
-                    <span className="hidden md:inline">Desktop</span>
+                    <span className="hidden sm:inline">Desktop</span>
                   </button>
                   <button
                     type="button"
@@ -254,7 +302,7 @@ export const PreviewDropdownPanel: React.FC<PreviewDropdownPanelProps> = ({
                     title="Tablet View (768px)"
                   >
                     <Tablet className="w-3.5 h-3.5" />
-                    <span className="hidden md:inline">Tablet</span>
+                    <span className="hidden sm:inline">Tablet</span>
                   </button>
                   <button
                     type="button"
@@ -267,59 +315,21 @@ export const PreviewDropdownPanel: React.FC<PreviewDropdownPanelProps> = ({
                     title="Mobile View (375px)"
                   >
                     <Smartphone className="w-3.5 h-3.5" />
-                    <span className="hidden md:inline">Mobile</span>
+                    <span className="hidden sm:inline">Mobile</span>
                   </button>
                 </div>
-              </div>
 
-              {/* Right Column: Unified Actions Toolbar */}
-              <div className="flex items-center gap-1.5 ml-auto sm:ml-0">
                 {hasAnyLocks && viewMode === 'lock' && (
                   <button
                     type="button"
                     onClick={handleRefresh}
-                    className="h-8 px-2.5 rounded-lg bg-amber-950/60 hover:bg-amber-900/80 border border-amber-500/40 text-amber-200 hover:text-white transition-all flex items-center gap-1.5 text-xs font-mono font-medium cursor-pointer shadow-sm active:scale-[0.96]"
+                    className="h-7 px-2.5 ml-auto rounded-lg bg-amber-950/60 hover:bg-amber-900/80 border border-amber-500/40 text-amber-200 hover:text-white transition-all flex items-center gap-1.5 text-xs font-mono font-medium cursor-pointer shadow-sm active:scale-[0.96] shrink-0"
                     title="Reset lock state to test unlocking again"
                   >
                     <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
                     <span className="hidden sm:inline">Re-Lock</span>
                   </button>
                 )}
-
-                <button
-                  type="button"
-                  onClick={handleRefresh}
-                  className={`h-8 w-8 rounded-lg bg-purple-950/50 hover:bg-purple-900/70 border border-purple-500/35 text-purple-200 hover:text-white transition-all flex items-center justify-center text-xs font-mono cursor-pointer active:scale-[0.96] ${
-                    isRefreshing ? 'animate-spin' : ''
-                  }`}
-                  title="Refresh Render Preview"
-                >
-                  <RefreshCw className="w-3.5 h-3.5" />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleOpenInNewTab}
-                  className="h-8 px-2.5 rounded-lg bg-purple-950/50 hover:bg-purple-900/70 border border-purple-500/35 text-purple-200 hover:text-white transition-all flex items-center gap-1.5 text-xs font-mono font-medium cursor-pointer active:scale-[0.96]"
-                  title="Open Preview in New Tab"
-                >
-                  <ExternalLink className="w-3.5 h-3.5 text-cyan-400" />
-                  <span className="hidden sm:inline">Popout</span>
-                </button>
-
-                <div className="h-4 w-px bg-fuchsia-500/20 mx-0.5" />
-
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="h-8 px-2.5 sm:px-3 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 border border-rose-500/40 hover:border-rose-400 text-rose-200 hover:text-white transition-all flex items-center gap-1.5 text-xs font-mono font-semibold cursor-pointer active:scale-[0.96] shadow-sm"
-                  title="Close Preview (Esc)"
-                  aria-label="Close preview"
-                >
-                  <X className="w-4 h-4" />
-                  <span className="hidden xs:inline">Close</span>
-                  <kbd className="hidden md:inline-block px-1 py-0.2 text-[9px] bg-black/40 rounded border border-rose-500/30 text-rose-300/80">ESC</kbd>
-                </button>
               </div>
             </div>
 
