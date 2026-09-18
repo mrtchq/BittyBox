@@ -38,6 +38,23 @@ export interface BittyStageViewProps {
   onPaymentPolicyChange?: (value?: PaymentPolicyDraft) => void;
 }
 
+// Single source of truth for how parent metadata maps into the stage store,
+// used by both the upward forward and the downward sync so the two can be
+// compared for identity. `title` deliberately allows an empty string — the
+// "My Box" default belongs to a brand-new session, not to a re-sync, while
+// `??` still protects against an undefined title reaching the input.
+const buildStageSyncPayload = (metadata: BittyMetadata) => ({
+  title: metadata.title ?? 'My Box',
+  description: metadata.description || '',
+  favicon: metadata.favicon || '📦',
+  password: metadata.password || '',
+  boxId: metadata.boxId,
+  timeLockEnabled: Boolean(metadata.lockConfig?.timeWindow?.enabled || metadata.lockConfig?.timeWindow?.mode),
+  accessLimitEnabled: Boolean(metadata.lockConfig?.openLimit?.enabled),
+  accessLimitMaxOpens: metadata.lockConfig?.openLimit?.maxOpens || 1,
+  showRemainingAccessCount: metadata.lockConfig?.openLimit?.showRemainingCount ?? true,
+});
+
 const StageDispatcher: React.FC<BittyStageViewProps> = (props) => {
   const { state, setContent, setTitle, setDescription, syncFromExternal, discardDraft, exitMode } = useStage();
 
@@ -45,6 +62,12 @@ const StageDispatcher: React.FC<BittyStageViewProps> = (props) => {
   // parent-to-child echo of our own keystrokes never clobbers newer
   // local typing with a stale parent value (dropped characters).
   const lastForwardedContent = useRef(props.content);
+
+  // The same guard for the metadata fields. The upward effect below forwards
+  // title/description/lock settings to the parent, which hands them straight
+  // back; re-applying that echo replaces the newest keystroke with the
+  // previous one. Metadata may only land here when it did not come from us.
+  const lastForwardedMetadata = useRef(buildStageSyncPayload(props.metadata));
 
   // Sync incoming props to stage store — external changes only
   // (session switch, template select). Skips the echo of our own edits.
@@ -56,19 +79,17 @@ const StageDispatcher: React.FC<BittyStageViewProps> = (props) => {
   }, [props.content]);
 
   useEffect(() => {
-    syncFromExternal({
-      // Preserve an intentionally empty title; the initial provider state above
-      // supplies "My Box" only when a new editor session is first created.
-      title: props.metadata.title,
-      description: props.metadata.description || '',
-      favicon: props.metadata.favicon || '📦',
-      password: props.metadata.password || '',
-      boxId: props.metadata.boxId,
-      timeLockEnabled: Boolean(props.metadata.lockConfig?.timeWindow?.enabled || props.metadata.lockConfig?.timeWindow?.mode),
-      accessLimitEnabled: Boolean(props.metadata.lockConfig?.openLimit?.enabled),
-      accessLimitMaxOpens: props.metadata.lockConfig?.openLimit?.maxOpens || 1,
-      showRemainingAccessCount: props.metadata.lockConfig?.openLimit?.showRemainingCount ?? true,
-    });
+    const incoming = buildStageSyncPayload(props.metadata);
+    const forwarded = lastForwardedMetadata.current;
+    const a = incoming as Record<string, unknown>;
+    const b = forwarded as Record<string, unknown>;
+    const keys = Object.keys(a);
+    const isOwnEcho =
+      keys.length === Object.keys(b).length && keys.every(key => a[key] === b[key]);
+    // Our own echo carries no information the store does not already have,
+    // and applying it rolls back keystrokes typed since it was forwarded.
+    if (isOwnEcho) return;
+    syncFromExternal(incoming);
   }, [props.metadata]);
 
   // Handle browser Back / popstate so users smoothly return to Editor without leaving page
@@ -149,6 +170,9 @@ const StageDispatcher: React.FC<BittyStageViewProps> = (props) => {
     };
 
     props.onChangeMetadata?.(updatedMeta);
+    // Record what we just handed upward so the sync effect above recognises
+    // the parent's copy of it as our own echo and leaves local state alone.
+    lastForwardedMetadata.current = buildStageSyncPayload(updatedMeta);
   }, [
     state.title,
     state.description,
