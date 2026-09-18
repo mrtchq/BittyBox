@@ -31,3 +31,7 @@ frontend/.netlify/
 # It was previously -> /var/www/bittybox.org/docs, which made a bare `vite build`
 # publish straight to production. Never repoint it at a served directory.
 !dist
+
+# Python bytecode
+__pycache__/
+*.pyc

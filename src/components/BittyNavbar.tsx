@@ -17,7 +17,9 @@ import {
   Compass,
   LogOut,
   User,
-  Coins
+  Coins,
+  Settings,
+  Unlock
 } from 'lucide-react';
 import { AppView, WorkspaceTheme, WorkspaceMode, BittyUser } from '../types';
 import { GRIP_ICON_DATA_URL } from './EdgeGripHandles';
@@ -37,6 +39,8 @@ interface BittyNavbarProps {
   onOpenTools?: () => void;
   onStartTour?: () => void;
   onReplaySplash?: () => void;
+  onOpenSettings?: () => void;
+  isDevMode?: boolean;
   isEncrypted: boolean;
   hasContent: boolean;
   theme: WorkspaceTheme;
@@ -72,6 +76,8 @@ export const BittyNavbar: React.FC<BittyNavbarProps> = ({
   onOpenTools,
   onStartTour,
   onReplaySplash,
+  onOpenSettings,
+  isDevMode,
   isEncrypted,
   theme,
   onThemeChange,
@@ -176,6 +182,26 @@ export const BittyNavbar: React.FC<BittyNavbarProps> = ({
           <motion.button
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.96 }}
+            id="nav-funding-btn"
+            onClick={() => onViewChange('funding')}
+            className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-colors cursor-pointer ${
+              currentView === 'funding' ? 'text-emerald-200' : 'text-purple-200/70 hover:text-emerald-200'
+            }`}
+          >
+            {currentView === 'funding' && (
+              <motion.div
+                layoutId="active-desktop-nav-tab"
+                className="absolute inset-0 rounded-lg bg-gradient-to-r from-emerald-500/25 via-cyan-500/25 to-teal-500/25 border border-emerald-400/60 shadow-[0_0_12px_rgba(16,185,129,0.3)]"
+                transition={{ type: 'spring', stiffness: 450, damping: 30 }}
+              />
+            )}
+            <Coins className="w-3.5 h-3.5 relative z-10 text-emerald-400" />
+            <span className="relative z-10">FUNDING</span>
+          </motion.button>
+
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.96 }}
             id="nav-about-btn"
             onClick={() => onViewChange('about')}
             className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-colors cursor-pointer ${
@@ -241,6 +267,32 @@ export const BittyNavbar: React.FC<BittyNavbarProps> = ({
               <span className="relative z-10">PRO</span>
             </motion.button>
           </div>
+
+          {/* Settings Modal Button with Dev Mode indicator */}
+          <motion.button
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.94 }}
+            id="nav-settings-btn"
+            onClick={onOpenSettings}
+            title={isDevMode ? "Settings • Dev Mode Active (Credits Disabled)" : "Settings & Dev Mode"}
+            className={`relative p-1.5 sm:p-2 rounded-xl transition-all duration-200 cursor-pointer flex items-center justify-center border ${
+              isDevMode
+                ? 'bg-emerald-950/80 border-emerald-400 text-emerald-300 shadow-[0_0_14px_rgba(16,185,129,0.5)]'
+                : 'bg-purple-950/40 border-purple-500/30 text-cyan-300 hover:border-cyan-400/50 hover:bg-cyan-950/40'
+            }`}
+          >
+            {isDevMode ? (
+              <Unlock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-300 animate-pulse" />
+            ) : (
+              <Settings className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-300" />
+            )}
+            {isDevMode && (
+              <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+              </span>
+            )}
+          </motion.button>
 
           {/* User Profile Avatar Top-Right Trigger */}
           <motion.button
@@ -311,6 +363,25 @@ export const BittyNavbar: React.FC<BittyNavbarProps> = ({
             )}
             <Bot className="w-3.5 h-3.5 shrink-0 relative z-10 text-cyan-400" />
             <span className="relative z-10 text-[11px]">AGENTS</span>
+          </motion.button>
+
+          <motion.button
+            whileTap={{ scale: 0.96 }}
+            id="mobile-nav-funding-btn"
+            onClick={() => onViewChange('funding')}
+            className={`relative flex items-center justify-center gap-1 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-colors cursor-pointer ${
+              currentView === 'funding' ? 'text-emerald-200' : 'text-purple-200/70 hover:text-emerald-200'
+            }`}
+          >
+            {currentView === 'funding' && (
+              <motion.div
+                layoutId="active-mobile-nav-tab"
+                className="absolute inset-0 rounded-lg bg-gradient-to-r from-emerald-500/25 via-cyan-500/25 to-teal-500/25 border border-emerald-400/60 shadow-[0_0_10px_rgba(16,185,129,0.3)]"
+                transition={{ type: 'spring', stiffness: 450, damping: 30 }}
+              />
+            )}
+            <Coins className="w-3.5 h-3.5 shrink-0 relative z-10 text-emerald-400" />
+            <span className="relative z-10 text-[11px]">FUNDING</span>
           </motion.button>
 
           <motion.button

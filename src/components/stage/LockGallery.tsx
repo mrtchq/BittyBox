@@ -329,22 +329,24 @@ export const LockGallery: React.FC<LockGalleryProps> = ({
           );
         })}
 
-        {/* Roadmap Modal End-Card */}
+        {/* Roadmap tile — deferred locks stay reachable from the marquee itself.
+            Deliberately NOT titled "View locks deferred to roadmap": that title is
+            hidden by the #hide-roadmap-trigger style in the app shell. */}
         <button
           type="button"
           onClick={() => setIsRoadmapOpen(true)}
-          className="relative flex items-center gap-2 p-2 rounded-xl border border-amber-500/40 bg-amber-950/40 hover:bg-amber-900/60 hover:border-amber-400 text-amber-200 transition-all cursor-pointer snap-start shrink-0 w-36 sm:w-42 shadow-[0_0_10px_rgba(245,158,11,0.15)] select-none"
-          title="View all 9 locks requiring hardware or special software engineering"
+          className="relative flex items-center gap-2 p-2 rounded-xl border text-left transition-all cursor-pointer snap-start shrink-0 w-36 sm:w-42 select-none bg-amber-950/50 border-amber-500/40 hover:border-amber-400/70 hover:bg-amber-900/60"
+          title="Locks deferred to roadmap"
         >
-          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg border border-amber-500/40 bg-amber-950/90 flex items-center justify-center shrink-0 text-amber-400">
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg border flex items-center justify-center shrink-0 bg-amber-900/50 border-amber-500/50 text-amber-300">
             <Map className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </div>
           <div className="min-w-0 flex-1">
-            <div className="text-[10px] sm:text-[11px] font-bold leading-tight truncate text-amber-300">
-              Roadmap ({roadmapLocks.length})
+            <div className="text-[11px] font-bold leading-tight truncate text-amber-300">
+              <span className="truncate">Roadmap ({roadmapLocks.length})</span>
             </div>
-            <div className="text-[8px] sm:text-[9px] opacity-80 truncate text-amber-400/80">
-              HW &amp; Engineering
+            <div className="text-[8px] sm:text-[9px] opacity-75 truncate text-amber-400/80">
+              Coming soon
             </div>
           </div>
         </button>

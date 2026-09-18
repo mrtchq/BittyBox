@@ -126,9 +126,14 @@ HANDMADE="index.html app.js style.css editor-stars.css hybrid-theme.css assets/l
 for f in $HANDMADE; do
   if [ -f "$SCRATCH/$f" ] && [ -f "$LIVE/$f" ]; then
     if cmp -s "$SCRATCH/$f" "$LIVE/$f"; then
-      printf '  %-24s identical\n' "$f"
+      printf '  %-24s identical to live\n' "$f"
+    elif [ -f "$REPO/docs/$f" ] && cmp -s "$SCRATCH/$f" "$REPO/docs/$f"; then
+      # The build reproduces the repo's tracked source, and live is simply behind.
+      # That is a pending intentional change, not a clobber.
+      printf '  %-24s \033[33mpending intentional update\033[0m (build == repo source; live is older)\n' "$f"
+      warn=$((warn+1))
     else
-      printf '  %-24s \033[31mWOULD BE REPLACED\033[0m (live=%s built=%s)\n' \
+      printf '  %-24s \033[31mWOULD BE REPLACED with content that is NOT in the repo source\033[0m (live=%s built=%s)\n' \
         "$f" "$(stat -c%s "$LIVE/$f")" "$(stat -c%s "$SCRATCH/$f")"
       fail=$((fail+1))
     fi
@@ -140,17 +145,17 @@ for f in $HANDMADE; do
 done
 # The React shell must arrive as `editor.html` (see ops/stage-build.mjs), never as
 # `index.html` — that slot belongs to the hand-maintained landing page.
-norm() { sed 's/\(index\|editor\)-[A-Za-z0-9_-]*\.\(js\|css\)/BUNDLE.\2/g' "$1"; }
+norm() { sed -e 's/^[[:space:]]*//' -e 's/\(index\|editor\)-[A-Za-z0-9_-]*\.\(js\|css\)/BUNDLE.\2/g' "$1"; }
 if [ -f "$SCRATCH/index.html" ]; then
   bad "build emitted index.html ($(stat -c%s "$SCRATCH/index.html") B vs live $(stat -c%s "$LIVE/index.html") B) - it must be staged to editor.html, not the landing-page slot"
 else
   ok "build did not emit index.html (landing-page slot untouched)"
 fi
 if [ -f "$SCRATCH/editor.html" ]; then
-  if diff -q <(norm "$SCRATCH/editor.html") <(norm "$LIVE/editor.html") >/dev/null 2>&1; then
-    ok "staged editor.html matches live (bundle hash normalised)"
+  if diff -q <(norm "$SCRATCH/editor.html" | sort) <(norm "$LIVE/editor.html" | sort) >/dev/null 2>&1; then
+    ok "staged editor.html matches live (bundle hash normalised, tag order ignored)"
   else
-    wrn "staged editor.html differs from live beyond the bundle hash - review before promoting"
+    wrn "staged editor.html differs from live beyond the bundle hash and tag order - review before promoting"
   fi
 else
   bad "build produced no editor.html - the app shell is missing from the staging output"

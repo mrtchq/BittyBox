@@ -7,7 +7,7 @@ import { BittyRenderer } from './components/BittyRenderer';
 import { HistoryModal } from './components/HistoryModal';
 import { AboutModal } from './components/AboutModal';
 import { AgentsPage } from './components/AgentsPage';
-import { OpenMoltConsole } from './components/OpenMoltConsole';
+import { FundingPage } from './components/FundingPage';
 import { QrModal } from './components/QrModal';
 import { LegalModal, LegalTab } from './components/LegalModal';
 import { BittyMetadata, BittyHistoryItem, AppView, TemplatePreset, WorkspaceTheme, BittySession, BittyChainDraft } from './types';
@@ -35,6 +35,8 @@ import { ChainNextModal } from './components/ChainNextModal';
 import { PreviewDropdownPanel } from './components/PreviewDropdownPanel';
 import { TemplatesSidePanel } from './components/TemplatesSidePanel';
 import { StudioToolsSidePanel } from './components/StudioToolsSidePanel';
+import { SettingsModal } from './components/SettingsModal';
+import { useDevMode } from './utils/devMode';
 import { useEdgeSwipe } from './hooks/useEdgeSwipe';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -66,20 +68,24 @@ function getInitialUrlState() {
     return { hash, payload: '', metadata: null, isViewer: false, isAuth: false, isAccount: false, isTerms: false, isPrivacy: false, isAgents: true };
   }
   if (hash === '#/terms' || hash === '#terms') {
-    return { hash, payload: '', metadata: null, isViewer: false, isAuth: false, isAccount: false, isTerms: true, isPrivacy: false, isAgents: false };
+    return { hash, payload: '', metadata: null, isViewer: false, isAuth: false, isAccount: false, isTerms: true, isPrivacy: false, isAgents: false, isSettings: false };
   }
   if (hash === '#/privacy' || hash === '#privacy') {
-    return { hash, payload: '', metadata: null, isViewer: false, isAuth: false, isAccount: false, isTerms: false, isPrivacy: true, isAgents: false };
+    return { hash, payload: '', metadata: null, isViewer: false, isAuth: false, isAccount: false, isTerms: false, isPrivacy: true, isAgents: false, isSettings: false };
   }
-  if (hash && hash.length > 2 && hash !== '#/edit' && hash !== '#edit' && hash !== '#/studio' && hash !== '#/account' && hash !== '#/' && hash !== '#' && hash !== '#/terms' && hash !== '#terms' && hash !== '#/privacy' && hash !== '#privacy' && hash !== '#/agents' && hash !== '#agents' && hash !== '#/agent' && hash !== '#agent') {
+  if (hash === '#/settings' || hash === '#settings') {
+    return { hash, payload: '', metadata: null, isViewer: false, isAuth: false, isAccount: false, isTerms: false, isPrivacy: false, isAgents: false, isSettings: true };
+  }
+  if (hash && hash.length > 2 && hash !== '#/edit' && hash !== '#edit' && hash !== '#/studio' && hash !== '#/account' && hash !== '#/' && hash !== '#' && hash !== '#/terms' && hash !== '#terms' && hash !== '#/privacy' && hash !== '#privacy' && hash !== '#/agents' && hash !== '#agents' && hash !== '#/agent' && hash !== '#agent' && hash !== '#/settings' && hash !== '#settings') {
     const { payload, metadata } = parseBittyHash(hash);
-    return { hash, payload, metadata, isViewer: Boolean(payload), isAuth: false, isAccount: false, isTerms: false, isPrivacy: false, isAgents: false };
+    return { hash, payload, metadata, isViewer: Boolean(payload), isAuth: false, isAccount: false, isTerms: false, isPrivacy: false, isAgents: false, isSettings: false };
   }
-  return { hash: '', payload: '', metadata: null, isViewer: false, isAuth: false, isAccount: false, isTerms: false, isPrivacy: false, isAgents: false };
+  return { hash: '', payload: '', metadata: null, isViewer: false, isAuth: false, isAccount: false, isTerms: false, isPrivacy: false, isAgents: false, isSettings: false };
 }
 
 export default function App() {
   const proStatus = useProStatus();
+  const { isDevMode } = useDevMode();
   const initialUrl = useMemo(() => getInitialUrlState(), []);
   const [currentView, setCurrentView] = useState<AppView>(() => {
     if (initialUrl.isAuth || initialUrl.isAccount) return 'account';
@@ -131,6 +137,7 @@ export default function App() {
   const [isRightToolsPanelOpen, setIsRightToolsPanelOpen] = useState<boolean>(false);
   const [isPreviewDropdownOpen, setIsPreviewDropdownOpen] = useState<boolean>(false);
   const [isCloseSessionModalOpen, setIsCloseSessionModalOpen] = useState<boolean>(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(() => Boolean((initialUrl as any).isSettings));
   const [isLegalModalOpen, setIsLegalModalOpen] = useState<boolean>(() => Boolean(initialUrl.isTerms || initialUrl.isPrivacy));
   const [legalModalTab, setLegalModalTab] = useState<LegalTab>(() => (initialUrl.isPrivacy ? 'privacy' : 'terms'));
   const [history, setHistory] = useState<BittyHistoryItem[]>([]);
@@ -144,6 +151,7 @@ export default function App() {
   const isLastChainBox = !chainEnabled || chainCurrentIndex >= chainTotal - 1;
 
   const calculatedCreditCost = useMemo(() => {
+    if (isDevMode) return 0;
     if (chainEnabled && chainDraft?.pages) {
       return calculateTotalChainCreditCost(chainDraft.pages).totalCost;
     }
@@ -151,7 +159,7 @@ export default function App() {
     if (metadata.lockConfig?.timeWindow?.enabled || metadata.lockConfig?.timeWindow?.mode) cost += 10;
     if (metadata.lockConfig?.openLimit?.enabled) cost += 10;
     return cost;
-  }, [chainEnabled, chainDraft, metadata.lockConfig]);
+  }, [isDevMode, chainEnabled, chainDraft, metadata.lockConfig]);
 
   // Edge Swiping Gesture Hook
   useEdgeSwipe({
@@ -623,7 +631,7 @@ export default function App() {
     const id = await hashString(entryUrl);
     const totalByteSize = baseDraft.pages.reduce((sum, page) => sum + (page.content?.length || 0), 0);
     const chainCreditCalculation = calculateTotalChainCreditCost(baseDraft.pages);
-    const chainCost = chainCreditCalculation.totalCost;
+    const chainCost = isDevMode ? 0 : chainCreditCalculation.totalCost;
 
     saveToHistory({
       id,
@@ -643,7 +651,7 @@ export default function App() {
         title: baseDraft.pages[0]?.metadata.title || currentMetadata.title || 'Chained Bitty Box',
         url: entryUrl,
         format: 'chain',
-        boxBreakdowns: chainCreditCalculation.boxBreakdowns,
+        boxBreakdowns: isDevMode ? chainCreditCalculation.boxBreakdowns.map(b => ({ ...b, totalCost: 0 })) : chainCreditCalculation.boxBreakdowns,
         byteSize: totalByteSize,
         compressedSize: entryUrl.length,
         encrypted: baseDraft.pages.some(p => Boolean(p.metadata.password)),
@@ -663,9 +671,9 @@ export default function App() {
       entryUrl,
       urls,
       creditCost: chainCost,
-      boxCreditBreakdowns: chainCreditCalculation.boxBreakdowns,
+      boxCreditBreakdowns: isDevMode ? chainCreditCalculation.boxBreakdowns.map(b => ({ ...b, totalCost: 0 })) : chainCreditCalculation.boxBreakdowns,
     };
-  }, [chainDraft, saveToHistory, account]);
+  }, [chainDraft, saveToHistory, account, isDevMode]);
 
   const deleteHistoryItem = (id: string) => {
     setHistory(prev => {
@@ -749,6 +757,11 @@ export default function App() {
         return;
       }
 
+      if (hash === '#/settings' || hash === '#settings') {
+        setIsSettingsModalOpen(true);
+        return;
+      }
+
       if (hash && hash.length > 2) {
         // Check if there is a valid data payload to view
         const { payload, metadata: parsedMeta } = parseBittyHash(hash);
@@ -793,7 +806,7 @@ export default function App() {
     if (hasTimeWindow) requiredCost += 10;
     if (hasAccessLimit) requiredCost += 10;
 
-    if (requiredCost > 0) {
+    if (requiredCost > 0 && !isDevMode) {
       const userIsPro = Boolean(proStatus.isPro || account.user?.tier === 'pro');
       const curCredits = account.user?.credits ?? 0;
       const canProceed = userIsPro || (account.isAuthenticated && curCredits >= requiredCost);
@@ -1120,6 +1133,8 @@ export default function App() {
         onExportZip={() => exportBittyToZip(content, metadata, bittyUrl)}
         onOpenTemplates={() => setIsLeftTemplatesPanelOpen(true)}
         onOpenTools={() => setIsRightToolsPanelOpen(true)}
+        onOpenSettings={() => setIsSettingsModalOpen(true)}
+        isDevMode={isDevMode}
         onStartTour={handleStartTour}
         onReplaySplash={() => setShowSplash(true)}
         isEncrypted={!!metadata.password}
@@ -1154,6 +1169,7 @@ export default function App() {
                 bittyUrl={bittyUrl}
                 onGenerate={chainEnabled ? () => handleGenerateChain(content, metadata) : handleGenerate}
                 calculatedCreditCost={calculatedCreditCost}
+                isDevMode={isDevMode}
                 chainEnabled={chainEnabled}
                 chainIndex={chainCurrentIndex}
                 chainTotal={chainTotal}
@@ -1181,6 +1197,7 @@ export default function App() {
             >
               <AccountDashboard
                 account={account}
+                onOpenSettings={() => setIsSettingsModalOpen(true)}
                 onNavigateToSlide01={() => setShowSplash(true)}
                 onOpenQr={(url) => {
                   setBittyUrl(url);
@@ -1242,6 +1259,21 @@ export default function App() {
             </motion.div>
           )}
 
+          {currentView === 'funding' && (
+            <motion.div
+              key="view-funding"
+              initial={{ opacity: 0, y: 14, scale: 0.99 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -14, scale: 0.99 }}
+              transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <FundingPage
+                onOpenEditor={() => setCurrentView('editor')}
+                onOpenAgents={() => setCurrentView('agents')}
+              />
+            </motion.div>
+          )}
+
           {currentView === 'about' && (
             <motion.div
               key="view-about"
@@ -1274,7 +1306,6 @@ export default function App() {
                   setIsQrOpen(true);
                 }}
               />
-              <OpenMoltConsole />
             </motion.div>
           )}
         </AnimatePresence>
@@ -1312,6 +1343,7 @@ export default function App() {
       <StudioToolsSidePanel
         isOpen={isRightToolsPanelOpen}
         onClose={() => setIsRightToolsPanelOpen(false)}
+        onOpenSettings={() => setIsSettingsModalOpen(true)}
         account={account}
         onGenerate={handleGenerate}
         bittyUrl={bittyUrl}
@@ -1379,6 +1411,16 @@ export default function App() {
         paywallFeature={proStatus.paywallFeature}
         onUnlockLifetime={proStatus.unlockLifetimePro}
         onSwitchToPro={() => proStatus.setMode('pro')}
+      />
+
+      {/* Settings Modal (Workspace & Dev Mode) */}
+      <SettingsModal
+        isOpen={isSettingsModalOpen}
+        onClose={() => setIsSettingsModalOpen(false)}
+        theme={workspaceTheme}
+        onThemeChange={setWorkspaceTheme}
+        mode={proStatus.mode}
+        onModeChange={proStatus.setMode}
       />
 
       {/* Legal Modal (Terms of Service & Privacy Policy) */}

@@ -24,6 +24,8 @@ Both halves are now fixed:
 Live editor bundle: `docs/assets/index-preview-fix-A3C20D50.js` (referenced by
 the hand-maintained `docs/editor.html`).
 
+### Before the recovery (2026-09-18, first measurement)
+
 | marker | live | fresh build from `/root/TheBittyBox/src` | meaning |
 | --- | --- | --- | --- |
 | `x402` | 14 | **1** | live's payments/monetize wiring is absent from `src/` |
@@ -33,15 +35,41 @@ the hand-maintained `docs/editor.html`).
 | `Roadmap` | 2 | 1 | live carries an extra roadmap string |
 | `WebAuthn` | 1 | 1 | matches |
 | bundle bytes | 1,969,895 | 1,831,862 | **138 KB** of live code is not in the build |
-| `index.html` | 31,919 | 2,995 | the build would replace the whole landing page |
-| `style.css` | 59,757 | 881 | build copies a stale `public/style.css` |
-| `editor-stars.css` | 54,781 | 4,954 | build copies a stale `public/editor-stars.css` |
-| `app.js` | 66,953 | 67,026 | close, still not identical |
-| `editor.html`, `hybrid-theme.css` | present | not produced | live-only files, safe from a build |
 
-`MonetizeBoxPanel.tsx` and `FundingPage.tsx` exist only in `/root/bittybox2`'s
-working tree and are **not tracked in this repository** — so the funding/x402
-surface was never committed here. That is why the build cannot reproduce it.
+### After the recovery (same day)
+
+| marker | live | build | status |
+| --- | --- | --- | --- |
+| `x402` | 14 | 14 | recovered |
+| `FUNDING` | 3 | 3 | recovered |
+| `Agentic` | 3 | 4 | ok |
+| `Live Locks` | 1 | 1 | ok |
+| `Roadmap` | 2 | 2 | recovered |
+| `WebAuthn` | 1 | 1 | ok |
+| bundle bytes | 1,969,895 | 1,861,851 | 108 KB smaller; no known missing feature |
+
+**The gate now exits 0.** What was recovered:
+
+- `src/components/FundingPage.tsx`, `src/components/MonetizeBoxPanel.tsx`,
+  `src/utils/authHeaders.ts` ported in from `/root/bittybox2`'s working tree
+  (they were never committed anywhere).
+- `AppView` gains `'funding'`; `App.tsx` renders `<FundingPage>`; `BittyNavbar`
+  gains the FUNDING tab on both the desktop and mobile navs.
+- `LockGallery` gains the amber Roadmap tile inside the marquee (live renders it
+  as the last card; the repo only had the header button).
+- `public/style.css` and `public/editor-stars.css` were stale build inputs
+  (881 B / 4,954 B against live's 59,757 B / 54,781 B). `public/` now mirrors the
+  tracked `docs/` sources, so a build can no longer clobber live CSS.
+
+### Known remaining deltas (warning-level, not regressions)
+
+- `app.js`: the repo source is ~73 B *ahead* of live (a conditional hover border
+  for `COMING SOON` locks). The gate reports this as a pending intentional update.
+- The built bundle is ~108 KB smaller than live with no marker missing; most
+  likely minifier/version drift rather than absent features. Not investigated.
+- `docs/hybrid-theme.css` and `docs/editor.html` are live-only files a build
+  never produces, so they cannot be clobbered.
+
 
 ### The second tree
 

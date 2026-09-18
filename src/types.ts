@@ -31,6 +31,7 @@ export interface BittyMetadata {
       opensUsed?: number;
       showRemainingCount?: boolean;
     };
+    paymentPolicy?: any;
   };
 }
 
@@ -67,7 +68,7 @@ export interface BittyHistoryItem {
 }
 
 export type EditorMode = 'code' | 'rich';
-export type AppView = 'account' | 'editor' | 'viewer' | 'history' | 'about' | 'agents';
+export type AppView = 'account' | 'editor' | 'viewer' | 'history' | 'about' | 'agents' | 'funding';
 export type WorkspaceTheme = 'synthwave' | 'monochrome' | 'matrix';
 export type WorkspaceMode = 'simple' | 'pro';
 
