@@ -57,7 +57,9 @@ const StageDispatcher: React.FC<BittyStageViewProps> = (props) => {
 
   useEffect(() => {
     syncFromExternal({
-      title: props.metadata.title || 'My Box',
+      // Preserve an intentionally empty title; the initial provider state above
+      // supplies "My Box" only when a new editor session is first created.
+      title: props.metadata.title,
       description: props.metadata.description || '',
       favicon: props.metadata.favicon || '📦',
       password: props.metadata.password || '',
