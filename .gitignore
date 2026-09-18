@@ -2,6 +2,7 @@
 node_modules/
 coverage/
 build/
+.build/
 dist-v2/
 *.log
 .DS_Store
@@ -26,5 +27,7 @@ frontend/node_modules/
 frontend/.env*
 frontend/.netlify/
 
-# Keep the portable live-site symlink tracked.
+# dist is a LOCAL build-output symlink (-> .build). It is NOT the live docroot.
+# It was previously -> /var/www/bittybox.org/docs, which made a bare `vite build`
+# publish straight to production. Never repoint it at a served directory.
 !dist

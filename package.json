@@ -5,11 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "node server.js",
-    "build": "vite build",
+    "build": "vite build && node ops/stage-build.mjs",
     "start": "node server.js",
     "build:v2": "vite build --config v2/vite.config.ts",
     "test": "npm run test:v2",
-    "test:v2": "tsx --test tests/capsuleV2.test.ts tests/viewerPolicy.test.ts && node --test tests/v2SimpleUx.test.mjs",
+    "test:v2": "tsx --test tests/capsuleV2.test.ts tests/viewerPolicy.test.ts && node --test tests/v2SimpleUx.test.mjs tests/landingHeaderFooter.test.mjs",
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit"
@@ -24,6 +24,7 @@
     "@types/prismjs": "^1.26.6",
     "@types/qrcode": "^1.5.6",
     "@vitejs/plugin-react": "^5.0.4",
+    "creem": "^1.13.0",
     "dotenv": "^17.2.3",
     "express": "^4.21.2",
     "firebase": "^12.18.0",
