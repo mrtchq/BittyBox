@@ -112,7 +112,7 @@ export const RoadmapLocksModal: React.FC<RoadmapLocksModalProps> = ({ isOpen, on
         </div>
 
         {/* Vertically Scrollable Locks List */}
-        <div className="overflow-y-auto p-3 sm:p-5 space-y-3 flex-1 scrollbar-thin">
+        <div className="overflow-y-auto p-3 sm:p-5 space-y-3 flex-1 scrollbar-none">
           {filteredLocks.map(item => {
             const Icon = item.icon;
             const isHw = item.blockerType === 'hardware';

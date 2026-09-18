@@ -17,13 +17,13 @@ import {
   Compass,
   LogOut,
   User,
-  Coins,
-  Settings,
-  Unlock
+  Coins
 } from 'lucide-react';
 import { AppView, WorkspaceTheme, WorkspaceMode, BittyUser } from '../types';
 import { GRIP_ICON_DATA_URL } from './EdgeGripHandles';
 import { UserAvatar } from './UserAvatar';
+import { BittyLiveBadge } from './BittyLiveBadge';
+import type { BittyPeer } from '../bitty-live';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface BittyNavbarProps {
@@ -39,8 +39,6 @@ interface BittyNavbarProps {
   onOpenTools?: () => void;
   onStartTour?: () => void;
   onReplaySplash?: () => void;
-  onOpenSettings?: () => void;
-  isDevMode?: boolean;
   isEncrypted: boolean;
   hasContent: boolean;
   theme: WorkspaceTheme;
@@ -61,6 +59,15 @@ interface BittyNavbarProps {
   // User Profile Account props
   user?: BittyUser | null;
   isAuthenticated?: boolean;
+  livePeerCount?: number;
+  livePeers?: BittyPeer[];
+  liveRoomId?: string;
+  liveBoxId?: string | null;
+  onEnableLive?: () => void;
+  liveShareUrl?: string;
+  onSwitchToPrivate?: () => void;
+  onToggleChat?: () => void;
+  unreadChatCount?: number;
 }
 
 export const BittyNavbar: React.FC<BittyNavbarProps> = ({
@@ -76,8 +83,6 @@ export const BittyNavbar: React.FC<BittyNavbarProps> = ({
   onOpenTools,
   onStartTour,
   onReplaySplash,
-  onOpenSettings,
-  isDevMode,
   isEncrypted,
   theme,
   onThemeChange,
@@ -94,6 +99,15 @@ export const BittyNavbar: React.FC<BittyNavbarProps> = ({
   onManualSave,
   user,
   isAuthenticated,
+  livePeerCount = 0,
+  livePeers = [],
+  liveRoomId,
+  liveBoxId,
+  onEnableLive,
+  onSwitchToPrivate,
+  onToggleChat,
+  unreadChatCount = 0,
+  liveShareUrl,
 }) => {
   return (
     <header className="fixed inset-x-0 top-0 z-40 w-full pt-[env(safe-area-inset-top)] backdrop-blur-xl bg-[#0a0316]/90 border-b border-cyan-500/20 shadow-[0_4px_30px_rgba(0,0,0,0.6)]">
@@ -185,17 +199,17 @@ export const BittyNavbar: React.FC<BittyNavbarProps> = ({
             id="nav-funding-btn"
             onClick={() => onViewChange('funding')}
             className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-colors cursor-pointer ${
-              currentView === 'funding' ? 'text-emerald-200' : 'text-purple-200/70 hover:text-emerald-200'
+              currentView === 'funding' ? 'text-amber-200' : 'text-purple-200/70 hover:text-amber-200'
             }`}
           >
             {currentView === 'funding' && (
               <motion.div
                 layoutId="active-desktop-nav-tab"
-                className="absolute inset-0 rounded-lg bg-gradient-to-r from-emerald-500/25 via-cyan-500/25 to-teal-500/25 border border-emerald-400/60 shadow-[0_0_12px_rgba(16,185,129,0.3)]"
+                className="absolute inset-0 rounded-lg bg-gradient-to-r from-amber-500/25 via-yellow-500/25 to-orange-500/25 border border-amber-400/60 shadow-[0_0_12px_rgba(251,191,36,0.3)]"
                 transition={{ type: 'spring', stiffness: 450, damping: 30 }}
               />
             )}
-            <Coins className="w-3.5 h-3.5 relative z-10 text-emerald-400" />
+            <Coins className="w-3.5 h-3.5 relative z-10 text-amber-400" />
             <span className="relative z-10">FUNDING</span>
           </motion.button>
 
@@ -268,31 +282,18 @@ export const BittyNavbar: React.FC<BittyNavbarProps> = ({
             </motion.button>
           </div>
 
-          {/* Settings Modal Button with Dev Mode indicator */}
-          <motion.button
-            whileHover={{ scale: 1.08 }}
-            whileTap={{ scale: 0.94 }}
-            id="nav-settings-btn"
-            onClick={onOpenSettings}
-            title={isDevMode ? "Settings • Dev Mode Active (Credits Disabled)" : "Settings & Dev Mode"}
-            className={`relative p-1.5 sm:p-2 rounded-xl transition-all duration-200 cursor-pointer flex items-center justify-center border ${
-              isDevMode
-                ? 'bg-emerald-950/80 border-emerald-400 text-emerald-300 shadow-[0_0_14px_rgba(16,185,129,0.5)]'
-                : 'bg-purple-950/40 border-purple-500/30 text-cyan-300 hover:border-cyan-400/50 hover:bg-cyan-950/40'
-            }`}
-          >
-            {isDevMode ? (
-              <Unlock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-300 animate-pulse" />
-            ) : (
-              <Settings className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-300" />
-            )}
-            {isDevMode && (
-              <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-              </span>
-            )}
-          </motion.button>
+          {/* Bitty Live P2P Status Indicator */}
+          <BittyLiveBadge
+            peerCount={livePeerCount}
+            peers={livePeers}
+            roomId={liveRoomId}
+            boxId={liveBoxId}
+            onEnableLive={onEnableLive}
+            onSwitchToPrivate={onSwitchToPrivate}
+            onToggleChat={onToggleChat}
+            unreadChatCount={unreadChatCount}
+            shareUrl={liveShareUrl}
+          />
 
           {/* User Profile Avatar Top-Right Trigger */}
           <motion.button
@@ -325,13 +326,13 @@ export const BittyNavbar: React.FC<BittyNavbarProps> = ({
       {/* =========================================================================
           ROW 2: MOBILE VIEW NAVIGATION with layoutId animation
          ========================================================================= */}
-      <div className="lg:hidden w-full border-t border-cyan-500/15 bg-[#070213]/95 px-3 py-1.5 flex items-center justify-between gap-1 shadow-inner">
-        <nav className="grid grid-cols-3 gap-1 w-full bg-purple-950/50 p-1 rounded-xl border border-purple-500/25 relative">
+      <div className="lg:hidden w-full border-t border-cyan-500/15 bg-[#070213]/95 px-2 sm:px-3 py-1.5 flex items-center justify-between gap-1 shadow-inner">
+        <nav className="grid grid-cols-4 gap-1 w-full bg-purple-950/50 p-1 rounded-xl border border-purple-500/25 relative">
           <motion.button
             whileTap={{ scale: 0.96 }}
             id="mobile-nav-editor-btn"
             onClick={() => onViewChange('editor')}
-            className={`relative flex items-center justify-center gap-1 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-colors cursor-pointer ${
+            className={`relative flex items-center justify-center gap-1 py-1.5 px-1 rounded-lg text-xs font-semibold tracking-wide transition-colors cursor-pointer ${
               currentView === 'editor' ? 'text-cyan-200' : 'text-purple-200/70 hover:text-cyan-200'
             }`}
           >
@@ -343,14 +344,14 @@ export const BittyNavbar: React.FC<BittyNavbarProps> = ({
               />
             )}
             <Code className="w-3.5 h-3.5 shrink-0 relative z-10" />
-            <span className="relative z-10 text-[11px]">EDITOR</span>
+            <span className="relative z-10 text-[10px] sm:text-[11px] truncate">EDITOR</span>
           </motion.button>
 
           <motion.button
             whileTap={{ scale: 0.96 }}
             id="mobile-nav-agents-btn"
             onClick={() => onViewChange('agents')}
-            className={`relative flex items-center justify-center gap-1 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-colors cursor-pointer ${
+            className={`relative flex items-center justify-center gap-1 py-1.5 px-1 rounded-lg text-xs font-semibold tracking-wide transition-colors cursor-pointer ${
               currentView === 'agents' ? 'text-cyan-200' : 'text-purple-200/70 hover:text-cyan-200'
             }`}
           >
@@ -362,33 +363,33 @@ export const BittyNavbar: React.FC<BittyNavbarProps> = ({
               />
             )}
             <Bot className="w-3.5 h-3.5 shrink-0 relative z-10 text-cyan-400" />
-            <span className="relative z-10 text-[11px]">AGENTS</span>
+            <span className="relative z-10 text-[10px] sm:text-[11px] truncate">AGENTS</span>
           </motion.button>
 
           <motion.button
             whileTap={{ scale: 0.96 }}
             id="mobile-nav-funding-btn"
             onClick={() => onViewChange('funding')}
-            className={`relative flex items-center justify-center gap-1 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-colors cursor-pointer ${
-              currentView === 'funding' ? 'text-emerald-200' : 'text-purple-200/70 hover:text-emerald-200'
+            className={`relative flex items-center justify-center gap-1 py-1.5 px-1 rounded-lg text-xs font-semibold tracking-wide transition-colors cursor-pointer ${
+              currentView === 'funding' ? 'text-amber-200' : 'text-purple-200/70 hover:text-amber-200'
             }`}
           >
             {currentView === 'funding' && (
               <motion.div
                 layoutId="active-mobile-nav-tab"
-                className="absolute inset-0 rounded-lg bg-gradient-to-r from-emerald-500/25 via-cyan-500/25 to-teal-500/25 border border-emerald-400/60 shadow-[0_0_10px_rgba(16,185,129,0.3)]"
+                className="absolute inset-0 rounded-lg bg-gradient-to-r from-amber-500/25 via-yellow-500/25 to-orange-500/25 border border-amber-400/60 shadow-[0_0_10px_rgba(251,191,36,0.3)]"
                 transition={{ type: 'spring', stiffness: 450, damping: 30 }}
               />
             )}
-            <Coins className="w-3.5 h-3.5 shrink-0 relative z-10 text-emerald-400" />
-            <span className="relative z-10 text-[11px]">FUNDING</span>
+            <Coins className="w-3.5 h-3.5 shrink-0 relative z-10 text-amber-400" />
+            <span className="relative z-10 text-[10px] sm:text-[11px] truncate">FUNDING</span>
           </motion.button>
 
           <motion.button
             whileTap={{ scale: 0.96 }}
             id="mobile-nav-about-btn"
             onClick={() => onViewChange('about')}
-            className={`relative flex items-center justify-center gap-1 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-colors cursor-pointer ${
+            className={`relative flex items-center justify-center gap-1 py-1.5 px-1 rounded-lg text-xs font-semibold tracking-wide transition-colors cursor-pointer ${
               currentView === 'about' ? 'text-purple-200' : 'text-purple-200/70 hover:text-purple-200'
             }`}
           >
@@ -400,7 +401,7 @@ export const BittyNavbar: React.FC<BittyNavbarProps> = ({
               />
             )}
             <Info className="w-3.5 h-3.5 shrink-0 relative z-10" />
-            <span className="relative z-10 text-[11px]">ABOUT</span>
+            <span className="relative z-10 text-[10px] sm:text-[11px] truncate">ABOUT</span>
           </motion.button>
         </nav>
       </div>

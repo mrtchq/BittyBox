@@ -312,7 +312,7 @@ export function parseBittyHash(hash: string): {
     }
   }
 
-  if (!payload && parts.length > 0 && !metadata.title) {
+  if (!payload && parts.length > 0 && !metadata.title && !metadata.boxId) {
     payload = parts[parts.length - 1];
   }
 

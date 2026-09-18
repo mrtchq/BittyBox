@@ -1,0 +1,12 @@
+[Unit]
+Description=Best-effort fast path for BittyBox public-root changes
+
+[Path]
+PathChanged=/var/www/bittybox.org/docs
+PathChanged=/var/www/bittybox.org/docs/assets
+PathChanged=/var/www/test.bittybox.org/docs
+PathChanged=/var/www/test.bittybox.org/docs/assets
+Unit=bittybox-static-permissions.service
+
+[Install]
+WantedBy=multi-user.target

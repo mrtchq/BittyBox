@@ -1,5 +1,5 @@
 import React from 'react';
-import { Key, Clock, Eye, ShieldCheck, Bot, Sparkles, AlertCircle, X } from 'lucide-react';
+import { Key, Clock, Eye, Sparkles, AlertCircle, X } from 'lucide-react';
 import { useStage, useActiveLocksList, StageMode, ActiveLockInfo } from '../../stores/stageStore';
 
 interface ActiveLockChipsProps {
@@ -31,12 +31,6 @@ export const ActiveLockChips: React.FC<ActiveLockChipsProps> = ({ className = ''
       case 'accessLimitLock':
         dispatch({ type: 'REMOVE_ACCESS_LIMIT' });
         break;
-      case 'encryption':
-        dispatch({ type: 'REMOVE_ENCRYPTION' });
-        break;
-      case 'agenticLock':
-        dispatch({ type: 'REMOVE_AGENTIC_LOCK' });
-        break;
       default:
         break;
     }
@@ -50,10 +44,6 @@ export const ActiveLockChips: React.FC<ActiveLockChipsProps> = ({ className = ''
         return <Clock className="w-3 h-3 shrink-0" />;
       case 'views':
         return <Eye className="w-3 h-3 shrink-0" />;
-      case 'encryption':
-        return <ShieldCheck className="w-3 h-3 shrink-0" />;
-      case 'agentic':
-        return <Bot className="w-3 h-3 shrink-0" />;
       default:
         return <Sparkles className="w-3 h-3 shrink-0" />;
     }
@@ -71,10 +61,6 @@ export const ActiveLockChips: React.FC<ActiveLockChipsProps> = ({ className = ''
         return 'bg-amber-950/70 border-amber-500/50 text-amber-200 shadow-[0_0_10px_rgba(245,158,11,0.3)] hover:bg-amber-900/60 hover:border-amber-400';
       case 'views':
         return 'bg-emerald-950/70 border-emerald-500/50 text-emerald-200 shadow-[0_0_10px_rgba(16,185,129,0.3)] hover:bg-emerald-900/60 hover:border-emerald-400';
-      case 'encryption':
-        return 'bg-cyan-950/70 border-cyan-500/50 text-cyan-200 shadow-[0_0_10px_rgba(0,242,255,0.3)] hover:bg-cyan-900/60 hover:border-cyan-400';
-      case 'agentic':
-        return 'bg-indigo-950/70 border-indigo-500/50 text-indigo-200 shadow-[0_0_10px_rgba(99,102,241,0.3)] hover:bg-indigo-900/60 hover:border-indigo-400';
       default:
         return 'bg-cyan-950/70 border-cyan-500/40 text-cyan-300 hover:bg-cyan-900/50';
     }

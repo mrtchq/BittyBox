@@ -1,20 +1,59 @@
 import React, { useState } from 'react';
-import { Eye, ArrowLeft, ExternalLink, Copy, Check } from 'lucide-react';
+import { Eye, ArrowLeft, ExternalLink, Copy, Check, Lock, Key, Clock, Flame, Shield } from 'lucide-react';
 import { useStage } from '../../stores/stageStore';
 import { BittyRenderer } from '../BittyRenderer';
 import { buildBittyUrl } from '../../utils/bittyEngine';
+import { buildTimeWindow } from '../../utils/timeWindow';
 
 export const PreviewStage: React.FC = () => {
   const { state, exitMode } = useStage();
   const [copied, setCopied] = useState(false);
 
-  const url = buildBittyUrl(state.content, {
+  const twConfig = state.timeLockEnabled
+    ? buildTimeWindow({
+        enabled: true,
+        mode: state.timeLockMode,
+        expiryHours: state.timeExpiryHours,
+        delayHours: state.timeDelayHours,
+        openAt: state.timeOpenAt,
+        lockAt: state.timeLockAt,
+        hybridRevealMode: state.hybridRevealMode,
+        hybridSelfDestructHours: state.hybridSelfDestructHours,
+        showCountdown: state.showTimeCountdown,
+      })
+    : null;
+
+  const olConfig = state.accessLimitEnabled
+    ? {
+        enabled: true,
+        maxOpens: state.accessLimitMaxOpens,
+        showRemainingCount: state.showRemainingAccessCount,
+      }
+    : null;
+
+  const lockConfig = (twConfig || olConfig || state.agenticEnabled) ? {
+    timeWindow: twConfig || undefined,
+    openLimit: olConfig || undefined,
+    agentic: state.agenticEnabled ? {
+      enabled: true,
+      requireMcp: state.agenticRequireMcp,
+      roleFilter: state.agenticRoleFilter || undefined,
+    } : undefined,
+  } : undefined;
+
+  const effectiveBoxId = state.boxId || `box_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+
+  const previewMeta = {
     title: state.title,
     description: state.description,
     favicon: state.favicon,
-    password: state.password,
+    boxId: effectiveBoxId,
+    password: state.password.trim() ? state.password.trim() : undefined,
     includeMetadata: true,
-  });
+    lockConfig,
+  };
+
+  const url = buildBittyUrl(state.content, previewMeta);
 
   const handleCopy = async () => {
     try {
@@ -27,8 +66,8 @@ export const PreviewStage: React.FC = () => {
   return (
     <div className="w-full flex flex-col gap-4 font-mono select-none">
       {/* Header Bar */}
-      <div className="flex items-center justify-between pb-3 border-b border-cyan-500/20">
-        <div className="flex items-center gap-2.5">
+      <div className="flex items-center justify-between pb-3 border-b border-cyan-500/20 flex-wrap gap-2">
+        <div className="flex items-center gap-2.5 flex-wrap">
           <button
             type="button"
             onClick={exitMode}
@@ -42,8 +81,31 @@ export const PreviewStage: React.FC = () => {
             <Eye className="w-4 h-4 text-cyan-300" />
           </div>
           <div>
-            <h2 className="text-sm font-bold text-cyan-200 tracking-wide font-cyber">LIVE PREVIEW</h2>
-            <p className="text-[10px] text-cyan-400/70">Experience your Bitty Box as recipients see it</p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-sm font-bold text-cyan-200 tracking-wide font-cyber">LIVE PREVIEW</h2>
+              {/* Active Lock Badges */}
+              {state.password && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-fuchsia-950/80 border border-fuchsia-500/50 text-fuchsia-300 text-[10px] font-bold">
+                  <Key className="w-2.5 h-2.5 text-fuchsia-400" /> PIN LOCKED ({state.password.length} DIGITS)
+                </span>
+              )}
+              {state.timeLockEnabled && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-950/80 border border-amber-500/50 text-amber-300 text-[10px] font-bold">
+                  <Clock className="w-2.5 h-2.5 text-amber-400" /> TIMER ACTIVE
+                </span>
+              )}
+              {state.accessLimitEnabled && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 text-[10px] font-bold">
+                  <Flame className="w-2.5 h-2.5 text-emerald-400" /> {state.accessLimitMaxOpens === 1 ? 'BURN ON READ' : `${state.accessLimitMaxOpens} VIEWS`}
+                </span>
+              )}
+              {!state.password && !state.timeLockEnabled && !state.accessLimitEnabled && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-500/40 text-cyan-400/80 text-[10px]">
+                  UNRESTRICTED
+                </span>
+              )}
+            </div>
+            <p className="text-[10px] text-cyan-400/70">Experience your Bitty Box with configured locks as recipients see it</p>
           </div>
         </div>
 
@@ -68,18 +130,14 @@ export const PreviewStage: React.FC = () => {
       </div>
 
       {/* Embedded Live Renderer Frame */}
-      <div className="w-full min-h-[420px] rounded-xl border border-cyan-500/30 bg-[#02010a]/90 overflow-hidden shadow-inner flex flex-col">
+      <div className="w-full min-h-[440px] rounded-xl border border-cyan-500/30 bg-[#02010a]/90 overflow-hidden shadow-inner flex flex-col relative">
         <BittyRenderer
-          hashFragment={state.content}
+          hashFragment=""
           activeContent={state.content}
-          metadata={{
-            title: state.title,
-            description: state.description,
-            favicon: state.favicon,
-            includeMetadata: true,
-          }}
+          metadata={previewMeta}
           onEdit={() => exitMode()}
           onHome={() => exitMode()}
+          embedded={true}
         />
       </div>
 

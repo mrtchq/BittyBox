@@ -71,6 +71,7 @@ export interface StageState {
   agenticEnabled: boolean;
   agenticRequireMcp: boolean;
   agenticRoleFilter: string;
+  boxId?: string;
 
   // Draft state for cancelable editing
   draft: BoxDraft | null;
@@ -150,6 +151,7 @@ const initialState: StageState = {
   agenticEnabled: false,
   agenticRequireMcp: true,
   agenticRoleFilter: '',
+  boxId: undefined,
   draft: null,
 };
 
@@ -407,7 +409,7 @@ export function useStage(): StageContextValue {
 export interface ActiveLockInfo {
   id: StageMode;
   label: string;
-  iconType: 'password' | 'time' | 'views' | 'encryption' | 'agentic';
+  iconType: 'password' | 'time' | 'views';
   status: 'active' | 'configured' | 'incomplete' | 'disabled';
   detail: string;
 }
@@ -453,28 +455,6 @@ export function useActiveLocksList(): ActiveLockInfo[] {
       iconType: 'views',
       status: 'active',
       detail: state.accessLimitMaxOpens === 1 ? 'Burn on Read' : `${state.accessLimitMaxOpens} views max`,
-    });
-  }
-
-  // Encryption
-  if (state.encryptionEnabled || state.password.length >= 8) {
-    locks.push({
-      id: 'encryption',
-      label: 'Encrypted',
-      iconType: 'encryption',
-      status: 'active',
-      detail: state.encryptionMode === 'zk-aes256gcm' ? 'Zero-Knowledge' : 'AES-GCM',
-    });
-  }
-
-  // Agentic Lock
-  if (state.agenticEnabled) {
-    locks.push({
-      id: 'agenticLock',
-      label: 'Agentic',
-      iconType: 'agentic',
-      status: 'active',
-      detail: state.agenticRequireMcp ? 'WebMCP Session' : 'Agent Guard',
     });
   }
 

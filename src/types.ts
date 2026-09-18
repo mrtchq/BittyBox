@@ -24,6 +24,16 @@ export interface BittyMetadata {
    * Client-side & server-backed lock configuration surfaced on the recipient lock screen.
    */
   lockConfig?: {
+    paymentPolicy?: {
+      templateId: string;
+      price: string;
+      releaseAt?: string;
+      maxOpens?: number;
+      maxClaims?: number;
+      previousBoxId?: string;
+      accessWindowSeconds?: number;
+      maxCalls?: number;
+    };
     timeWindow?: TimeWindowConfig;
     openLimit?: {
       enabled?: boolean;
@@ -31,7 +41,6 @@ export interface BittyMetadata {
       opensUsed?: number;
       showRemainingCount?: boolean;
     };
-    paymentPolicy?: any;
   };
 }
 

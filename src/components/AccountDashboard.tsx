@@ -38,7 +38,10 @@ import {
   ShieldCheck,
   Volume2,
   VolumeX,
-  CheckCheck
+  CheckCheck,
+  BarChart3,
+  EyeOff,
+  RadioTower
 } from "lucide-react";
 import { BittyUser, ApiKeyMeta, TrackedBittyBox } from "../types";
 import { UseAccountResult } from "../hooks/useAccount";
@@ -47,6 +50,12 @@ import { PrismCheckbox } from "./PrismCheckbox";
 import { UserAvatar } from "./UserAvatar";
 import { TimeWindowConfig, evaluateTimeWindow, formatCountdown, nextBoundary } from "../utils/timeWindow";
 import { SessionSaveIndicator } from "./SessionSaveIndicator";
+import {
+  enablePrivacyAnalytics,
+  hasAnalyticsConsent,
+  setAnalyticsConsent,
+  trackPrivacyEvent,
+} from "../lib/privacyAnalytics";
 
 export const GoogleIcon: React.FC<{ className?: string }> = ({ className = "w-4 h-4" }) => (
   <svg className={className} viewBox="0 0 24 24">
@@ -106,7 +115,10 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
   } = account;
 
   // Navigation tab inside Account Dashboard
-  const [activeTab, setActiveTab] = useState<"boxes" | "keys" | "credits" | "mcp">("boxes");
+  const [activeTab, setActiveTab] = useState<"boxes" | "keys" | "credits" | "mcp" | "analytics">("boxes");
+  const [analyticsEnabled, setAnalyticsEnabled] = useState<boolean>(() => hasAnalyticsConsent());
+  const [analyticsLive, setAnalyticsLive] = useState(false);
+  const [analyticsEventsThisSession, setAnalyticsEventsThisSession] = useState(0);
 
   // Auth form states (Google & Magic Link)
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -146,6 +158,43 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
     const id = window.setInterval(() => setNowMs(Date.now()), 1000);
     return () => window.clearInterval(id);
   }, []);
+
+  useEffect(() => {
+    if (!analyticsEnabled || !user?.id) return;
+    void enablePrivacyAnalytics(user.id).then((isLive) => {
+      setAnalyticsLive(isLive);
+      if (isLive) setAnalyticsEventsThisSession((count) => count + 1);
+    });
+  }, [analyticsEnabled, user?.id]);
+
+  useEffect(() => {
+    if (!analyticsEnabled || !user?.id) return;
+    void trackPrivacyEvent(user.id, "account_dashboard_viewed", { account_surface: true }).then((sent) => {
+      if (sent) setAnalyticsEventsThisSession((count) => count + 1);
+    });
+  }, [analyticsEnabled, user?.id]);
+
+  const selectAccountTab = (tab: "boxes" | "keys" | "credits" | "mcp" | "analytics") => {
+    setActiveTab(tab);
+    if (!analyticsEnabled || !user?.id) return;
+    void trackPrivacyEvent(user.id, "account_tab_opened", { tab }).then((sent) => {
+      if (sent) setAnalyticsEventsThisSession((count) => count + 1);
+    });
+  };
+
+  const toggleAnalytics = async () => {
+    const next = !analyticsEnabled;
+    setAnalyticsConsent(next);
+    setAnalyticsEnabled(next);
+    if (!next) {
+      setAnalyticsLive(false);
+      return;
+    }
+    if (!user?.id) return;
+    const isLive = await enablePrivacyAnalytics(user.id);
+    setAnalyticsLive(isLive);
+    if (isLive) setAnalyticsEventsThisSession((count) => count + 1);
+  };
 
   // Credit purchasing state
   const [purchasingPkg, setPurchasingPkg] = useState<string | null>(null);
@@ -660,7 +709,7 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
         <div className="flex flex-col items-stretch gap-1.5 p-1.5 bg-[#08041c]/95 border-2 border-cyan-500/30 rounded-2xl font-mono text-xs shadow-lg backdrop-blur-xl">
           <button
             type="button"
-            onClick={() => setActiveTab("boxes")}
+            onClick={() => selectAccountTab("boxes")}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-cyber font-bold transition-all cursor-pointer shrink-0 ${
               activeTab === "boxes"
                 ? "bg-cyan-500 text-black shadow-[0_0_15px_rgba(0,242,255,0.45)]"
@@ -673,7 +722,7 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
 
           <button
             type="button"
-            onClick={() => setActiveTab("keys")}
+            onClick={() => selectAccountTab("keys")}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-cyber font-bold transition-all cursor-pointer shrink-0 ${
               activeTab === "keys"
                 ? "bg-amber-400 text-black shadow-[0_0_15px_rgba(245,158,11,0.45)]"
@@ -686,7 +735,7 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
 
           <button
             type="button"
-            onClick={() => setActiveTab("credits")}
+            onClick={() => selectAccountTab("credits")}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-cyber font-bold transition-all cursor-pointer shrink-0 ${
               activeTab === "credits"
                 ? "bg-emerald-400 text-black shadow-[0_0_15px_rgba(0,255,150,0.45)]"
@@ -699,7 +748,7 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
 
           <button
             type="button"
-            onClick={() => setActiveTab("mcp")}
+            onClick={() => selectAccountTab("mcp")}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-cyber font-bold transition-all cursor-pointer shrink-0 ${
               activeTab === "mcp"
                 ? "bg-fuchsia-500 text-white shadow-[0_0_15px_rgba(189,0,255,0.45)]"
@@ -708,6 +757,18 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
           >
             <Bot className="w-4 h-4" />
             <span>MCP SERVER CONFIG</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => selectAccountTab("analytics")}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-cyber font-bold transition-all cursor-pointer shrink-0 ${
+              activeTab === "analytics"
+                ? "bg-violet-400 text-black shadow-[0_0_15px_rgba(167,139,250,0.45)]"
+                : "text-violet-300/70 hover:text-violet-100 hover:bg-violet-950/40"
+            }`}
+          >
+            <BarChart3 className="w-4 h-4" />
+            <span>PRIVATE ANALYTICS</span>
           </button>
         </div>
 
@@ -774,7 +835,14 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
                   <button
                     key={box.id}
                     type="button"
-                    onClick={() => setSelectedBox(box)}
+                    onClick={() => {
+                      setSelectedBox(box);
+                      if (analyticsEnabled && user?.id) {
+                        void trackPrivacyEvent(user.id, "box_detail_opened", { has_lock: Boolean(box.locks?.password || box.encrypted) }).then((sent) => {
+                          if (sent) setAnalyticsEventsThisSession((count) => count + 1);
+                        });
+                      }
+                    }}
                     className="w-full text-left p-4 rounded-xl bg-[#03010b] border border-cyan-500/30 hover:border-cyan-400 hover:bg-cyan-950/20 focus:outline-none focus:ring-2 focus:ring-cyan-300/60 transition flex flex-col justify-between gap-3 shadow-inner group relative cursor-pointer"
                     aria-label={`Open details for ${box.title || "Untitled Bitty Box"}`}
                   >
@@ -894,6 +962,83 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* =========================================================================
+            TAB: PRIVACY-FIRST ACCOUNT ANALYTICS
+           ========================================================================= */}
+        {activeTab === "analytics" && (
+          <div className="bg-[#08041c]/95 backdrop-blur-2xl border-2 border-violet-500/35 rounded-2xl p-5 sm:p-7 shadow-[0_0_35px_rgba(167,139,250,0.16)] font-mono space-y-5 relative overflow-hidden">
+            <div className="bento-corner-accent top-l" />
+            <div className="bento-corner-accent top-r" />
+            <div className="bento-corner-accent bot-l" />
+            <div className="bento-corner-accent bot-r" />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(167,139,250,0.14),transparent_65%)] pointer-events-none" />
+
+            <div className="relative z-10 flex flex-col gap-4 border-b border-violet-400/20 pb-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="max-w-xl">
+                <div className="flex items-center gap-2 text-violet-200 font-cyber font-bold text-base sm:text-lg">
+                  <BarChart3 className="w-5 h-5 text-violet-300" />
+                  PRIVATE ACTIVITY SIGNAL
+                </div>
+                <p className="mt-1.5 text-xs leading-relaxed text-violet-200/70">
+                  Start with a synthetic preview. Nothing is sent until you deliberately enable your personal activity stream.
+                </p>
+              </div>
+              <span className={`inline-flex w-fit items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold tracking-wider ${analyticsEnabled && analyticsLive ? "border-emerald-400/60 bg-emerald-950/70 text-emerald-300" : "border-violet-400/40 bg-violet-950/50 text-violet-200"}`}>
+                {analyticsEnabled && analyticsLive ? <RadioTower className="h-3.5 w-3.5 animate-pulse" /> : <EyeOff className="h-3.5 w-3.5" />}
+                {analyticsEnabled && analyticsLive ? "LIVE · OPTED IN" : "PREVIEW · LOCAL ONLY"}
+              </span>
+            </div>
+
+            <div className="relative z-10 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {[
+                { label: "BOX ACTIVITY", value: analyticsEnabled ? String((user.links || []).length) : "12", tint: "text-cyan-200 border-cyan-400/30" },
+                { label: "AGENT RUNS", value: analyticsEnabled ? String((user.creditsMcpUsed || 0) + (user.creditsApiUsed || 0)) : "34", tint: "text-fuchsia-200 border-fuchsia-400/30" },
+                { label: "CREDITS USED", value: analyticsEnabled ? String(user.creditsUsedTotal || 0) : "18", tint: "text-amber-200 border-amber-400/30" },
+                { label: "THIS SESSION", value: analyticsEnabled && analyticsLive ? String(analyticsEventsThisSession) : "7", tint: "text-emerald-200 border-emerald-400/30" },
+              ].map((metric) => (
+                <div key={metric.label} className={`rounded-xl border bg-[#03010f] p-3 shadow-inner ${metric.tint}`}>
+                  <div className="text-[9px] font-bold tracking-wider opacity-70">{metric.label}</div>
+                  <div className="mt-1 font-cyber text-2xl font-bold">{metric.value}</div>
+                  <div className="mt-2 flex h-1.5 gap-0.5 overflow-hidden rounded-full bg-white/5">
+                    {[0, 1, 2, 3, 4, 5, 6].map((bar) => <span key={bar} className={`flex-1 rounded-full ${bar < 5 ? "bg-current opacity-80" : "bg-current opacity-15"}`} />)}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="relative z-10 rounded-xl border border-violet-400/25 bg-violet-950/20 p-4">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <div className="flex items-center gap-2 text-sm font-cyber font-bold text-violet-100">
+                    <ShieldCheck className="h-4 w-4 text-violet-300" />
+                    {analyticsEnabled ? "Your consent is active" : "Analytics is off by default"}
+                  </div>
+                  <p className="mt-1 max-w-2xl text-[11px] leading-relaxed text-violet-200/70">
+                    {analyticsEnabled
+                      ? analyticsLive
+                        ? "OpenPanel receives only a pseudonymous account signal and four allowlisted event types. No email, box URL, title, payload, clickstream, or session replay."
+                        : "Your choice is stored locally, but no events can leave this device until the site owner adds VITE_OPENPANEL_CLIENT_ID. The preview remains private."
+                      : "The numbers above are illustrative. Turn this on only if you want to help build a personal activity history."}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void toggleAnalytics()}
+                  className={`shrink-0 rounded-xl border px-4 py-2.5 text-xs font-cyber font-bold tracking-wide transition active:scale-[0.99] ${analyticsEnabled ? "border-rose-400/55 bg-rose-950/60 text-rose-200 hover:bg-rose-900/70" : "border-violet-300/70 bg-violet-400 text-black shadow-[0_0_18px_rgba(167,139,250,0.38)] hover:brightness-110"}`}
+                >
+                  {analyticsEnabled ? "DISABLE TRACKING" : "ENABLE MY ACTIVITY STREAM"}
+                </button>
+              </div>
+            </div>
+
+            <div className="relative z-10 grid gap-2 text-[10px] text-violet-200/60 sm:grid-cols-3">
+              <div>01 · Consent stays in this browser</div>
+              <div>02 · Session replay is permanently disabled</div>
+              <div>03 · You can revoke it instantly</div>
+            </div>
           </div>
         )}
 

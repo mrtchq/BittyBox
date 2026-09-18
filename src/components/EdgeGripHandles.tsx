@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { Lock } from 'lucide-react';
 
 export const GripVerticalIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
   <svg
@@ -64,6 +65,7 @@ export interface EdgeGripHandlesProps {
   isChainNextVisible?: boolean;
   chainNextLabel?: string;
   chainNextDisabled?: boolean;
+  activeLockCount?: number;
   bottomClassName?: string;
   topClassName?: string;
 }
@@ -77,6 +79,7 @@ export const EdgeGripHandles: React.FC<EdgeGripHandlesProps> = ({
   isChainNextVisible = false,
   chainNextLabel = 'NEXT BOX',
   chainNextDisabled = false,
+  activeLockCount = 0,
   topClassName,
 }) => {
   const handleOpenPreview = onOpenPreview || onOpenLeft;
@@ -133,8 +136,8 @@ export const EdgeGripHandles: React.FC<EdgeGripHandlesProps> = ({
   }, []);
 
   const topGripMotion = gripBurst
-    ? { y: 6, scale: 1.08, opacity: 1, boxShadow: '0 0 46px rgba(217,70,239,0.72), 0 0 18px rgba(0,242,255,0.42)' }
-    : { y: -8, scale: 0.96, opacity: 0.82, boxShadow: '0 0 18px rgba(217,70,239,0.28)' };
+    ? { y: 4, scale: 1.04, opacity: 1, boxShadow: '0 0 36px rgba(217,70,239,0.72), 0 0 16px rgba(0,242,255,0.42)' }
+    : { y: 0, scale: 1, opacity: 0.9, boxShadow: '0 0 18px rgba(217,70,239,0.28)' };
   const gripTransition = { type: 'spring' as const, stiffness: gripBurst ? 520 : 280, damping: gripBurst ? 18 : 28 };
 
   return (
@@ -158,7 +161,7 @@ export const EdgeGripHandles: React.FC<EdgeGripHandlesProps> = ({
               data-scroll-state={gripBurst ? 'reversal-flare' : 'idle-retracted'}
               animate={topGripMotion}
               transition={gripTransition}
-              whileHover={{ scale: 1.06, y: 2 }}
+              whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.94 }}
               className="group relative flex items-center justify-center gap-2 px-4 py-1.5 rounded-b-2xl bg-gradient-to-b from-[#0d041e] via-[#170836] to-[#230d4e] border-x-2 border-b-2 border-fuchsia-400 text-fuchsia-200 shadow-[0_0_30px_rgba(217,70,239,0.5)] backdrop-blur-xl transition-colors cursor-pointer"
             >
@@ -174,6 +177,12 @@ export const EdgeGripHandles: React.FC<EdgeGripHandlesProps> = ({
               <span className="text-[10px] sm:text-[11px] font-cyber font-extrabold tracking-widest text-fuchsia-200 group-hover:text-cyan-200 uppercase">
                 PREVIEW
               </span>
+              {activeLockCount > 0 && (
+                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-amber-950/90 border border-amber-500/60 text-amber-300 text-[9px] font-bold font-mono shadow-[0_0_8px_rgba(245,158,11,0.5)]">
+                  <Lock className="w-2.5 h-2.5 text-amber-400" />
+                  <span>{activeLockCount}</span>
+                </span>
+              )}
             </motion.button>
           </motion.div>
         )}

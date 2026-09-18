@@ -3,6 +3,7 @@ import { BittyNavbar } from './components/BittyNavbar';
 import { HoloBackground } from './components/HoloBackground';
 import { ConfettiClickFX } from './components/ConfettiClickFX';
 import { BittyStageView } from './components/stage/BittyStageView';
+import { PaymentPolicyDraft } from './components/PaymentPolicyLockPanel';
 import { BittyRenderer } from './components/BittyRenderer';
 import { HistoryModal } from './components/HistoryModal';
 import { AboutModal } from './components/AboutModal';
@@ -20,7 +21,20 @@ import {
   hashString 
 } from './utils/bittyEngine';
 import { exportBittyToZip } from './utils/zipExport';
+import { authJsonHeaders, authJsonHeadersAsync } from './utils/authHeaders';
 import { TEMPLATE_PRESETS } from './data/templates';
+import { joinBittyBoxLive, type BittyLiveRoom, type BittyPeer, type BittyChatMessage } from './bitty-live';
+import {
+  generateInviteCode,
+  normalizeInviteCode,
+  isValidInviteCode,
+  inviteBoxIdFor,
+  isInviteBoxId,
+  inviteCodeFromBoxId,
+  INVITE_LISTEN_MS
+} from './bitty-live/invite';
+import { BittyLiveBadge } from './components/BittyLiveBadge';
+import { BittyLiveChat } from './components/BittyLiveChat';
 import { createBittyTour } from './components/OnboardingTour';
 import { ConfirmCloseSessionModal } from './components/ConfirmCloseSessionModal';
 import { AnimatedSplash } from './components/AnimatedSplash';
@@ -35,8 +49,6 @@ import { ChainNextModal } from './components/ChainNextModal';
 import { PreviewDropdownPanel } from './components/PreviewDropdownPanel';
 import { TemplatesSidePanel } from './components/TemplatesSidePanel';
 import { StudioToolsSidePanel } from './components/StudioToolsSidePanel';
-import { SettingsModal } from './components/SettingsModal';
-import { useDevMode } from './utils/devMode';
 import { useEdgeSwipe } from './hooks/useEdgeSwipe';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -68,24 +80,21 @@ function getInitialUrlState() {
     return { hash, payload: '', metadata: null, isViewer: false, isAuth: false, isAccount: false, isTerms: false, isPrivacy: false, isAgents: true };
   }
   if (hash === '#/terms' || hash === '#terms') {
-    return { hash, payload: '', metadata: null, isViewer: false, isAuth: false, isAccount: false, isTerms: true, isPrivacy: false, isAgents: false, isSettings: false };
+    return { hash, payload: '', metadata: null, isViewer: false, isAuth: false, isAccount: false, isTerms: true, isPrivacy: false, isAgents: false };
   }
   if (hash === '#/privacy' || hash === '#privacy') {
-    return { hash, payload: '', metadata: null, isViewer: false, isAuth: false, isAccount: false, isTerms: false, isPrivacy: true, isAgents: false, isSettings: false };
+    return { hash, payload: '', metadata: null, isViewer: false, isAuth: false, isAccount: false, isTerms: false, isPrivacy: true, isAgents: false };
   }
-  if (hash === '#/settings' || hash === '#settings') {
-    return { hash, payload: '', metadata: null, isViewer: false, isAuth: false, isAccount: false, isTerms: false, isPrivacy: false, isAgents: false, isSettings: true };
-  }
-  if (hash && hash.length > 2 && hash !== '#/edit' && hash !== '#edit' && hash !== '#/studio' && hash !== '#/account' && hash !== '#/' && hash !== '#' && hash !== '#/terms' && hash !== '#terms' && hash !== '#/privacy' && hash !== '#privacy' && hash !== '#/agents' && hash !== '#agents' && hash !== '#/agent' && hash !== '#agent' && hash !== '#/settings' && hash !== '#settings') {
+  if (hash && hash.length > 2 && hash !== '#/edit' && hash !== '#edit' && hash !== '#/studio' && hash !== '#/account' && hash !== '#/' && hash !== '#' && hash !== '#/terms' && hash !== '#terms' && hash !== '#/privacy' && hash !== '#privacy' && hash !== '#/agents' && hash !== '#agents' && hash !== '#/agent' && hash !== '#agent') {
     const { payload, metadata } = parseBittyHash(hash);
-    return { hash, payload, metadata, isViewer: Boolean(payload), isAuth: false, isAccount: false, isTerms: false, isPrivacy: false, isAgents: false, isSettings: false };
+    const hasHtmlPayload = Boolean(payload && (payload.startsWith('?') || payload.startsWith('data:') || payload.length > 25));
+    return { hash, payload, metadata, isViewer: hasHtmlPayload, isAuth: false, isAccount: false, isTerms: false, isPrivacy: false, isAgents: false };
   }
-  return { hash: '', payload: '', metadata: null, isViewer: false, isAuth: false, isAccount: false, isTerms: false, isPrivacy: false, isAgents: false, isSettings: false };
+  return { hash: '', payload: '', metadata: null, isViewer: false, isAuth: false, isAccount: false, isTerms: false, isPrivacy: false, isAgents: false };
 }
 
 export default function App() {
   const proStatus = useProStatus();
-  const { isDevMode } = useDevMode();
   const initialUrl = useMemo(() => getInitialUrlState(), []);
   const [currentView, setCurrentView] = useState<AppView>(() => {
     if (initialUrl.isAuth || initialUrl.isAccount) return 'account';
@@ -137,12 +146,322 @@ export default function App() {
   const [isRightToolsPanelOpen, setIsRightToolsPanelOpen] = useState<boolean>(false);
   const [isPreviewDropdownOpen, setIsPreviewDropdownOpen] = useState<boolean>(false);
   const [isCloseSessionModalOpen, setIsCloseSessionModalOpen] = useState<boolean>(false);
-  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(() => Boolean((initialUrl as any).isSettings));
   const [isLegalModalOpen, setIsLegalModalOpen] = useState<boolean>(() => Boolean(initialUrl.isTerms || initialUrl.isPrivacy));
   const [legalModalTab, setLegalModalTab] = useState<LegalTab>(() => (initialUrl.isPrivacy ? 'privacy' : 'terms'));
   const [history, setHistory] = useState<BittyHistoryItem[]>([]);
   const [chainDraft, setChainDraft] = useState<BittyChainDraft | null>(() => loadChainDraft());
   const [isChainModalOpen, setIsChainModalOpen] = useState<boolean>(false);
+
+  // Bitty Live P2P state
+  const [livePeers, setLivePeers] = useState<BittyPeer[]>([]);
+  const [liveRoomId, setLiveRoomId] = useState<string>('');
+  const liveRoomRef = useRef<BittyLiveRoom | null>(null);
+  const livePeersRef = useRef<BittyPeer[]>([]);
+
+  // Ephemeral invite-code rendezvous: the chatbox itself is the only thing
+  // anyone needs to join — no collab URL to share.
+  const [inviteBoxId, setInviteBoxId] = useState<string | null>(null);
+  const [inviteRole, setInviteRole] = useState<'host' | 'guest' | null>(null);
+  const [inviteExpiresAt, setInviteExpiresAt] = useState<number | null>(null);
+  const [inviteError, setInviteError] = useState<string | null>(null);
+  const [isJoiningInvite, setIsJoiningInvite] = useState<boolean>(false);
+
+  // Live Chat state
+  const [chatMessages, setChatMessages] = useState<BittyChatMessage[]>([]);
+  const [isChatOpen, setIsChatOpen] = useState<boolean>(false);
+  const [unreadChatCount, setUnreadChatCount] = useState<number>(0);
+  const isChatOpenRef = useRef(false);
+  isChatOpenRef.current = isChatOpen;
+
+  const handleToggleChat = useCallback(() => {
+    setIsChatOpen(prev => {
+      const next = !prev;
+      if (next) setUnreadChatCount(0);
+      return next;
+    });
+  }, []);
+
+  const handleSendChatMessage = useCallback(async (text: string) => {
+    if (!text.trim() || !liveRoomRef.current) return;
+    const selfPeerId = liveRoomRef.current.selfId || 'local';
+    const myName = account.user?.displayName || `You (${selfPeerId.slice(0, 4)})`;
+    const broadcastName = account.user?.displayName || `Peer (${selfPeerId.slice(0, 4)})`;
+    const msgId = `msg_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    const newMsg: BittyChatMessage = {
+      id: msgId,
+      senderId: selfPeerId,
+      senderName: myName,
+      text: text.trim(),
+      timestamp: Date.now(),
+      isSelf: true
+    };
+    setChatMessages(prev => [...prev, newMsg]);
+    try {
+      await liveRoomRef.current.sendMessage(text.trim(), {
+        id: msgId,
+        senderName: broadcastName
+      });
+    } catch (err) {
+      console.warn('[BittyLiveChat] Failed sending chat message:', err);
+    }
+  }, [account.user?.displayName]);
+
+  const handleSwitchToPrivate = useCallback(() => {
+    if (liveRoomRef.current) {
+      liveRoomRef.current.leave().catch(() => {});
+      liveRoomRef.current = null;
+    }
+    setLivePeers([]);
+    livePeersRef.current = [];
+    setLiveRoomId('');
+    setChatMessages([]);
+    setIsChatOpen(false);
+    setUnreadChatCount(0);
+    // Clear any invite-code session as well
+    setInviteBoxId(null);
+    setInviteRole(null);
+    setInviteExpiresAt(null);
+    setInviteError(null);
+    setIsJoiningInvite(false);
+
+    setMetadata(prev => {
+      const next = { ...prev };
+      delete next.boxId;
+      const titleSlug = encodeURIComponent(next.title || 'Live Box');
+      window.location.hash = `#/${titleSlug}`;
+      setBittyUrl(`${window.location.origin}/#/${titleSlug}`);
+      return next;
+    });
+  }, []);
+
+  // Isolate live rooms: Only connect if viewing a shared box or if Live is explicitly enabled
+  const currentBoxId = useMemo(() => {
+    if (metadata.boxId) return metadata.boxId;
+    if (initialUrl.metadata?.boxId) return initialUrl.metadata.boxId;
+    if (initialUrl.hash && initialUrl.hash.includes('/box/')) {
+      const match = initialUrl.hash.match(/\/box\/([^/?#]+)/);
+      if (match && match[1]) return decodeURIComponent(match[1]);
+    }
+    // Stable payload fallback: Any shared link with content has a unique hash fragment payload
+    if (initialUrl.payload && initialUrl.payload.length > 5) {
+      return `payload_${initialUrl.payload.slice(0, 32)}`;
+    }
+    if (hashFragment && hashFragment.length > 5) {
+      return `payload_${hashFragment.slice(0, 32)}`;
+    }
+    return null; // Private local draft: no public P2P mesh
+  }, [metadata.boxId, initialUrl.metadata, initialUrl.hash, initialUrl.payload, hashFragment]);
+
+  const handleEnableLive = useCallback(() => {
+    const generatedBoxId = `box_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+    setMetadata(prev => {
+      const titleSlug = encodeURIComponent(prev.title || 'Live Box');
+      const livePath = `/${titleSlug}/box/${generatedBoxId}`;
+      window.location.hash = livePath;
+      setBittyUrl(`${window.location.origin}/#${livePath}`);
+      return {
+        ...prev,
+        boxId: generatedBoxId
+      };
+    });
+  }, []);
+
+  const liveShareUrl = useMemo(() => {
+    if (!currentBoxId) return '';
+    const titleSlug = encodeURIComponent(metadata.title || 'Live Box');
+    return `${window.location.origin}/#/${titleSlug}/box/${currentBoxId}`;
+  }, [currentBoxId, metadata.title]);
+
+  // Effective live session: invite-code room wins over the URL-derived box room.
+  // Invite rooms are namespaced (`invite:CODE`) so both sides provably derive
+  // the identical Trystero room from the short code alone.
+  const liveBoxId = inviteBoxId ?? currentBoxId;
+
+  const handleCreateInvite = useCallback(() => {
+    const code = generateInviteCode();
+    setInviteError(null);
+    setIsJoiningInvite(true);
+    setInviteRole('host');
+    setInviteBoxId(inviteBoxIdFor(code));
+    setInviteExpiresAt(Date.now() + INVITE_LISTEN_MS);
+    setIsChatOpen(true);
+  }, []);
+
+  const handleJoinWithCode = useCallback((raw: string) => {
+    const code = normalizeInviteCode(raw);
+    if (!isValidInviteCode(code)) {
+      setInviteError('That code doesn\u2019t look right \u2014 invite codes are 6 letters (A\u2013Z, 2\u20139, no 0/1). Ask the host to read it out again.');
+      return;
+    }
+    setInviteError(null);
+    setIsJoiningInvite(true);
+    setInviteRole('guest');
+    setInviteBoxId(inviteBoxIdFor(code));
+    setInviteExpiresAt(Date.now() + INVITE_LISTEN_MS);
+    setIsChatOpen(true);
+  }, []);
+
+  // Invite expiry: listen for ~30s; if nobody connects, the code dies and a
+  // fresh one must be generated. Once a peer joins, the session continues.
+  useEffect(() => {
+    if (!inviteExpiresAt) return;
+    const delay = Math.max(0, inviteExpiresAt - Date.now());
+    const t = setTimeout(() => {
+      if (livePeersRef.current.length === 0) {
+        if (liveRoomRef.current) {
+          liveRoomRef.current.leave().catch(() => {});
+          liveRoomRef.current = null;
+        }
+        setLivePeers([]);
+        setLiveRoomId('');
+        setInviteBoxId(null);
+        setInviteRole(null);
+        setInviteExpiresAt(null);
+        setIsJoiningInvite(false);
+        setInviteError('Invite expired \u2014 nobody joined within 30 seconds. Generate a new code to try again.');
+        setIsChatOpen(true);
+      } else {
+        // Peer connected in time: session stays live, countdown stops.
+        setInviteExpiresAt(null);
+        setIsJoiningInvite(false);
+      }
+    }, delay);
+    return () => clearTimeout(t);
+  }, [inviteExpiresAt]);
+
+  const inviteChatProps = {
+    inviteCode: inviteCodeFromBoxId(inviteBoxId),
+    inviteRole,
+    inviteExpiresAt,
+    inviteError,
+    isJoiningInvite,
+    onCreateInvite: handleCreateInvite,
+    onJoinWithCode: handleJoinWithCode
+  };
+
+  useEffect(() => {
+    if (!liveBoxId) {
+      setLivePeers([]);
+      livePeersRef.current = [];
+      setLiveRoomId('');
+      if (liveRoomRef.current) {
+        liveRoomRef.current.leave().catch(() => {});
+        liveRoomRef.current = null;
+      }
+      return;
+    }
+
+    let active = true;
+    const isInviteRoom = isInviteBoxId(liveBoxId);
+    const joinBoxId = liveBoxId;
+
+    async function initLive() {
+      try {
+        const room = await joinBittyBoxLive({
+          boxId: joinBoxId,
+          identity: {
+            peerType: 'human',
+            name: account.user?.displayName || 'Browser User'
+          },
+          capabilities: ['box.read', 'box.edit'],
+          // Invite rooms carry no passcode: admission always passes, so two
+          // sides holding the same code can never fail the handshake.
+          passcode: isInviteRoom ? undefined : metadata.password,
+          getInitialState: () => ({
+            boxId: joinBoxId,
+            title: metadata.title || 'Untitled Box',
+            content: content || '',
+            updatedAt: Date.now(),
+            version: 1
+          }),
+          onPeersChange: (peers) => {
+            if (!active) return;
+            const prev = livePeersRef.current;
+            livePeersRef.current = peers;
+            setLivePeers(peers);
+            if (isInviteRoom && peers.length > prev.length) {
+              const sysMsg: BittyChatMessage = {
+                id: `sys_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+                senderId: 'system',
+                senderName: 'system',
+                text: prev.length === 0 ? 'Peer connected \u2014 you\u2019re live.' : 'A peer joined the session.',
+                timestamp: Date.now(),
+                isSystem: true
+              };
+              setChatMessages(prevMsgs => [...prevMsgs, sysMsg]);
+            }
+          },
+          onPatch: (patch) => {
+            if (!active) return;
+            if (patch.path === 'content.title' || patch.path === 'metadata.title' || patch.path === 'title') {
+              const incomingTitle = String(patch.value);
+              setMetadata(prev => prev.title === incomingTitle ? prev : { ...prev, title: incomingTitle });
+            } else if (patch.path === 'content' || patch.path === 'content.body') {
+              const incomingContent = String(patch.value);
+              setContent(prev => prev === incomingContent ? prev : incomingContent);
+            }
+          },
+          onStateChange: (state) => {
+            if (!active || !state) return;
+            if (state.title) {
+              setMetadata(prev => prev.title === state.title ? prev : { ...prev, title: state.title });
+            }
+            if (state.content !== undefined && state.content !== '') {
+              setContent(prev => prev === state.content ? prev : state.content);
+            }
+          },
+          onMessage: (msg, peerId) => {
+            if (!active) return;
+            if (msg.text) {
+              const incoming: BittyChatMessage = {
+                id: msg.data?.id || `msg_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+                senderId: peerId,
+                senderName: msg.data?.senderName || `Peer-${peerId.slice(0, 4)}`,
+                text: msg.text,
+                timestamp: msg.timestamp || Date.now(),
+                isSelf: false
+              };
+              setChatMessages(prev => [...prev, incoming]);
+              if (!isChatOpenRef.current) {
+                setUnreadChatCount(c => c + 1);
+              }
+            }
+          }
+        });
+
+        if (active) {
+          liveRoomRef.current = room;
+          setLiveRoomId(room.roomId);
+          setIsJoiningInvite(false);
+        } else {
+          room.leave();
+        }
+      } catch (err) {
+        console.warn('[BittyLive] Error connecting to live room:', err);
+        if (active && isInviteRoom) {
+          setInviteBoxId(null);
+          setInviteRole(null);
+          setInviteExpiresAt(null);
+          setIsJoiningInvite(false);
+          setInviteError('Could not reach the live relay. Check your connection and generate a new code.');
+          setIsChatOpen(true);
+        }
+      }
+    }
+
+    initLive();
+
+    return () => {
+      active = false;
+      if (liveRoomRef.current) {
+        liveRoomRef.current.leave().catch(() => {});
+        liveRoomRef.current = null;
+      }
+      setLivePeers([]);
+      livePeersRef.current = [];
+    };
+  }, [liveBoxId]);
+
   const [isLastEditorSlide, setIsLastEditorSlide] = useState<boolean>(false);
 
   const chainEnabled = Boolean(chainDraft?.enabled);
@@ -151,7 +470,6 @@ export default function App() {
   const isLastChainBox = !chainEnabled || chainCurrentIndex >= chainTotal - 1;
 
   const calculatedCreditCost = useMemo(() => {
-    if (isDevMode) return 0;
     if (chainEnabled && chainDraft?.pages) {
       return calculateTotalChainCreditCost(chainDraft.pages).totalCost;
     }
@@ -159,7 +477,29 @@ export default function App() {
     if (metadata.lockConfig?.timeWindow?.enabled || metadata.lockConfig?.timeWindow?.mode) cost += 10;
     if (metadata.lockConfig?.openLimit?.enabled) cost += 10;
     return cost;
-  }, [isDevMode, chainEnabled, chainDraft, metadata.lockConfig]);
+  }, [chainEnabled, chainDraft, metadata.lockConfig]);
+
+  const activeLockCount = useMemo(() => {
+    const hasPasscode = Boolean(metadata?.password && metadata.password.trim().length > 0);
+    const twConfig = metadata?.lockConfig?.timeWindow;
+    const hasTimeLock = Boolean(
+      twConfig &&
+      (twConfig.enabled !== false) &&
+      (twConfig.enabled || twConfig.mode || twConfig.notBefore || twConfig.notAfter)
+    );
+    const olConfig = metadata?.lockConfig?.openLimit;
+    const hasAccessLimit = Boolean(olConfig && olConfig.enabled);
+    const hasPaymentPolicy = Boolean(metadata?.lockConfig?.paymentPolicy);
+    const hasAgentic = Boolean(metadata?.lockConfig?.agentic?.enabled);
+
+    return [
+      hasPasscode,
+      hasTimeLock,
+      hasAccessLimit,
+      hasPaymentPolicy,
+      hasAgentic,
+    ].filter(Boolean).length;
+  }, [metadata]);
 
   // Edge Swiping Gesture Hook
   useEdgeSwipe({
@@ -330,64 +670,113 @@ export default function App() {
     }
   }, []);
 
-  // Sync content updates with active session
+  // Sync content updates with active session.
+  // NOTE: session persistence (setSessions + localStorage) is debounced so
+  // fast typing never blocks the main thread mid-keystroke (stuck caret).
+  const contentPersistTimer = useRef<number | null>(null);
+  const metadataPersistTimer = useRef<number | null>(null);
+
+  // Flush any pending debounced session writes (e.g. before manual save).
+  const flushPendingSessionWrites = useCallback(() => {
+    if (contentPersistTimer.current !== null) {
+      window.clearTimeout(contentPersistTimer.current);
+      contentPersistTimer.current = null;
+    }
+    if (metadataPersistTimer.current !== null) {
+      window.clearTimeout(metadataPersistTimer.current);
+      metadataPersistTimer.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (contentPersistTimer.current !== null) window.clearTimeout(contentPersistTimer.current);
+      if (metadataPersistTimer.current !== null) window.clearTimeout(metadataPersistTimer.current);
+    };
+  }, []);
+
   const handleContentChange = useCallback((newContent: string) => {
     setContent(newContent);
+    if (liveRoomRef.current) {
+      liveRoomRef.current.patch('content', newContent).catch(() => {});
+    }
     setChainDraft(prev => prev?.enabled ? updateChainDraftPage(prev, prev.currentIndex, newContent, metadata) : prev);
-    const now = Date.now();
     setIsSavingSession(true);
-    setSessions(prev => {
-      const idx = prev.findIndex(s => s.id === currentSessionId);
-      if (idx >= 0) {
-        const updated = [...prev];
-        updated[idx] = {
-          ...updated[idx],
-          content: newContent,
-          savedAt: now,
-        };
-        try {
-          localStorage.setItem('bitty_multi_sessions', JSON.stringify(updated));
-        } catch {}
-        return updated;
-      }
-      return prev;
-    });
-    setLastSavedTimestamp(now);
-    const saveTimer = setTimeout(() => setIsSavingSession(false), 250);
-    return () => clearTimeout(saveTimer);
+    if (contentPersistTimer.current !== null) window.clearTimeout(contentPersistTimer.current);
+    contentPersistTimer.current = window.setTimeout(() => {
+      contentPersistTimer.current = null;
+      const now = Date.now();
+      setSessions(prev => {
+        const idx = prev.findIndex(s => s.id === currentSessionId);
+        if (idx >= 0) {
+          const updated = [...prev];
+          updated[idx] = {
+            ...updated[idx],
+            content: newContent,
+            savedAt: now,
+          };
+          try {
+            localStorage.setItem('bitty_multi_sessions', JSON.stringify(updated));
+          } catch {}
+          return updated;
+        }
+        return prev;
+      });
+      setLastSavedTimestamp(now);
+      setIsSavingSession(false);
+    }, 600);
   }, [currentSessionId, metadata]);
 
   // Sync metadata updates with active session
+  const handlePaymentPolicyChange = useCallback((value?: PaymentPolicyDraft) => {
+    setMetadata(prev => {
+      const lockConfig = { ...(prev.lockConfig || {}) };
+      if (value) lockConfig.paymentPolicy = value;
+      else delete lockConfig.paymentPolicy;
+      return {
+        ...prev,
+        lockConfig: Object.keys(lockConfig).length > 0 ? lockConfig : undefined,
+      };
+    });
+  }, []);
+
   const handleMetadataChange = useCallback((newMetadata: BittyMetadata) => {
+    if (newMetadata.title !== metadata.title && liveRoomRef.current) {
+      liveRoomRef.current.patch('content.title', newMetadata.title).catch(() => {});
+    }
     setMetadata(newMetadata);
     setChainDraft(prev => prev?.enabled ? updateChainDraftPage(prev, prev.currentIndex, content, newMetadata) : prev);
-    const now = Date.now();
     setIsSavingSession(true);
-    setSessions(prev => {
-      const idx = prev.findIndex(s => s.id === currentSessionId);
-      if (idx >= 0) {
-        const updated = [...prev];
-        updated[idx] = {
-          ...updated[idx],
-          title: newMetadata.title || 'Untitled',
-          favicon: newMetadata.favicon || '📦',
-          metadata: newMetadata,
-          savedAt: now,
-        };
-        try {
-          localStorage.setItem('bitty_multi_sessions', JSON.stringify(updated));
-        } catch {}
-        return updated;
-      }
-      return prev;
-    });
-    setLastSavedTimestamp(now);
-    const saveTimer = setTimeout(() => setIsSavingSession(false), 250);
-    return () => clearTimeout(saveTimer);
+    if (metadataPersistTimer.current !== null) window.clearTimeout(metadataPersistTimer.current);
+    metadataPersistTimer.current = window.setTimeout(() => {
+      metadataPersistTimer.current = null;
+      const now = Date.now();
+      setSessions(prev => {
+        const idx = prev.findIndex(s => s.id === currentSessionId);
+        if (idx >= 0) {
+          const updated = [...prev];
+          updated[idx] = {
+            ...updated[idx],
+            title: newMetadata.title || 'Untitled',
+            favicon: newMetadata.favicon || '📦',
+            metadata: newMetadata,
+            savedAt: now,
+          };
+          try {
+            localStorage.setItem('bitty_multi_sessions', JSON.stringify(updated));
+          } catch {}
+          return updated;
+        }
+        return prev;
+      });
+      setLastSavedTimestamp(now);
+      setIsSavingSession(false);
+    }, 600);
   }, [currentSessionId, content]);
 
   // Manual Force Save Handler
   const handleManualSaveSession = useCallback(() => {
+    flushPendingSessionWrites();
     setIsSavingSession(true);
     const now = Date.now();
     setSessions(prev => {
@@ -415,10 +804,11 @@ export default function App() {
     });
     setLastSavedTimestamp(now);
     setTimeout(() => setIsSavingSession(false), 300);
-  }, [content, metadata, currentSessionId]);
+  }, [content, metadata, currentSessionId, flushPendingSessionWrites]);
 
   // Switch to another session
   const handleSwitchSession = useCallback((sessionId: string) => {
+    flushPendingSessionWrites();
     const target = sessions.find(s => s.id === sessionId);
     if (target) {
       setCurrentSessionId(target.id);
@@ -436,10 +826,11 @@ export default function App() {
         }));
       } catch {}
     }
-  }, [sessions]);
+  }, [sessions, flushPendingSessionWrites]);
 
   // Close session by ID
   const handleCloseSessionById = useCallback((sessionId: string) => {
+    flushPendingSessionWrites();
     setSessions(prev => {
       const remaining = prev.filter(s => s.id !== sessionId);
       try {
@@ -488,7 +879,7 @@ export default function App() {
       }
       return remaining;
     });
-  }, [currentSessionId]);
+  }, [currentSessionId, flushPendingSessionWrites]);
 
   // Guided Walkthrough trigger handler
   const handleStartTour = useCallback(() => {
@@ -631,7 +1022,7 @@ export default function App() {
     const id = await hashString(entryUrl);
     const totalByteSize = baseDraft.pages.reduce((sum, page) => sum + (page.content?.length || 0), 0);
     const chainCreditCalculation = calculateTotalChainCreditCost(baseDraft.pages);
-    const chainCost = isDevMode ? 0 : chainCreditCalculation.totalCost;
+    const chainCost = chainCreditCalculation.totalCost;
 
     saveToHistory({
       id,
@@ -651,7 +1042,7 @@ export default function App() {
         title: baseDraft.pages[0]?.metadata.title || currentMetadata.title || 'Chained Bitty Box',
         url: entryUrl,
         format: 'chain',
-        boxBreakdowns: isDevMode ? chainCreditCalculation.boxBreakdowns.map(b => ({ ...b, totalCost: 0 })) : chainCreditCalculation.boxBreakdowns,
+        boxBreakdowns: chainCreditCalculation.boxBreakdowns,
         byteSize: totalByteSize,
         compressedSize: entryUrl.length,
         encrypted: baseDraft.pages.some(p => Boolean(p.metadata.password)),
@@ -671,9 +1062,9 @@ export default function App() {
       entryUrl,
       urls,
       creditCost: chainCost,
-      boxCreditBreakdowns: isDevMode ? chainCreditCalculation.boxBreakdowns.map(b => ({ ...b, totalCost: 0 })) : chainCreditCalculation.boxBreakdowns,
+      boxCreditBreakdowns: chainCreditCalculation.boxBreakdowns,
     };
-  }, [chainDraft, saveToHistory, account, isDevMode]);
+  }, [chainDraft, saveToHistory, account]);
 
   const deleteHistoryItem = (id: string) => {
     setHistory(prev => {
@@ -757,11 +1148,6 @@ export default function App() {
         return;
       }
 
-      if (hash === '#/settings' || hash === '#settings') {
-        setIsSettingsModalOpen(true);
-        return;
-      }
-
       if (hash && hash.length > 2) {
         // Check if there is a valid data payload to view
         const { payload, metadata: parsedMeta } = parseBittyHash(hash);
@@ -806,7 +1192,7 @@ export default function App() {
     if (hasTimeWindow) requiredCost += 10;
     if (hasAccessLimit) requiredCost += 10;
 
-    if (requiredCost > 0 && !isDevMode) {
+    if (requiredCost > 0) {
       const userIsPro = Boolean(proStatus.isPro || account.user?.tier === 'pro');
       const curCredits = account.user?.credits ?? 0;
       const canProceed = userIsPro || (account.isAuthenticated && curCredits >= requiredCost);
@@ -816,13 +1202,24 @@ export default function App() {
       }
     }
 
+    // 0. Ensure a persistent Box ID is allocated for this session so P2P mesh discoverability works
+    const paymentPolicy = metadata.lockConfig?.paymentPolicy;
+    const needsServerBox =
+      Boolean(metadata.lockConfig?.openLimit?.enabled) || Boolean(paymentPolicy);
+    const effectiveBoxId = metadata.boxId || (needsServerBox
+      ? `bbx_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 7)}`
+      : `box_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`
+    );
+    let updatedMetadata: BittyMetadata = { ...metadata, boxId: effectiveBoxId };
+    setMetadata(updatedMetadata);
+
     // 1. Determine target URL synchronously so window.open executes within the user click gesture
     let targetUrl = bittyUrl;
     if (!metadata.password) {
       try {
         const syncRes = compressContentSync(content, { mimeType: 'text/html' });
         if (syncRes) {
-          targetUrl = buildBittyUrl(syncRes.compressedUrl, metadata);
+          targetUrl = buildBittyUrl(syncRes.compressedUrl, updatedMetadata);
         }
       } catch {}
     }
@@ -851,15 +1248,15 @@ export default function App() {
       password: metadata.password,
     });
 
-    let updatedMetadata = { ...metadata };
-    if (metadata.lockConfig?.openLimit?.enabled && !metadata.boxId) {
-      const generatedBoxId = `bbx_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 7)}`;
-      updatedMetadata.boxId = generatedBoxId;
-      setMetadata(updatedMetadata);
+    if (needsServerBox && !metadata.boxId) {
+      const generatedBoxId = effectiveBoxId;
       try {
+        const createHeaders = (await authJsonHeadersAsync()) || { 'Content-Type': 'application/json' };
         await fetch('/api/boxes', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          // Include owner credentials so the box is attributable and can be
+          // monetized later (PUT /api/boxes/:id/policy requires box ownership).
+          headers: createHeaders,
           body: JSON.stringify({
             id: generatedBoxId,
             boxId: generatedBoxId,
@@ -868,6 +1265,29 @@ export default function App() {
             lockConfig: metadata.lockConfig,
           }),
         });
+
+        // Attach the x402 payment policy and publish. Publishing is required
+        // because unpublished boxes return 403 instead of 402.
+        if (paymentPolicy) {
+          const policyHeaders = await authJsonHeadersAsync();
+          if (policyHeaders) {
+            const policyRes = await fetch(`/api/boxes/${generatedBoxId}/policy`, {
+              method: 'PUT',
+              headers: policyHeaders,
+              body: JSON.stringify({
+                templateId: paymentPolicy.templateId,
+                config: paymentPolicy,
+              }),
+            });
+            const policyData = await policyRes.json().catch(() => null);
+            if (policyData?.success) {
+              await fetch(`/api/boxes/${generatedBoxId}/publish`, {
+                method: 'POST',
+                headers: policyHeaders,
+              }).catch(() => {});
+            }
+          }
+        }
       } catch {}
     }
 
@@ -985,12 +1405,25 @@ export default function App() {
 
   // System Share trigger
   const handleShare = async () => {
+    let shareUrl = bittyUrl;
+    if (!shareUrl) {
+      const effectiveBoxId = metadata.boxId || `box_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+      const updatedMeta = { ...metadata, boxId: effectiveBoxId };
+      setMetadata(updatedMeta);
+      try {
+        const syncRes = compressContentSync(content, { mimeType: 'text/html' });
+        if (syncRes) {
+          shareUrl = buildBittyUrl(syncRes.compressedUrl, updatedMeta);
+          setBittyUrl(shareUrl);
+        }
+      } catch {}
+    }
     if (navigator.share) {
       try {
         await navigator.share({
           title: metadata.title || 'Bitty Box',
           text: metadata.description || 'Check out this Bitty Box micro-webpage!',
-          url: bittyUrl || window.location.href,
+          url: shareUrl || window.location.href,
         });
       } catch {}
     } else {
@@ -1052,10 +1485,14 @@ export default function App() {
   // Switch from viewer back to studio editor with content
   const handleEditFromViewer = (newContent: string, newMeta: Partial<BittyMetadata>) => {
     if (newContent) setContent(newContent);
-    if (newMeta.title) {
-      setMetadata(prev => ({ ...prev, ...newMeta }));
-    }
-    window.history.replaceState(null, '', '/#/edit');
+    const activeBoxId = metadata.boxId || newMeta.boxId || currentBoxId;
+    setMetadata(prev => ({
+      ...prev,
+      ...newMeta,
+      ...(activeBoxId ? { boxId: activeBoxId } : {})
+    }));
+    const targetHash = activeBoxId ? `#/edit/box/${encodeURIComponent(activeBoxId)}` : '#/edit';
+    window.history.replaceState(null, '', `/${targetHash}`);
     setCurrentView('editor');
   };
 
@@ -1087,20 +1524,64 @@ export default function App() {
     );
   }
 
-  // If in viewer mode (generated site / capsule URL), render only the pure preview iframe with zero Bittybox UI
+  // If in viewer mode (generated site / capsule URL), render the pure preview iframe with floating P2P live overlay
   if (currentView === 'viewer') {
     return (
-      <BittyRenderer
-        hashFragment={hashFragment}
-        activeContent={hashFragment ? undefined : content}
-        metadata={metadata}
-        onNextChainBox={metadata.chain?.nextUrl ? () => { window.location.href = metadata.chain!.nextUrl!; } : undefined}
-        onEdit={handleEditFromViewer}
-        onHome={handleGoToHomePage}
-        onOpenQr={() => setIsQrOpen(true)}
-        onShare={handleShare}
-        onCloseSession={handleRequestCloseSession}
-      />
+      <div className="relative w-screen h-screen overflow-hidden">
+        <BittyRenderer
+          hashFragment={hashFragment}
+          activeContent={hashFragment ? undefined : content}
+          metadata={metadata}
+          onNextChainBox={metadata.chain?.nextUrl ? () => { window.location.href = metadata.chain!.nextUrl!; } : undefined}
+          onEdit={handleEditFromViewer}
+          onHome={handleGoToHomePage}
+          onOpenQr={() => setIsQrOpen(true)}
+          onShare={handleShare}
+          onCloseSession={handleRequestCloseSession}
+          onUnlock={(pw) => setMetadata(prev => ({ ...prev, password: pw }))}
+        />
+
+        {/* Floating Live P2P Overlay for Viewer Mode */}
+        {currentBoxId && (
+          <div className="fixed top-3 left-3 z-[70] flex items-center gap-2 select-none">
+            <BittyLiveBadge
+              peerCount={livePeers.length}
+              peers={livePeers}
+              roomId={liveRoomId}
+              boxId={currentBoxId}
+              onEnableLive={handleEnableLive}
+              onSwitchToPrivate={handleSwitchToPrivate}
+              onToggleChat={handleToggleChat}
+              unreadChatCount={unreadChatCount}
+              shareUrl={liveShareUrl}
+            />
+            <button
+              onClick={() => handleEditFromViewer(content, metadata)}
+              className="px-2.5 py-1 rounded-full bg-slate-900/80 hover:bg-slate-800 border border-cyan-500/40 text-cyan-300 text-xs font-semibold flex items-center gap-1 cursor-pointer transition-all shadow-sm shadow-cyan-500/10 backdrop-blur-md"
+              title="Open Collaborative Studio Editor"
+            >
+              <span>Edit Box</span>
+            </button>
+          </div>
+        )}
+
+        {/* Live Ephemeral P2P Chat in Viewer Mode */}
+        <BittyLiveChat
+          isLive={Boolean(liveBoxId)}
+          isOpen={isChatOpen}
+          onClose={() => setIsChatOpen(false)}
+          onToggle={handleToggleChat}
+          messages={chatMessages}
+          onSendMessage={handleSendChatMessage}
+          peerCount={livePeers.length}
+          peers={livePeers}
+          onSwitchToPrivate={handleSwitchToPrivate}
+          unreadCount={unreadChatCount}
+          boxId={liveBoxId}
+          {...inviteChatProps}
+        />
+        <ConfettiClickFX />
+      </div>
     );
   }
 
@@ -1118,7 +1599,8 @@ export default function App() {
         isChainNextVisible={currentView === 'editor' && chainEnabled && isLastEditorSlide}
         chainNextLabel={isLastChainBox ? (chainTotal >= BITTY_CHAIN_MAX_PAGES ? 'MAX CHAIN' : 'ADD NEXT') : 'NEXT BOX'}
         chainNextDisabled={chainEnabled && isLastChainBox && chainTotal >= BITTY_CHAIN_MAX_PAGES}
-        topClassName="top-[calc(6.75rem+env(safe-area-inset-top))] lg:top-[calc(4rem+env(safe-area-inset-top))]"
+        activeLockCount={activeLockCount}
+        topClassName="top-[calc(6.6rem+env(safe-area-inset-top))] lg:top-[calc(4rem+1px+env(safe-area-inset-top))]"
       />
 
       {/* Top Cyber Navigation Bar */}
@@ -1133,8 +1615,6 @@ export default function App() {
         onExportZip={() => exportBittyToZip(content, metadata, bittyUrl)}
         onOpenTemplates={() => setIsLeftTemplatesPanelOpen(true)}
         onOpenTools={() => setIsRightToolsPanelOpen(true)}
-        onOpenSettings={() => setIsSettingsModalOpen(true)}
-        isDevMode={isDevMode}
         onStartTour={handleStartTour}
         onReplaySplash={() => setShowSplash(true)}
         isEncrypted={!!metadata.password}
@@ -1147,10 +1627,19 @@ export default function App() {
         onOpenPaywall={proStatus.openPaywall}
         user={account.user}
         isAuthenticated={account.isAuthenticated}
+        livePeerCount={livePeers.length}
+        livePeers={livePeers}
+        liveRoomId={liveRoomId}
+        liveBoxId={currentBoxId}
+        onEnableLive={handleEnableLive}
+        onSwitchToPrivate={handleSwitchToPrivate}
+        onToggleChat={handleToggleChat}
+        unreadChatCount={unreadChatCount}
+        liveShareUrl={liveShareUrl}
       />
 
       {/* Main Content Body with Motion View Transitions */}
-      <main className="flex-1 relative z-10 pt-[calc(6.75rem+env(safe-area-inset-top))] lg:pt-[calc(4rem+env(safe-area-inset-top))] pb-[calc(4.5rem+env(safe-area-inset-bottom))] lg:pb-16">
+      <main className="flex-1 relative z-10 pt-[calc(9.5rem+env(safe-area-inset-top))] lg:pt-[calc(6.5rem+env(safe-area-inset-top))] pb-[calc(4.5rem+env(safe-area-inset-bottom))] lg:pb-16">
         <AnimatePresence mode="wait">
           {currentView === 'editor' && (
             <motion.div
@@ -1169,7 +1658,6 @@ export default function App() {
                 bittyUrl={bittyUrl}
                 onGenerate={chainEnabled ? () => handleGenerateChain(content, metadata) : handleGenerate}
                 calculatedCreditCost={calculatedCreditCost}
-                isDevMode={isDevMode}
                 chainEnabled={chainEnabled}
                 chainIndex={chainCurrentIndex}
                 chainTotal={chainTotal}
@@ -1183,6 +1671,8 @@ export default function App() {
                 onDeleteChainPage={handleDeleteChainPage}
                 isPro={proStatus.isPro}
                 onOpenPaywall={proStatus.openPaywall}
+                paymentPolicy={metadata.lockConfig?.paymentPolicy}
+                onPaymentPolicyChange={handlePaymentPolicyChange}
               />
             </motion.div>
           )}
@@ -1197,7 +1687,6 @@ export default function App() {
             >
               <AccountDashboard
                 account={account}
-                onOpenSettings={() => setIsSettingsModalOpen(true)}
                 onNavigateToSlide01={() => setShowSplash(true)}
                 onOpenQr={(url) => {
                   setBittyUrl(url);
@@ -1229,6 +1718,7 @@ export default function App() {
                 onOpenQr={() => setIsQrOpen(true)}
                 onShare={handleShare}
                 onCloseSession={handleRequestCloseSession}
+                onUnlock={(pw) => setMetadata(prev => ({ ...prev, password: pw }))}
               />
             </motion.div>
           )}
@@ -1255,21 +1745,6 @@ export default function App() {
                 onDelete={deleteHistoryItem}
                 onClearAll={clearAllHistory}
                 onClose={() => setCurrentView('editor')}
-              />
-            </motion.div>
-          )}
-
-          {currentView === 'funding' && (
-            <motion.div
-              key="view-funding"
-              initial={{ opacity: 0, y: 14, scale: 0.99 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -14, scale: 0.99 }}
-              transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-            >
-              <FundingPage
-                onOpenEditor={() => setCurrentView('editor')}
-                onOpenAgents={() => setCurrentView('agents')}
               />
             </motion.div>
           )}
@@ -1308,6 +1783,21 @@ export default function App() {
               />
             </motion.div>
           )}
+
+          {currentView === 'funding' && (
+            <motion.div
+              key="view-funding"
+              initial={{ opacity: 0, y: 14, scale: 0.99 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -14, scale: 0.99 }}
+              transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <FundingPage
+                onOpenEditor={() => setCurrentView('editor')}
+                onOpenAgents={() => setCurrentView('agents')}
+              />
+            </motion.div>
+          )}
         </AnimatePresence>
       </main>
 
@@ -1343,7 +1833,6 @@ export default function App() {
       <StudioToolsSidePanel
         isOpen={isRightToolsPanelOpen}
         onClose={() => setIsRightToolsPanelOpen(false)}
-        onOpenSettings={() => setIsSettingsModalOpen(true)}
         account={account}
         onGenerate={handleGenerate}
         bittyUrl={bittyUrl}
@@ -1413,16 +1902,6 @@ export default function App() {
         onSwitchToPro={() => proStatus.setMode('pro')}
       />
 
-      {/* Settings Modal (Workspace & Dev Mode) */}
-      <SettingsModal
-        isOpen={isSettingsModalOpen}
-        onClose={() => setIsSettingsModalOpen(false)}
-        theme={workspaceTheme}
-        onThemeChange={setWorkspaceTheme}
-        mode={proStatus.mode}
-        onModeChange={proStatus.setMode}
-      />
-
       {/* Legal Modal (Terms of Service & Privacy Policy) */}
       <LegalModal
         isOpen={isLegalModalOpen}
@@ -1436,6 +1915,22 @@ export default function App() {
           <AnimatedSplash onComplete={() => setShowSplash(false)} />
         )}
       </AnimatePresence>
+
+      {/* Live Ephemeral P2P Chat */}
+      <BittyLiveChat
+        isLive={Boolean(liveBoxId)}
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+        onToggle={handleToggleChat}
+        messages={chatMessages}
+        onSendMessage={handleSendChatMessage}
+        peerCount={livePeers.length}
+        peers={livePeers}
+        onSwitchToPrivate={handleSwitchToPrivate}
+        unreadCount={unreadChatCount}
+        boxId={liveBoxId}
+        {...inviteChatProps}
+      />
     </div>
   );
 }

@@ -94,7 +94,7 @@ export const HoloGenerateButton: React.FC<HoloGenerateButtonProps> = ({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className={`button-container select-none relative ${className || 'my-6'}`}
+      className={`button-container select-none relative mx-auto ${className || 'my-6'}`}
     >
       {/* Press shockwave ring burst */}
       <AnimatePresence>
@@ -150,14 +150,14 @@ export const HoloGenerateButton: React.FC<HoloGenerateButtonProps> = ({
 
       <motion.button
         id="holo-generate-btn"
-        className="holo-button relative cursor-pointer holo-btn-idle"
+        className="holo-button relative cursor-pointer holo-btn-idle mx-auto"
         onClick={handleClick}
         type="button"
         whileHover={{ scale: 1.025, transition: { duration: 0.2 } }}
         whileTap={{ scale: 0.96 }}
         title="Generate & Copy shareable Bitty Box URL"
       >
-        <div className="button-text flex items-center justify-center gap-2">
+        <div className="button-text w-full flex items-center justify-center gap-2">
           <AnimatePresence mode="wait">
             {isCopied ? (
               <motion.div
@@ -166,10 +166,11 @@ export const HoloGenerateButton: React.FC<HoloGenerateButtonProps> = ({
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.8, opacity: 0 }}
                 transition={{ type: "spring", stiffness: 500, damping: 25 }}
-                className="flex items-center gap-2"
+                className="flex items-center justify-center gap-2"
               >
-                <Check className="w-5 h-5 text-teal-300 animate-bounce" />
-                <span className="text-teal-200">LINK COPIED!</span>
+                <Check className="w-5 h-5 text-teal-300 animate-bounce shrink-0" />
+                <span className="text-teal-200">{label === 'GENERATE BOX' ? 'LINK COPIED!' : 'COPIED!'}</span>
+                <span className="w-5 h-5 shrink-0 pointer-events-none" aria-hidden="true" />
               </motion.div>
             ) : isLoading ? (
               <motion.div
@@ -177,10 +178,11 @@ export const HoloGenerateButton: React.FC<HoloGenerateButtonProps> = ({
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.8, opacity: 0 }}
-                className="flex items-center gap-2"
+                className="flex items-center justify-center gap-2"
               >
-                <Sparkles className="w-5 h-5 text-fuchsia-400 animate-spin" />
+                <Sparkles className="w-5 h-5 text-fuchsia-400 animate-spin shrink-0" />
                 <span>GENERATING...</span>
+                <span className="w-5 h-5 shrink-0 pointer-events-none" aria-hidden="true" />
               </motion.div>
             ) : (
               <motion.div
@@ -188,10 +190,11 @@ export const HoloGenerateButton: React.FC<HoloGenerateButtonProps> = ({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="flex items-center gap-2"
+                className="flex items-center justify-center gap-2"
               >
-                <Zap className={`w-4 h-4 text-cyan-300 ${isPressed ? 'animate-bounce' : 'animate-pulse'}`} />
+                <Zap className={`w-4 h-4 text-cyan-300 shrink-0 ${isPressed ? 'animate-bounce' : 'animate-pulse'}`} />
                 <span>{label}</span>
+                <span className="w-4 h-4 shrink-0 pointer-events-none" aria-hidden="true" />
               </motion.div>
             )}
           </AnimatePresence>
