@@ -246,7 +246,7 @@ export const BittyStageView: React.FC<BittyStageViewProps> = (props) => {
     <StageProvider
       initial={{
         content: props.content,
-        title: props.metadata.title || 'My Box',
+        title: props.metadata.title ?? 'My Box',
         description: props.metadata.description || '',
         favicon: props.metadata.favicon || '📦',
         password: props.metadata.password || '',

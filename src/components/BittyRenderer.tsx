@@ -260,22 +260,60 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
     if (targetHash && targetHash.trim()) {
       loadData();
     }
+
+    // Check if a magic key is passed via URL query or hash parameter (e.g. ?key=MK-... or #key=MK-...)
+    if (typeof window !== 'undefined') {
+      try {
+        const searchParams = new URLSearchParams(window.location.search);
+        const hashStr = window.location.hash || '';
+        const hashQuery = hashStr.includes('?') ? hashStr.slice(hashStr.indexOf('?')) : '';
+        const hashParams = new URLSearchParams(hashQuery);
+        const urlKey = searchParams.get('key') || searchParams.get('magicKey') || hashParams.get('key') || hashParams.get('magicKey');
+        if (urlKey && urlKey.trim()) {
+          const rawKey = urlKey.trim();
+          const storedMagic = (metadata?.password || '').trim();
+          const cleanKey = /^MK-/i.test(storedMagic)
+            ? (() => {
+                const c = rawKey.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                const b = c.startsWith('MK') ? c.slice(2) : c;
+                const a = b.slice(0, 4), d = b.slice(4, 8);
+                return d ? `MK-${a}-${d}` : a ? `MK-${a}` : 'MK-';
+              })()
+            : rawKey;
+          setPasswordInput(cleanKey);
+          if (targetHash && targetHash.trim()) {
+            loadData(cleanKey);
+          }
+        }
+      } catch {}
+    }
   }, [hashFragment, hasLock, hasPasswordLock, twBlocked, quotaBlocked, activeContent]);
 
   const handlePasswordSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!passwordInput.trim()) return;
-    if (passwordInput.trim().length < 8) {
-      setError('Passcode must be at least 8 digits.');
+    if (passwordInput.trim().length < 4) {
+      setError('Passcode or magic key must be at least 4 characters.');
       setShake(true);
       return;
     }
 
     const targetHash = effectiveHash;
+    // Normalise the submitted secret identically for comparison AND for key
+    // derivation. A One-Time Magic Key may be typed with or without its dashes
+    // (and in any case) and must still unlock.
+    const canonicalSecret = (raw: string, stored?: string): string => {
+      if (!/^MK-/i.test((stored || '').trim())) return (raw || '').trim();
+      const c = (raw || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+      const b = c.startsWith('MK') ? c.slice(2) : c;
+      const a = b.slice(0, 4), d = b.slice(4, 8);
+      return d ? `MK-${a}-${d}` : a ? `MK-${a}` : 'MK-';
+    };
+    const submittedSecret = canonicalSecret(passwordInput, metadata?.password);
     // Preview mode: activeContent provided without cipher fragment
     if ((!targetHash || !isEncryptedFragment) && activeContent && metadata?.password) {
-      if (passwordInput.trim() !== metadata.password.trim()) {
-        setError('Incorrect passcode. Please check and try again.');
+      if (submittedSecret !== canonicalSecret(metadata.password, metadata.password)) {
+        setError('Incorrect passcode or key. Please check and try again.');
         setShake(false);
         requestAnimationFrame(() => requestAnimationFrame(() => setShake(true)));
         return;
@@ -291,7 +329,7 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
         }
       }
       setUnlocking(true);
-      onUnlock?.(passwordInput.trim());
+      onUnlock?.(submittedSecret);
       window.setTimeout(() => {
         setNeedsPassword(false);
         setIsUnlocked(true);
@@ -300,7 +338,7 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
       return;
     }
 
-    loadData(passwordInput.trim());
+    loadData(submittedSecret);
   };
 
   // Check box quota status from server if boxId is present and quota is enabled
@@ -681,27 +719,23 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
 
               <div>
                 <div className="flex items-center justify-between text-[11px] text-fuchsia-300 mb-1.5 uppercase tracking-wider">
-                  <span>NUMERICAL PASSCODE</span>
-                  <span className="text-fuchsia-400/80 text-[10px]">{passwordInput.length} / 12 DIGITS</span>
+                  <span>{passwordInput.startsWith('MK-') || (!/^\d*$/.test(passwordInput) && passwordInput.length > 0) ? 'ONE-TIME MAGIC KEY' : 'PASSCODE / MAGIC KEY'}</span>
+                  <span className="text-fuchsia-400/80 text-[10px]">{passwordInput.length} CHARS</span>
                 </div>
                 <div className="relative">
                   <motion.input
                     animate={shake ? { x: [-10, 10, -8, 8, -4, 4, 0] } : {}}
                     transition={{ duration: 0.4 }}
                     type={showPassword ? 'text' : 'password'}
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    maxLength={12}
-                    minLength={8}
+                    maxLength={64}
                     value={passwordInput}
                     onChange={e => {
-                      const numbersOnly = e.target.value.replace(/\D/g, '').slice(0, 12);
-                      setPasswordInput(numbersOnly);
+                      setPasswordInput(e.target.value);
                       if (error) setError(null);
                     }}
-                    placeholder="Enter 8-12 digit passcode..."
+                    placeholder="Enter passcode or magic key..."
                     autoFocus
-                    className="w-full bg-[#090314] border border-fuchsia-500/40 rounded-xl pl-4 pr-11 py-3 text-center text-lg tracking-[0.25em] text-white placeholder:text-purple-400/40 placeholder:text-xs placeholder:tracking-normal focus:outline-none focus:border-fuchsia-400 focus:ring-1 focus:ring-fuchsia-400"
+                    className="w-full bg-[#090314] border border-fuchsia-500/40 rounded-xl pl-4 pr-11 py-3 text-center text-base sm:text-lg tracking-[0.2em] text-white placeholder:text-purple-400/40 placeholder:text-xs placeholder:tracking-normal focus:outline-none focus:border-fuchsia-400 focus:ring-1 focus:ring-fuchsia-400 font-mono"
                     onAnimationEnd={() => setShake(false)}
                   />
                   <button

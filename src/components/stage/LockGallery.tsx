@@ -22,8 +22,8 @@ function isLockActive(
   switch (def.kind) {
     case 'passcode':
       return state.password.length > 0 && /^\d+$/.test(state.password);
-    case 'passphrase':
-      return state.password.length > 0 && /\D/.test(state.password);
+    case 'magic-key':
+      return state.password.length > 0 && (state.password.startsWith('MK-') || !/^\d+$/.test(state.password));
     case 'time-capsule':
       return state.timeLockEnabled && state.timeLockMode === 'range' && Boolean(state.timeOpenAt) && !state.timeLockAt;
     case 'burn':
@@ -207,6 +207,8 @@ const DEFAULT_THEME: LockColorTheme = {
 };
 
 const EXCLUDED_LOCK_IDS = new Set([
+  'passphrase',
+  'invite-code',
   'time-capsule',
   'tap-to-unseal',
   'totp',

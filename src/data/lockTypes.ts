@@ -47,6 +47,7 @@ export type LockKind =
   | 'countdown'
   | 'chain'
   | 'payment'
+  | 'magic-key'
   | 'soon';
 
 export interface LockTypeDef {
@@ -84,18 +85,6 @@ export const LOCK_TYPES: LockTypeDef[] = [
     useCase: 'Private notes, digital gifts, family links, and quick mobile unlocking.',
     icon: Hash,
     kind: 'passcode',
-    canGoLiveToday: true,
-  },
-  {
-    id: 'passphrase',
-    num: '02',
-    category: 'core',
-    name: 'Passphrase Lock',
-    tagline: 'Words & sentences',
-    description: 'A word or full-sentence secret processed through PBKDF2 or Argon2 key derivation.',
-    useCase: 'Higher-security letters, legal documents, and long-term secrets.',
-    icon: Type,
-    kind: 'passphrase',
     canGoLiveToday: true,
   },
   {
@@ -207,7 +196,7 @@ export const LOCK_TYPES: LockTypeDef[] = [
     description: 'Uses a single-use asymmetric, ephemeral key fragment to unlock one target Box.',
     useCase: 'Personalized VIP delivery without requiring recipient account registration.',
     icon: KeyRound,
-    kind: 'soon',
+    kind: 'magic-key',
     canGoLiveToday: true,
   },
 
@@ -227,22 +216,6 @@ export const LOCK_TYPES: LockTypeDef[] = [
     blockerCategory: 'Special Software Engineering',
     whyNotToday: 'TOTP RFC 6238 derivation requires trusted clock synchronization to prevent client device clock skew replay attacks.',
     plannedArch: 'Network Time Protocol (NTP) synchronized WebCrypto HMAC-SHA1 TOTP validator.',
-  },
-  {
-    id: 'signed-sender',
-    num: '12',
-    category: 'identity',
-    name: 'Signed Sender Lock',
-    tagline: 'Ed25519 signature',
-    description: 'The recipient browser validates an Ed25519 creator signature before decryption.',
-    useCase: 'Legal notices, creator drops, authentic communications, and tamper-resistant memos.',
-    icon: PenLine,
-    kind: 'soon',
-    canGoLiveToday: false,
-    blockerType: 'software',
-    blockerCategory: 'Special Software Engineering',
-    whyNotToday: 'Requires creator public key identity registry or Nostr NIP-07 extension signing integration.',
-    plannedArch: 'Ed25519 subtle crypto signature verification with decentralized Nostr public key proofs.',
   },
   {
     id: 'recipient-email',
@@ -286,7 +259,11 @@ export const LOCK_TYPES: LockTypeDef[] = [
     useCase: 'Private alpha communities, secret societies, club access, and gated launches.',
     icon: Ticket,
     kind: 'soon',
-    canGoLiveToday: true,
+    canGoLiveToday: false,
+    blockerType: 'software',
+    blockerCategory: 'Special Software Engineering',
+    whyNotToday: 'P2P invite-only rendezvous is managed directly via the Live Chat interface; retired from editor locks.',
+    plannedArch: 'Trystero WebRTC ephemeral signaling with scoped box token validation.',
   },
   {
     id: 'approval',
@@ -339,22 +316,6 @@ export const LOCK_TYPES: LockTypeDef[] = [
 
   // ── Contextual locks ────────────────────────────────────────
   {
-    id: 'location',
-    num: '19',
-    category: 'contextual',
-    name: 'Location Lock',
-    tagline: 'GPS radius',
-    description: 'Verifies that the recipient’s device is within a designated GPS radius.',
-    useCase: 'Physical scavenger hunts, museum tours, real-estate walkthroughs, and geo-drops.',
-    icon: MapPin,
-    kind: 'soon',
-    canGoLiveToday: false,
-    blockerType: 'software',
-    blockerCategory: 'Special Software Engineering',
-    whyNotToday: 'Client-side GPS coordinates are easily spoofed without cryptographic location attestation or cell-tower proofs.',
-    plannedArch: 'Browser Geolocation API combined with IP geofencing and zero-knowledge location proximity proofs.',
-  },
-  {
     id: 'proximity',
     num: '20',
     category: 'contextual',
@@ -401,38 +362,6 @@ export const LOCK_TYPES: LockTypeDef[] = [
     blockerCategory: 'Special Software Engineering',
     whyNotToday: 'Cross-origin and incognito boundaries isolate IndexedDB storage, requiring device backup recovery fallback.',
     plannedArch: 'IndexedDB non-extractable CryptoKey storage with WebAuthn PRF fallback derivation.',
-  },
-  {
-    id: 'puzzle',
-    num: '23',
-    category: 'contextual',
-    name: 'Puzzle Lock',
-    tagline: 'Riddles & ciphers',
-    description: 'Unlocks after correctly solving an in-browser riddle, cipher, or mini-game.',
-    useCase: 'ARGs, romantic Easter eggs, educational quests, and hacker recruitment.',
-    icon: Puzzle,
-    kind: 'soon',
-    canGoLiveToday: false,
-    blockerType: 'software',
-    blockerCategory: 'Special Software Engineering',
-    whyNotToday: 'Requires interactive puzzle verification engine without leaking solution plaintext in client bytecode.',
-    plannedArch: 'ZK-SNARK proof-of-solution or Argon2id key derivation from hashed answer normalize step.',
-  },
-  {
-    id: 'proof-of-human',
-    num: '24',
-    category: 'contextual',
-    name: 'Proof-of-Human Lock',
-    tagline: 'Anti-bot challenge',
-    description: 'Uses an interactive zero-knowledge puzzle or gesture challenge to stop automated scrapers and bots.',
-    useCase: 'Public links protected from web crawlers and AI scraping.',
-    icon: Bot,
-    kind: 'soon',
-    canGoLiveToday: false,
-    blockerType: 'software',
-    blockerCategory: 'Special Software Engineering',
-    whyNotToday: 'Requires privacy-preserving proof-of-humanity or proof-of-work challenge verification.',
-    plannedArch: 'mCaptcha / Altcha zero-knowledge SHA-256 proof-of-work challenge widget.',
   },
   {
     id: 'payment',

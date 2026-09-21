@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { X, Check, Trash2, Eye, EyeOff, Clock, Lock } from 'lucide-react';
+import { X, Check, Trash2, Eye, EyeOff, Clock, Lock, Mail, Send, Copy, RefreshCw, Sparkles, CheckCircle2 } from 'lucide-react';
 import { useStage, useDraft } from '../../stores/stageStore';
 import { getLockType } from '../../data/lockTypes';
 
@@ -13,6 +13,291 @@ interface LockConfigModalProps {
 const inputCls =
   'w-full rounded-xl border border-cyan-400/40 bg-[#02010a] px-3 py-2.5 text-sm text-cyan-100 placeholder:text-cyan-400/30 outline-none focus:border-cyan-300 focus:ring-2 focus:ring-cyan-500/25 transition-all select-text';
 const labelCls = 'text-[11px] font-bold text-cyan-300 tracking-wide';
+
+function generateNewMagicKey(): string {
+  const chars = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
+  let seg1 = '';
+  let seg2 = '';
+  for (let i = 0; i < 4; i++) {
+    seg1 += chars.charAt(Math.floor(Math.random() * chars.length));
+    seg2 += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return `MK-${seg1}-${seg2}`;
+}
+
+// Accepts whatever the user types — dashes or not, upper or lower case — and
+// returns the canonical MK-XXXX-XXXX shape. The dashes come from the field
+// itself so the user never has to type one or tab past one.
+function formatMagicKey(raw: string): string {
+  const cleaned = (raw || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const body = cleaned.startsWith('MK') ? cleaned.slice(2) : cleaned;
+  const a = body.slice(0, 4);
+  const b = body.slice(4, 8);
+  if (b) return `MK-${a}-${b}`;
+  if (a) return `MK-${a}`;
+  return 'MK-';
+}
+
+interface MagicKeySetupBodyProps {
+  draftPassword: string;
+  boxTitle: string;
+  onApplyKey: (key: string) => void;
+  onRemoveKey?: () => void;
+  isConfigured: boolean;
+  onClose: () => void;
+}
+
+const MagicKeySetupBody: React.FC<MagicKeySetupBodyProps> = ({
+  draftPassword,
+  boxTitle,
+  onApplyKey,
+  onRemoveKey,
+  isConfigured,
+  onClose,
+}) => {
+  const [magicKey, setMagicKey] = useState<string>(() => {
+    return draftPassword && draftPassword.trim().length >= 4 ? formatMagicKey(draftPassword) : generateNewMagicKey();
+  });
+  const [recipientEmail, setRecipientEmail] = useState('');
+  const [recipientName, setRecipientName] = useState('');
+  const [personalNote, setPersonalNote] = useState('');
+  const [isSending, setIsSending] = useState(false);
+  const [sendResult, setSendResult] = useState<{ success: boolean; id?: string; error?: string } | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(magicKey);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {}
+  };
+
+  const handleRegenerate = () => {
+    const newKey = generateNewMagicKey();
+    setMagicKey(newKey);
+    setSendResult(null);
+  };
+
+  const handleSendAndApply = async () => {
+    if (!recipientEmail || !recipientEmail.includes('@')) {
+      setSendResult({ success: false, error: 'Please enter a valid recipient email address.' });
+      return;
+    }
+    setIsSending(true);
+    setSendResult(null);
+    try {
+      const res = await fetch('/api/magic-key/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: recipientEmail.trim(),
+          recipientName: recipientName.trim(),
+          magicKey: magicKey.trim(),
+          boxTitle: boxTitle || 'Untitled Bitty Box',
+          note: personalNote.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setSendResult({ success: false, error: data.error || 'Failed to dispatch email via Resend.' });
+      } else {
+        setSendResult({ success: true, id: data.id });
+        onApplyKey(magicKey.trim());
+      }
+    } catch (err: any) {
+      setSendResult({ success: false, error: err.message || 'Network error dispatching email via Resend.' });
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const handleApplyWithoutEmail = () => {
+    onApplyKey(magicKey.trim());
+    onClose();
+  };
+
+  return (
+    <div className="space-y-3 font-mono">
+      {/* Key Display Card */}
+      <div className="rounded-xl border border-yellow-500/40 bg-[#070514]/90 p-3.5 space-y-2 shadow-[0_0_20px_rgba(234,179,8,0.15)]">
+        <div className="flex items-center justify-between">
+          <label className="text-[11px] font-bold text-yellow-300 uppercase tracking-wider flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-yellow-400" />
+            <span>One-Time Magic Key</span>
+          </label>
+          <span className="text-[9px] text-yellow-400/80 bg-yellow-950/70 border border-yellow-600/40 px-2 py-0.5 rounded-full font-bold">
+            EPHEMERAL SECRET
+          </span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={magicKey}
+            inputMode="text"
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="characters"
+            spellCheck={false}
+            maxLength={11}
+            onChange={e => {
+              setMagicKey(formatMagicKey(e.target.value));
+              setSendResult(null);
+            }}
+            className="flex-1 bg-[#02010a] border border-yellow-500/50 rounded-xl px-3 py-2.5 text-center text-base sm:text-lg font-bold tracking-[0.2em] text-yellow-200 shadow-[inset_0_0_15px_rgba(234,179,8,0.15)] focus:border-yellow-300 focus:outline-none select-text"
+            placeholder="MK-XXXX-XXXX"
+          />
+          <button
+            type="button"
+            onClick={handleRegenerate}
+            className="p-2.5 rounded-xl border border-yellow-500/40 bg-yellow-950/50 hover:bg-yellow-900/60 text-yellow-300 transition-all cursor-pointer"
+            title="Generate new random key"
+          >
+            <RefreshCw className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            onClick={handleCopy}
+            className="p-2.5 rounded-xl border border-yellow-500/40 bg-yellow-950/50 hover:bg-yellow-900/60 text-yellow-300 transition-all cursor-pointer min-w-[38px] flex items-center justify-center"
+            title="Copy magic key"
+          >
+            {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+          </button>
+        </div>
+        <p className="text-[10px] text-yellow-300/60 leading-tight">
+          This key is required to decrypt the Box ciphertext. Deliver it to your designated recipient.
+        </p>
+      </div>
+
+      {/* Dedicated Recipient Email Delivery Form */}
+      <div className="rounded-xl border border-cyan-500/30 bg-[#040210]/90 p-3.5 space-y-2.5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5 text-xs font-bold text-cyan-200">
+            <Mail className="w-3.5 h-3.5 text-cyan-400" />
+            <span>DELIVER VIA RESEND</span>
+          </div>
+          <span className="inline-flex items-center gap-1 text-[9px] text-emerald-400 bg-emerald-950/60 border border-emerald-500/40 px-2 py-0.5 rounded-full font-bold">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            LIVE EMAIL
+          </span>
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-[10px] font-bold text-cyan-300/90 uppercase tracking-wider">Recipient Email *</label>
+          <input
+            type="email"
+            value={recipientEmail}
+            onChange={e => {
+              setRecipientEmail(e.target.value);
+              if (sendResult) setSendResult(null);
+            }}
+            placeholder="recipient@example.com"
+            className="w-full rounded-xl border border-cyan-400/40 bg-[#02010a] px-3 py-2 text-xs sm:text-sm text-cyan-100 placeholder:text-cyan-400/30 outline-none focus:border-cyan-300 focus:ring-1 focus:ring-cyan-400 select-text"
+          />
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-[10px] font-bold text-cyan-300/90 uppercase tracking-wider">Recipient Name (Optional)</label>
+          <input
+            type="text"
+            value={recipientName}
+            onChange={e => setRecipientName(e.target.value)}
+            placeholder="e.g. VIP Guest"
+            className="w-full rounded-xl border border-cyan-400/40 bg-[#02010a] px-3 py-2 text-xs sm:text-sm text-cyan-100 placeholder:text-cyan-400/30 outline-none focus:border-cyan-300 focus:ring-1 focus:ring-cyan-400 select-text"
+          />
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-[10px] font-bold text-cyan-300/90 uppercase tracking-wider">Personal Memo (Optional)</label>
+          <textarea
+            rows={2}
+            value={personalNote}
+            onChange={e => setPersonalNote(e.target.value)}
+            placeholder="Optional personal message included in the delivery email..."
+            className="w-full rounded-xl border border-cyan-400/40 bg-[#02010a] px-3 py-2 text-xs text-cyan-100 placeholder:text-cyan-400/30 outline-none focus:border-cyan-300 focus:ring-1 focus:ring-cyan-400 select-text resize-none"
+          />
+        </div>
+      </div>
+
+      {/* Result feedback alert */}
+      {sendResult?.success && (
+        <div className="rounded-xl border border-emerald-500/50 bg-emerald-950/80 p-3 text-xs text-emerald-200 flex items-start gap-2 shadow-[0_0_15px_rgba(16,185,129,0.3)]">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+          <div className="min-w-0 flex-1">
+            <p className="font-bold text-emerald-300">Magic Key Sent Successfully!</p>
+            <p className="text-[11px] text-emerald-200/80 mt-0.5">
+              Delivered to <strong className="text-white">{recipientEmail}</strong> via Resend.
+            </p>
+            {sendResult.id && (
+              <p className="text-[9px] font-mono text-emerald-400/70 mt-0.5 truncate">Delivery ID: {sendResult.id}</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {sendResult?.error && (
+        <div className="rounded-xl border border-rose-500/50 bg-rose-950/80 p-3 text-xs text-rose-200 flex items-start gap-2 shadow-[0_0_15px_rgba(244,63,94,0.3)]">
+          <X className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+          <div className="min-w-0 flex-1">
+            <p className="font-bold text-rose-300">Delivery Failed</p>
+            <p className="text-[11px] text-rose-200/80 mt-0.5">{sendResult.error}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Actions */}
+      <div className="flex flex-col gap-2 pt-1">
+        <button
+          type="button"
+          onClick={handleSendAndApply}
+          disabled={isSending || !magicKey || magicKey.trim().length < 4}
+          className={`w-full py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+            isSending
+              ? 'bg-yellow-950/60 border border-yellow-500/40 text-yellow-400 animate-pulse'
+              : 'bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500 text-slate-950 shadow-[0_0_20px_rgba(234,179,8,0.4)] hover:brightness-110 active:scale-[0.99]'
+          }`}
+        >
+          {isSending ? (
+            <>
+              <RefreshCw className="w-4 h-4 animate-spin" />
+              <span>Sending Key via Resend...</span>
+            </>
+          ) : (
+            <>
+              <Send className="w-4 h-4" />
+              <span>Send Magic Key &amp; Apply Lock</span>
+            </>
+          )}
+        </button>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleApplyWithoutEmail}
+            disabled={!magicKey || magicKey.trim().length < 4}
+            className="flex-1 py-2 px-3 rounded-xl text-xs font-bold border border-yellow-500/30 bg-yellow-950/40 text-yellow-300 hover:bg-yellow-900/50 hover:border-yellow-400/60 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+            title="Apply this magic key without sending an email"
+          >
+            <Check className="w-3.5 h-3.5" />
+            <span>Apply Key Only</span>
+          </button>
+
+          {isConfigured && (
+            <button
+              type="button"
+              onClick={onRemoveKey}
+              className="px-3 py-2 rounded-xl bg-rose-950/60 border border-rose-500/30 text-rose-300 text-xs hover:bg-rose-900/50 transition-all cursor-pointer flex items-center justify-center"
+              title="Disable One-Time Magic Key lock"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export const LockConfigModal: React.FC<LockConfigModalProps> = ({
   lockId,
@@ -51,6 +336,8 @@ export const LockConfigModal: React.FC<LockConfigModalProps> = ({
     switch (lock.kind) {
       case 'passcode':
         return state.password.length > 0 && /^\d+$/.test(state.password);
+      case 'magic-key':
+        return state.password.length > 0 && (state.password.startsWith('MK-') || !/^\d+$/.test(state.password));
       case 'passphrase':
         return state.password.length > 0 && /\D/.test(state.password);
       case 'time-capsule':
@@ -72,6 +359,21 @@ export const LockConfigModal: React.FC<LockConfigModalProps> = ({
 
   const renderBody = () => {
     switch (lock.kind) {
+      case 'magic-key': {
+        return (
+          <MagicKeySetupBody
+            draftPassword={draft.password}
+            boxTitle={state.title}
+            onApplyKey={(key) => {
+              draft.setPassword(key);
+              commitDraft();
+            }}
+            onRemoveKey={() => removeAndClose({ type: 'REMOVE_PASSWORD' })}
+            isConfigured={isConfigured()}
+            onClose={onClose}
+          />
+        );
+      }
       case 'passcode': {
         const valid = draft.password.length >= 8 && draft.password.length <= 12 && /^\d*$/.test(draft.password);
         const apply = () => {
@@ -534,7 +836,16 @@ export const LockConfigModal: React.FC<LockConfigModalProps> = ({
   const Icon = lock.icon;
   const configured = isConfigured();
   const timedKinds: Array<string> = ['time-capsule', 'access-window', 'countdown'];
-  const accent = lock.kind === 'passcode' || lock.kind === 'passphrase' ? 'fuchsia' : timedKinds.includes(lock.kind) ? 'amber' : lock.kind === 'burn' || lock.kind === 'max-opens' ? 'emerald' : 'cyan';
+  const accent =
+    lock.kind === 'magic-key' || lock.id === 'one-time-magic-key'
+      ? 'yellow'
+      : lock.kind === 'passcode' || lock.kind === 'passphrase'
+        ? 'fuchsia'
+        : timedKinds.includes(lock.kind)
+          ? 'amber'
+          : lock.kind === 'burn' || lock.kind === 'max-opens'
+            ? 'emerald'
+            : 'cyan';
 
   return (
     <div
@@ -545,37 +856,43 @@ export const LockConfigModal: React.FC<LockConfigModalProps> = ({
     >
       <div
         className={`max-h-[92vh] w-full max-w-md overflow-y-auto rounded-2xl border bg-[#050314]/95 p-4 sm:p-5 shadow-[0_0_50px_rgba(0,242,255,0.2)] ${
-          accent === 'fuchsia'
-            ? 'border-fuchsia-500/40'
-            : accent === 'amber'
-              ? 'border-amber-500/40'
-              : accent === 'emerald'
-                ? 'border-emerald-500/40'
-                : 'border-cyan-500/40'
+          accent === 'yellow'
+            ? 'border-yellow-500/40 shadow-[0_0_50px_rgba(234,179,8,0.2)]'
+            : accent === 'fuchsia'
+              ? 'border-fuchsia-500/40'
+              : accent === 'amber'
+                ? 'border-amber-500/40'
+                : accent === 'emerald'
+                  ? 'border-emerald-500/40'
+                  : 'border-cyan-500/40'
         }`}
       >
         <div className="flex items-start justify-between gap-2 mb-1">
           <div className="flex items-center gap-2.5">
             <div
               className={`w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 ${
-                accent === 'fuchsia'
-                  ? 'bg-fuchsia-950/80 border-fuchsia-500/40'
-                  : accent === 'amber'
-                    ? 'bg-amber-950/80 border-amber-500/40'
-                    : accent === 'emerald'
-                      ? 'bg-emerald-950/80 border-emerald-500/40'
-                      : 'bg-cyan-950/80 border-cyan-500/40'
+                accent === 'yellow'
+                  ? 'bg-yellow-950/80 border-yellow-500/40'
+                  : accent === 'fuchsia'
+                    ? 'bg-fuchsia-950/80 border-fuchsia-500/40'
+                    : accent === 'amber'
+                      ? 'bg-amber-950/80 border-amber-500/40'
+                      : accent === 'emerald'
+                        ? 'bg-emerald-950/80 border-emerald-500/40'
+                        : 'bg-cyan-950/80 border-cyan-500/40'
               }`}
             >
               <Icon
                 className={`w-4 h-4 ${
-                  accent === 'fuchsia'
-                    ? 'text-fuchsia-300'
-                    : accent === 'amber'
-                      ? 'text-amber-300'
-                      : accent === 'emerald'
-                        ? 'text-emerald-300'
-                        : 'text-cyan-300'
+                  accent === 'yellow'
+                    ? 'text-yellow-300'
+                    : accent === 'fuchsia'
+                      ? 'text-fuchsia-300'
+                      : accent === 'amber'
+                        ? 'text-amber-300'
+                        : accent === 'emerald'
+                          ? 'text-emerald-300'
+                          : 'text-cyan-300'
                 }`}
               />
             </div>
