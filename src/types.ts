@@ -41,6 +41,15 @@ export interface BittyMetadata {
       opensUsed?: number;
       showRemainingCount?: boolean;
     };
+    /**
+     * M-of-N unlock policy: how many of the active locks must be satisfied
+     * before the box decrypts. `required` of `total active locks`
+     * (e.g. required: 2 with 3 active locks ⇒ "2 of 3").
+     * Omitted = every active lock must be satisfied (AND).
+     */
+    unlockThreshold?: {
+      required?: number;
+    };
   };
 }
 

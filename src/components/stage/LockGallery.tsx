@@ -218,6 +218,9 @@ const EXCLUDED_LOCK_IDS = new Set([
   'browser-key',
   'puzzle',
   'proof-of-human',
+  // Chain Key is no longer a gallery tile — it now lives as the shimmering
+  // CHAIN button in the editor header (clone this page / start blank).
+  'chain-key',
 ]);
 
 export const LockGallery: React.FC<LockGalleryProps> = ({

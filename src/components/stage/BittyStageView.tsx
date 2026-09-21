@@ -155,6 +155,15 @@ const StageDispatcher: React.FC<BittyStageViewProps> = (props) => {
       delete nextLockConfig.openLimit;
     }
 
+    // M-of-N unlock policy. 0 means "every active lock must be satisfied"
+    // (the unchanged AND default), so the field is only persisted when the
+    // creator deliberately chose a partial threshold.
+    if (state.thresholdRequired > 0) {
+      nextLockConfig.unlockThreshold = { required: state.thresholdRequired };
+    } else {
+      delete nextLockConfig.unlockThreshold;
+    }
+
     if (props.paymentPolicy) nextLockConfig.paymentPolicy = props.paymentPolicy;
     else delete nextLockConfig.paymentPolicy;
 
@@ -190,6 +199,7 @@ const StageDispatcher: React.FC<BittyStageViewProps> = (props) => {
     state.accessLimitEnabled,
     state.accessLimitMaxOpens,
     state.showRemainingAccessCount,
+    state.thresholdRequired,
     props.paymentPolicy,
   ]);
 

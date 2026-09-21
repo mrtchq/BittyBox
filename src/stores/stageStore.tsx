@@ -39,6 +39,8 @@ export interface BoxDraft {
   agenticEnabled: boolean;
   agenticRequireMcp: boolean;
   agenticRoleFilter: string;
+  // Unlock threshold: how many active locks must be satisfied (0 = all)
+  thresholdRequired: number;
 }
 
 export interface StageState {
@@ -72,6 +74,9 @@ export interface StageState {
   agenticRequireMcp: boolean;
   agenticRoleFilter: string;
   boxId?: string;
+
+  // Unlock threshold: how many active locks must be satisfied (0 = all)
+  thresholdRequired: number;
 
   // Draft state for cancelable editing
   draft: BoxDraft | null;
@@ -120,7 +125,10 @@ export type StageAction =
   | { type: 'REMOVE_TIME_LOCK' }
   | { type: 'REMOVE_ACCESS_LIMIT' }
   | { type: 'REMOVE_ENCRYPTION' }
-  | { type: 'REMOVE_AGENTIC_LOCK' };
+  | { type: 'REMOVE_AGENTIC_LOCK' }
+
+  // Unlock threshold (M-of-N)
+  | { type: 'SET_THRESHOLD_REQUIRED'; required: number };
 
 // ============================================================
 // Initial State
@@ -152,6 +160,7 @@ const initialState: StageState = {
   agenticRequireMcp: true,
   agenticRoleFilter: '',
   boxId: undefined,
+  thresholdRequired: 0,
   draft: null,
 };
 
@@ -175,6 +184,7 @@ function buildDraft(state: StageState): BoxDraft {
     agenticEnabled: state.agenticEnabled,
     agenticRequireMcp: state.agenticRequireMcp,
     agenticRoleFilter: state.agenticRoleFilter,
+    thresholdRequired: state.thresholdRequired,
   };
 }
 
@@ -276,6 +286,14 @@ export function stageReducer(state: StageState, action: StageAction): StageState
       return state.draft ? { ...state, draft: { ...state.draft, agenticRoleFilter: action.role } } : state;
 
     // Remove locks immediately
+    case 'SET_THRESHOLD_REQUIRED':
+      return {
+        ...state,
+        thresholdRequired: Math.max(0, action.required),
+        draft: state.draft
+          ? { ...state.draft, thresholdRequired: Math.max(0, action.required) }
+          : null,
+      };
     case 'REMOVE_PASSWORD':
       return {
         ...state,
@@ -327,6 +345,7 @@ interface StageContextValue {
   setTitle: (title: string) => void;
   setDescription: (desc: string) => void;
   syncFromExternal: (payload: Partial<StageState>) => void;
+  setThresholdRequired: (required: number) => void;
 }
 
 const StageContext = createContext<StageContextValue | null>(null);
@@ -372,6 +391,10 @@ export function StageProvider({
     dispatch({ type: 'SET_DESCRIPTION', description });
   }, []);
 
+  const setThresholdRequired = useCallback((required: number) => {
+    dispatch({ type: 'SET_THRESHOLD_REQUIRED', required });
+  }, []);
+
   const syncFromExternal = useCallback((payload: Partial<StageState>) => {
     dispatch({ type: 'SYNC_FROM_EXTERNAL', payload });
   }, []);
@@ -390,6 +413,7 @@ export function StageProvider({
         setTitle,
         setDescription,
         syncFromExternal,
+        setThresholdRequired,
       }}
     >
       {children}
@@ -418,15 +442,21 @@ export function useActiveLocksList(): ActiveLockInfo[] {
   const { state } = useStage();
   const locks: ActiveLockInfo[] = [];
 
-  // Password
+  // Passcode / One-Time Magic Key. Both live in state.password; the *format*
+  // decides which lock the creator configured — an MK-XXXX-XXXX value is a
+  // One-Time Magic Key, anything else is a Passcode (numeric PIN).
   if (state.password.length > 0) {
-    const isComplete = state.password.length >= 8;
+    const magicKeyText = state.password.trim();
+    const isMagicKey = /^MK-/i.test(magicKeyText);
+    const isComplete = magicKeyText.length >= 8;
     locks.push({
       id: 'passwordLock',
-      label: 'Password',
+      label: isMagicKey ? 'Magic Key' : 'Passcode',
       iconType: 'password',
       status: isComplete ? 'active' : 'incomplete',
-      detail: isComplete ? `${state.password.length}-digit PIN` : 'Min 8 digits',
+      detail: isMagicKey
+        ? (isComplete ? 'One-time key' : 'Incomplete key')
+        : (isComplete ? `${state.password.length}-digit PIN` : 'Min 8 digits'),
     });
   }
 

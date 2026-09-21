@@ -3366,7 +3366,61 @@ body,
 @media (prefers-reduced-motion: reduce) {
   .holo-btn-idle::after,
   .holo-btn-idle,
-  .button-glitch-active {
+  .button-glitch-active,
+  .chain-shimmer-btn::after {
     animation: none !important;
   }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Chain Key button — relocated out of the lock gallery and into
+   the editor header, next to the credit cost. Shimmers/sweeps a
+   light sheen across the button to invite the press.
+   ───────────────────────────────────────────────────────────── */
+.chain-shimmer-btn {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background: linear-gradient(110deg, #062e33 0%, #0a4a52 46%, #062e33 100%);
+  border: 1px solid rgba(0, 242, 255, 0.55);
+  color: #a5f3fc;
+  box-shadow: 0 0 10px rgba(0, 242, 255, 0.25), inset 0 0 12px rgba(0, 242, 255, 0.08);
+  transition: box-shadow 0.25s ease, border-color 0.25s ease, transform 0.15s ease;
+}
+.chain-shimmer-btn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -150%;
+  width: 55%;
+  height: 100%;
+  background: linear-gradient(
+    100deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.55) 45%,
+    rgba(0, 242, 255, 0.5) 55%,
+    transparent 100%
+  );
+  transform: skewX(-18deg);
+  animation: chain-sheen 2.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+.chain-shimmer-btn:hover {
+  border-color: rgba(0, 242, 255, 0.95);
+  box-shadow: 0 0 22px rgba(0, 242, 255, 0.55), inset 0 0 16px rgba(0, 242, 255, 0.16);
+}
+.chain-shimmer-btn:active {
+  transform: scale(0.97);
+}
+.chain-shimmer-btn-active {
+  border-color: rgba(52, 211, 153, 0.85);
+  color: #6ee7b7;
+  background: linear-gradient(110deg, #04302a 0%, #065f46 46%, #04302a 100%);
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.45), inset 0 0 14px rgba(16, 185, 129, 0.12);
+}
+@keyframes chain-sheen {
+  0%   { left: -150%; }
+  55%  { left: 150%; }
+  100% { left: 150%; }
 }

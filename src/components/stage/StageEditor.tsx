@@ -9,8 +9,9 @@ import {
   Radio,
   GripVertical,
   X,
+  ShieldCheck,
 } from 'lucide-react';
-import { useStage, StageMode } from '../../stores/stageStore';
+import { useStage, StageMode, useActiveLocksList } from '../../stores/stageStore';
 import { ActiveLockChips } from './ActiveLockChips';
 import { LockGallery } from './LockGallery';
 import { HoloGenerateButton } from '../HoloGenerateButton';
@@ -98,10 +99,13 @@ export const StageEditor: React.FC<StageEditorProps> = ({
   paymentPolicy,
   onPaymentPolicyChange,
 }) => {
-  const { state, setTitle, setDescription, setContent, enterMode } = useStage();
+  const { state, setTitle, setDescription, setContent, enterMode, setThresholdRequired } = useStage();
+  const activeLocks = useActiveLocksList();
+  const lockCount = activeLocks.length;
   const [isCopied, setIsCopied] = useState(false);
   const [paymentPanelOpen, setPaymentPanelOpen] = useState(false);
   const [deleteConfirmIndex, setDeleteConfirmIndex] = useState<number | null>(null);
+  const [chainPromptOpen, setChainPromptOpen] = useState(false);
 
   useEffect(() => {
     if (deleteConfirmIndex === null) return;
@@ -122,6 +126,27 @@ export const StageEditor: React.FC<StageEditorProps> = ({
     }
   };
 
+  /**
+   * Chain Key entry point (relocated out of the lock gallery).
+   * Choosing a mode both enables the chain and appends the next page —
+   * `createChainDraftFromCurrent` sets `enabled: true`, so we must NOT
+   * also call onToggleChain here or the draft would be toggled twice.
+   */
+  const handleChainStart = (mode: 'clone' | 'scratch') => {
+    setChainPromptOpen(false);
+    if (!onCreateNextChainPage) {
+      if (!chainEnabled) onToggleChain?.(true);
+      return;
+    }
+    if (chainEnabled || chainTotal > 1) {
+      onCreateNextChainPage(mode);
+    } else {
+      // First press on a single box: enable the sequence, then add page two.
+      onToggleChain?.(true);
+      onCreateNextChainPage(mode);
+    }
+  };
+
   return (
     <div className="w-full flex flex-col gap-2 sm:gap-3.5 font-mono select-none">
       {/* Top Header Bar: Title, Byte Counter & Preview */}
@@ -137,7 +162,108 @@ export const StageEditor: React.FC<StageEditorProps> = ({
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          {/* Chain Key — moved here from the lock gallery. Shimmers to invite
+              the press; opens a prompt to clone this page or start blank. */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setChainPromptOpen(v => !v)}
+              className={`chain-shimmer-btn inline-flex items-center gap-1.5 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-bold tracking-wider cursor-pointer ${
+                chainEnabled ? 'chain-shimmer-btn-active' : ''
+              }`}
+              title="Chain Key — link this box into a sequence"
+              aria-haspopup="menu"
+              aria-expanded={chainPromptOpen}
+            >
+              <Link2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+              <span className="hidden xs:inline">CHAIN</span>
+              {chainEnabled && (
+                <span className="text-[9px] opacity-80 tabular-nums">
+                  {chainIndex + 1}/{chainTotal}
+                </span>
+              )}
+            </button>
+
+            <AnimatePresence>
+              {chainPromptOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setChainPromptOpen(false)}
+                    aria-hidden="true"
+                  />
+                  <motion.div
+                    initial={{ opacity: 0, y: -6, scale: 0.97 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -6, scale: 0.97 }}
+                    transition={{ duration: 0.16 }}
+                    className="absolute right-0 top-full mt-2 z-50 w-64 p-2 rounded-xl bg-[#050212]/98 border border-cyan-400/50 shadow-[0_0_30px_rgba(0,242,255,0.28)] backdrop-blur-xl"
+                    role="menu"
+                  >
+                    <div className="px-1.5 pb-1.5 mb-1 border-b border-cyan-500/20">
+                      <div className="text-[10px] font-bold text-cyan-300 uppercase tracking-wider">
+                        Chain Key
+                      </div>
+                      <div className="text-[9px] text-cyan-400/60">
+                        Add the next box in this sequence
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => handleChainStart('clone')}
+                      className="w-full flex items-start gap-2 p-2 rounded-lg text-left hover:bg-cyan-950/70 border border-transparent hover:border-cyan-400/40 transition-colors cursor-pointer"
+                    >
+                      <Copy className="w-3.5 h-3.5 text-cyan-300 mt-0.5 shrink-0" />
+                      <span className="min-w-0">
+                        <span className="block text-[11px] font-bold text-cyan-200">
+                          Clone this page
+                        </span>
+                        <span className="block text-[9px] text-cyan-400/60">
+                          Copy the current content &amp; locks
+                        </span>
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => handleChainStart('scratch')}
+                      className="w-full flex items-start gap-2 p-2 rounded-lg text-left hover:bg-cyan-950/70 border border-transparent hover:border-cyan-400/40 transition-colors cursor-pointer"
+                    >
+                      <FilePlus2 className="w-3.5 h-3.5 text-fuchsia-300 mt-0.5 shrink-0" />
+                      <span className="min-w-0">
+                        <span className="block text-[11px] font-bold text-fuchsia-200">
+                          Start with a blank slate
+                        </span>
+                        <span className="block text-[9px] text-fuchsia-400/60">
+                          Empty editor, no locks carried over
+                        </span>
+                      </span>
+                    </button>
+
+                    {chainEnabled && (
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                          setChainPromptOpen(false);
+                          onToggleChain?.(false);
+                        }}
+                        className="w-full mt-1 pt-1.5 border-t border-cyan-500/20 text-left text-[10px] text-rose-300/80 hover:text-rose-300 px-2 py-1 cursor-pointer"
+                      >
+                        Unlink chain
+                      </button>
+                    )}
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Credit cost — moved to the far right of the header */}
           <div
             className="flex items-center gap-1 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg bg-cyan-950/40 border border-cyan-500/20 text-cyan-300/80 text-[10px] sm:text-xs font-bold"
             title="Generation cost with active server locks"
@@ -217,6 +343,49 @@ export const StageEditor: React.FC<StageEditorProps> = ({
       {/* Persistent Active Locks Strip */}
       <div className="p-1.5 sm:p-2 rounded-xl bg-[#030112]/90 border border-cyan-500/20 flex flex-col gap-1 shadow-inner">
         <ActiveLockChips onOpenMode={mode => enterMode(mode)} />
+
+        {/* Unlock rule (M-of-N). Only meaningful once 2+ locks are active:
+            pick how many of them must be satisfied before the box decrypts. */}
+        {lockCount > 1 && (
+          <div className="flex items-center justify-between gap-2 flex-wrap pt-1.5 mt-0.5 border-t border-cyan-500/15">
+            <div className="flex items-center gap-1.5 text-[10px] text-cyan-300/80 font-bold uppercase tracking-wider">
+              <ShieldCheck className="w-3 h-3 text-cyan-400 shrink-0" />
+              <span>Unlock rule</span>
+            </div>
+
+            <div className="flex items-center gap-1 flex-wrap">
+              {Array.from({ length: lockCount }, (_, i) => i + 1).map(n => {
+                const isSelected =
+                  state.thresholdRequired === n ||
+                  (state.thresholdRequired === 0 && n === lockCount);
+                return (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setThresholdRequired(state.thresholdRequired === n ? 0 : n)}
+                    title={
+                      n === lockCount
+                        ? `All ${lockCount} locks must be satisfied`
+                        : `Any ${n} of the ${lockCount} active locks unlock the box`
+                    }
+                    className={`px-2 py-0.5 rounded-md border text-[9px] sm:text-[10px] font-bold transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-cyan-500/20 border-cyan-400/70 text-cyan-100 shadow-[0_0_10px_rgba(0,242,255,0.3)]'
+                        : 'bg-cyan-950/70 border-cyan-500/30 text-cyan-400/70 hover:bg-cyan-900/70 hover:border-cyan-400/50'
+                    }`}
+                  >
+                    {n} of {lockCount}
+                  </button>
+                );
+              })}
+              <span className="text-[9px] text-cyan-400/50 ml-1">
+                {state.thresholdRequired > 0 && state.thresholdRequired < lockCount
+                  ? `${state.thresholdRequired} of ${lockCount} must be satisfied`
+                  : `all ${lockCount} required`}
+              </span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Lock Gallery: Single Marquee Row for all 16 Live Locks + Roadmap Modal Trigger */}

@@ -67,6 +67,16 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
     (metadata?.password && metadata.password.trim().length > 0)
   );
 
+  /**
+   * Which secret-based lock did the creator actually configure?
+   * A One-Time Magic Key is stored in `metadata.password` as an MK-XXXX-XXXX
+   * value; anything else is a Passcode. The recipient prompt must name only the
+   * lock that is really on this box — never "passcode or magic key".
+   */
+  const isMagicKeyLock = /^MK-/i.test((metadata?.password || '').trim());
+  const secretNoun = isMagicKeyLock ? 'magic key' : 'passcode';
+  const secretNounTitle = isMagicKeyLock ? 'MAGIC KEY' : 'PASSCODE';
+
   // Time-window configuration & live ticking hook
   const twConfig = metadata?.lockConfig?.timeWindow ?? null;
   const twEnabled = Boolean(
@@ -233,7 +243,9 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
       setUnlocking(true);
       window.setTimeout(() => {
         setNeedsPassword(false);
-        setIsUnlocked(true);
+        // The secret is satisfied — but the creator's unlock rule may also
+        // demand other gates (time window, quota) before the box opens.
+        setIsUnlocked(unlockAllowed(true));
         setUnlocking(false);
       }, 320);
     } else if (!hasLock) {
@@ -253,7 +265,7 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
 
     if (!targetHash && activeContent && activeContent.trim()) {
       setContent(activeContent);
-      if (!hasPasswordLock && !twBlocked && !quotaBlocked) {
+      if (unlockAllowed(!hasPasswordLock)) {
         setIsUnlocked(true);
       }
     }
@@ -289,11 +301,51 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
     }
   }, [hashFragment, hasLock, hasPasswordLock, twBlocked, quotaBlocked, activeContent]);
 
+  /**
+   * ── M-of-N unlock policy ──────────────────────────────────────────────
+   * The creator may require only some of the configured locks to be satisfied
+   * before the box decrypts (e.g. "2 of 3"). Locks that the recipient cannot
+   * sidestep — an access quota that is already exhausted, or the secret that
+   * the ciphertext itself depends on — stay mandatory; the threshold governs
+   * the rest. Omitted policy keeps the historical "all locks" (AND) behaviour.
+   */
+  const countGates = (secretSatisfied: boolean) => {
+    let total = 0;
+    let satisfied = 0;
+    let mandatory = 0;
+    if (hasPasswordLock) {
+      total += 1;
+      if (secretSatisfied) satisfied += 1;
+      // A secret-protected box cannot be decrypted without its secret.
+      mandatory = 1;
+    }
+    if (twEnabled) {
+      total += 1;
+      if (!twBlocked) satisfied += 1;
+    }
+    if (olEnabled) {
+      total += 1;
+      if (!quotaBlocked) satisfied += 1;
+    }
+    const requested = Number(metadata?.lockConfig?.unlockThreshold?.required || 0);
+    const required =
+      total === 0
+        ? 0
+        : Math.min(total, Math.max(mandatory, requested > 0 ? requested : total));
+    return { total, satisfied, required, met: satisfied >= required };
+  };
+
+  /** True when the current lock state satisfies the creator's unlock rule. */
+  const unlockAllowed = (secretSatisfied: boolean): boolean => countGates(secretSatisfied).met;
+
+  /** Live gate counters for the recipient-facing progress readout. */
+  const gateSummary = countGates(!needsPassword);
+
   const handlePasswordSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!passwordInput.trim()) return;
     if (passwordInput.trim().length < 4) {
-      setError('Passcode or magic key must be at least 4 characters.');
+      setError(`${isMagicKeyLock ? 'Magic key' : 'Passcode'} must be at least 4 characters.`);
       setShake(true);
       return;
     }
@@ -313,7 +365,7 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
     // Preview mode: activeContent provided without cipher fragment
     if ((!targetHash || !isEncryptedFragment) && activeContent && metadata?.password) {
       if (submittedSecret !== canonicalSecret(metadata.password, metadata.password)) {
-        setError('Incorrect passcode or key. Please check and try again.');
+        setError(`Incorrect ${secretNoun}. Please check and try again.`);
         setShake(false);
         requestAnimationFrame(() => requestAnimationFrame(() => setShake(true)));
         return;
@@ -332,7 +384,9 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
       onUnlock?.(submittedSecret);
       window.setTimeout(() => {
         setNeedsPassword(false);
-        setIsUnlocked(true);
+        // The secret is satisfied — but the creator's unlock rule may also
+        // demand other gates (time window, quota) before the box opens.
+        setIsUnlocked(unlockAllowed(true));
         setUnlocking(false);
       }, 320);
       return;
@@ -425,7 +479,7 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
 
     setUnlocking(true);
     window.setTimeout(() => {
-      setIsUnlocked(true);
+      setIsUnlocked(unlockAllowed(!hasPasswordLock));
       setUnlocking(false);
     }, 320);
   };
@@ -689,6 +743,21 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
             )}
           </div>
 
+          {/* M-of-N progress — only rendered when more than one lock is live */}
+          {gateSummary.total > 1 && (
+            <div className="mb-4 flex items-center justify-center gap-2 text-[10px] font-mono flex-wrap">
+              <span className="text-cyan-400/70 uppercase tracking-wider">Unlock rule</span>
+              <span className="px-2 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-400/40 text-cyan-200 font-bold">
+                {gateSummary.satisfied} of {gateSummary.total} satisfied
+              </span>
+              {gateSummary.required < gateSummary.total && (
+                <span className="text-cyan-300/80">
+                  needs {gateSummary.required}
+                </span>
+              )}
+            </div>
+          )}
+
           {/* Passcode Form or Direct Enter Button */}
           {twBlocked ? (
             /* AND-gate: while the time rule is pending/expired, no lock may be
@@ -719,7 +788,7 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
 
               <div>
                 <div className="flex items-center justify-between text-[11px] text-fuchsia-300 mb-1.5 uppercase tracking-wider">
-                  <span>{passwordInput.startsWith('MK-') || (!/^\d*$/.test(passwordInput) && passwordInput.length > 0) ? 'ONE-TIME MAGIC KEY' : 'PASSCODE / MAGIC KEY'}</span>
+                  <span>{secretNounTitle} REQUIRED</span>
                   <span className="text-fuchsia-400/80 text-[10px]">{passwordInput.length} CHARS</span>
                 </div>
                 <div className="relative">
@@ -733,7 +802,7 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
                       setPasswordInput(e.target.value);
                       if (error) setError(null);
                     }}
-                    placeholder="Enter passcode or magic key..."
+                    placeholder={`Enter your ${secretNoun}...`}
                     autoFocus
                     className="w-full bg-[#090314] border border-fuchsia-500/40 rounded-xl pl-4 pr-11 py-3 text-center text-base sm:text-lg tracking-[0.2em] text-white placeholder:text-purple-400/40 placeholder:text-xs placeholder:tracking-normal focus:outline-none focus:border-fuchsia-400 focus:ring-1 focus:ring-fuchsia-400 font-mono"
                     onAnimationEnd={() => setShake(false)}
@@ -742,7 +811,7 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-purple-400 hover:text-fuchsia-300 transition cursor-pointer"
-                    title={showPassword ? 'Hide passcode' : 'Show passcode'}
+                    title={showPassword ? `Hide ${secretNoun}` : `Show ${secretNoun}`}
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -759,7 +828,7 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
                 {isLoading ? (
                   <>
                     <RefreshCw className="w-4 h-4 animate-spin" />
-                    <span>AUTHENTICATING PASSCODE...</span>
+                    <span>{`AUTHENTICATING ${secretNounTitle}...`}</span>
                   </>
                 ) : (
                   <>
