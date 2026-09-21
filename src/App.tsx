@@ -1552,7 +1552,6 @@ export default function App() {
           activeContent={hashFragment ? undefined : content}
           metadata={metadata}
           onNextChainBox={metadata.chain?.nextUrl ? () => { window.location.href = metadata.chain!.nextUrl!; } : undefined}
-          onEdit={handleEditFromViewer}
           onHome={handleGoToHomePage}
           onOpenQr={() => setIsQrOpen(true)}
           onShare={handleShare}
@@ -1560,18 +1559,8 @@ export default function App() {
           onUnlock={(pw) => setMetadata(prev => ({ ...prev, password: pw }))}
         />
 
-        {/* Experimental P2P controls disabled for launch; the Edit Box affordance is preserved. */}
-        {currentBoxId && (
-          <div className="fixed top-3 left-3 z-[70] flex items-center gap-2 select-none">
-            <button
-              onClick={() => handleEditFromViewer(content, metadata)}
-              className="px-2.5 py-1 rounded-full bg-slate-900/80 hover:bg-slate-800 border border-cyan-500/40 text-cyan-300 text-xs font-semibold flex items-center gap-1 cursor-pointer transition-all shadow-sm shadow-cyan-500/10 backdrop-blur-md"
-              title="Open Collaborative Studio Editor"
-            >
-              <span>Edit Box</span>
-            </button>
-          </div>
-        )}
+        {/* Viewer exposes no editing affordance: a recipient opening a box URL
+            must not be able to reach the Studio editor from this page. */}
 
         {/* Experimental P2P chat retained in source but disabled for launch. */}
       </div>
