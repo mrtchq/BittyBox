@@ -133,8 +133,18 @@ body,
   contain: strict;
 }
 
-/* Static starfield — same dot field, zero motion. Applied on the /editor
-   workspace so the backdrop stays perfectly still. */
+/* Clean static gradient backdrop — used on the /editor workspace in place of
+   the animated starfield. No layers, no motion, just a still surface. */
+.bitty-starfield--static {
+  background:
+    radial-gradient(120% 90% at 50% -10%, rgba(0, 242, 255, 0.10) 0%, rgba(0, 242, 255, 0.03) 32%, rgba(0, 0, 0, 0) 62%),
+    radial-gradient(90% 70% at 12% 100%, rgba(124, 58, 237, 0.13) 0%, rgba(124, 58, 237, 0) 58%),
+    radial-gradient(90% 70% at 88% 8%, rgba(14, 165, 233, 0.10) 0%, rgba(14, 165, 233, 0) 55%),
+    linear-gradient(180deg, #07061a 0%, #050314 45%, #03020d 100%);
+}
+
+/* Safety net: if star layers are ever rendered inside a static surface, keep
+   them perfectly still. */
 .bitty-starfield--static #stars,
 .bitty-starfield--static #stars2,
 .bitty-starfield--static #stars3,

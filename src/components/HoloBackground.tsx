@@ -4,8 +4,8 @@ import { WorkspaceTheme } from '../types';
 interface HoloBackgroundProps {
   theme?: WorkspaceTheme;
   /**
-   * Freeze the starfield: the identical dot field, rendered without the
-   * animStar drift. Used on the /editor workspace so the backdrop never moves.
+   * Render a clean, flat gradient instead of the animated starfield. Used on
+   * the /editor workspace so the backdrop is completely still.
    */
   static?: boolean;
 }
@@ -21,9 +21,13 @@ export const HoloBackground: React.FC<HoloBackgroundProps> = React.memo(({ stati
     aria-hidden="true"
     style={{ contain: 'strict' }}
   >
-    <div id="stars" />
-    <div id="stars2" />
-    <div id="stars3" />
+    {!isStatic && (
+      <>
+        <div id="stars" />
+        <div id="stars2" />
+        <div id="stars3" />
+      </>
+    )}
   </div>
 ));
 HoloBackground.displayName = 'HoloBackground';
