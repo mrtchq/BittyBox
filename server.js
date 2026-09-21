@@ -32,7 +32,7 @@ import {
   getUserCreemEntries
 } from './lib/account-store.js';
 import { calculateBoxCreditCost, calculateChainCreditCost, calculateRecordedLinkCreditCost } from './lib/credit-costs.js';
-import { sendMagicLinkEmail } from './lib/resend-client.js';
+import { sendMagicLinkEmail, sendOneTimeMagicKeyEmail } from './lib/resend-client.js';
 import { triggerN8nWebhook } from './lib/n8n-client.js';
 import { authMiddleware } from './lib/auth-middleware.js';
 import firebaseAdmin from './lib/firebase-admin.cjs';
@@ -396,6 +396,46 @@ app.post('/api/accounts/magic/request', async (req, res) => {
       expiresAt: magic.expiresAt
     });
   } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/magic-key/send', async (req, res) => {
+  try {
+    const { to, recipientName, magicKey, boxTitle, boxUrl, note } = req.body || {};
+    if (!to || typeof to !== 'string' || !to.includes('@')) {
+      return res.status(400).json({ success: false, error: 'A valid recipient email address is required.' });
+    }
+    if (!magicKey || typeof magicKey !== 'string' || magicKey.trim().length < 4) {
+      return res.status(400).json({ success: false, error: 'A valid magic key is required.' });
+    }
+
+    const emailResult = await sendOneTimeMagicKeyEmail({
+      to: to.trim().toLowerCase(),
+      recipientName: recipientName ? String(recipientName).trim() : '',
+      magicKey: magicKey.trim(),
+      boxTitle: (boxTitle || 'Untitled Bitty Box').trim(),
+      boxUrl: boxUrl ? String(boxUrl).trim() : '',
+      note: note ? String(note).trim() : '',
+    });
+
+    if (!emailResult.success) {
+      console.error('[resend] One-time magic key send failed:', emailResult.error);
+      return res.status(500).json({
+        success: false,
+        error: emailResult.error || 'Failed to dispatch magic key email via Resend.',
+      });
+    }
+
+    res.json({
+      success: true,
+      id: emailResult.id,
+      to: emailResult.to,
+      magicKey: magicKey.trim(),
+      sentAt: new Date().toISOString(),
+    });
+  } catch (err) {
+    console.error('[resend] Exception sending magic key:', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
