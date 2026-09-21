@@ -1570,7 +1570,7 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col bg-transparent text-cyan-100 relative overflow-x-hidden font-sans">
       {/* Background Animated Hologram FX */}
-      <HoloBackground theme={workspaceTheme} />
+      <HoloBackground theme={workspaceTheme} static={currentView === 'editor'} />
 
       {/* Edge Grip Handle on Center Top (PREVIEW) */}
       <EdgeGripHandles

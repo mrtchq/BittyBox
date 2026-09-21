@@ -133,6 +133,19 @@ body,
   contain: strict;
 }
 
+/* Static starfield — same dot field, zero motion. Applied on the /editor
+   workspace so the backdrop stays perfectly still. */
+.bitty-starfield--static #stars,
+.bitty-starfield--static #stars2,
+.bitty-starfield--static #stars3,
+.bitty-starfield--static #stars:after,
+.bitty-starfield--static #stars2:after,
+.bitty-starfield--static #stars3:after {
+  animation: none !important;
+  transform: none;
+  will-change: auto;
+}
+
 #stars,
 #stars2,
 #stars3 {
