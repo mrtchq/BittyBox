@@ -5,10 +5,7 @@
 const DEFAULT_PAYLOAD = "⚠️ DEAD MAN'S SWITCH TRIGGERED — VAULT DECRYPTED\n\nLiveness interval lapsed and all required cryptographic release conditions satisfied in browser memory.\nWebCrypto AES-GCM (256-bit) verification complete.\nZero plaintext or unencrypted secrets were stored on external servers.";
 
 const LIVE_LOCK_IDS = [
-  'dead_man_switch', 'passcode', 'passphrase', 'time_capsule', 'access_window',
-  'countdown', 'tap_unseal', 'chain_key', 'one_time_magic_key',
-  'totp', 'signed_sender', 'invite_code', 'two_person',
-  'location', 'browser_key', 'puzzle', 'proof_of_human'
+  'dead_man_switch', 'passcode', 'access_window', 'countdown', 'one_time_magic_key'
 ];
 
 const ROADMAP_LOCKS = [
@@ -122,16 +119,16 @@ const PRESETS = [
   {
     id: 'digital_inheritance',
     title: 'Digital Estate & Inheritance Vault',
-    locks: ['dead_man_switch', 'totp', 'two_person'],
-    desc: 'Automatically transfers master passwords, crypto seed phrases, and legal wills to heirs if you fail to check in, guarded by 2-of-2 executor quorum.',
-    tags: ['Dead-Man', '2FA', '2-Person']
+    locks: ['dead_man_switch', 'passcode'],
+    desc: 'Passes estate instructions to heirs if you miss your planned check-ins, protected by a passcode you choose.',
+    tags: ['Dead-Man', 'Passcode']
   },
   {
     id: 'whistleblower_safeguard',
     title: 'The Whistleblower Sovereign Drop',
-    locks: ['dead_man_switch', 'signed_sender', 'location'],
-    desc: 'Autonomously releases investigative disclosures and proof dossiers if check-ins lapse, authenticated with creator Ed25519 signature within designated coordinates.',
-    tags: ['Dead-Man', 'Signed', 'Geofence']
+    locks: ['dead_man_switch', 'time_capsule'],
+    desc: 'Releases investigative notes if check-ins lapse, with a timed release for an added layer of planning.',
+    tags: ['Dead-Man', 'Timed Release']
   },
   {
     id: 'infra_failover',
@@ -143,23 +140,23 @@ const PRESETS = [
   {
     id: 'executive_succession',
     title: 'Executive Succession Escrow',
-    locks: ['signed_sender', 'totp', 'two_person'],
-    desc: '2-of-3 threshold governance escrow that transfers administrative control and treasury signing authority only upon verified executive incapacitation.',
-    tags: ['Multi-Sig', '2FA', '2-Person']
+    locks: ['dead_man_switch', 'passphrase'],
+    desc: 'Keeps succession instructions available if an executive misses scheduled check-ins; access also requires the chosen passphrase.',
+    tags: ['Dead-Man', 'Passphrase']
   },
   {
     id: 'confidential_legal_custody',
     title: 'Confidential Legal Custody Drop',
-    locks: ['passphrase', 'tap_unseal', 'browser_key'],
-    desc: 'Safeguards privileged attorney-client documents, decryptable via master passphrase and persistent device hardware key if retainer lapses.',
-    tags: ['Passphrase', 'Tactile', 'Browser Key']
+    locks: ['passphrase', 'tap_unseal'],
+    desc: 'Keeps privileged legal documents sealed until the authorized passphrase is entered and the recipient deliberately opens them.',
+    tags: ['Passphrase', 'Tactile Seal']
   },
   {
     id: 'anti_duress',
     title: 'Anti-Duress Emergency Beacon',
-    locks: ['location', 'puzzle', 'proof_of_human'],
-    desc: 'Emergency distress switch designed for high-risk travel; decrypts escape instructions when participant leaves hostile zone and completes biometric proof.',
-    tags: ['Geofence', 'Puzzle', 'Anti-Bot']
+    locks: ['dead_man_switch', 'time_capsule'],
+    desc: 'Keeps emergency instructions sealed until the planned release time or missed check-in.',
+    tags: ['Dead-Man', 'Timed Release']
   },
   {
     id: 'ephemeral_recon',
@@ -171,14 +168,14 @@ const PRESETS = [
   {
     id: 'cooling_off',
     title: 'Cooling-Off Contingency Release',
-    locks: ['time_capsule', 'totp', 'location'],
-    desc: 'Enforces mandatory cooling-off intervals and 2FA authentication before sensitive instructions or sealed communications can be unlocked.',
-    tags: ['Time Capsule', '2FA', 'Geofence']
+    locks: ['time_capsule', 'passphrase'],
+    desc: 'Adds a deliberate waiting period and passphrase before sensitive instructions can be opened.',
+    tags: ['Time Capsule', 'Passphrase']
   }
 ];
 
 let state = {
-  activeLocks: ['dead_man_switch', 'passcode', 'totp'],
+  activeLocks: ['dead_man_switch', 'passcode', 'time_capsule'],
   solvedLocks: new Set(),
   subKeys: new Map(),
   threshold: 'all',
