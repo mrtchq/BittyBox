@@ -2,10 +2,10 @@
 // PART 1: CONSTANTS, PRESETS, STATE & INITIALIZATION
 // =========================================================================
 
-const DEFAULT_PAYLOAD = "🔓 Welcome to the confidential vault!\n\nYou have successfully satisfied all required cryptographic access rules in browser memory.\nWebCrypto AES-GCM (256-bit) verification complete.\nNo private keys or plaintext data ever touched an external server.";
+const DEFAULT_PAYLOAD = "⚠️ DEAD MAN'S SWITCH TRIGGERED — VAULT DECRYPTED\n\nLiveness interval lapsed and all required cryptographic release conditions satisfied in browser memory.\nWebCrypto AES-GCM (256-bit) verification complete.\nZero plaintext or unencrypted secrets were stored on external servers.";
 
 const LIVE_LOCK_IDS = [
-  'passcode', 'passphrase', 'time_capsule', 'access_window',
+  'dead_man_switch', 'passcode', 'passphrase', 'time_capsule', 'access_window',
   'countdown', 'tap_unseal', 'chain_key', 'one_time_magic_key',
   'totp', 'signed_sender', 'invite_code', 'two_person',
   'location', 'browser_key', 'puzzle', 'proof_of_human'
@@ -78,19 +78,6 @@ const ROADMAP_LOCKS = [
     plannedArch: 'WebPush / Telegram bot integration with Ed25519 creator signature authorization tokens.'
   },
   {
-    id: 'dead_man_switch',
-    num: '18',
-    name: 'Dead-Man Switch Lock',
-    icon: '⚠️',
-    category: 'Special Software Engineering',
-    blockerType: 'software',
-    badgeClass: 'bg-blue-950/60 text-blue-400 border-blue-800/60',
-    reason: 'Requires external heartbeat daemon, cron monitor, or Nostr relay watcher.',
-    desc: 'Reveals contents only if creator fails to confirm liveness over a designated interval.',
-    whyNotToday: 'A recipient browser cannot reliably determine creator inactivity without a persistent server-side cron service or decentralized Nostr relay daemon that tracks heartbeat timestamps.',
-    plannedArch: 'Automated Nostr NIP-01 relay listener paired with serverless heartbeat verification cron.'
-  },
-  {
     id: 'qr_proximity',
     num: '20',
     name: 'QR Proximity Lock',
@@ -133,65 +120,65 @@ const ROADMAP_LOCKS = [
 
 const PRESETS = [
   {
-    id: 'anti_regret',
-    title: 'The Anti-Regret Proposal',
-    locks: ['time_capsule', 'totp', 'location'],
-    desc: 'Protects critical decisions until a cooling-off timer passes, verified by 2FA authentication within a designated geofence.',
-    tags: ['Time', '2FA', 'Geofence']
+    id: 'digital_inheritance',
+    title: 'Digital Estate & Inheritance Vault',
+    locks: ['dead_man_switch', 'totp', 'two_person'],
+    desc: 'Automatically transfers master passwords, crypto seed phrases, and legal wills to heirs if you fail to check in, guarded by 2-of-2 executor quorum.',
+    tags: ['Dead-Man', '2FA', '2-Person']
   },
   {
-    id: 'scavenger_hunt',
-    title: 'The Digital Scavenger Hunt',
-    locks: ['passphrase', 'location', 'puzzle'],
-    desc: 'Unlocks a treasure clue only when the participant is standing at target GPS coordinates and solves an in-situ riddle.',
-    tags: ['Passphrase', 'Geofence', 'Puzzle']
+    id: 'whistleblower_safeguard',
+    title: 'The Whistleblower Sovereign Drop',
+    locks: ['dead_man_switch', 'signed_sender', 'location'],
+    desc: 'Autonomously releases investigative disclosures and proof dossiers if check-ins lapse, authenticated with creator Ed25519 signature within designated coordinates.',
+    tags: ['Dead-Man', 'Signed', 'Geofence']
   },
   {
-    id: 'executive_veto',
-    title: 'The Executive Multilateral Veto',
+    id: 'infra_failover',
+    title: 'Infrastructure Disaster Recovery Switch',
+    locks: ['countdown', 'one_time_magic_key', 'passcode'],
+    desc: 'Releases emergency break-glass cloud credentials and root tokens to on-call engineering during catastrophic incidents unless silenced.',
+    tags: ['Countdown', 'Magic Key', 'Passcode']
+  },
+  {
+    id: 'executive_succession',
+    title: 'Executive Succession Escrow',
     locks: ['signed_sender', 'totp', 'two_person'],
-    desc: '2-of-3 threshold scheme combining Ed25519 signature verification, TOTP hardware token, and dual-custody Shamir keyholders.',
+    desc: '2-of-3 threshold governance escrow that transfers administrative control and treasury signing authority only upon verified executive incapacitation.',
     tags: ['Multi-Sig', '2FA', '2-Person']
   },
   {
-    id: 'treasure_hunt_100',
-    title: 'The 100-Year Treasure Hunt',
-    locks: ['time_capsule', 'puzzle', 'countdown'],
-    desc: 'Temporal gating combined with in-browser cryptography puzzles and a cinematic countdown reveal timer.',
-    tags: ['Time Capsule', 'Puzzle', 'Countdown']
+    id: 'confidential_legal_custody',
+    title: 'Confidential Legal Custody Drop',
+    locks: ['passphrase', 'tap_unseal', 'browser_key'],
+    desc: 'Safeguards privileged attorney-client documents, decryptable via master passphrase and persistent device hardware key if retainer lapses.',
+    tags: ['Passphrase', 'Tactile', 'Browser Key']
   },
   {
-    id: 'collectors_vault',
-    title: "The Collector's Vault",
-    locks: ['one_time_magic_key', 'signed_sender', 'passphrase'],
-    desc: 'High-assurance drop combining single-use ephemeral URL fragment key with creator digital signature and master passphrase.',
-    tags: ['Magic Key', 'Signed', 'Passphrase']
+    id: 'anti_duress',
+    title: 'Anti-Duress Emergency Beacon',
+    locks: ['location', 'puzzle', 'proof_of_human'],
+    desc: 'Emergency distress switch designed for high-risk travel; decrypts escape instructions when participant leaves hostile zone and completes biometric proof.',
+    tags: ['Geofence', 'Puzzle', 'Anti-Bot']
   },
   {
-    id: 'escape_room',
-    title: 'The Escape Room Multi-Party Riddle',
-    locks: ['puzzle', 'proof_of_human', 'two_person'],
-    desc: 'Requires solving an interactive cipher, completing biometric anti-bot proof, and recombining 2-party Shamir shares.',
-    tags: ['Riddle', 'Anti-Bot', '2-Person']
-  },
-  {
-    id: 'ephemeral_drop',
-    title: 'The Ephemeral Drop',
+    id: 'ephemeral_recon',
+    title: 'Ephemeral Field Agent Contingency',
     locks: ['one_time_magic_key', 'access_window', 'tap_unseal'],
-    desc: 'Flash access window active only during a live event, tied to a tactile wax seal unsealing and ephemeral token.',
+    desc: 'Tactical field deployment switch that reveals contingency rendezvous coordinates strictly inside a narrow operational time slot with a single-use URL token.',
     tags: ['Magic Key', 'Window', 'Tap Unseal']
   },
   {
-    id: 'memory_journal',
-    title: 'The Memory Resonance Journal',
-    locks: ['passphrase', 'tap_unseal', 'browser_key'],
-    desc: 'Private retrospective that decrypts via master passphrase, intentional unseal gesture, and persistent device storage.',
-    tags: ['Passphrase', 'Tactile', 'Browser Key']
+    id: 'cooling_off',
+    title: 'Cooling-Off Contingency Release',
+    locks: ['time_capsule', 'totp', 'location'],
+    desc: 'Enforces mandatory cooling-off intervals and 2FA authentication before sensitive instructions or sealed communications can be unlocked.',
+    tags: ['Time Capsule', '2FA', 'Geofence']
   }
 ];
 
 let state = {
-  activeLocks: ['passcode', 'time_capsule', 'totp'],
+  activeLocks: ['dead_man_switch', 'passcode', 'totp'],
   solvedLocks: new Set(),
   subKeys: new Map(),
   threshold: 'all',
@@ -972,7 +959,7 @@ function updateProgressMeter() {
   const solved = state.solvedLocks.size;
   const pct = Math.round((solved / total) * 100);
 
-  document.getElementById('ceremonyProgressText').innerText = `${solved} of ${total} Shares Acquired`;
+  document.getElementById('ceremonyProgressText').innerText = `${solved} of ${total} Conditions Satisfied`;
   document.getElementById('ceremonyProgressBar').style.width = `${pct}%`;
 }
 
@@ -983,7 +970,7 @@ async function checkResolution() {
 
   if (solved >= req && !state.decrypted) {
     state.decrypted = true;
-    logCrypto(`🎉 Threshold satisfied (${solved}/${req} keys)! Reconstructing Shamir Master Key...`, 'success');
+    logCrypto(`🎉 Release conditions satisfied (${solved}/${req})! Reconstructing Shamir Master Key...`, 'success');
 
     const subKeyList = [];
     state.activeLocks.forEach(id => {
@@ -1029,11 +1016,11 @@ function resetPayloadReveal() {
   badge.innerText = 'SEALED';
   icon.className = 'w-3.5 h-3.5 mr-1.5 text-slate-500';
   content.className = 'text-xs text-slate-500 italic p-3 bg-slate-900/60 rounded-xl border border-slate-800 min-h-[60px] flex items-center justify-center text-center font-mono';
-  content.innerText = 'Ciphertext locked. Solve required locks to reconstruct the AES-256-GCM master key and reveal the hidden payload.';
+  content.innerText = 'Ciphertext locked. Trigger dead-man switch inactivity or satisfy required release conditions to reconstruct the AES-256-GCM master key and reveal the contingency payload.';
   actions.classList.add('hidden');
 }
 
-﻿// =========================================================================
+// =========================================================================
 // PART 4: PRESETS, CATALOG RENDERING & URL SHARING
 // =========================================================================
 
@@ -1054,7 +1041,7 @@ function renderPresets() {
         <p class="text-xs text-slate-400 mt-2 leading-relaxed">${p.desc}</p>
       </div>
       <button onclick="loadPreset('${p.id}')" class="mt-4 w-full py-2 rounded-xl text-xs font-mono font-semibold bg-slate-900 border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800 hover:border-cyan-500/40 transition flex items-center justify-center">
-        <i data-lucide="play" class="w-3 h-3 mr-1.5 text-cyan-400"></i> Launch Ceremony
+        <i data-lucide="play" class="w-3 h-3 mr-1.5 text-cyan-400"></i> Load Scenario
       </button>
     `;
 
@@ -1115,7 +1102,7 @@ function renderCatalog() {
       <div class="mt-3.5 pt-3 border-t border-slate-800/60 flex items-center justify-between">
         <span class="text-[10px] font-mono text-slate-500 capitalize">${lock.catLabel}</span>
         <button onclick="addActiveLock('${lock.id}')" class="text-xs font-mono text-cyan-400 hover:text-cyan-300 flex items-center font-semibold">
-          + Add to Ceremony
+          + Add Condition
         </button>
       </div>
     `;
