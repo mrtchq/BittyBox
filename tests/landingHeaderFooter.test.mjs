@@ -32,7 +32,7 @@ test('landing footer exposes working legal and contact destinations', async () =
   const footer = section(html, '<!-- Footer -->', '</footer>');
 
   assert.match(html, /href="\/style\.css\?v=20260918-no-scrollbars"/);
-  assert.match(html, /src="\/app\.js\?v=20260915-header-footer"/);
+  assert.match(html, /src="\/app\.js\?v=20260923-dms-simulation"/);
   assert.match(footer, /href="\/editor#\/terms"[^>]*>Terms of Service<\/a>/);
   assert.match(footer, /href="\/editor#\/privacy"[^>]*>Privacy Policy<\/a>/);
   assert.match(footer, /href="mailto:support@bittybox\.org"[^>]*>Contact Us<\/a>/);
