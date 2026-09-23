@@ -1713,6 +1713,12 @@ export default function App() {
               <AccountDashboard
                 account={account}
                 onNavigateToSlide01={() => setCurrentView('editor')}
+                onOpenDeadManSwitch={() => {
+                  try {
+                    sessionStorage.setItem('bitty_pending_lock', 'dead-man-switch');
+                  } catch {}
+                  setCurrentView('editor');
+                }}
                 onOpenQr={(url) => {
                   setBittyUrl(url);
                   setIsQrOpen(true);

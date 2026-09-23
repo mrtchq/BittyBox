@@ -41,7 +41,8 @@ import {
   CheckCheck,
   BarChart3,
   EyeOff,
-  RadioTower
+  RadioTower,
+  Hourglass
 } from "lucide-react";
 import { BittyUser, ApiKeyMeta, TrackedBittyBox } from "../types";
 import { UseAccountResult } from "../hooks/useAccount";
@@ -81,6 +82,7 @@ export const GoogleIcon: React.FC<{ className?: string }> = ({ className = "w-4 
 interface AccountDashboardProps {
   account: UseAccountResult;
   onNavigateToSlide01?: () => void;
+  onOpenDeadManSwitch?: () => void;
   onOpenQr?: (url: string) => void;
   lastSavedAt?: number | null;
   isSaving?: boolean;
@@ -91,6 +93,7 @@ interface AccountDashboardProps {
 export const AccountDashboard: React.FC<AccountDashboardProps> = ({
   account,
   onNavigateToSlide01,
+  onOpenDeadManSwitch,
   onOpenQr,
   lastSavedAt,
   isSaving,
@@ -622,14 +625,26 @@ export const AccountDashboard: React.FC<AccountDashboardProps> = ({
                 onManualSave={onManualSave}
               />
               {onNavigateToSlide01 && (
-                <button
-                  type="button"
-                  onClick={onNavigateToSlide01}
-                  className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-cyan-500/20 via-teal-500/20 to-cyan-500/20 border border-cyan-400/60 hover:border-cyan-300 text-cyan-100 hover:text-white text-xs font-cyber font-bold flex items-center gap-1.5 transition cursor-pointer shadow-[0_0_15px_rgba(0,242,255,0.25)] hover:scale-105 active:scale-95 whitespace-nowrap"
-                >
-                  <Plus className="w-4 h-4 text-cyan-300" />
-                  <span>BUILD A BOX</span>
-                </button>
+                <>
+                  {/* SPEC §1: the Dead Man's Switch is the primary create experience.
+                      leads straight into the editor where the DMS builder fronts. */}
+                  <button
+                    type="button"
+                    onClick={() => (onOpenDeadManSwitch ? onOpenDeadManSwitch() : onNavigateToSlide01?.())}
+                    className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-purple-600/30 via-fuchsia-500/25 to-purple-600/30 border border-purple-400/70 hover:border-fuchsia-300 text-purple-100 hover:text-white text-xs font-cyber font-bold flex items-center gap-1.5 transition cursor-pointer shadow-[0_0_18px_rgba(168,85,247,0.35)] hover:scale-105 active:scale-95 whitespace-nowrap"
+                  >
+                    <Hourglass className="w-4 h-4 text-fuchsia-300" />
+                    <span>CREATE A DEAD MAN'S SWITCH</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onNavigateToSlide01}
+                    className="px-3.5 py-2 rounded-xl bg-cyan-950/40 border border-cyan-500/40 hover:border-cyan-400/70 text-cyan-200/90 hover:text-cyan-100 text-xs font-cyber font-bold flex items-center gap-1.5 transition cursor-pointer hover:scale-105 active:scale-95 whitespace-nowrap"
+                  >
+                    <Plus className="w-4 h-4 text-cyan-400" />
+                    <span>BUILD A BOX</span>
+                  </button>
+                </>
               )}
               <button
                 type="button"

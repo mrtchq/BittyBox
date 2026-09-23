@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { Lock, Check, ChevronLeft, ChevronRight, Map, Sparkles } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Lock, Check, ChevronLeft, ChevronRight, ChevronDown, Map, Sparkles } from 'lucide-react';
 import { useStage } from '../../stores/stageStore';
 import { LOCK_TYPES, LockTypeDef } from '../../data/lockTypes';
 import type { PaymentPolicyDraft } from '../PaymentPolicyLockPanel';
@@ -246,10 +246,38 @@ export const LockGallery: React.FC<LockGalleryProps> = ({
   const { state } = useStage();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isRoadmapOpen, setIsRoadmapOpen] = useState<boolean>(false);
+  // SPEC §1/§31 progressive disclosure: the wall of lock tiles is collapsed by
+  // default on a fresh Box. It opens on demand ("ADD LOCKS") so the Dead Man's
+  // Switch flow fronts the create experience instead of 18 lock types.
+  const [expanded, setExpanded] = useState<boolean>(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Deep-link handoff: the dashboard's CREATE A DEAD MAN'S SWITCH CTA writes
+  // bitty_pending_lock into sessionStorage and navigates to the editor. We
+  // consume it once on mount — expand the gallery and open the DMS builder
+  // directly, so the create journey starts at the Switch, not at lock-hunting.
+  useEffect(() => {
+    let pending: string | null = null;
+    try {
+      pending = sessionStorage.getItem('bitty_pending_lock');
+      if (pending) sessionStorage.removeItem('bitty_pending_lock');
+    } catch {}
+    if (pending) {
+      setExpanded(true);
+      const def = LOCK_TYPES.find(l => l.id === pending);
+      if (def && def.kind === 'payment') onOpenPayment();
+      else setSelectedId(pending);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const liveLocks = LOCK_TYPES.filter(l => l.canGoLiveToday && !EXCLUDED_LOCK_IDS.has(l.id));
   const roadmapLocks = LOCK_TYPES.filter(l => !l.canGoLiveToday);
+  const anyActive = liveLocks.some(l => isLockActive(l, state, chainEnabled, paymentPolicy));
+  // Auto-expand once the Box carries at least one lock (or during an active
+  // DMS flow) so existing/locked Boxes never hide their configuration;
+  // fresh Boxes start collapsed behind the ADD LOCKS toggle.
+  const showGallery = expanded || anyActive || state.deadmanEnabled;
 
   const handlePress = (def: LockTypeDef) => {
     if (state.deadmanEnabled && def.kind !== 'dead-man-switch') return;
@@ -268,6 +296,21 @@ export const LockGallery: React.FC<LockGalleryProps> = ({
 
   return (
     <div className="flex flex-col gap-1.5 pt-1 border-t border-cyan-500/20 font-mono select-none">
+      {/* Collapsed state: single ADD LOCKS row (progressive disclosure, SPEC §1/§31) */}
+      {!showGallery && (
+        <button
+          type="button"
+          onClick={() => setExpanded(true)}
+          className="flex items-center justify-center gap-2 py-2.5 rounded-xl border border-dashed border-cyan-500/40 bg-cyan-950/30 text-cyan-300 hover:text-cyan-100 hover:border-cyan-300/70 hover:bg-cyan-900/40 transition-all cursor-pointer text-[11px] font-bold uppercase tracking-wider"
+          title="Add locks to this Box"
+        >
+          <Lock className="w-3.5 h-3.5" />
+          <span>Add Locks</span>
+          <ChevronDown className="w-3.5 h-3.5 opacity-60" />
+        </button>
+      )}
+
+      {showGallery && (<>
       {/* Header Bar with Live Badge & Chevrons */}
       <div className="flex items-center justify-between gap-2 px-0.5 pt-1">
         <div className="flex items-center gap-1.5 min-w-0">
@@ -282,6 +325,16 @@ export const LockGallery: React.FC<LockGalleryProps> = ({
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
+          {!anyActive && !state.deadmanEnabled && (
+            <button
+              type="button"
+              onClick={() => setExpanded(false)}
+              className="text-[9px] text-cyan-400/60 hover:text-cyan-200 transition-colors cursor-pointer uppercase tracking-wider mr-1"
+              title="Collapse the lock gallery"
+            >
+              Hide
+            </button>
+          )}
           {/* Marquee Navigation Chevrons */}
           <div className="hidden sm:flex items-center gap-0.5">
             <button
@@ -360,6 +413,7 @@ export const LockGallery: React.FC<LockGalleryProps> = ({
       <div className="text-[9px] text-cyan-400/40 text-center uppercase tracking-wider sm:hidden">
         ← swipe horizontally for all {liveLocks.length} live locks →
       </div>
+      </>)}
 
       {/* Lock Configuration Modal */}
       {selectedId && (
