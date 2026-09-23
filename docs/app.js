@@ -236,7 +236,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.getElementById('btnEmbedUrl').addEventListener('click', () => openShareModal());
-  document.getElementById('btnQuickShare').addEventListener('click', () => openShareModal());
+  document.getElementById('btnQuickShare')?.addEventListener('click', () => openShareModal());
   document.getElementById('btnCloseShareModal').addEventListener('click', () => {
     document.getElementById('shareModal').classList.add('hidden');
     document.getElementById('shareModal').classList.remove('flex');

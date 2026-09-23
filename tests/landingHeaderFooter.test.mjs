@@ -13,12 +13,12 @@ function section(html, startMarker, endMarker) {
   return html.slice(start, end);
 }
 
-test('landing header exposes only API/MCP Server and Open Editor actions', async () => {
+test('landing header exposes only API/MCP Server and Create Switch actions', async () => {
   const html = await readFile(landingPath, 'utf8');
   const header = section(html, '<!-- Top Navigation Header -->', '</header>');
 
   assert.match(header, /href="\/api\/docs"[^>]*>[\s\S]*?API\/MCP Server/);
-  assert.match(header, /href="\/editor"[^>]*>[\s\S]*?Open Editor/);
+  assert.match(header, /href="\/editor"[^>]*>[\s\S]*?Create a Switch/);
   assert.equal((header.match(/<a\b/g) || []).length, 2);
   assert.equal((header.match(/<button\b/g) || []).length, 0);
 
@@ -31,7 +31,7 @@ test('landing footer exposes working legal and contact destinations', async () =
   const html = await readFile(landingPath, 'utf8');
   const footer = section(html, '<!-- Footer -->', '</footer>');
 
-  assert.match(html, /href="\/style\.css\?v=20260915-header-footer"/);
+  assert.match(html, /href="\/style\.css\?v=20260918-no-scrollbars"/);
   assert.match(html, /src="\/app\.js\?v=20260915-header-footer"/);
   assert.match(footer, /href="\/editor#\/terms"[^>]*>Terms of Service<\/a>/);
   assert.match(footer, /href="\/editor#\/privacy"[^>]*>Privacy Policy<\/a>/);
