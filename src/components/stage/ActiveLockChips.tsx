@@ -1,5 +1,5 @@
 import React from 'react';
-import { Key, Clock, Eye, Sparkles, AlertCircle, X } from 'lucide-react';
+import { Key, Clock, Eye, Sparkles, AlertCircle, X, Hourglass } from 'lucide-react';
 import { useStage, useActiveLocksList, StageMode, ActiveLockInfo } from '../../stores/stageStore';
 
 interface ActiveLockChipsProps {
@@ -31,6 +31,9 @@ export const ActiveLockChips: React.FC<ActiveLockChipsProps> = ({ className = ''
       case 'accessLimitLock':
         dispatch({ type: 'REMOVE_ACCESS_LIMIT' });
         break;
+      case 'deadManSwitchLock':
+        dispatch({ type: 'REMOVE_DEADMAN' });
+        break;
       default:
         break;
     }
@@ -44,6 +47,8 @@ export const ActiveLockChips: React.FC<ActiveLockChipsProps> = ({ className = ''
         return <Clock className="w-3 h-3 shrink-0" />;
       case 'views':
         return <Eye className="w-3 h-3 shrink-0" />;
+      case 'deadman':
+        return <Hourglass className="w-3 h-3 shrink-0" />;
       default:
         return <Sparkles className="w-3 h-3 shrink-0" />;
     }
@@ -61,6 +66,8 @@ export const ActiveLockChips: React.FC<ActiveLockChipsProps> = ({ className = ''
         return 'bg-amber-950/70 border-amber-500/50 text-amber-200 shadow-[0_0_10px_rgba(245,158,11,0.3)] hover:bg-amber-900/60 hover:border-amber-400';
       case 'views':
         return 'bg-emerald-950/70 border-emerald-500/50 text-emerald-200 shadow-[0_0_10px_rgba(16,185,129,0.3)] hover:bg-emerald-900/60 hover:border-emerald-400';
+      case 'deadman':
+        return 'bg-violet-950/70 border-violet-500/50 text-violet-200 shadow-[0_0_10px_rgba(139,92,246,0.3)] hover:bg-violet-900/60 hover:border-violet-400';
       default:
         return 'bg-cyan-950/70 border-cyan-500/40 text-cyan-300 hover:bg-cyan-900/50';
     }

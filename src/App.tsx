@@ -23,6 +23,7 @@ import { exportBittyToZip } from './utils/zipExport';
 import { authJsonHeaders, authJsonHeadersAsync } from './utils/authHeaders';
 import { TEMPLATE_PRESETS } from './data/templates';
 import { joinBittyBoxLive, type BittyLiveRoom, type BittyPeer, type BittyChatMessage } from './bitty-live';
+import { isPaymentPolicyConfigured } from './utils/paymentPolicy';
 import {
   generateInviteCode,
   normalizeInviteCode,
@@ -81,7 +82,7 @@ function getInitialUrlState() {
   if (hash === '#/privacy' || hash === '#privacy') {
     return { hash, payload: '', metadata: null, isViewer: false, isAuth: false, isAccount: false, isTerms: false, isPrivacy: true, isAgents: false };
   }
-  if (hash && hash.length > 2 && hash !== '#/edit' && hash !== '#edit' && hash !== '#/studio' && hash !== '#/account' && hash !== '#/' && hash !== '#' && hash !== '#/terms' && hash !== '#terms' && hash !== '#/privacy' && hash !== '#privacy' && hash !== '#/agents' && hash !== '#agents' && hash !== '#/agent' && hash !== '#agent') {
+  if (hash && hash.length > 2 && !hash.startsWith('#stage=') && hash !== '#/edit' && hash !== '#edit' && hash !== '#/studio' && hash !== '#/account' && hash !== '#/' && hash !== '#' && hash !== '#/terms' && hash !== '#terms' && hash !== '#/privacy' && hash !== '#privacy' && hash !== '#/agents' && hash !== '#agents' && hash !== '#/agent' && hash !== '#agent') {
     const { payload, metadata } = parseBittyHash(hash);
     const hasHtmlPayload = Boolean(payload && (payload.startsWith('?') || payload.startsWith('data:') || payload.length > 25));
     return { hash, payload, metadata, isViewer: hasHtmlPayload, isAuth: false, isAccount: false, isTerms: false, isPrivacy: false, isAgents: false };
@@ -485,8 +486,9 @@ export default function App() {
     );
     const olConfig = metadata?.lockConfig?.openLimit;
     const hasAccessLimit = Boolean(olConfig && olConfig.enabled);
-    const hasPaymentPolicy = Boolean(metadata?.lockConfig?.paymentPolicy);
+    const hasPaymentPolicy = isPaymentPolicyConfigured(metadata?.lockConfig?.paymentPolicy);
     const hasAgentic = Boolean(metadata?.lockConfig?.agentic?.enabled);
+    const hasDeadman = Boolean(metadata?.lockConfig?.deadmanSwitch?.enabled);
 
     return [
       hasPasscode,
@@ -494,6 +496,7 @@ export default function App() {
       hasAccessLimit,
       hasPaymentPolicy,
       hasAgentic,
+      hasDeadman,
     ].filter(Boolean).length;
   }, [metadata]);
 
@@ -1224,7 +1227,7 @@ export default function App() {
     // 0. Ensure a persistent Box ID is allocated for this session so P2P mesh discoverability works
     const paymentPolicy = metadata.lockConfig?.paymentPolicy;
     const needsServerBox =
-      Boolean(metadata.lockConfig?.openLimit?.enabled) || Boolean(paymentPolicy);
+      Boolean(metadata.lockConfig?.openLimit?.enabled) || isPaymentPolicyConfigured(paymentPolicy);
     const effectiveBoxId = metadata.boxId || (needsServerBox
       ? `bbx_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 7)}`
       : `box_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`
@@ -1287,7 +1290,7 @@ export default function App() {
 
         // Attach the x402 payment policy and publish. Publishing is required
         // because unpublished boxes return 403 instead of 402.
-        if (paymentPolicy) {
+        if (isPaymentPolicyConfigured(paymentPolicy)) {
           const policyHeaders = await authJsonHeadersAsync();
           if (policyHeaders) {
             const policyRes = await fetch(`/api/boxes/${generatedBoxId}/policy`, {
@@ -1316,6 +1319,57 @@ export default function App() {
 
     // Save to browser address bar without reload
     window.history.replaceState(null, '', fullUrl);
+
+    // ── Dead-Man Switch: arm/refresh the server-side liveness tracker ────────
+    // The full Box URL (which carries the content) is handed to the server and
+    // held there. The server emails the creator a check-in link now; if they go
+    // silent past interval + grace, that exact URL is delivered to the recipient.
+    const dm = updatedMetadata.lockConfig?.deadmanSwitch;
+    if (dm?.enabled && dm.switchId) {
+      try {
+        const armRes = await fetch('/api/deadman/arm', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: dm.switchId,
+            boxTitle: updatedMetadata.title || 'Untitled Bitty Box',
+            boxUrl: fullUrl,
+            creatorEmail: dm.creatorEmail,
+            recipientEmail: dm.recipientEmail,
+            recipientName: dm.recipientName,
+            note: dm.note,
+            intervalMinutes: dm.intervalMinutes,
+            graceMinutes: dm.graceDisabled ? 0 : dm.graceMinutes,
+            graceDisabled: dm.graceDisabled,
+            sendFirstEmail: true,
+          }),
+        });
+        const armData = await armRes.json().catch(() => null);
+        if (armData?.success) {
+          try {
+            localStorage.setItem(`bitty_deadman_token_${dm.switchId}`, armData.checkInToken);
+          } catch {}
+          setMetadata(prev => ({
+            ...prev,
+            lockConfig: {
+              ...(prev.lockConfig || {}),
+              deadmanSwitch: {
+                ...(prev.lockConfig?.deadmanSwitch || {}),
+                enabled: true,
+                switchId: dm.switchId,
+                armedAt: armData.switch?.armedAt,
+                checkedInAt: armData.switch?.lastCheckInAt,
+                nextDueAt: armData.switch?.nextDueAt,
+                releasesAt: armData.switch?.releasesAt,
+                triggered: false,
+              },
+            },
+          }));
+        }
+      } catch {
+        // Arming is best-effort: the editor still produces a valid Box URL.
+      }
+    }
 
     // If newTab was opened without targetUrl or URL updated, redirect it to fullUrl
     if (newTab && (!targetUrl || targetUrl !== fullUrl)) {

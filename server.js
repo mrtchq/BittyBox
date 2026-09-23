@@ -33,6 +33,7 @@ import {
 } from './lib/account-store.js';
 import { calculateBoxCreditCost, calculateChainCreditCost, calculateRecordedLinkCreditCost } from './lib/credit-costs.js';
 import { sendMagicLinkEmail, sendOneTimeMagicKeyEmail } from './lib/resend-client.js';
+import { createDeadmanRouter, startDeadmanScheduler } from './lib/deadman-switch.js';
 import { triggerN8nWebhook } from './lib/n8n-client.js';
 import { authMiddleware } from './lib/auth-middleware.js';
 import firebaseAdmin from './lib/firebase-admin.cjs';
@@ -77,6 +78,15 @@ app.use(express.text({ limit: '15mb', type: ['text/plain', 'text/html', 'text/ma
 
 // Optional authentication extraction on all routes
 app.use(authMiddleware({ required: false }));
+
+// ==========================================
+// Dead-Man Switch Locks (liveness-gated release)
+// ==========================================
+// Heartbeat tracking + one-click check-in + release, plus the tick endpoint
+// an n8n cron workflow drives. The internal scheduler keeps switches advancing
+// even when the external cron is paused.
+app.use(createDeadmanRouter());
+startDeadmanScheduler();
 
 // ==========================================
 // Model Context Protocol (MCP) Endpoints

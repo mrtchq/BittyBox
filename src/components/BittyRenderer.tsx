@@ -11,7 +11,8 @@ import {
   Flame,
   Shield,
   Zap,
-  X
+  X,
+  Hourglass
 } from 'lucide-react';
 import { BittyMetadata } from '../types';
 import { decompressBittyData, getRenderedHtml } from '../utils/bittyEngine';
@@ -93,8 +94,18 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
   const olEnabled = Boolean(olConfig && olConfig.enabled);
   const maxOpens = olConfig?.maxOpens || 1;
 
+  // Dead-Man Switch — liveness-gated release. The box stays sealed until the
+  // server-side switch fires (creator missed a check-in); we poll the public
+  // status endpoint so a recipient's open page unlocks the moment it releases.
+  const dmConfig = metadata?.lockConfig?.deadmanSwitch ?? null;
+  const dmSwitchId = dmConfig?.switchId || '';
+  const dmEnabled = Boolean(dmConfig?.enabled && dmSwitchId);
+  const [dmReleased, setDmReleased] = useState<boolean>(() => !dmEnabled);
+  const [dmStatus, setDmStatus] = useState<any>(null);
+  const [dmError, setDmError] = useState<boolean>(false);
+
   // Active lock state
-  const hasLock = Boolean(twEnabled || olEnabled || hasPasswordLock);
+  const hasLock = Boolean(twEnabled || olEnabled || hasPasswordLock || dmEnabled);
   const [isUnlocked, setIsUnlocked] = useState<boolean>(() => !hasLock);
   const [isHudDismissed, setIsHudDismissed] = useState<boolean>(false);
 
@@ -335,8 +346,13 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
     return { total, satisfied, required, met: satisfied >= required };
   };
 
-  /** True when the current lock state satisfies the creator's unlock rule. */
-  const unlockAllowed = (secretSatisfied: boolean): boolean => countGates(secretSatisfied).met;
+  /**
+   * True when the current lock state satisfies the creator's unlock rule.
+   * The Dead-Man Switch is a hard, non-delegable gate: it must have fired
+   * (released) regardless of any M-of-N threshold.
+   */
+  const unlockAllowed = (secretSatisfied: boolean): boolean =>
+    (dmEnabled ? dmReleased : true) && countGates(secretSatisfied).met;
 
   /** Live gate counters for the recipient-facing progress readout. */
   const gateSummary = countGates(!needsPassword);
@@ -432,6 +448,40 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
     return () => { isMounted = false; };
   }, [metadata?.boxId]);
 
+  // Poll the Dead-Man Switch status. Released ⇒ the recipient may view; still
+  // armed ⇒ sealed behind the liveness gate. A failed fetch stays sealed.
+  useEffect(() => {
+    if (!dmEnabled || !dmSwitchId) {
+      setDmReleased(true);
+      return;
+    }
+    let alive = true;
+    const check = async () => {
+      try {
+        const res = await fetch(`/api/deadman/status/${encodeURIComponent(dmSwitchId)}`, {
+          headers: { Accept: 'application/json' },
+        });
+        if (!res.ok) {
+          if (alive) setDmError(true);
+          return;
+        }
+        const data = await res.json();
+        if (!alive) return;
+        setDmStatus(data.switch || null);
+        setDmError(false);
+        setDmReleased(Boolean(data.switch?.triggered));
+      } catch {
+        if (alive) setDmError(true);
+      }
+    };
+    check();
+    const timer = window.setInterval(check, 60000);
+    return () => {
+      alive = false;
+      window.clearInterval(timer);
+    };
+  }, [dmSwitchId, dmEnabled]);
+
   // Unlocking for non-password protected boxes with Time Lock or Access Limit
   const handleUnlockAndEnter = async () => {
     if (olEnabled) {
@@ -488,7 +538,7 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
   // AND-gate policy: when a passcode and/or access-limit lock is ALSO configured,
   // fall through to the combined protected splash so every configured lock stays
   // visible. This dedicated screen is only for a lone time lock.
-  const hasOtherLocks = Boolean(needsPassword || olEnabled);
+  const hasOtherLocks = Boolean(needsPassword || olEnabled || dmEnabled);
   if (twBlocked && !hasOtherLocks) {
     const expired = tw.status === 'EXPIRED';
     return (
@@ -592,6 +642,73 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
           <h4 className="font-cyber text-sm text-emerald-300 tracking-wider">VERIFYING ACCESS QUOTA...</h4>
           <p className="text-xs font-mono text-emerald-300/70 mt-2">Checking allowable session limit</p>
         </div>
+      </div>
+    );
+  }
+
+  // ── 3.5 Dead-Man Switch Armed Screen ────────────────────────────────────────
+  // Rendered while the creator is still checking in. We never show the encoded
+  // recipe behind this gate; when the switch fires the poll above flips
+  // `dmReleased` and the transmission renders.
+  if (dmEnabled && !dmReleased) {
+    const nextDue = dmStatus?.nextDueAt ? new Date(dmStatus.nextDueAt).toLocaleString() : null;
+    const releasesAt = dmStatus?.releasesAt ? new Date(dmStatus.releasesAt).toLocaleString() : null;
+    return (
+      <div className={`${embedded ? 'relative w-full h-full min-h-[420px]' : 'fixed inset-0 w-screen h-[100dvh]'} bg-[#050515] flex flex-col items-center justify-center p-4 z-10 overflow-y-auto font-sans`}>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.94, y: 16 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ type: 'spring', damping: 25, stiffness: 320 }}
+          className="w-full max-w-md p-6 rounded-2xl border border-violet-500/40 bg-[#090620]/90 shadow-[0_0_60px_rgba(139,92,246,0.28)] relative font-mono"
+        >
+          <div className="absolute top-2 left-2 w-3 h-3 border-t-2 border-l-2 border-violet-400 pointer-events-none" />
+          <div className="absolute top-2 right-2 w-3 h-3 border-t-2 border-r-2 border-violet-400 pointer-events-none" />
+          <div className="absolute bottom-2 left-2 w-3 h-3 border-b-2 border-l-2 border-violet-400 pointer-events-none" />
+          <div className="absolute bottom-2 right-2 w-3 h-3 border-b-2 border-r-2 border-violet-400 pointer-events-none" />
+
+          <div className="text-center mb-5">
+            <motion.div
+              animate={{ y: [0, -4, 0] }}
+              transition={{ repeat: Infinity, duration: 3, ease: 'easeInOut' }}
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-950/80 border border-violet-400/40 text-violet-200 text-xs mb-3 shadow-[0_0_15px_rgba(139,92,246,0.35)]"
+            >
+              <Hourglass className="w-3.5 h-3.5 text-violet-300 animate-pulse" />
+              <span>DEAD-MAN SWITCH ARMED</span>
+            </motion.div>
+            <h2 className="text-xl sm:text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-violet-200 via-fuchsia-200 to-cyan-200 tracking-wide">
+              <CyberScrambleText text={metadata.title || 'UNTITLED BITTY BOX'} speed={20} />
+            </h2>
+            <p className="text-xs text-violet-200/70 mt-2 leading-relaxed">
+              This transmission is sealed until the creator&apos;s liveness clock lapses. It releases
+              automatically if they stop checking in.
+            </p>
+          </div>
+
+          <div className="space-y-2 mb-5">
+            <div className="rounded-lg bg-black/50 border border-violet-500/30 p-3 text-center">
+              <div className="text-[10px] text-violet-300 uppercase tracking-widest mb-1">Awaiting Check-In</div>
+              <div className="text-sm text-violet-100 font-bold">
+                {nextDue ? `Next due ${nextDue}` : 'Creator check-ins in progress'}
+              </div>
+              {releasesAt && (
+                <div className="text-[11px] text-violet-300/70 mt-1">Releases {releasesAt} if missed</div>
+              )}
+            </div>
+            {dmError && (
+              <div className="rounded-lg bg-black/50 border border-amber-500/30 p-3 text-center text-[11px] text-amber-200/80">
+                Could not reach the liveness service. This page re-checks automatically.
+              </div>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="w-full py-3 rounded-xl bg-violet-950/70 border border-violet-400/50 text-violet-200 text-xs font-cyber tracking-wider hover:bg-violet-900/70 transition cursor-pointer flex items-center justify-center gap-2"
+          >
+            <RefreshCw className="w-3.5 h-3.5" /> CHECK AGAIN
+          </button>
+        </motion.div>
       </div>
     );
   }
@@ -966,6 +1083,16 @@ export const BittyRenderer: React.FC<BittyRendererProps> = ({
                 <Flame className="w-3 h-3 text-amber-400" />
                 <span>{remainingOpens !== null ? `${remainingOpens} Opens Left` : 'Active Quota'}</span>
               </div>
+            )}
+
+            {dmEnabled && (
+              <>
+                {(twEnabled || olEnabled) && <span className="text-cyan-500/40">|</span>}
+                <div className="flex items-center gap-1 text-violet-300 font-bold">
+                  <Hourglass className="w-3 h-3 text-violet-400" />
+                  <span>DEAD-MAN RELEASED</span>
+                </div>
+              </>
             )}
 
             <motion.button

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Eye, ArrowLeft, ExternalLink, Copy, Check, Lock, Key, Clock, Flame, Shield } from 'lucide-react';
+import { Eye, ArrowLeft, ExternalLink, Copy, Check, Lock, Key, Clock, Flame, Shield, Hourglass } from 'lucide-react';
 import { useStage } from '../../stores/stageStore';
 import { BittyRenderer } from '../BittyRenderer';
 import { buildBittyUrl } from '../../utils/bittyEngine';
@@ -31,9 +31,24 @@ export const PreviewStage: React.FC = () => {
       }
     : null;
 
-  const lockConfig = (twConfig || olConfig || state.agenticEnabled) ? {
+  const dmConfig = state.deadmanEnabled && state.deadmanSwitchId
+    ? {
+        enabled: true,
+        switchId: state.deadmanSwitchId,
+        intervalMinutes: state.deadmanIntervalMinutes,
+        graceMinutes: state.deadmanGraceEnabled ? state.deadmanGraceMinutes : 0,
+        graceDisabled: !state.deadmanGraceEnabled,
+        creatorEmail: state.deadmanCreatorEmail.trim() || undefined,
+        recipientEmail: state.deadmanRecipientEmail.trim() || undefined,
+        recipientName: state.deadmanRecipientName.trim() || undefined,
+        note: state.deadmanNote.trim() || undefined,
+      }
+    : null;
+
+  const lockConfig = (twConfig || olConfig || dmConfig || state.agenticEnabled) ? {
     timeWindow: twConfig || undefined,
     openLimit: olConfig || undefined,
+    deadmanSwitch: dmConfig || undefined,
     agentic: state.agenticEnabled ? {
       enabled: true,
       requireMcp: state.agenticRequireMcp,
@@ -99,7 +114,12 @@ export const PreviewStage: React.FC = () => {
                   <Flame className="w-2.5 h-2.5 text-emerald-400" /> {state.accessLimitMaxOpens === 1 ? 'BURN ON READ' : `${state.accessLimitMaxOpens} VIEWS`}
                 </span>
               )}
-              {!state.password && !state.timeLockEnabled && !state.accessLimitEnabled && (
+              {state.deadmanEnabled && state.deadmanSwitchId && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-violet-950/80 border border-violet-500/50 text-violet-300 text-[10px] font-bold">
+                  <Hourglass className="w-2.5 h-2.5 text-violet-400" /> DEAD-MAN SWITCH
+                </span>
+              )}
+              {!state.password && !state.timeLockEnabled && !state.accessLimitEnabled && !state.deadmanEnabled && (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-500/40 text-cyan-400/80 text-[10px]">
                   UNRESTRICTED
                 </span>

@@ -229,7 +229,7 @@ export function parseBittyHash(hash: string): {
 
   const parts = metaSection ? metaSection.split('/') : [];
   const metadata: Partial<BittyMetadata> = {};
-  const metadataTokens = ['d', 'f', 'i', 'tw', 'ol', 'box', 'ch', 'nx'];
+  const metadataTokens = ['d', 'f', 'i', 'tw', 'ol', 'dm', 'box', 'ch', 'nx'];
   let payload = directPayload;
 
   for (let i = 0; i < parts.length; i++) {
@@ -281,6 +281,33 @@ export function parseBittyHash(hash: string): {
             showRemainingCount: src !== '0',
           },
         };
+      } catch {}
+      i++;
+    } else if (part === 'dm' && parts[i + 1]) {
+      // Dead-Man Switch descriptor: switchId~interval~grace~unit, where unit is
+      // 'm' (minutes, canonical), 's' (seconds), 'h' (hours), or absent for the
+      // original hours-only format. Only the non-sensitive liveness parameters
+      // travel in the URL — creator/recipient emails stay in the editor/server.
+      try {
+        const rawDm = decodeURIComponent(parts[i + 1]);
+        const [switchId, aRaw, bRaw, unit] = rawDm.split('~');
+        if (switchId) {
+          const a = Number(aRaw);
+          const b = Number(bRaw);
+          const toMinutes = (value: number) => (unit === 's' ? value / 60 : unit === 'h' || !unit ? value * 60 : value);
+          const intervalMinutes = Number.isFinite(a) ? toMinutes(a) : 10080;
+          const graceMinutes = Number.isFinite(b) ? toMinutes(b) : 4320;
+          metadata.lockConfig = {
+            ...(metadata.lockConfig || {}),
+            deadmanSwitch: {
+              enabled: true,
+              switchId,
+              intervalMinutes,
+              graceMinutes,
+              graceDisabled: graceMinutes <= 0,
+            },
+          };
+        }
       } catch {}
       i++;
     } else if (part === 'box' && parts[i + 1]) {
@@ -575,6 +602,16 @@ export function buildBittyUrl(
     const max = ol.maxOpens || 1;
     const src = ol.showRemainingCount === false ? '0' : '1';
     metaHash += `/ol/${max}~${src}`;
+  }
+  if (metadata.lockConfig?.deadmanSwitch?.enabled && metadata.lockConfig.deadmanSwitch.switchId) {
+    const dm = metadata.lockConfig.deadmanSwitch;
+    // Canonical unit is minutes; tolerate seconds/hours so older metadata still
+    // encodes. `??` (not `||`) preserves a deliberate zero grace window.
+    const intervalMinutes =
+      dm.intervalMinutes ?? (dm.intervalSeconds != null ? dm.intervalSeconds / 60 : dm.intervalHours != null ? dm.intervalHours * 60 : 10080);
+    const graceMinutes =
+      dm.graceMinutes ?? (dm.graceSeconds != null ? dm.graceSeconds / 60 : dm.graceHours != null ? dm.graceHours * 60 : 4320);
+    metaHash += `/dm/${encodeURIComponent(`${dm.switchId}~${intervalMinutes}~${graceMinutes}~m`)}`;
   }
 
   const finalPayload = (cleanFragment.startsWith('?') || cleanFragment.startsWith('data:'))

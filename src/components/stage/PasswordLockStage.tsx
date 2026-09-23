@@ -9,7 +9,7 @@ export const PasswordLockStage: React.FC = () => {
 
   if (!draft) return null;
 
-  const isValid = draft.password.length >= 8 && draft.password.length <= 12;
+  const isValid = draft.password.length >= 8 && draft.password.length <= 24;
   const isEmpty = draft.password.length === 0;
 
   const handleApply = () => {
@@ -45,7 +45,7 @@ export const PasswordLockStage: React.FC = () => {
           </div>
           <div>
             <h2 className="text-sm font-bold text-fuchsia-200 tracking-wide font-cyber">PASSWORD LOCK</h2>
-            <p className="text-[10px] text-fuchsia-400/70">8–12 digit secret PIN code</p>
+            <p className="text-[10px] text-fuchsia-400/70">8–24 digit secret PIN code</p>
           </div>
         </div>
 
@@ -70,7 +70,7 @@ export const PasswordLockStage: React.FC = () => {
       {/* PIN Code Configuration Inputs */}
       <div className="space-y-3 bg-[#050314]/70 border border-fuchsia-500/30 rounded-xl p-4">
         <div className="flex items-center justify-between">
-          <label className="text-xs font-bold text-fuchsia-300">ENTER NUMERICAL PIN (8–12 DIGITS)</label>
+          <label className="text-xs font-bold text-fuchsia-300">ENTER NUMERICAL PIN (8–24 DIGITS)</label>
           <span
             className={`text-[10px] px-2 py-0.5 rounded font-bold border transition-colors ${
               isValid
@@ -89,13 +89,13 @@ export const PasswordLockStage: React.FC = () => {
             type={showPassword ? 'text' : 'password'}
             inputMode="numeric"
             pattern="[0-9]*"
-            maxLength={12}
+            maxLength={24}
             value={draft.password}
             onChange={e => {
-              const numbersOnly = e.target.value.replace(/\D/g, '').slice(0, 12);
+              const numbersOnly = e.target.value.replace(/\D/g, '').slice(0, 24);
               draft.setPassword(numbersOnly);
             }}
-            placeholder="Enter 8-12 digits..."
+            placeholder="Enter 8-24 digits..."
             className="w-full rounded-xl border border-fuchsia-400/40 bg-[#02010a] px-4 py-3 text-center text-lg sm:text-xl tracking-[0.25em] text-fuchsia-100 placeholder:text-fuchsia-400/30 placeholder:text-sm placeholder:tracking-normal outline-none focus:border-fuchsia-300 focus:ring-2 focus:ring-fuchsia-500/25 transition-all pr-10"
             autoFocus
           />

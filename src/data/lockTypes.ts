@@ -48,6 +48,7 @@ export type LockKind =
   | 'chain'
   | 'payment'
   | 'magic-key'
+  | 'dead-man-switch'
   | 'soon';
 
 export interface LockTypeDef {
@@ -80,8 +81,8 @@ export const LOCK_TYPES: LockTypeDef[] = [
     num: '01',
     category: 'core',
     name: 'Passcode Lock',
-    tagline: '8–12 digit PIN',
-    description: 'Numeric PIN entry, typically 4–8 digits, with cryptographic key derivation.',
+    tagline: '8–24 digit PIN',
+    description: 'Numeric PIN entry, 8–24 digits, with cryptographic key derivation.',
     useCase: 'Private notes, digital gifts, family links, and quick mobile unlocking.',
     icon: Hash,
     kind: 'passcode',
@@ -303,15 +304,12 @@ export const LOCK_TYPES: LockTypeDef[] = [
     category: 'identity',
     name: 'Dead-Man Switch Lock',
     tagline: 'Liveness-gated',
-    description: 'Reveals content only if the creator fails to confirm continued liveness during a defined interval.',
+    description:
+      'Releases the Box only if you stop checking in. We email you a one-click check-in link on your schedule — miss it past your grace window and the archived Box is delivered to your recipient.',
     useCase: 'Legacy letters, estate contingency plans, and emergency survival instructions.',
     icon: Hourglass,
-    kind: 'soon',
-    canGoLiveToday: false,
-    blockerType: 'software',
-    blockerCategory: 'Special Software Engineering',
-    whyNotToday: 'A recipient browser cannot reliably determine creator inactivity without a persistent server-side cron service or decentralized Nostr relay daemon that tracks heartbeat timestamps.',
-    plannedArch: 'Automated Nostr NIP-01 relay listener paired with serverless heartbeat verification cron.',
+    kind: 'dead-man-switch',
+    canGoLiveToday: true,
   },
 
   // ── Contextual locks ────────────────────────────────────────

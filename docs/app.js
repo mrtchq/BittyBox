@@ -459,9 +459,9 @@ function createChallengeCard(lockId, stepNum) {
   if (lockId === 'passcode') {
     body = `
       <div class="space-y-2">
-        <p class="text-xs text-slate-400">Enter master numeric PIN (4-8 digits). Default demo: <code class="text-cyan-400">1337</code></p>
+        <p class="text-xs text-slate-400">Enter your numeric PIN (8-24 digits).</p>
         <div class="flex items-center space-x-2">
-          <input type="password" id="input_passcode" maxlength="8" value="1337" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm font-mono text-cyan-300 w-36 focus:border-cyan-400 focus:outline-none" placeholder="PIN" />
+          <input type="password" id="input_passcode" maxlength="24" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm font-mono text-cyan-300 w-36 focus:border-cyan-400 focus:outline-none" placeholder="PIN" />
           <button onclick="solvePasscode()" class="px-4 py-2 rounded-xl text-xs font-mono font-semibold bg-cyan-500 text-slate-950 hover:bg-cyan-400 transition">
             Unlock PIN
           </button>

@@ -42,6 +42,36 @@ export interface BittyMetadata {
       showRemainingCount?: boolean;
     };
     /**
+     * Dead-Man Switch: a liveness-gated release. The creator must keep checking
+     * in on an interval; if they go silent past `intervalHours + graceHours`,
+     * the archived Box link is released to `recipientEmail`. `switchId` names
+     * the server-side heartbeat record the viewer gate polls.
+     */
+    deadmanSwitch?: {
+      enabled?: boolean;
+      switchId?: string;
+      /** Canonical durations in minutes (down to a 1-minute cadence). */
+      intervalMinutes?: number;
+      graceMinutes?: number;
+      /** Derived units, accepted for compatibility. */
+      intervalSeconds?: number;
+      graceSeconds?: number;
+      intervalHours?: number;
+      graceHours?: number;
+      /** True when the creator turned the grace window off (releases at interval). */
+      graceDisabled?: boolean;
+      creatorEmail?: string;
+      recipientEmail?: string;
+      recipientName?: string;
+      note?: string;
+      armedAt?: string;
+      checkedInAt?: string;
+      nextDueAt?: string;
+      releasesAt?: string;
+      triggered?: boolean;
+      triggeredAt?: string;
+    };
+    /**
      * M-of-N unlock policy: how many of the active locks must be satisfied
      * before the box decrypts. `required` of `total active locks`
      * (e.g. required: 2 with 3 active locks ⇒ "2 of 3").

@@ -5,6 +5,7 @@ import { LOCK_TYPES, LockTypeDef } from '../../data/lockTypes';
 import type { PaymentPolicyDraft } from '../PaymentPolicyLockPanel';
 import { LockConfigModal } from './LockConfigModal';
 import { RoadmapLocksModal } from './RoadmapLocksModal';
+import { isPaymentPolicyConfigured } from '../../utils/paymentPolicy';
 
 interface LockGalleryProps {
   chainEnabled?: boolean;
@@ -37,7 +38,11 @@ function isLockActive(
     case 'chain':
       return chainEnabled;
     case 'payment':
-      return Boolean(paymentPolicy);
+      return isPaymentPolicyConfigured(paymentPolicy);
+    case 'dead-man-switch':
+      return state.deadmanEnabled && Boolean(state.deadmanSwitchId);
+    case 'soon':
+      return false;
   }
 }
 
@@ -122,6 +127,15 @@ const LOCK_THEMES: Record<string, LockColorTheme> = {
     activeIcon: 'bg-yellow-900/90 border-yellow-300 text-yellow-200 shadow-[0_0_10px_rgba(234,179,8,0.5)]',
     tagline: 'text-yellow-300/70',
     activeBadge: 'bg-yellow-400',
+  },
+  // 18. Dead-Man Switch: Hourglass Violet
+  'dead-man-switch': {
+    inactiveCard: 'bg-[#030208]/85 border-violet-500/30 text-violet-300 hover:border-violet-400/80 hover:text-white hover:bg-violet-950/40 hover:shadow-[0_0_12px_rgba(139,92,246,0.2)]',
+    activeCard: 'bg-violet-950/90 border-violet-400 text-violet-100 shadow-[0_0_14px_rgba(139,92,246,0.45)] ring-1 ring-violet-400/60',
+    inactiveIcon: 'bg-violet-950/80 border-violet-500/40 text-violet-400',
+    activeIcon: 'bg-violet-900/90 border-violet-300 text-violet-200 shadow-[0_0_10px_rgba(139,92,246,0.5)]',
+    tagline: 'text-violet-300/70',
+    activeBadge: 'bg-violet-400',
   },
   // 9. TOTP: High-Security Indigo
   'totp': {
@@ -238,6 +252,7 @@ export const LockGallery: React.FC<LockGalleryProps> = ({
   const roadmapLocks = LOCK_TYPES.filter(l => !l.canGoLiveToday);
 
   const handlePress = (def: LockTypeDef) => {
+    if (state.deadmanEnabled && def.kind !== 'dead-man-switch') return;
     if (def.kind === 'payment') {
       onOpenPayment();
       return;
@@ -298,14 +313,19 @@ export const LockGallery: React.FC<LockGalleryProps> = ({
         {liveLocks.map(def => {
           const Icon = def.icon;
           const active = isLockActive(def, state, chainEnabled, paymentPolicy);
+          const disabled = state.deadmanEnabled && def.kind !== 'dead-man-switch';
           const theme = LOCK_THEMES[def.id] || DEFAULT_THEME;
           return (
             <button
               key={def.id}
               type="button"
               onClick={() => handlePress(def)}
-              className={`relative flex items-center gap-2 p-2 rounded-xl border text-left transition-all cursor-pointer snap-start shrink-0 w-36 sm:w-42 select-none ${
-                active ? theme.activeCard : theme.inactiveCard
+              disabled={disabled}
+              aria-disabled={disabled}
+              className={`relative flex items-center gap-2 p-2 rounded-xl border text-left transition-all snap-start shrink-0 w-36 sm:w-42 select-none ${
+                disabled
+                  ? 'opacity-35 grayscale cursor-not-allowed border-slate-700/50 bg-slate-950/50 text-slate-500'
+                  : `cursor-pointer ${active ? theme.activeCard : theme.inactiveCard}`
               }`}
               title={`${def.name} — ${def.tagline}`}
             >

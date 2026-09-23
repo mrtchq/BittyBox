@@ -1,5 +1,14 @@
 import React, { createContext, useContext, useReducer, ReactNode, useCallback } from 'react';
 
+// Compact humaniser for dead-man durations, which are stored in minutes.
+function formatMinutesShort(minutes: number): string {
+  const m = Number(minutes) || 0;
+  if (m <= 0) return 'off';
+  if (m % (24 * 60) === 0) return `${m / (24 * 60)}d`;
+  if (m % 60 === 0) return `${m / 60}h`;
+  return `${m}m`;
+}
+
 // ============================================================
 // Stage Mode — Authoritative view-state for the Bitty Stage
 // ============================================================
@@ -10,6 +19,7 @@ export type StageMode =
   | 'accessLimitLock'
   | 'encryption'
   | 'agenticLock'
+  | 'deadManSwitchLock'
   | 'preview';
 
 export type TimeLockMode = 'expiry' | 'delay' | 'range' | 'hybrid';
@@ -39,6 +49,16 @@ export interface BoxDraft {
   agenticEnabled: boolean;
   agenticRequireMcp: boolean;
   agenticRoleFilter: string;
+  // Dead-Man Switch
+  deadmanEnabled: boolean;
+  deadmanSwitchId: string;
+  deadmanIntervalMinutes: number;
+  deadmanGraceMinutes: number;
+  deadmanGraceEnabled: boolean;
+  deadmanCreatorEmail: string;
+  deadmanRecipientEmail: string;
+  deadmanRecipientName: string;
+  deadmanNote: string;
   // Unlock threshold: how many active locks must be satisfied (0 = all)
   thresholdRequired: number;
 }
@@ -73,6 +93,16 @@ export interface StageState {
   agenticEnabled: boolean;
   agenticRequireMcp: boolean;
   agenticRoleFilter: string;
+  // Dead-Man Switch
+  deadmanEnabled: boolean;
+  deadmanSwitchId: string;
+  deadmanIntervalMinutes: number;
+  deadmanGraceMinutes: number;
+  deadmanGraceEnabled: boolean;
+  deadmanCreatorEmail: string;
+  deadmanRecipientEmail: string;
+  deadmanRecipientName: string;
+  deadmanNote: string;
   boxId?: string;
 
   // Unlock threshold: how many active locks must be satisfied (0 = all)
@@ -120,12 +150,25 @@ export type StageAction =
   | { type: 'SET_DRAFT_AGENTIC_REQUIRE_MCP'; required: boolean }
   | { type: 'SET_DRAFT_AGENTIC_ROLE_FILTER'; role: string }
 
+  // Dead-Man Switch draft setters
+  | { type: 'SET_DRAFT_DEADMAN_ENABLED'; enabled: boolean }
+  | { type: 'SET_DRAFT_DEADMAN_SWITCH_ID'; value: string }
+  | { type: 'SET_DRAFT_DEADMAN_INTERVAL'; hours: number }
+  | { type: 'SET_DRAFT_DEADMAN_GRACE'; hours: number }
+  | { type: 'SET_DRAFT_DEADMAN_GRACE_ENABLED'; enabled: boolean }
+  | { type: 'SET_DRAFT_DEADMAN_CREATOR_EMAIL'; value: string }
+  | { type: 'SET_DRAFT_DEADMAN_RECIPIENT_EMAIL'; value: string }
+  | { type: 'SET_DRAFT_DEADMAN_RECIPIENT_NAME'; value: string }
+  | { type: 'SET_DRAFT_DEADMAN_NOTE'; value: string }
+  | { type: 'SET_DRAFT_DEADMAN_ARMED'; payload: Partial<StageState> }
+
   // Remove locks
   | { type: 'REMOVE_PASSWORD' }
   | { type: 'REMOVE_TIME_LOCK' }
   | { type: 'REMOVE_ACCESS_LIMIT' }
   | { type: 'REMOVE_ENCRYPTION' }
   | { type: 'REMOVE_AGENTIC_LOCK' }
+  | { type: 'REMOVE_DEADMAN' }
 
   // Unlock threshold (M-of-N)
   | { type: 'SET_THRESHOLD_REQUIRED'; required: number };
@@ -159,6 +202,15 @@ const initialState: StageState = {
   agenticEnabled: false,
   agenticRequireMcp: true,
   agenticRoleFilter: '',
+  deadmanEnabled: false,
+  deadmanSwitchId: '',
+  deadmanIntervalMinutes: 10080,
+  deadmanGraceMinutes: 4320,
+  deadmanGraceEnabled: true,
+  deadmanCreatorEmail: '',
+  deadmanRecipientEmail: '',
+  deadmanRecipientName: '',
+  deadmanNote: '',
   boxId: undefined,
   thresholdRequired: 0,
   draft: null,
@@ -184,15 +236,39 @@ function buildDraft(state: StageState): BoxDraft {
     agenticEnabled: state.agenticEnabled,
     agenticRequireMcp: state.agenticRequireMcp,
     agenticRoleFilter: state.agenticRoleFilter,
+    deadmanEnabled: state.deadmanEnabled,
+    deadmanSwitchId: state.deadmanSwitchId,
+    deadmanIntervalMinutes: state.deadmanIntervalMinutes,
+    deadmanGraceMinutes: state.deadmanGraceMinutes,
+    deadmanGraceEnabled: state.deadmanGraceEnabled,
+    deadmanCreatorEmail: state.deadmanCreatorEmail,
+    deadmanRecipientEmail: state.deadmanRecipientEmail,
+    deadmanRecipientName: state.deadmanRecipientName,
+    deadmanNote: state.deadmanNote,
     thresholdRequired: state.thresholdRequired,
   };
 }
 
-function applyDraft(state: StageState, draft: BoxDraft): StageState {
+function enforceDeadmanExclusivity(state: StageState): StageState {
+  if (!state.deadmanEnabled) return state;
   return {
     ...state,
-    ...draft,
+    password: '',
+    timeLockEnabled: false,
+    timeOpenAt: '',
+    timeLockAt: '',
+    accessLimitEnabled: false,
+    encryptionEnabled: false,
+    agenticEnabled: false,
+    thresholdRequired: 0,
   };
+}
+
+function applyDraft(state: StageState, draft: BoxDraft): StageState {
+  return enforceDeadmanExclusivity({
+    ...state,
+    ...draft,
+  });
 }
 
 export function stageReducer(state: StageState, action: StageAction): StageState {
@@ -226,7 +302,7 @@ export function stageReducer(state: StageState, action: StageAction): StageState
     case 'SET_FAVICON':
       return { ...state, favicon: action.favicon };
     case 'SYNC_FROM_EXTERNAL':
-      return { ...state, ...action.payload };
+      return enforceDeadmanExclusivity({ ...state, ...action.payload });
 
     case 'BEGIN_DRAFT':
       return { ...state, draft: buildDraft(state) };
@@ -285,6 +361,28 @@ export function stageReducer(state: StageState, action: StageAction): StageState
     case 'SET_DRAFT_AGENTIC_ROLE_FILTER':
       return state.draft ? { ...state, draft: { ...state.draft, agenticRoleFilter: action.role } } : state;
 
+    // Dead-Man Switch draft updates
+    case 'SET_DRAFT_DEADMAN_ENABLED':
+      return state.draft ? { ...state, draft: { ...state.draft, deadmanEnabled: action.enabled } } : state;
+    case 'SET_DRAFT_DEADMAN_SWITCH_ID':
+      return state.draft ? { ...state, draft: { ...state.draft, deadmanSwitchId: action.value } } : state;
+    case 'SET_DRAFT_DEADMAN_INTERVAL':
+      return state.draft ? { ...state, draft: { ...state.draft, deadmanIntervalMinutes: action.hours } } : state;
+    case 'SET_DRAFT_DEADMAN_GRACE':
+      return state.draft ? { ...state, draft: { ...state.draft, deadmanGraceMinutes: action.hours } } : state;
+    case 'SET_DRAFT_DEADMAN_GRACE_ENABLED':
+      return state.draft ? { ...state, draft: { ...state.draft, deadmanGraceEnabled: action.enabled } } : state;
+    case 'SET_DRAFT_DEADMAN_CREATOR_EMAIL':
+      return state.draft ? { ...state, draft: { ...state.draft, deadmanCreatorEmail: action.value } } : state;
+    case 'SET_DRAFT_DEADMAN_RECIPIENT_EMAIL':
+      return state.draft ? { ...state, draft: { ...state.draft, deadmanRecipientEmail: action.value } } : state;
+    case 'SET_DRAFT_DEADMAN_RECIPIENT_NAME':
+      return state.draft ? { ...state, draft: { ...state.draft, deadmanRecipientName: action.value } } : state;
+    case 'SET_DRAFT_DEADMAN_NOTE':
+      return state.draft ? { ...state, draft: { ...state.draft, deadmanNote: action.value } } : state;
+    case 'SET_DRAFT_DEADMAN_ARMED':
+      return { ...state, ...action.payload };
+
     // Remove locks immediately
     case 'SET_THRESHOLD_REQUIRED':
       return {
@@ -324,6 +422,29 @@ export function stageReducer(state: StageState, action: StageAction): StageState
         agenticEnabled: false,
         draft: state.draft ? { ...state.draft, agenticEnabled: false } : null,
       };
+    case 'REMOVE_DEADMAN':
+      return {
+        ...state,
+        deadmanEnabled: false,
+        deadmanSwitchId: '',
+        deadmanGraceEnabled: true,
+        deadmanCreatorEmail: '',
+        deadmanRecipientEmail: '',
+        deadmanRecipientName: '',
+        deadmanNote: '',
+        draft: state.draft
+          ? {
+              ...state.draft,
+              deadmanEnabled: false,
+              deadmanSwitchId: '',
+              deadmanGraceEnabled: true,
+              deadmanCreatorEmail: '',
+              deadmanRecipientEmail: '',
+              deadmanRecipientName: '',
+              deadmanNote: '',
+            }
+          : null,
+      };
 
     default:
       return state;
@@ -357,7 +478,8 @@ export function StageProvider({
   children: ReactNode;
   initial?: Partial<StageState>;
 }) {
-  const [state, dispatch] = useReducer(stageReducer, { ...initialState, ...initial });
+  const mergedInitialState = { ...initialState, ...initial };
+  const [state, dispatch] = useReducer(stageReducer, mergedInitialState, enforceDeadmanExclusivity);
 
   const enterMode = useCallback((mode: StageMode) => {
     dispatch({ type: 'ENTER_MODE', mode });
@@ -433,7 +555,7 @@ export function useStage(): StageContextValue {
 export interface ActiveLockInfo {
   id: StageMode;
   label: string;
-  iconType: 'password' | 'time' | 'views';
+  iconType: 'password' | 'time' | 'views' | 'deadman';
   status: 'active' | 'configured' | 'incomplete' | 'disabled';
   detail: string;
 }
@@ -488,6 +610,23 @@ export function useActiveLocksList(): ActiveLockInfo[] {
     });
   }
 
+  // Dead-Man Switch
+  if (state.deadmanEnabled) {
+    const intervalLabel = formatMinutesShort(state.deadmanIntervalMinutes);
+    const graceLabel = state.deadmanGraceEnabled
+      ? `+${formatMinutesShort(state.deadmanGraceMinutes)} grace`
+      : 'no grace';
+    locks.push({
+      id: 'deadManSwitchLock',
+      label: 'Dead-Man',
+      iconType: 'deadman',
+      status: state.deadmanCreatorEmail ? 'active' : 'incomplete',
+      detail: state.deadmanCreatorEmail
+        ? `Every ${intervalLabel} · ${graceLabel}`
+        : 'Creator email needed',
+    });
+  }
+
   return locks;
 }
 
@@ -500,6 +639,7 @@ export function useActiveLocks() {
     accessLimit: state.accessLimitEnabled,
     encryption: state.encryptionEnabled || state.password.length >= 8,
     agentic: state.agenticEnabled,
+    deadman: state.deadmanEnabled,
   };
 }
 
@@ -527,5 +667,14 @@ export function useDraft() {
     setAgenticEnabled: (v: boolean) => dispatch({ type: 'SET_DRAFT_AGENTIC_ENABLED', enabled: v }),
     setAgenticRequireMcp: (v: boolean) => dispatch({ type: 'SET_DRAFT_AGENTIC_REQUIRE_MCP', required: v }),
     setAgenticRoleFilter: (v: string) => dispatch({ type: 'SET_DRAFT_AGENTIC_ROLE_FILTER', role: v }),
+    setDeadmanEnabled: (v: boolean) => dispatch({ type: 'SET_DRAFT_DEADMAN_ENABLED', enabled: v }),
+    setDeadmanSwitchId: (v: string) => dispatch({ type: 'SET_DRAFT_DEADMAN_SWITCH_ID', value: v }),
+    setDeadmanIntervalMinutes: (v: number) => dispatch({ type: 'SET_DRAFT_DEADMAN_INTERVAL', hours: v }),
+    setDeadmanGraceMinutes: (v: number) => dispatch({ type: 'SET_DRAFT_DEADMAN_GRACE', hours: v }),
+    setDeadmanGraceEnabled: (v: boolean) => dispatch({ type: 'SET_DRAFT_DEADMAN_GRACE_ENABLED', enabled: v }),
+    setDeadmanCreatorEmail: (v: string) => dispatch({ type: 'SET_DRAFT_DEADMAN_CREATOR_EMAIL', value: v }),
+    setDeadmanRecipientEmail: (v: string) => dispatch({ type: 'SET_DRAFT_DEADMAN_RECIPIENT_EMAIL', value: v }),
+    setDeadmanRecipientName: (v: string) => dispatch({ type: 'SET_DRAFT_DEADMAN_RECIPIENT_NAME', value: v }),
+    setDeadmanNote: (v: string) => dispatch({ type: 'SET_DRAFT_DEADMAN_NOTE', value: v }),
   };
 }

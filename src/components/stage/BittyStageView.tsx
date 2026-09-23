@@ -10,6 +10,7 @@ import { PaymentPolicyDraft } from '../PaymentPolicyLockPanel';
 import { buildTimeWindow } from '../../utils/timeWindow';
 import type { UseAccountResult } from '../../hooks/useAccount';
 import type { BittyMetadata, BittyChainDraft } from '../../types';
+import { isPaymentPolicyConfigured } from '../../utils/paymentPolicy';
 
 export interface BittyStageViewProps {
   content: string;
@@ -43,17 +44,36 @@ export interface BittyStageViewProps {
 // compared for identity. `title` deliberately allows an empty string — the
 // "My Box" default belongs to a brand-new session, not to a re-sync, while
 // `??` still protects against an undefined title reaching the input.
-const buildStageSyncPayload = (metadata: BittyMetadata) => ({
-  title: metadata.title ?? 'My Box',
-  description: metadata.description || '',
-  favicon: metadata.favicon || '📦',
-  password: metadata.password || '',
-  boxId: metadata.boxId,
-  timeLockEnabled: Boolean(metadata.lockConfig?.timeWindow?.enabled || metadata.lockConfig?.timeWindow?.mode),
-  accessLimitEnabled: Boolean(metadata.lockConfig?.openLimit?.enabled),
-  accessLimitMaxOpens: metadata.lockConfig?.openLimit?.maxOpens || 1,
-  showRemainingAccessCount: metadata.lockConfig?.openLimit?.showRemainingCount ?? true,
-});
+const buildStageSyncPayload = (metadata: BittyMetadata) => {
+  const dm = metadata.lockConfig?.deadmanSwitch;
+  // Canonical unit is minutes; fall back through seconds/hours for older drafts.
+  const dmIntervalMinutes =
+    dm?.intervalMinutes ??
+    (dm?.intervalSeconds != null ? dm.intervalSeconds / 60 : dm?.intervalHours != null ? dm.intervalHours * 60 : 10080);
+  const dmGraceMinutes =
+    dm?.graceMinutes ??
+    (dm?.graceSeconds != null ? dm.graceSeconds / 60 : dm?.graceHours != null ? dm.graceHours * 60 : 4320);
+  return {
+    title: metadata.title ?? 'My Box',
+    description: metadata.description || '',
+    favicon: metadata.favicon || '📦',
+    password: metadata.password || '',
+    boxId: metadata.boxId,
+    timeLockEnabled: Boolean(metadata.lockConfig?.timeWindow?.enabled || metadata.lockConfig?.timeWindow?.mode),
+    accessLimitEnabled: Boolean(metadata.lockConfig?.openLimit?.enabled),
+    accessLimitMaxOpens: metadata.lockConfig?.openLimit?.maxOpens || 1,
+    showRemainingAccessCount: metadata.lockConfig?.openLimit?.showRemainingCount ?? true,
+    deadmanEnabled: Boolean(dm?.enabled),
+    deadmanSwitchId: dm?.switchId || '',
+    deadmanIntervalMinutes: dmIntervalMinutes,
+    deadmanGraceMinutes: dmGraceMinutes,
+    deadmanGraceEnabled: !(dm?.graceDisabled || dmGraceMinutes <= 0),
+    deadmanCreatorEmail: dm?.creatorEmail || '',
+    deadmanRecipientEmail: dm?.recipientEmail || '',
+    deadmanRecipientName: dm?.recipientName || '',
+    deadmanNote: dm?.note || '',
+  };
+};
 
 const StageDispatcher: React.FC<BittyStageViewProps> = (props) => {
   const { state, setContent, setTitle, setDescription, syncFromExternal, discardDraft, exitMode } = useStage();
@@ -158,13 +178,32 @@ const StageDispatcher: React.FC<BittyStageViewProps> = (props) => {
     // M-of-N unlock policy. 0 means "every active lock must be satisfied"
     // (the unchanged AND default), so the field is only persisted when the
     // creator deliberately chose a partial threshold.
+    if (state.deadmanEnabled && state.deadmanSwitchId) {
+      // Preserve server-populated fields (armedAt / nextDueAt / triggered…)
+      // already present on the metadata, but let the editor's live edits win.
+      nextLockConfig.deadmanSwitch = {
+        ...(props.metadata.lockConfig?.deadmanSwitch || {}),
+        enabled: true,
+        switchId: state.deadmanSwitchId,
+        intervalMinutes: state.deadmanIntervalMinutes,
+        graceMinutes: state.deadmanGraceEnabled ? state.deadmanGraceMinutes : 0,
+        graceDisabled: !state.deadmanGraceEnabled,
+        creatorEmail: state.deadmanCreatorEmail.trim() || undefined,
+        recipientEmail: state.deadmanRecipientEmail.trim() || undefined,
+        recipientName: state.deadmanRecipientName.trim() || undefined,
+        note: state.deadmanNote.trim() || undefined,
+      };
+    } else {
+      delete nextLockConfig.deadmanSwitch;
+    }
+
     if (state.thresholdRequired > 0) {
       nextLockConfig.unlockThreshold = { required: state.thresholdRequired };
     } else {
       delete nextLockConfig.unlockThreshold;
     }
 
-    if (props.paymentPolicy) nextLockConfig.paymentPolicy = props.paymentPolicy;
+    if (isPaymentPolicyConfigured(props.paymentPolicy)) nextLockConfig.paymentPolicy = props.paymentPolicy;
     else delete nextLockConfig.paymentPolicy;
 
     const hasAnyLock = Object.keys(nextLockConfig).length > 0;
@@ -200,6 +239,15 @@ const StageDispatcher: React.FC<BittyStageViewProps> = (props) => {
     state.accessLimitMaxOpens,
     state.showRemainingAccessCount,
     state.thresholdRequired,
+    state.deadmanEnabled,
+    state.deadmanSwitchId,
+    state.deadmanIntervalMinutes,
+    state.deadmanGraceMinutes,
+    state.deadmanGraceEnabled,
+    state.deadmanCreatorEmail,
+    state.deadmanRecipientEmail,
+    state.deadmanRecipientName,
+    state.deadmanNote,
     props.paymentPolicy,
   ]);
 
@@ -264,6 +312,30 @@ export const BittyStageView: React.FC<BittyStageViewProps> = (props) => {
         accessLimitEnabled: Boolean(props.metadata.lockConfig?.openLimit?.enabled),
         accessLimitMaxOpens: props.metadata.lockConfig?.openLimit?.maxOpens || 1,
         showRemainingAccessCount: props.metadata.lockConfig?.openLimit?.showRemainingCount ?? true,
+        deadmanEnabled: Boolean(props.metadata.lockConfig?.deadmanSwitch?.enabled),
+        deadmanSwitchId: props.metadata.lockConfig?.deadmanSwitch?.switchId || '',
+        deadmanIntervalMinutes:
+          props.metadata.lockConfig?.deadmanSwitch?.intervalMinutes ??
+          (props.metadata.lockConfig?.deadmanSwitch?.intervalSeconds != null
+            ? props.metadata.lockConfig.deadmanSwitch.intervalSeconds / 60
+            : props.metadata.lockConfig?.deadmanSwitch?.intervalHours != null
+              ? props.metadata.lockConfig.deadmanSwitch.intervalHours * 60
+              : 10080),
+        deadmanGraceMinutes:
+          props.metadata.lockConfig?.deadmanSwitch?.graceMinutes ??
+          (props.metadata.lockConfig?.deadmanSwitch?.graceSeconds != null
+            ? props.metadata.lockConfig.deadmanSwitch.graceSeconds / 60
+            : props.metadata.lockConfig?.deadmanSwitch?.graceHours != null
+              ? props.metadata.lockConfig.deadmanSwitch.graceHours * 60
+              : 4320),
+        deadmanGraceEnabled: !(
+          props.metadata.lockConfig?.deadmanSwitch?.graceDisabled ||
+          (props.metadata.lockConfig?.deadmanSwitch?.graceMinutes ?? 4320) <= 0
+        ),
+        deadmanCreatorEmail: props.metadata.lockConfig?.deadmanSwitch?.creatorEmail || '',
+        deadmanRecipientEmail: props.metadata.lockConfig?.deadmanSwitch?.recipientEmail || '',
+        deadmanRecipientName: props.metadata.lockConfig?.deadmanSwitch?.recipientName || '',
+        deadmanNote: props.metadata.lockConfig?.deadmanSwitch?.note || '',
       }}
     >
       <StageDispatcher {...props} />

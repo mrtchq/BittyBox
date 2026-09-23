@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { X, Check, Trash2, Eye, EyeOff, Clock, Lock, Mail, Send, Copy, RefreshCw, Sparkles, CheckCircle2 } from 'lucide-react';
+import { X, Check, Trash2, Eye, EyeOff, Clock, Lock, Mail, Send, Copy, RefreshCw, Sparkles, CheckCircle2, Hourglass, ShieldCheck, AlertTriangle } from 'lucide-react';
 import { useStage, useDraft } from '../../stores/stageStore';
 import { getLockType } from '../../data/lockTypes';
 
@@ -299,6 +299,569 @@ const MagicKeySetupBody: React.FC<MagicKeySetupBodyProps> = ({
   );
 };
 
+// ── Dead-Man Switch configuration ────────────────────────────────────────────
+// A liveness-gated release: the server emails the creator a one-click check-in
+// link on the chosen cadence. Missing `interval + grace` fires the switch and
+// releases the archived Box link to the recipient. Cadence is settable down to
+// one minute (60 s), and the grace window can be turned off entirely.
+
+type DurationUnit = 'minutes' | 'hours' | 'days';
+const UNIT_MINUTES: Record<DurationUnit, number> = { minutes: 1, hours: 60, days: 1440 };
+const UNIT_LABEL: Record<DurationUnit, string> = { minutes: 'min', hours: 'hrs', days: 'days' };
+
+function bestUnit(minutes: number): DurationUnit {
+  if (minutes > 0 && minutes % 1440 === 0) return 'days';
+  if (minutes > 0 && minutes % 60 === 0) return 'hours';
+  return 'minutes';
+}
+function toMinutes(value: number, unit: DurationUnit): number {
+  return Math.max(0, Number(value) || 0) * UNIT_MINUTES[unit];
+}
+function fromMinutes(minutes: number, unit: DurationUnit): number {
+  return Math.round((minutes / UNIT_MINUTES[unit]) * 1000) / 1000;
+}
+function humanizeMinutes(minutes: number): string {
+  const m = Math.round(Number(minutes) || 0);
+  if (m <= 0) return 'no grace';
+  const days = Math.floor(m / 1440);
+  const hours = Math.floor((m % 1440) / 60);
+  const mins = m % 60;
+  const parts: string[] = [];
+  if (days) parts.push(`${days} day${days === 1 ? '' : 's'}`);
+  if (hours) parts.push(`${hours} hour${hours === 1 ? '' : 's'}`);
+  if (mins) parts.push(`${mins} minute${mins === 1 ? '' : 's'}`);
+  return parts.join(' ');
+}
+
+function generateSwitchId(): string {
+  try {
+    const bytes = new Uint8Array(8);
+    crypto.getRandomValues(bytes);
+    return 'dms_' + Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+  } catch {
+    return 'dms_' + Math.random().toString(36).slice(2, 14);
+  }
+}
+
+function emailLooksValid(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((value || '').trim());
+}
+
+interface DurationFieldProps {
+  value: number;
+  unit: DurationUnit;
+  onChangeValue: (v: number) => void;
+  onChangeUnit: (u: DurationUnit) => void;
+  onSetMinutes: (minutes: number) => void;
+  min: number;
+  presets: Array<{ label: string; minutes: number }>;
+  accent: 'violet' | 'amber';
+}
+
+const DurationField: React.FC<DurationFieldProps> = ({
+  value,
+  unit,
+  onChangeValue,
+  onChangeUnit,
+  onSetMinutes,
+  min,
+  presets,
+  accent,
+}) => {
+  const ring = accent === 'violet' ? 'focus:border-violet-300 focus:ring-violet-400' : 'focus:border-amber-300 focus:ring-amber-400';
+  const chipOn = accent === 'violet' ? 'bg-violet-950/90 border-violet-400 text-violet-100' : 'bg-amber-950/90 border-amber-400 text-amber-100';
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center gap-2">
+        <input
+          type="number"
+          min={min}
+          step={1}
+          value={value}
+          onChange={e => onChangeValue(Math.max(min, Number(e.target.value) || min))}
+          className={`flex-1 rounded-xl border border-cyan-400/40 bg-[#02010a] px-3 py-2 text-sm text-cyan-100 outline-none focus:ring-1 select-text ${ring}`}
+        />
+        <div className="flex items-center gap-1">
+          {(['minutes', 'hours', 'days'] as DurationUnit[]).map(u => (
+            <button
+              key={u}
+              type="button"
+              onClick={() => onChangeUnit(u)}
+              className={`px-2 py-1.5 rounded-lg border text-[10px] font-bold transition-all cursor-pointer ${
+                unit === u ? chipOn : 'bg-[#02010a]/80 border-cyan-500/20 text-cyan-400/60 hover:border-cyan-500/40'
+              }`}
+            >
+              {UNIT_LABEL[u]}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="flex items-center gap-1.5 flex-wrap">
+        {presets.map(p => (
+          <button
+            key={p.label}
+            type="button"
+            onClick={() => onSetMinutes(p.minutes)}
+            className="px-2 py-0.5 rounded-md border border-cyan-500/25 bg-[#02010a]/70 text-[10px] text-cyan-300/70 hover:border-cyan-400/60 hover:text-cyan-200 transition-all cursor-pointer"
+          >
+            {p.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+interface DeadManSwitchSetupBodyProps {
+  draft: NonNullable<ReturnType<typeof useDraft>>;
+  boxTitle: string;
+  isConfigured: boolean;
+  onApply: () => void;
+  onRemove: () => void;
+  onClose: () => void;
+}
+
+const DeadManSwitchSetupBody: React.FC<DeadManSwitchSetupBodyProps> = ({
+  draft,
+  boxTitle,
+  isConfigured,
+  onApply,
+  onRemove,
+  onClose,
+}) => {
+  const switchId = draft.deadmanSwitchId;
+  const [intervalUnit, setIntervalUnit] = useState<DurationUnit>(() => bestUnit(draft.deadmanIntervalMinutes));
+  const [intervalValue, setIntervalValue] = useState<number>(() =>
+    fromMinutes(draft.deadmanIntervalMinutes, bestUnit(draft.deadmanIntervalMinutes))
+  );
+  const [graceUnit, setGraceUnit] = useState<DurationUnit>(() =>
+    bestUnit(draft.deadmanGraceMinutes > 0 ? draft.deadmanGraceMinutes : 60)
+  );
+  const [graceValue, setGraceValue] = useState<number>(() =>
+    fromMinutes(draft.deadmanGraceMinutes > 0 ? draft.deadmanGraceMinutes : 60, bestUnit(draft.deadmanGraceMinutes > 0 ? draft.deadmanGraceMinutes : 60))
+  );
+
+  const [liveStatus, setLiveStatus] = useState<null | {
+    status: string;
+    nextDueAt?: string;
+    releasesAt?: string;
+    triggered?: boolean;
+  }>(null);
+  const [checkingIn, setCheckingIn] = useState(false);
+  const [checkInMessage, setCheckInMessage] = useState<null | { ok: boolean; text: string }>(null);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [testing, setTesting] = useState<'' | 'remind' | 'fire'>('');
+  const [testMessage, setTestMessage] = useState<null | { ok: boolean; text: string }>(null);
+
+  const token = (() => {
+    if (!switchId) return '';
+    try {
+      return localStorage.getItem(`bitty_deadman_token_${switchId}`) || '';
+    } catch {
+      return '';
+    }
+  })();
+
+  const refreshStatus = React.useCallback(() => {
+    if (!switchId) return;
+    fetch(`/api/deadman/status/${switchId}`, { headers: { Accept: 'application/json' } })
+      .then(r => (r.ok ? r.json() : null))
+      .then(data => {
+        if (data?.success) setLiveStatus(data.switch);
+      })
+      .catch(() => {});
+  }, [switchId]);
+
+  // Prefer the server's authoritative state when we already have a switch id.
+  useEffect(() => {
+    refreshStatus();
+  }, [refreshStatus]);
+
+  const applyInterval = (v: number) => {
+    setIntervalValue(v);
+    draft.setDeadmanIntervalMinutes(Math.max(1, Math.round(toMinutes(v, intervalUnit))));
+  };
+  const setIntervalPreset = (minutes: number) => {
+    const u = bestUnit(minutes);
+    setIntervalUnit(u);
+    setIntervalValue(fromMinutes(minutes, u));
+    draft.setDeadmanIntervalMinutes(Math.max(1, Math.round(minutes)));
+  };
+  const changeIntervalUnit = (u: DurationUnit) => {
+    setIntervalUnit(u);
+    setIntervalValue(fromMinutes(draft.deadmanIntervalMinutes, u));
+  };
+  const applyGrace = (v: number) => {
+    setGraceValue(v);
+    draft.setDeadmanGraceMinutes(Math.max(1, Math.round(toMinutes(v, graceUnit))));
+  };
+  const setGracePreset = (minutes: number) => {
+    const u = bestUnit(minutes);
+    setGraceUnit(u);
+    setGraceValue(fromMinutes(minutes, u));
+    draft.setDeadmanGraceMinutes(Math.max(1, Math.round(minutes)));
+  };
+  const changeGraceUnit = (u: DurationUnit) => {
+    setGraceUnit(u);
+    setGraceValue(fromMinutes(draft.deadmanGraceMinutes > 0 ? draft.deadmanGraceMinutes : 60, u));
+  };
+  const toggleGrace = (enabled: boolean) => {
+    draft.setDeadmanGraceEnabled(enabled);
+    if (enabled && draft.deadmanGraceMinutes <= 0) {
+      draft.setDeadmanGraceMinutes(Math.max(1, Math.round(toMinutes(graceValue || 60, graceUnit))));
+    }
+  };
+
+  const handleCheckIn = async () => {
+    if (!token) return;
+    setCheckingIn(true);
+    setCheckInMessage(null);
+    try {
+      const res = await fetch(`/api/deadman/checkin/${encodeURIComponent(token)}`, {
+        method: 'POST',
+        headers: { Accept: 'application/json' },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success) {
+        const due = data.switch?.nextDueAt ? new Date(data.switch.nextDueAt).toLocaleString() : 'the next interval';
+        setLiveStatus(data.switch);
+        setCheckInMessage({ ok: true, text: `Checked in. Next check-in due ${due}.` });
+      } else {
+        setCheckInMessage({ ok: false, text: 'Could not check in — the link may have been replaced. Arm again to get a fresh check-in link.' });
+      }
+    } catch {
+      setCheckInMessage({ ok: false, text: 'Network error while checking in.' });
+    } finally {
+      setCheckingIn(false);
+    }
+  };
+
+  const runTest = async (kind: 'remind' | 'fire') => {
+    if (!token) return;
+    setTesting(kind);
+    setTestMessage(null);
+    try {
+      const res = await fetch(`/api/deadman/test-${kind}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ token }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) {
+        setTestMessage({ ok: false, text: data.error || `Test ${kind} failed.` });
+      } else if (kind === 'remind') {
+        setTestMessage({
+          ok: data.delivery?.success !== false,
+          text: data.delivery?.success === false
+            ? `Reminder could not be delivered: ${data.delivery.error || 'unknown error'}`
+            : 'Test check-in email sent to your inbox.',
+        });
+      } else {
+        setTestMessage({
+          ok: true,
+          text: data.alreadyTriggered
+            ? 'This switch was already fired.'
+            : data.delivery?.success === false
+              ? `Switch fired, but the release email was not delivered (${data.delivery.error || 'no recipient set'}).`
+              : 'Switch fired and the release email was delivered to the recipient.',
+        });
+      }
+      refreshStatus();
+    } catch {
+      setTestMessage({ ok: false, text: `Network error running test ${kind}.` });
+    } finally {
+      setTesting('');
+    }
+  };
+
+  const handleCopyCheckIn = async () => {
+    if (!token || typeof window === 'undefined') return;
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}/api/deadman/checkin/${token}`);
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2000);
+    } catch {}
+  };
+
+  const creatorValid = emailLooksValid(draft.deadmanCreatorEmail);
+  const recipientValid = emailLooksValid(draft.deadmanRecipientEmail);
+  const canApply = creatorValid && recipientValid;
+  const graceOn = draft.deadmanGraceEnabled;
+  const totalMinutes = draft.deadmanIntervalMinutes + (graceOn ? draft.deadmanGraceMinutes : 0);
+
+  return (
+    <div className="space-y-3 font-mono">
+      {/* Explainer */}
+      <div className="rounded-xl border border-violet-500/40 bg-[#0b0718]/90 p-3.5 space-y-2 shadow-[0_0_20px_rgba(139,92,246,0.18)]">
+        <div className="flex items-center gap-1.5 text-[11px] font-bold text-violet-300 uppercase tracking-wider">
+          <Hourglass className="w-3.5 h-3.5 text-violet-400" />
+          <span>Liveness-gated release</span>
+        </div>
+        <p className="text-[11px] text-violet-200/80 leading-relaxed">
+          We email you a one-click check-in link on your cadence. Keep checking in and nothing is
+          released. Go silent past <strong className="text-white">interval + grace</strong> and the
+          archived Box link is delivered to your recipient automatically.
+        </p>
+        <p className="text-[10px] text-violet-300/60 leading-relaxed">
+          Cadence is settable down to 1 minute and grace can be switched off — handy for testing the
+          full reminder and release path quickly.
+        </p>
+      </div>
+
+      {/* Cadence */}
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between">
+          <label className={labelCls}>CHECK-IN EVERY</label>
+          <span className="text-xs font-bold text-violet-200 bg-violet-950/80 border border-violet-500/40 px-2 py-0.5 rounded">
+            {humanizeMinutes(draft.deadmanIntervalMinutes)}
+          </span>
+        </div>
+        <DurationField
+          value={intervalValue}
+          unit={intervalUnit}
+          onChangeValue={applyInterval}
+          onChangeUnit={changeIntervalUnit}
+          onSetMinutes={setIntervalPreset}
+          min={1}
+          accent="violet"
+          presets={[
+            { label: '1 min', minutes: 1 },
+            { label: '5 min', minutes: 5 },
+            { label: '1 hr', minutes: 60 },
+            { label: '1 day', minutes: 1440 },
+            { label: '7 days', minutes: 10080 },
+          ]}
+        />
+      </div>
+
+      {/* Grace */}
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between gap-2">
+          <label className={labelCls}>GRACE PERIOD</label>
+          <button
+            type="button"
+            onClick={() => toggleGrace(!graceOn)}
+            className={`px-2 py-0.5 rounded-full border text-[10px] font-bold transition-all cursor-pointer ${
+              graceOn
+                ? 'bg-emerald-950/70 border-emerald-500/50 text-emerald-300'
+                : 'bg-rose-950/60 border-rose-500/40 text-rose-300'
+            }`}
+            title={graceOn ? 'Turn the grace period off' : 'Turn the grace period on'}
+          >
+            {graceOn ? 'ON' : 'OFF'}
+          </button>
+        </div>
+        {graceOn ? (
+          <>
+            <div className="flex items-center justify-end">
+              <span className="text-xs font-bold text-violet-200 bg-violet-950/80 border border-violet-500/40 px-2 py-0.5 rounded">
+                {humanizeMinutes(draft.deadmanGraceMinutes)}
+              </span>
+            </div>
+            <DurationField
+              value={graceValue}
+              unit={graceUnit}
+              onChangeValue={applyGrace}
+              onChangeUnit={changeGraceUnit}
+              onSetMinutes={setGracePreset}
+              min={1}
+              accent="amber"
+              presets={[
+                { label: '1 min', minutes: 1 },
+                { label: '5 min', minutes: 5 },
+                { label: '1 hr', minutes: 60 },
+                { label: '1 day', minutes: 1440 },
+              ]}
+            />
+            <p className="text-[10px] text-violet-300/60 leading-tight">
+              Releases {humanizeMinutes(totalMinutes)} after your last check-in.
+            </p>
+          </>
+        ) : (
+          <p className="text-[10px] text-amber-300/80 leading-tight">
+            No grace: the switch releases exactly {humanizeMinutes(draft.deadmanIntervalMinutes)} after
+            your last check-in.
+          </p>
+        )}
+      </div>
+
+      {/* Contacts */}
+      <div className="rounded-xl border border-cyan-500/30 bg-[#040210]/90 p-3.5 space-y-2.5">
+        <div className="flex items-center gap-1.5 text-xs font-bold text-cyan-200">
+          <Mail className="w-3.5 h-3.5 text-cyan-400" />
+          <span>CHECK-IN &amp; DELIVERY</span>
+        </div>
+        <div className="space-y-1">
+          <label className="text-[10px] font-bold text-cyan-300/90 uppercase tracking-wider">Your Email (check-in) *</label>
+          <input
+            type="email"
+            value={draft.deadmanCreatorEmail}
+            onChange={e => draft.setDeadmanCreatorEmail(e.target.value)}
+            placeholder="you@example.com"
+            className="w-full rounded-xl border border-cyan-400/40 bg-[#02010a] px-3 py-2 text-xs sm:text-sm text-cyan-100 placeholder:text-cyan-400/30 outline-none focus:border-cyan-300 focus:ring-1 focus:ring-cyan-400 select-text"
+          />
+        </div>
+        <div className="space-y-1">
+          <label className="text-[10px] font-bold text-cyan-300/90 uppercase tracking-wider">Recipient Email *</label>
+          <input
+            type="email"
+            value={draft.deadmanRecipientEmail}
+            onChange={e => draft.setDeadmanRecipientEmail(e.target.value)}
+            placeholder="recipient@example.com"
+            className="w-full rounded-xl border border-cyan-400/40 bg-[#02010a] px-3 py-2 text-xs sm:text-sm text-cyan-100 placeholder:text-cyan-400/30 outline-none focus:border-cyan-300 focus:ring-1 focus:ring-cyan-400 select-text"
+          />
+        </div>
+        <div className="space-y-1">
+          <label className="text-[10px] font-bold text-cyan-300/90 uppercase tracking-wider">Recipient Name (Optional)</label>
+          <input
+            type="text"
+            value={draft.deadmanRecipientName}
+            onChange={e => draft.setDeadmanRecipientName(e.target.value)}
+            placeholder="e.g. Mum, Alex, Estate Trustee"
+            className="w-full rounded-xl border border-cyan-400/40 bg-[#02010a] px-3 py-2 text-xs sm:text-sm text-cyan-100 placeholder:text-cyan-400/30 outline-none focus:border-cyan-300 focus:ring-1 focus:ring-cyan-400 select-text"
+          />
+        </div>
+        <div className="space-y-1">
+          <label className="text-[10px] font-bold text-cyan-300/90 uppercase tracking-wider">Message on Release (Optional)</label>
+          <textarea
+            rows={2}
+            value={draft.deadmanNote}
+            onChange={e => draft.setDeadmanNote(e.target.value)}
+            placeholder="Included in the release email…"
+            className="w-full rounded-xl border border-cyan-400/40 bg-[#02010a] px-3 py-2 text-xs text-cyan-100 placeholder:text-cyan-400/30 outline-none focus:border-cyan-300 focus:ring-1 focus:ring-cyan-400 select-text resize-none"
+          />
+        </div>
+        {draft.deadmanCreatorEmail && !creatorValid && (
+          <p className="text-[11px] text-rose-300">Enter a valid email for your check-in links.</p>
+        )}
+        {draft.deadmanRecipientEmail && !recipientValid && (
+          <p className="text-[11px] text-rose-300">Enter a valid recipient email.</p>
+        )}
+      </div>
+
+      {isConfigured && switchId && !token && !liveStatus && (
+        <div className="rounded-xl border border-violet-500/30 bg-violet-950/30 p-3 text-[11px] text-violet-200/80 leading-relaxed">
+          Configured, not yet armed. Generate the Box to arm the switch and receive your first
+          check-in email.
+        </div>
+      )}
+
+      {/* Armed status + easy check-in */}
+      {isConfigured && switchId && (token || liveStatus) && (
+        <div className="rounded-xl border border-emerald-500/40 bg-emerald-950/40 p-3.5 space-y-2.5">
+          <div className="flex items-center justify-between gap-2">
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-300 uppercase tracking-wider">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+              ARMED
+            </span>
+            <span className="text-[9px] font-mono text-emerald-300/70 truncate">{switchId}</span>
+          </div>
+          {liveStatus?.nextDueAt && !liveStatus.triggered && (
+            <p className="text-[11px] text-emerald-200/85">
+              Next check-in due <strong className="text-white">{new Date(liveStatus.nextDueAt).toLocaleString()}</strong>
+              {liveStatus.releasesAt ? ` · releases ${new Date(liveStatus.releasesAt).toLocaleString()} if missed` : ''}
+            </p>
+          )}
+          {liveStatus?.triggered && (
+            <p className="text-[11px] text-rose-300 flex items-center gap-1.5">
+              <AlertTriangle className="w-3.5 h-3.5" /> This switch has already fired. Re-arm to start a new cycle.
+            </p>
+          )}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleCheckIn}
+              disabled={checkingIn || !token}
+              className={`flex-1 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                checkingIn || !token
+                  ? 'bg-emerald-950/50 border border-emerald-500/30 text-emerald-500/60 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 shadow-[0_0_20px_rgba(16,185,129,0.4)] hover:brightness-110'
+              }`}
+              title={token ? 'Reset the liveness clock now' : 'Arm the switch to get a check-in link'}
+            >
+              {checkingIn ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+              <span>{checkingIn ? 'Checking in…' : 'Check In Now'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleCopyCheckIn}
+              disabled={!token}
+              className="px-3 py-2.5 rounded-xl border border-emerald-500/30 bg-emerald-950/50 text-emerald-300 text-xs hover:bg-emerald-900/50 transition-all cursor-pointer disabled:opacity-40"
+              title="Copy my check-in link"
+            >
+              {copiedLink ? <Check className="w-4 h-4 text-emerald-300" /> : <Copy className="w-4 h-4" />}
+            </button>
+          </div>
+          {checkInMessage && (
+            <p className={`text-[11px] ${checkInMessage.ok ? 'text-emerald-300' : 'text-rose-300'}`}>
+              {checkInMessage.text}
+            </p>
+          )}
+
+          {/* Test hooks — exercise the real paths without waiting */}
+          <div className="pt-2 mt-1 border-t border-emerald-500/20 space-y-2">
+            <div className="text-[10px] font-bold text-emerald-300/80 uppercase tracking-wider">Test the paths</div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => runTest('remind')}
+                disabled={!token || testing !== ''}
+                className="flex-1 py-2 rounded-xl text-[11px] font-bold border border-cyan-500/40 bg-cyan-950/40 text-cyan-200 hover:bg-cyan-900/50 transition-all cursor-pointer disabled:opacity-40"
+                title="Send the check-in reminder email right now"
+              >
+                {testing === 'remind' ? 'Sending…' : 'Send test reminder'}
+              </button>
+              <button
+                type="button"
+                onClick={() => runTest('fire')}
+                disabled={!token || testing !== '' || Boolean(liveStatus?.triggered)}
+                className="flex-1 py-2 rounded-xl text-[11px] font-bold border border-rose-500/40 bg-rose-950/40 text-rose-200 hover:bg-rose-900/50 transition-all cursor-pointer disabled:opacity-40"
+                title="Fire the switch immediately and deliver the release email"
+              >
+                {testing === 'fire' ? 'Firing…' : 'Fire release now'}
+              </button>
+            </div>
+            {testMessage && (
+              <p className={`text-[11px] ${testMessage.ok ? 'text-emerald-300' : 'text-rose-300'}`}>
+                {testMessage.text}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Actions */}
+      <div className="flex items-center gap-2 pt-1">
+        <button
+          type="button"
+          onClick={onApply}
+          disabled={!canApply}
+          className={`flex-1 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+            canApply
+              ? 'bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white shadow-[0_0_20px_rgba(139,92,246,0.45)] hover:scale-[1.01]'
+              : 'bg-violet-950/40 border border-violet-500/20 text-violet-500/50 cursor-not-allowed'
+          }`}
+        >
+          <Hourglass className="w-4 h-4" /> {isConfigured ? 'Update Dead-Man Switch' : 'Arm Dead-Man Switch'}
+        </button>
+        {isConfigured && (
+          <button
+            type="button"
+            onClick={onRemove}
+            className="px-3 py-2.5 rounded-xl bg-rose-950/60 border border-rose-500/30 text-rose-300 text-xs hover:bg-rose-900/50 transition-all cursor-pointer"
+            title="Disable Dead-Man Switch"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+      <p className="text-[9px] text-violet-300/50 leading-tight">
+        Arming saves this configuration. The first check-in email is sent when you generate the Box.
+      </p>
+    </div>
+  );
+};
+
 export const LockConfigModal: React.FC<LockConfigModalProps> = ({
   lockId,
   onClose,
@@ -326,10 +889,37 @@ export const LockConfigModal: React.FC<LockConfigModalProps> = ({
     onClose();
   };
 
-  const removeAndClose = (action: { type: 'REMOVE_PASSWORD' } | { type: 'REMOVE_TIME_LOCK' } | { type: 'REMOVE_ACCESS_LIMIT' }) => {
+  const removeAndClose = (
+    action:
+      | { type: 'REMOVE_PASSWORD' }
+      | { type: 'REMOVE_TIME_LOCK' }
+      | { type: 'REMOVE_ACCESS_LIMIT' }
+      | { type: 'REMOVE_DEADMAN' }
+  ) => {
     dispatch(action);
     discardDraft();
     onClose();
+  };
+
+  // Removing a Dead-Man Switch must also disarm it server-side so no release
+  // email can fire after the creator cancelled it.
+  const removeDeadmanAndClose = () => {
+    const switchId = state.deadmanSwitchId;
+    let token = '';
+    try {
+      if (switchId) token = localStorage.getItem(`bitty_deadman_token_${switchId}`) || '';
+    } catch {}
+    if (token) {
+      fetch('/api/deadman/disarm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
+      }).catch(() => {});
+      try {
+        localStorage.removeItem(`bitty_deadman_token_${switchId}`);
+      } catch {}
+    }
+    removeAndClose({ type: 'REMOVE_DEADMAN' });
   };
 
   const isConfigured = (): boolean => {
@@ -352,6 +942,8 @@ export const LockConfigModal: React.FC<LockConfigModalProps> = ({
         return state.timeLockEnabled && (state.timeLockMode === 'delay' || state.showTimeCountdown);
       case 'chain':
         return chainEnabled;
+      case 'dead-man-switch':
+        return state.deadmanEnabled && Boolean(state.deadmanSwitchId) && Boolean(state.deadmanCreatorEmail);
       default:
         return false;
     }
@@ -375,23 +967,23 @@ export const LockConfigModal: React.FC<LockConfigModalProps> = ({
         );
       }
       case 'passcode': {
-        const valid = draft.password.length >= 8 && draft.password.length <= 12 && /^\d*$/.test(draft.password);
+        const valid = draft.password.length >= 8 && draft.password.length <= 24 && /^\d*$/.test(draft.password);
         const apply = () => {
           if (valid) commitDraft();
           onClose();
         };
         return (
           <>
-            <label className={labelCls}>NUMERIC PIN (8–12 DIGITS)</label>
+            <label className={labelCls}>NUMERIC PIN (8–24 DIGITS)</label>
             <div className="relative">
               <input
                 type={showSecret ? 'text' : 'password'}
                 inputMode="numeric"
                 pattern="[0-9]*"
-                maxLength={12}
+                maxLength={24}
                 value={draft.password}
-                onChange={e => draft.setPassword(e.target.value.replace(/\D/g, '').slice(0, 12))}
-                placeholder="Enter 8-12 digits..."
+                onChange={e => draft.setPassword(e.target.value.replace(/\D/g, '').slice(0, 24))}
+                placeholder="Enter 8-24 digits..."
                 autoFocus
                 className={`${inputCls} text-center text-lg tracking-[0.25em] pr-10`}
               />
@@ -405,7 +997,7 @@ export const LockConfigModal: React.FC<LockConfigModalProps> = ({
               </button>
             </div>
             {draft.password.length > 0 && !valid && (
-              <p className="text-[11px] text-rose-300">PIN must be 8–12 digits to lock the Box.</p>
+              <p className="text-[11px] text-rose-300">PIN must be 8–24 digits to lock the Box.</p>
             )}
             <div className="flex items-center gap-2 pt-1">
               <button
@@ -806,6 +1398,23 @@ export const LockConfigModal: React.FC<LockConfigModalProps> = ({
           </>
         );
       }
+      case 'dead-man-switch': {
+        return (
+          <DeadManSwitchSetupBody
+            draft={draft}
+            boxTitle={state.title}
+            isConfigured={isConfigured()}
+            onApply={() => {
+              if (!draft.deadmanSwitchId) draft.setDeadmanSwitchId(generateSwitchId());
+              draft.setDeadmanEnabled(true);
+              commitDraft();
+              onClose();
+            }}
+            onRemove={removeDeadmanAndClose}
+            onClose={onClose}
+          />
+        );
+      }
       case 'soon':
       default: {
         return (
@@ -845,7 +1454,9 @@ export const LockConfigModal: React.FC<LockConfigModalProps> = ({
           ? 'amber'
           : lock.kind === 'burn' || lock.kind === 'max-opens'
             ? 'emerald'
-            : 'cyan';
+            : lock.kind === 'dead-man-switch'
+              ? 'violet'
+              : 'cyan';
 
   return (
     <div
@@ -864,7 +1475,9 @@ export const LockConfigModal: React.FC<LockConfigModalProps> = ({
                 ? 'border-amber-500/40'
                 : accent === 'emerald'
                   ? 'border-emerald-500/40'
-                  : 'border-cyan-500/40'
+                  : accent === 'violet'
+                    ? 'border-violet-500/40 shadow-[0_0_50px_rgba(139,92,246,0.25)]'
+                    : 'border-cyan-500/40'
         }`}
       >
         <div className="flex items-start justify-between gap-2 mb-1">
@@ -879,7 +1492,9 @@ export const LockConfigModal: React.FC<LockConfigModalProps> = ({
                       ? 'bg-amber-950/80 border-amber-500/40'
                       : accent === 'emerald'
                         ? 'bg-emerald-950/80 border-emerald-500/40'
-                        : 'bg-cyan-950/80 border-cyan-500/40'
+                        : accent === 'violet'
+                          ? 'bg-violet-950/80 border-violet-500/40'
+                          : 'bg-cyan-950/80 border-cyan-500/40'
               }`}
             >
               <Icon
@@ -892,7 +1507,9 @@ export const LockConfigModal: React.FC<LockConfigModalProps> = ({
                         ? 'text-amber-300'
                         : accent === 'emerald'
                           ? 'text-emerald-300'
-                          : 'text-cyan-300'
+                          : accent === 'violet'
+                            ? 'text-violet-300'
+                            : 'text-cyan-300'
                 }`}
               />
             </div>
