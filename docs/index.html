@@ -12,7 +12,7 @@
 <meta property="og:url" content="https://bittybox.org/">
 <link rel="icon" href="/favicon.png?v=20260924-bittybox-landing-1">
 <link rel="canonical" href="https://bittybox.org/">
-<link rel="stylesheet" href="/bittybox-landing.css?v=20260924-landing-1">
+<link rel="stylesheet" href="/bittybox-landing.css?v=20260924-heartbeat-logo-1">
 </head>
 <body>
 <div class="ambient" aria-hidden="true"><div class="grid"></div><div class="scan"></div><div class="vignette"></div></div>
@@ -21,7 +21,7 @@
 
 <header class="topbar">
   <a class="brand" href="#top">
-    <span class="brand-mark">B_</span>
+    <img class="brand-logo" src="/bittybox-header-mark.png?v=20260924-logo-1" alt="" aria-hidden="true" width="48" height="48">
     <span><b>BITTYBOX</b><small>URL-NATIVE DEAD MAN'S SWITCH</small></span>
   </a>
   <nav>
@@ -65,6 +65,17 @@
       <span id="hero-state-pill" class="badge-alive">ALIVE MODE</span>
     </div>
 
+    <div class="clock-meta" aria-label="Heartbeat preview details">
+      <div class="clock-meta-item tag-a" id="radar-tag-a">
+        <span class="clock-meta-label">NEXT CHECK-IN</span>
+        <strong class="clock-meta-value" id="clock-next-checkin">06D 13H</strong>
+      </div>
+      <div class="clock-meta-item tag-b" id="radar-tag-b">
+        <span class="clock-meta-label">HEARTBEAT</span>
+        <strong class="clock-meta-value">SIMULATED</strong>
+      </div>
+    </div>
+
     <!-- Active DMS heartbeat clock: accelerated visual preview, never a live monitor. -->
     <div class="radar clock-stage" id="hero-radar" data-mode="alive" aria-label="Heartbeat clock preview">
       <div class="clock-orbit" aria-hidden="true"></div>
@@ -91,8 +102,6 @@
           <line class="clock-hand clock-minute" x1="140" y1="140" x2="140" y2="77"></line>
           <line class="clock-hand clock-second" x1="140" y1="140" x2="140" y2="53"></line>
           <circle class="clock-center" cx="140" cy="140" r="6"></circle>
-          <text id="clock-countdown" class="clock-countdown" x="140" y="224">06D 13H 48M</text>
-          <text class="clock-demo-label" x="140" y="239">SIMULATED · NOT MONITORING</text>
         </svg>
         <div class="ecg-shell" aria-hidden="true">
           <svg viewBox="0 0 260 48" preserveAspectRatio="none">
@@ -100,9 +109,17 @@
           </svg>
         </div>
       </div>
-      <span class="radar-tag tag-a" id="radar-tag-a">NEXT CHECK-IN / 06D 13H</span>
-      <span class="radar-tag tag-b" id="radar-tag-b">HEARTBEAT // SIMULATED</span>
-      <span class="radar-tag tag-c" id="radar-tag-c">AFTERMATH / LOCKED</span>
+    </div>
+
+    <div class="clock-readout" aria-live="polite">
+      <span class="clock-readout-label">TIME TO CHECK-IN</span>
+      <strong id="clock-countdown" class="clock-countdown">06D 13H 48M</strong>
+      <span class="clock-demo-label">SIMULATED · NOT MONITORING</span>
+    </div>
+
+    <div class="clock-state-strip">
+      <span class="clock-state-label" id="clock-state-label">AFTERMATH</span>
+      <strong id="radar-tag-c" class="clock-state-value">LOCKED</strong>
     </div>
 
     <!-- Quick State Preview Buttons on Hero Art -->
@@ -544,6 +561,6 @@
   <a href="/editor">OPEN EDITOR ↗</a>
 </footer>
 
-<script src="/bittybox-landing.js?v=20260924-landing-1"></script>
+<script src="/bittybox-landing.js?v=20260924-heartbeat-layout-1"></script>
 </body>
 </html>

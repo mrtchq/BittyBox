@@ -16,6 +16,12 @@
   const tagA = document.getElementById('radar-tag-a');
   const tagB = document.getElementById('radar-tag-b');
   const tagC = document.getElementById('radar-tag-c');
+  const setMeta = (item, label, value, color = '') => {
+    const labelNode = item?.querySelector('.clock-meta-label, .clock-state-label');
+    const valueNode = item?.querySelector('.clock-meta-value, .clock-state-value');
+    if (labelNode) labelNode.textContent = label;
+    if (valueNode) { valueNode.textContent = value; valueNode.style.color = color; }
+  };
   const freezeState = document.getElementById('hero-freeze-state');
   const pulseStatus = document.getElementById('hero-pulse-status');
   const heroVault = document.getElementById('hero-vault');
@@ -28,33 +34,33 @@
 
       if (state === 'alive') {
         if (heroStatePill) { heroStatePill.className = 'badge-alive'; heroStatePill.textContent = 'ALIVE MODE'; }
-        if (tagA) tagA.textContent = 'CHECK-IN / 06D 14H';
-        if (tagB) { tagB.textContent = 'HEARTBEAT // SIMULATED'; tagB.style.color = 'var(--cyan)'; }
-        if (tagC) tagC.textContent = 'AFTERMATH / LOCKED';
+        setMeta(tagA, 'NEXT CHECK-IN', '06D 14H');
+        setMeta(tagB, 'HEARTBEAT', 'SIMULATED', 'var(--cyan)');
+        setMeta(tagC, 'AFTERMATH', 'LOCKED');
         if (freezeState) freezeState.textContent = 'CRYSTALLIZED';
         if (pulseStatus) { pulseStatus.textContent = '● DEMO SIGNAL'; pulseStatus.style.color = 'var(--green)'; }
         if (heroVault) heroVault.style.filter = 'drop-shadow(0 0 20px rgba(255, 66, 71, 0.4))';
       } else if (state === 'mutating') {
         if (heroStatePill) { heroStatePill.className = 'badge-mutating'; heroStatePill.textContent = 'MUTATING'; }
-        if (tagA) tagA.textContent = 'CHECK-IN / OVERDUE';
-        if (tagB) { tagB.textContent = 'HEARTBEAT // MISSED'; tagB.style.color = 'var(--gold)'; }
-        if (tagC) tagC.textContent = 'STATE / UNSTABLE';
+        setMeta(tagA, 'CHECK-IN', 'OVERDUE');
+        setMeta(tagB, 'HEARTBEAT', 'MISSED', 'var(--gold)');
+        setMeta(tagC, 'PREVIEW STATE', 'UNSTABLE');
         if (freezeState) freezeState.textContent = 'THAWING...';
         if (pulseStatus) { pulseStatus.textContent = '⚠ ESCALATING'; pulseStatus.style.color = 'var(--gold)'; }
         if (heroVault) heroVault.style.filter = 'drop-shadow(0 0 24px rgba(232, 189, 99, 0.6))';
       } else if (state === 'aftermath') {
         if (heroStatePill) { heroStatePill.className = 'badge-aftermath'; heroStatePill.textContent = 'AFTERMATH TRIGGERED'; }
-        if (tagA) tagA.textContent = 'SWITCH / FIRED';
-        if (tagB) { tagB.textContent = 'PAYLOAD // EXECUTING'; tagB.style.color = 'var(--red)'; }
-        if (tagC) tagC.textContent = 'AFTERMATH / UNLOCKED';
+        setMeta(tagA, 'SWITCH', 'FIRED');
+        setMeta(tagB, 'PAYLOAD', 'EXECUTING', 'var(--red)');
+        setMeta(tagC, 'AFTERMATH', 'UNLOCKED');
         if (freezeState) freezeState.textContent = 'THAWED & ACTIVE';
         if (pulseStatus) { pulseStatus.textContent = '⚡ TRIGGERED'; pulseStatus.style.color = 'var(--red)'; }
         if (heroVault) heroVault.style.filter = 'drop-shadow(0 0 30px rgba(255, 66, 71, 0.9))';
       } else if (state === 'burn') {
         if (heroStatePill) { heroStatePill.className = 'badge-burn'; heroStatePill.textContent = 'BURNED / ASHES'; }
-        if (tagA) tagA.textContent = 'STATUS / DESTROYED';
-        if (tagB) { tagB.textContent = 'KEY // ZEROIZED'; tagB.style.color = '#718096'; }
-        if (tagC) tagC.textContent = 'EXECUTED SEALED';
+        setMeta(tagA, 'STATUS', 'DESTROYED');
+        setMeta(tagB, 'KEY', 'ZEROIZED', '#718096');
+        setMeta(tagC, 'EXECUTION', 'SEALED');
         if (freezeState) freezeState.textContent = 'PERMANENT PURGE';
         if (pulseStatus) { pulseStatus.textContent = '✕ EXECUTED'; pulseStatus.style.color = '#a0aec0'; }
         if (heroVault) heroVault.style.filter = 'grayscale(1) opacity(0.3)';
@@ -202,7 +208,7 @@
 (() => {
   const radar = document.getElementById('hero-radar');
   const display = document.getElementById('clock-countdown');
-  const tag = document.getElementById('radar-tag-a');
+  const nextCheckin = document.getElementById('clock-next-checkin');
   if (!radar || !display) return;
   const windowMs = (6 * 24 * 60 + 13 * 60 + 48) * 60 * 1000;
   let deadline = Date.now() + windowMs;
@@ -213,15 +219,19 @@
     const minutes = Math.floor(left % 3600000 / 60000);
     return `${String(days).padStart(2,'0')}D ${String(hours).padStart(2,'0')}H ${String(minutes).padStart(2,'0')}M`;
   };
+  const updateNextCheckin = value => {
+    if (!nextCheckin) return;
+    nextCheckin.textContent = value === 'CHECK-IN DUE' ? value : value.split(' ').slice(0,2).join(' ');
+  };
   const showMode = mode => {
     radar.dataset.mode = mode;
-    if (mode === 'alive') { deadline = Date.now() + windowMs; display.textContent = format(); if(tag) tag.textContent = `NEXT CHECK-IN / ${display.textContent.split(' ').slice(0,2).join(' ')}`; }
+    if (mode === 'alive') { deadline = Date.now() + windowMs; display.textContent = format(); updateNextCheckin(display.textContent); }
     else display.textContent = ({mutating:'OVERDUE +18H',aftermath:'RELEASED',burn:'ZEROIZED'})[mode] || 'PAUSED';
   };
   document.querySelectorAll('.hero-quick-switch .state-btn').forEach(button => {
     button.addEventListener('click', () => showMode(button.dataset.state || 'alive'));
   });
   window.setInterval(() => {
-    if (radar.dataset.mode === 'alive') { display.textContent = deadline > Date.now() ? format() : 'CHECK-IN DUE'; if(tag) tag.textContent = `NEXT CHECK-IN / ${display.textContent.split(' ').slice(0,2).join(' ')}`; }
+    if (radar.dataset.mode === 'alive') { display.textContent = deadline > Date.now() ? format() : 'CHECK-IN DUE'; updateNextCheckin(display.textContent); }
   }, 1000);
 })();
