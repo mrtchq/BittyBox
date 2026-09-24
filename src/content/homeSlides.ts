@@ -17,7 +17,7 @@ export interface HomeSlideCopy {
 //   Slide 2 — Password Lock (Optional AES-256 GCM)
 //   Slide 3 — Time-Based Lock (Optional Expiration Window / Reveal + Decay)
 //   Slide 4 — Access Limit Lock (Optional Burn-on-Read / Visitor Quota)
-//   Slide 5 — Review & Credit Cost (Free with no locks / PRO / Credits)
+//   Slide 5 — Review & Generate (Free with no locks / PRO)
 // ─────────────────────────────────────────────────────────────────────────────
 const slideStubs: HomeSlideCopy[] = [
   {
@@ -46,7 +46,7 @@ const slideStubs: HomeSlideCopy[] = [
     bullets: [
       "Easy 8 to 12 digit PIN to lock your page",
       "Bank-grade encryption keeps your content secret",
-      "100% Free & Unlimited (0 credits needed)",
+      "100% Free & Unlimited",
     ],
     cta: "Next: Time-Based Lock →",
     metaDescription:
@@ -61,7 +61,7 @@ const slideStubs: HomeSlideCopy[] = [
     bullets: [
       "Set countdown timers, delayed reveals, or date ranges",
       "Automatically locks when time is up — nothing left behind",
-      "Free with PRO ($4/mo) or 10 credits",
+      "Free with PRO ($4/mo)",
     ],
     cta: "Next: View Limits →",
     metaDescription:
@@ -76,7 +76,7 @@ const slideStubs: HomeSlideCopy[] = [
     bullets: [
       "Set 1 view (burn after reading), 3, 5, or custom views",
       "Shows a live badge counting down remaining views",
-      "Free with PRO ($4/mo) or 10 credits",
+      "Free with PRO ($4/mo)",
     ],
     cta: "Next: Review & Generate →",
     metaDescription:
@@ -90,7 +90,7 @@ const slideStubs: HomeSlideCopy[] = [
     bullets: [],
     cta: "GENERATE BOX",
     metaDescription:
-      "Calculate credit cost and generate your self-contained Bitty Box URL.",
+      "Review configuration and generate your self-contained Bitty Box URL.",
   },
 ];
 

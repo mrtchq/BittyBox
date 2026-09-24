@@ -4,13 +4,13 @@
    ========================================================================= */
 
 :root {
-  /* Surfaces (Bitty Box live palette) */
-  --bg:            #07090e;
+  /* Surfaces (Bitty Box red & black palette) */
+  --bg:            #080a0e;
   --surface:       #0e121a;
-  --surface-2:     #141a26;
+  --surface-2:     #141823;
   --surface-3:     #1a2231;
-  --line:          #ffffff14;
-  --line-bright:   #ffffff2e;
+  --line:          #2a3140;
+  --line-bright:   rgba(255, 66, 71, 0.4);
 
   /* Ink
      --ink-3 is used for hint/micro text at 9.5-12px, so it must clear WCAG AA
@@ -20,19 +20,19 @@
   --ink-2:         #9aa4b2;
   --ink-3:         #7f8896;
 
-  /* Accents — ALIVE (armed) → AFTERMATH (released) */
-  --alive:         #10b981;
-  --alive-soft:    #10b98144;
-  --cyan:          #00e5ff;
+  /* Accents — ALIVE (armed, red) → AFTERMATH (released, gold/crimson) */
+  --alive:         #ff4247;
+  --alive-soft:    rgba(255, 66, 71, 0.22);
+  --cyan:          #ff555c;
   --amber:         #f59e0b;
-  --after:         #ff3366;
-  --after-soft:    #ff336644;
+  --after:         #e8bd63;
+  --after-soft:    rgba(232, 189, 99, 0.25);
 
   /* Derived, switched by [data-state] */
-  --accent:        var(--cyan);
-  --accent-2:      var(--alive);
-  --accent-soft:   #00e5ff33;
-  --accent-glow:   #00e5ff5c;
+  --accent:        var(--alive);
+  --accent-2:      #ff6268;
+  --accent-soft:   rgba(255, 66, 71, 0.22);
+  --accent-glow:   rgba(255, 66, 71, 0.55);
 
   /* Geometry */
   --r-sm: 10px;
@@ -444,10 +444,11 @@ input, textarea { font-family: inherit; }
   inset: 0;
   border-radius: 50%;
   border: 1px solid var(--accent-soft);
-  animation: dmsRipple 4.2s var(--ease-soft) infinite;
+  box-shadow: 0 0 16px rgba(255, 66, 71, 0.2);
+  animation: dmsRipple 3.36s var(--ease-soft) infinite;
 }
-.dms-pulse-ring.dms-d2 { animation-delay: 1.4s; }
-.dms-pulse-ring.dms-d3 { animation-delay: 2.8s; }
+.dms-pulse-ring.dms-d2 { animation-delay: 1.12s; }
+.dms-pulse-ring.dms-d3 { animation-delay: 2.24s; }
 @keyframes dmsRipple {
   0%   { transform: scale(.52); opacity: 0; }
   22%  { opacity: .85; }
@@ -457,16 +458,16 @@ input, textarea { font-family: inherit; }
   width: 34%;
   aspect-ratio: 1;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #ffffff, var(--accent) 42%, transparent 78%);
-  box-shadow: 0 0 44px var(--accent-glow), 0 0 110px var(--accent-soft);
-  animation: dmsCoreBeat 2.6s var(--ease-soft) infinite;
+  background: radial-gradient(circle at 35% 30%, #ffffff, var(--accent) 42%, #080a0e 78%);
+  box-shadow: 0 0 35px var(--accent-glow), 0 0 80px var(--accent-soft);
+  animation: dmsCoreBeat 1.12s cubic-bezier(.4, 0, .2, 1) infinite;
 }
 @keyframes dmsCoreBeat {
-  0%, 100% { transform: scale(1); }
-  9%       { transform: scale(1.13); }
-  18%      { transform: scale(1); }
-  27%      { transform: scale(1.07); }
-  36%      { transform: scale(1); }
+  0%, 100% { transform: scale(1); opacity: .85; }
+  14%      { transform: scale(1.18); opacity: 1; filter: drop-shadow(0 0 16px rgba(255, 66, 71, 0.8)); }
+  28%      { transform: scale(1.02); opacity: .9; }
+  42%      { transform: scale(1.12); opacity: 1; filter: drop-shadow(0 0 12px rgba(255, 66, 71, 0.6)); }
+  58%      { transform: scale(1); opacity: .85; }
 }
 .dms-ecg {
   position: absolute;
@@ -480,21 +481,21 @@ input, textarea { font-family: inherit; }
 .dms-ecg-line {
   fill: none;
   stroke: var(--accent);
-  stroke-width: 2;
+  stroke-width: 2.5;
   stroke-linecap: round;
   stroke-linejoin: round;
-  filter: drop-shadow(0 0 6px var(--accent-glow));
-  stroke-dasharray: 340;
-  stroke-dashoffset: 340;
-  animation: dmsEcg 3.4s var(--ease-soft) infinite;
-  opacity: .9;
+  filter: drop-shadow(0 0 6px rgba(255, 66, 71, 0.9));
+  stroke-dasharray: 240;
+  stroke-dashoffset: 240;
+  animation: dmsEcg 1.12s linear infinite;
+  opacity: .95;
 }
 @keyframes dmsEcg {
-  0%   { stroke-dashoffset: 340; opacity: 0; }
-  8%   { opacity: .95; }
-  55%  { stroke-dashoffset: 0; opacity: .95; }
+  0%   { stroke-dashoffset: 240; opacity: 0; }
+  8%   { opacity: 1; }
+  55%  { stroke-dashoffset: 0; opacity: 1; }
   80%  { stroke-dashoffset: 0; opacity: 0; }
-  100% { stroke-dashoffset: 340; opacity: 0; }
+  100% { stroke-dashoffset: -40; opacity: 0; }
 }
 
 /* ── Hero stats ──────────────────────────────────────────────────────────── */
@@ -1008,7 +1009,7 @@ input, textarea { font-family: inherit; }
   border-radius: 999px;
   border: 1px solid var(--alive-soft);
   color: var(--alive);
-  background: #10b9811a;
+  background: rgba(255, 66, 71, 0.12);
 }
 .dms-livepill i {
   width: 6px; height: 6px;

@@ -1,237 +1,461 @@
 (() => {
-  // Navigation & Mobile Menu
-  const menu = document.querySelector('.menu');
-  const nav = document.querySelector('.topbar nav');
-  menu?.addEventListener('click', () => {
-    const open = nav.classList.toggle('open');
-    menu.setAttribute('aria-expanded', String(open));
-  });
-  document.querySelectorAll('.topbar nav a').forEach(a => {
-    a.addEventListener('click', () => nav?.classList.remove('open'));
-  });
+  'use strict';
 
-  // Hero Quick State Preview
-  const stateBtns = document.querySelectorAll('.hero-quick-switch .state-btn');
-  const heroStatePill = document.getElementById('hero-state-pill');
-  const tagA = document.getElementById('radar-tag-a');
-  const tagB = document.getElementById('radar-tag-b');
-  const tagC = document.getElementById('radar-tag-c');
-  const setMeta = (item, label, value, color = '') => {
-    const labelNode = item?.querySelector('.clock-meta-label, .clock-state-label');
-    const valueNode = item?.querySelector('.clock-meta-value, .clock-state-value');
-    if (labelNode) labelNode.textContent = label;
-    if (valueNode) { valueNode.textContent = value; valueNode.style.color = color; }
-  };
-  const freezeState = document.getElementById('hero-freeze-state');
-  const pulseStatus = document.getElementById('hero-pulse-status');
-  const heroVault = document.getElementById('hero-vault');
+  // ── State ──────────────────────────────────────────────────────────────────
+  const REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let activeV = 0; // 0: Bitty Page, 1: Bitty Capsule, 2: Bitty Ally
+  const totalV = 3;
+  const activeH = [0, 0, 0]; // Current horizontal index for each vertical slide
+  const totalH = [4, 4, 4]; // 4 cards per slide
 
-  stateBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      stateBtns.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      const state = btn.dataset.state;
+  const vSlides = Array.from(document.querySelectorAll('.v-slide'));
+  const vNavBtns = Array.from(document.querySelectorAll('.v-nav-btn'));
+  const topNavJumps = Array.from(document.querySelectorAll('.nav-jump'));
+  const hTracks = Array.from(document.querySelectorAll('.h-card-track'));
 
-      if (state === 'alive') {
-        if (heroStatePill) { heroStatePill.className = 'badge-alive'; heroStatePill.textContent = 'ALIVE MODE'; }
-        setMeta(tagA, 'NEXT CHECK-IN', '06D 14H');
-        setMeta(tagB, 'HEARTBEAT', 'SIMULATED', 'var(--cyan)');
-        setMeta(tagC, 'AFTERMATH', 'LOCKED');
-        if (freezeState) freezeState.textContent = 'CRYSTALLIZED';
-        if (pulseStatus) { pulseStatus.textContent = '● DEMO SIGNAL'; pulseStatus.style.color = 'var(--green)'; }
-        if (heroVault) heroVault.style.filter = 'drop-shadow(0 0 20px rgba(255, 66, 71, 0.4))';
-      } else if (state === 'mutating') {
-        if (heroStatePill) { heroStatePill.className = 'badge-mutating'; heroStatePill.textContent = 'MUTATING'; }
-        setMeta(tagA, 'CHECK-IN', 'OVERDUE');
-        setMeta(tagB, 'HEARTBEAT', 'MISSED', 'var(--gold)');
-        setMeta(tagC, 'PREVIEW STATE', 'UNSTABLE');
-        if (freezeState) freezeState.textContent = 'THAWING...';
-        if (pulseStatus) { pulseStatus.textContent = '⚠ ESCALATING'; pulseStatus.style.color = 'var(--gold)'; }
-        if (heroVault) heroVault.style.filter = 'drop-shadow(0 0 24px rgba(232, 189, 99, 0.6))';
-      } else if (state === 'aftermath') {
-        if (heroStatePill) { heroStatePill.className = 'badge-aftermath'; heroStatePill.textContent = 'AFTERMATH TRIGGERED'; }
-        setMeta(tagA, 'SWITCH', 'FIRED');
-        setMeta(tagB, 'PAYLOAD', 'EXECUTING', 'var(--red)');
-        setMeta(tagC, 'AFTERMATH', 'UNLOCKED');
-        if (freezeState) freezeState.textContent = 'THAWED & ACTIVE';
-        if (pulseStatus) { pulseStatus.textContent = '⚡ TRIGGERED'; pulseStatus.style.color = 'var(--red)'; }
-        if (heroVault) heroVault.style.filter = 'drop-shadow(0 0 30px rgba(255, 66, 71, 0.9))';
-      } else if (state === 'burn') {
-        if (heroStatePill) { heroStatePill.className = 'badge-burn'; heroStatePill.textContent = 'BURNED / ASHES'; }
-        setMeta(tagA, 'STATUS', 'DESTROYED');
-        setMeta(tagB, 'KEY', 'ZEROIZED', '#718096');
-        setMeta(tagC, 'EXECUTION', 'SEALED');
-        if (freezeState) freezeState.textContent = 'PERMANENT PURGE';
-        if (pulseStatus) { pulseStatus.textContent = '✕ EXECUTED'; pulseStatus.style.color = '#a0aec0'; }
-        if (heroVault) heroVault.style.filter = 'grayscale(1) opacity(0.3)';
-      }
-    });
-  });
+  // ── Vertical Navigation ───────────────────────────────────────────────────
+  function goToVertical(idx) {
+    if (idx < 0) idx = 0;
+    if (idx >= totalV) idx = totalV - 1;
+    if (idx === activeV && vSlides[activeV]?.classList.contains('active')) return;
 
-  // Simulator 01: State Engine
-  window.setSimState = function(mode) {
-    const screen = document.getElementById('sim-screen');
-    const statusLabel = document.getElementById('sim-status-label');
-    const content = document.getElementById('sim-content');
-    const hbVal = document.getElementById('sim-hb-val');
-    const lockVal = document.getElementById('sim-lock-val');
-    const timeVal = document.getElementById('sim-time-val');
-    const btns = document.querySelectorAll('.btn-sim');
+    activeV = idx;
 
-    btns.forEach(b => b.classList.remove('active'));
-
-    if (mode === 'alive') {
-      btns[0]?.classList.add('active');
-      if (screen) screen.style.borderColor = '#232b3b';
-      if (statusLabel) { statusLabel.textContent = 'STATUS: ALIVE (NORMAL)'; statusLabel.style.color = 'var(--cyan)'; }
-      if (content) content.innerHTML = 'Welcome. This Bitty Box is currently in <strong>Alive Mode</strong>. Heartbeat ping confirmed 12 minutes ago. All confidential vaults remain encrypted and locked. Check-in window open for 6 days.';
-      if (hbVal) { hbVal.textContent = 'ONLINE (OK)'; hbVal.style.color = 'var(--green)'; }
-      if (lockVal) { lockVal.textContent = 'CRYSTALLIZED'; lockVal.style.color = 'var(--cyan)'; }
-      if (timeVal) { timeVal.textContent = '06D 13H 48M'; timeVal.style.color = 'var(--white)'; }
-    } else if (mode === 'mutating') {
-      btns[1]?.classList.add('active');
-      if (screen) screen.style.borderColor = 'rgba(232, 189, 99, 0.5)';
-      if (statusLabel) { statusLabel.textContent = 'STATUS: DEGRADED (MUTATING)'; statusLabel.style.color = 'var(--gold)'; }
-      if (content) content.innerHTML = '<strong>WARNING:</strong> Check-in deadline missed by 18 hours. Visual styles decaying. Copy urgency escalated. Line 4 of 12 un-redacting. Bitty Box metadata corrupting toward thaw.';
-      if (hbVal) { hbVal.textContent = 'MISSED (WARN)'; hbVal.style.color = 'var(--gold)'; }
-      if (lockVal) { lockVal.textContent = 'UNSTABLE (THAWING)'; lockVal.style.color = 'var(--gold)'; }
-      if (timeVal) { timeVal.textContent = '00D 05H 12M'; timeVal.style.color = 'var(--gold)'; }
-    } else if (mode === 'aftermath') {
-      btns[2]?.classList.add('active');
-      if (screen) screen.style.borderColor = 'rgba(255, 66, 71, 0.7)';
-      if (statusLabel) { statusLabel.textContent = 'STATUS: TRIGGERED (AFTERMATH ACTIVE)'; statusLabel.style.color = 'var(--red)'; }
-      if (content) content.innerHTML = '<strong>DEAD MAN’S SWITCH TRIGGERED.</strong> Alive Mode offline. Payload decrypted and executing. All designated recipients notified. Aftermath micro-site online with final instructions.';
-      if (hbVal) { hbVal.textContent = 'DEAD (TIMED OUT)'; hbVal.style.color = 'var(--red)'; }
-      if (lockVal) { lockVal.textContent = 'RELEASED / THAWED'; lockVal.style.color = 'var(--red)'; }
-      if (timeVal) { timeVal.textContent = '00D 00H 00M'; timeVal.style.color = 'var(--red)'; }
-    } else if (mode === 'burn') {
-      btns[3]?.classList.add('active');
-      if (screen) screen.style.borderColor = '#718096';
-      if (statusLabel) { statusLabel.textContent = 'STATUS: EXECUTED (BURNED / PURGED)'; statusLabel.style.color = '#a0aec0'; }
-      if (content) content.innerHTML = '<strong>PAYLOAD PERMANENTLY PURGED.</strong> Single-view window closed. Cryptographic encryption keys destroyed from memory. Zero residual trace. “EXECUTED” seal applied.';
-      if (hbVal) { hbVal.textContent = 'ZEROIZED'; hbVal.style.color = '#718096'; }
-      if (lockVal) { lockVal.textContent = 'PURGED'; lockVal.style.color = '#718096'; }
-      if (timeVal) { timeVal.textContent = 'TERMINATED'; timeVal.style.color = '#718096'; }
-    }
-  };
-
-  // Simulator 02: Dossier Redaction Toggle
-  let unredacted = false;
-  window.toggleRedaction = function() {
-    unredacted = !unredacted;
-    const btn = document.getElementById('btn-unredact');
-    const redactEls = document.querySelectorAll('#dossier-box .redact');
-
-    redactEls.forEach(el => {
-      if (unredacted) {
-        el.classList.add('revealed');
-        el.textContent = el.dataset.secret;
-      } else {
-        el.classList.remove('revealed');
-        el.textContent = '█'.repeat(el.dataset.secret.length || 16);
+    vSlides.forEach((slide, i) => {
+      slide.classList.remove('active', 'prev-slide');
+      if (i === activeV) {
+        slide.classList.add('active');
+      } else if (i < activeV) {
+        slide.classList.add('prev-slide');
       }
     });
 
-    if (btn) {
-      btn.textContent = unredacted ? '🔒 RE-LOCK & REDACT DOSSIER' : '⚡ TEST TRIGGER: UN-REDACT DOSSIER';
-    }
-  };
-
-  // Simulator 03: Mystery DMS Generator
-  const themes = [
-    "Orbital Blacksite (Glitch Minimal)",
-    "Crystallized Amber (Temporal Freeze)",
-    "Cold War Dossier (Typewriter & Redaction)",
-    "Neon Cyber-Vault (High-Tension Cyan)",
-    "Victorian Parchment (Wax Seal Legacy)",
-    "Terminal 80 (Monochrome Amber CRT)",
-    "Deep Submersible (Pressure Pulse UI)"
-  ];
-  const triggers = [
-    "3 missed daily pings + secondary capsule unopened",
-    "72-hour inactivity + failed passphrase challenge",
-    "Missed heartbeat URL webhook + geofence timeout",
-    "Compound failsafe: 2 missed check-ins + emergency duress code",
-    "Cascading trigger: Capsule A thaw + 48h unacknowledged",
-    "Silent timer: 14 days zero activity on target device"
-  ];
-  const reveals = [
-    "Burn-After-Reading + ashes glitch purge",
-    "Interactive cryptographic puzzle lock challenge",
-    "Progressive line-by-line un-redacting over 24 hours",
-    "Multi-recipient cascade: Split keys to 3 recipients",
-    "Cinematic audio dispatch + self-destroying dossier",
-    "Transformation into permanent digital memorial site"
-  ];
-  const prompts = [
-    "“A letter explaining the family archive.”",
-    "“A final letter to my children when they reach age 25.”",
-    "“A private note about a family story worth preserving.”",
-    "“Curated legacy gallery: 10 memories that shaped everything.”",
-    "“Confession of what really happened in winter 2024.”",
-    "“A checklist for finding non-sensitive family documents.”"
-  ];
-
-  let genCount = 1;
-  window.generateMysteryCapsule = function() {
-    genCount++;
-    const pick = arr => arr[Math.floor(Math.random() * arr.length)];
-    const elTheme = document.getElementById('res-theme');
-    const elTrigger = document.getElementById('res-trigger');
-    const elReveal = document.getElementById('res-reveal');
-    const elPrompt = document.getElementById('res-prompt');
-    const elCount = document.getElementById('gen-count-label');
-
-    if (elTheme) elTheme.textContent = pick(themes);
-    if (elTrigger) elTrigger.textContent = pick(triggers);
-    if (elReveal) elReveal.textContent = pick(reveals);
-    if (elPrompt) elPrompt.textContent = pick(prompts);
-    if (elCount) elCount.textContent = `Bitty Boxes generated this session: ${genCount}`;
-  };
-
-  // Subtle pointer 3D tilt on hero art
-  const heroArt = document.querySelector('.hero-art');
-  if (heroArt && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    heroArt.addEventListener('pointermove', e => {
-      const r = heroArt.getBoundingClientRect();
-      const x = (e.clientX - r.left) / r.width - 0.5;
-      const y = (e.clientY - r.top) / r.height - 0.5;
-      heroArt.style.transform = `perspective(800px) rotateY(${x * 6}deg) rotateX(${y * -6}deg)`;
+    vNavBtns.forEach((btn, i) => {
+      btn.classList.toggle('active', i === activeV);
     });
-    heroArt.addEventListener('pointerleave', () => {
-      heroArt.style.transform = 'none';
+
+    topNavJumps.forEach((btn, i) => {
+      btn.classList.toggle('active', i === activeV);
     });
   }
-})();
 
-// Heartbeat clock preview only; no check-in is sent and no release is triggered.
-(() => {
+  // ── Horizontal Navigation ─────────────────────────────────────────────────
+  function goToHorizontal(vIdx, hIdx) {
+    if (vIdx < 0 || vIdx >= totalV) return;
+    const maxH = totalH[vIdx] || 4;
+    if (hIdx < 0) hIdx = 0;
+    if (hIdx >= maxH) hIdx = maxH - 1;
+
+    activeH[vIdx] = hIdx;
+    const track = hTracks[vIdx];
+    if (track) {
+      track.style.transform = `translateX(-${hIdx * 100}%)`;
+    }
+
+    const slide = vSlides[vIdx];
+    if (slide) {
+      const dots = Array.from(slide.querySelectorAll('.h-dot'));
+      dots.forEach((dot, i) => {
+        dot.classList.toggle('active', i === hIdx);
+      });
+    }
+  }
+
+  // Expose globally for inline button onclicks if needed
+  window.goToVerticalSlide = goToVertical;
+  window.goToHorizontalCard = goToHorizontal;
+
+  // ── Event Bindings ────────────────────────────────────────────────────────
+  // Topbar jump buttons
+  topNavJumps.forEach((btn, i) => {
+    btn.addEventListener('click', () => goToVertical(i));
+  });
+
+  // Vertical rail buttons
+  vNavBtns.forEach((btn, i) => {
+    btn.addEventListener('click', () => goToVertical(i));
+  });
+
+  // Vertical arrow buttons
+  document.getElementById('vPrevBtn')?.addEventListener('click', () => goToVertical(activeV - 1));
+  document.getElementById('vNextBtn')?.addEventListener('click', () => goToVertical(activeV + 1));
+
+  // Horizontal controls per slide
+  vSlides.forEach((slide, vIdx) => {
+    const prevBtn = slide.querySelector('.h-prev');
+    const nextBtn = slide.querySelector('.h-next');
+    const dots = Array.from(slide.querySelectorAll('.h-dot'));
+
+    prevBtn?.addEventListener('click', () => goToHorizontal(vIdx, activeH[vIdx] - 1));
+    nextBtn?.addEventListener('click', () => goToHorizontal(vIdx, activeH[vIdx] + 1));
+
+    dots.forEach((dot, hIdx) => {
+      dot.addEventListener('click', () => goToHorizontal(vIdx, hIdx));
+    });
+
+    slide.querySelectorAll('.h-jump-next').forEach(btn => {
+      btn.addEventListener('click', () => goToHorizontal(vIdx, activeH[vIdx] + 1));
+    });
+  });
+
+  // ── Wheel Event Handling (Throttled) ───────────────────────────────────────
+  let lastWheelTime = 0;
+  window.addEventListener('wheel', e => {
+    const now = Date.now();
+    if (now - lastWheelTime < 450) return;
+
+    const absY = Math.abs(e.deltaY);
+    const absX = Math.abs(e.deltaX);
+
+    if (absY > absX && absY > 25) {
+      lastWheelTime = now;
+      if (e.deltaY > 0) {
+        goToVertical(activeV + 1);
+      } else {
+        goToVertical(activeV - 1);
+      }
+    } else if (absX > absY && absX > 25) {
+      lastWheelTime = now;
+      if (e.deltaX > 0) {
+        goToHorizontal(activeV, activeH[activeV] + 1);
+      } else {
+        goToHorizontal(activeV, activeH[activeV] - 1);
+      }
+    }
+  }, { passive: true });
+
+  // ── Touch / Swipe Gestures ────────────────────────────────────────────────
+  let touchStartX = 0;
+  let touchStartY = 0;
+
+  window.addEventListener('touchstart', e => {
+    if (e.touches.length === 1) {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    }
+  }, { passive: true });
+
+  window.addEventListener('touchend', e => {
+    if (e.changedTouches.length === 1) {
+      const deltaX = e.changedTouches[0].clientX - touchStartX;
+      const deltaY = e.changedTouches[0].clientY - touchStartY;
+      const absX = Math.abs(deltaX);
+      const absY = Math.abs(deltaY);
+
+      if (absY > absX && absY > 40) {
+        if (deltaY < 0) {
+          goToVertical(activeV + 1);
+        } else {
+          goToVertical(activeV - 1);
+        }
+      } else if (absX > absY && absX > 40) {
+        if (deltaX < 0) {
+          goToHorizontal(activeV, activeH[activeV] + 1);
+        } else {
+          goToHorizontal(activeV, activeH[activeV] - 1);
+        }
+      }
+    }
+  }, { passive: true });
+
+  // ── Keyboard Navigation ───────────────────────────────────────────────────
+  window.addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+    if (e.key === 'ArrowDown' || e.key === 'PageDown') {
+      e.preventDefault();
+      goToVertical(activeV + 1);
+    } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+      e.preventDefault();
+      goToVertical(activeV - 1);
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      goToHorizontal(activeV, activeH[activeV] + 1);
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      goToHorizontal(activeV, activeH[activeV] - 1);
+    } else if (e.key === '1') {
+      goToVertical(0);
+    } else if (e.key === '2') {
+      goToVertical(1);
+    } else if (e.key === '3') {
+      goToVertical(2);
+    }
+  });
+
+  // Initialize slides
+  goToVertical(0);
+  goToHorizontal(0, 0);
+  goToHorizontal(1, 0);
+  goToHorizontal(2, 0);
+
+  // ── Heartbeat Clock Telemetry & Simulator ─────────────────────────────────
   const radar = document.getElementById('hero-radar');
   const display = document.getElementById('clock-countdown');
   const nextCheckin = document.getElementById('clock-next-checkin');
-  if (!radar || !display) return;
-  const windowMs = (6 * 24 * 60 + 13 * 60 + 48) * 60 * 1000;
-  let deadline = Date.now() + windowMs;
-  const format = () => {
-    const left = Math.max(0, deadline - Date.now());
-    const days = Math.floor(left / 86400000);
-    const hours = Math.floor(left % 86400000 / 3600000);
-    const minutes = Math.floor(left % 3600000 / 60000);
-    return `${String(days).padStart(2,'0')}D ${String(hours).padStart(2,'0')}H ${String(minutes).padStart(2,'0')}M`;
-  };
-  const updateNextCheckin = value => {
-    if (!nextCheckin) return;
-    nextCheckin.textContent = value === 'CHECK-IN DUE' ? value : value.split(' ').slice(0,2).join(' ');
-  };
-  const showMode = mode => {
-    radar.dataset.mode = mode;
-    if (mode === 'alive') { deadline = Date.now() + windowMs; display.textContent = format(); updateNextCheckin(display.textContent); }
-    else display.textContent = ({mutating:'OVERDUE +18H',aftermath:'RELEASED',burn:'ZEROIZED'})[mode] || 'PAUSED';
-  };
-  document.querySelectorAll('.hero-quick-switch .state-btn').forEach(button => {
-    button.addEventListener('click', () => showMode(button.dataset.state || 'alive'));
+
+  if (radar && display) {
+    const windowMs = (6 * 24 * 60 + 13 * 60 + 48) * 60 * 1000;
+    let deadline = Date.now() + windowMs;
+
+    const format = () => {
+      const left = Math.max(0, deadline - Date.now());
+      const days = Math.floor(left / 86400000);
+      const hours = Math.floor((left % 86400000) / 3600000);
+      const minutes = Math.floor((left % 3600000) / 60000);
+      return `${String(days).padStart(2, '0')}D ${String(hours).padStart(2, '0')}H ${String(minutes).padStart(2, '0')}M`;
+    };
+
+    const updateCheckin = val => {
+      if (nextCheckin) nextCheckin.textContent = val.split(' ').slice(0, 2).join(' ');
+    };
+
+    const showMode = mode => {
+      radar.dataset.mode = mode;
+      if (mode === 'alive') {
+        deadline = Date.now() + windowMs;
+        display.textContent = format();
+        updateCheckin(display.textContent);
+      } else if (mode === 'mutating') {
+        display.textContent = 'OVERDUE +18H';
+        if (nextCheckin) nextCheckin.textContent = 'OVERDUE';
+      } else if (mode === 'aftermath') {
+        display.textContent = 'RELEASED';
+        if (nextCheckin) nextCheckin.textContent = 'FIRED';
+      } else if (mode === 'burn') {
+        display.textContent = 'ZEROIZED';
+        if (nextCheckin) nextCheckin.textContent = 'PURGED';
+      }
+    };
+
+    document.querySelectorAll('.state-switcher .state-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.state-switcher .state-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        showMode(btn.dataset.state || 'alive');
+      });
+    });
+
+    window.setInterval(() => {
+      if (radar.dataset.mode === 'alive') {
+        display.textContent = deadline > Date.now() ? format() : 'CHECK-IN DUE';
+        updateCheckin(display.textContent);
+      }
+    }, 1000);
+  }
+
+  // Mobile menu toggle
+  const menu = document.querySelector('.menu');
+  const nav = document.querySelector('.topbar-nav');
+  menu?.addEventListener('click', () => {
+    nav?.classList.toggle('open');
   });
-  window.setInterval(() => {
-    if (radar.dataset.mode === 'alive') { display.textContent = deadline > Date.now() ? format() : 'CHECK-IN DUE'; updateNextCheckin(display.textContent); }
-  }, 1000);
+
+  // ── Interactive Specular Light & 3D Tilt ──────────────────────────────────
+  if (!REDUCED && window.matchMedia('(hover: hover)').matches) {
+    const visualStages = Array.from(document.querySelectorAll('.visual-stage'));
+
+    window.addEventListener('mousemove', e => {
+      visualStages.forEach(stage => {
+        const rect = stage.getBoundingClientRect();
+        // Check if cursor is reasonably close to stage to optimize
+        const isNear = (
+          e.clientX >= rect.left - 200 &&
+          e.clientX <= rect.right + 200 &&
+          e.clientY >= rect.top - 200 &&
+          e.clientY <= rect.bottom + 200
+        );
+
+        if (isNear) {
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          stage.style.setProperty('--mouse-x', `${x}px`);
+          stage.style.setProperty('--mouse-y', `${y}px`);
+
+          // Subtle 3D tilt
+          const normX = (x / rect.width) - 0.5;
+          const normY = (y / rect.height) - 0.5;
+          const tiltX = (normY * -6).toFixed(2);
+          const tiltY = (normX * 6).toFixed(2);
+          stage.style.transform = `perspective(1200px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) translateY(-2px)`;
+        } else {
+          stage.style.transform = '';
+        }
+      });
+    }, { passive: true });
+  }
+
+  // ── Code Snippet Copy Feature ─────────────────────────────────────────────
+  document.querySelectorAll('.sim-code-box').forEach(box => {
+    const header = box.querySelector('.sim-code-header');
+    const codeEl = box.querySelector('.sim-code-body code');
+    if (header && codeEl) {
+      const copyBtn = document.createElement('button');
+      copyBtn.type = 'button';
+      copyBtn.className = 'sim-copy-btn';
+      copyBtn.setAttribute('aria-label', 'Copy code snippet');
+      copyBtn.innerHTML = '<span>⧉ COPY</span>';
+      copyBtn.style.cssText = `
+        font-family: var(--font-mono);
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        color: var(--champagne);
+        background: rgba(223, 194, 145, 0.1);
+        border: 1px solid rgba(223, 194, 145, 0.25);
+        border-radius: 4px;
+        padding: 2px 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        margin-left: auto;
+        margin-right: 8px;
+      `;
+
+      copyBtn.addEventListener('mouseenter', () => {
+        copyBtn.style.background = 'rgba(223, 194, 145, 0.25)';
+        copyBtn.style.color = '#fff';
+      });
+      copyBtn.addEventListener('mouseleave', () => {
+        copyBtn.style.background = 'rgba(223, 194, 145, 0.1)';
+        copyBtn.style.color = 'var(--champagne)';
+      });
+
+      copyBtn.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(codeEl.innerText.trim());
+          copyBtn.innerHTML = '<span style="color:#71d6a1;">✓ COPIED</span>';
+          setTimeout(() => {
+            copyBtn.innerHTML = '<span>⧉ COPY</span>';
+          }, 2000);
+        } catch (_) {
+          copyBtn.innerHTML = '<span>COPIED</span>';
+          setTimeout(() => {
+            copyBtn.innerHTML = '<span>⧉ COPY</span>';
+          }, 2000);
+        }
+      });
+
+      header.insertBefore(copyBtn, header.querySelector('.sim-status-code'));
+    }
+  });
+
+  // ── Luxury Stardust Canvas Background ─────────────────────────────────────
+  if (!REDUCED) {
+    const canvas = document.getElementById('luxury-canvas');
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      let width = 0;
+      let height = 0;
+      let particles = [];
+      const particleCount = 70;
+
+      // Color palette for stardust particles
+      const colors = [
+        'rgba(250, 247, 242, ', // Cream pure
+        'rgba(244, 238, 227, ', // Cream silk
+        'rgba(223, 194, 145, ', // Champagne gold
+        'rgba(225, 29, 72, ',   // Crimson bright
+        'rgba(201, 24, 59, '    // Crimson velvet
+      ];
+
+      function resize() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+      }
+      resize();
+      window.addEventListener('resize', resize, { passive: true });
+
+      let mouse = { x: -1000, y: -1000, radius: 140 };
+      window.addEventListener('mousemove', e => {
+        mouse.x = e.clientX;
+        mouse.y = e.clientY;
+      }, { passive: true });
+
+      window.addEventListener('mouseleave', () => {
+        mouse.x = -1000;
+        mouse.y = -1000;
+      }, { passive: true });
+
+      class Stardust {
+        constructor() {
+          this.reset(true);
+        }
+
+        reset(initial = false) {
+          this.x = Math.random() * width;
+          this.y = initial ? Math.random() * height : height + 10;
+          this.size = Math.random() * 2 + 0.6;
+          this.speedY = -(Math.random() * 0.45 + 0.15);
+          this.speedX = (Math.random() - 0.5) * 0.3;
+          this.colorBase = colors[Math.floor(Math.random() * colors.length)];
+          this.alpha = Math.random() * 0.6 + 0.2;
+          this.maxAlpha = this.alpha;
+          this.pulse = Math.random() * Math.PI;
+          this.pulseSpeed = Math.random() * 0.03 + 0.01;
+        }
+
+        update() {
+          this.y += this.speedY;
+          this.x += this.speedX + Math.sin(this.pulse) * 0.2;
+          this.pulse += this.pulseSpeed;
+
+          // Mouse proximity effect
+          const dx = mouse.x - this.x;
+          const dy = mouse.y - this.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < mouse.radius) {
+            const force = (1 - dist / mouse.radius);
+            this.x -= (dx / dist) * force * 1.5;
+            this.y -= (dy / dist) * force * 1.5;
+            this.currentAlpha = Math.min(1, this.maxAlpha + force * 0.5);
+          } else {
+            this.currentAlpha = this.maxAlpha * (0.6 + 0.4 * Math.sin(this.pulse));
+          }
+
+          if (this.y < -10 || this.x < -10 || this.x > width + 10) {
+            this.reset(false);
+          }
+        }
+
+        draw() {
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          ctx.fillStyle = this.colorBase + this.currentAlpha + ')';
+          ctx.shadowBlur = this.size > 1.8 ? 8 : 4;
+          ctx.shadowColor = this.colorBase + '0.8)';
+          ctx.fill();
+        }
+      }
+
+      for (let i = 0; i < particleCount; i++) {
+        particles.push(new Stardust());
+      }
+
+      let isRunning = true;
+      function loop() {
+        if (!isRunning) return;
+        ctx.clearRect(0, 0, width, height);
+
+        for (let i = 0; i < particles.length; i++) {
+          particles[i].update();
+          particles[i].draw();
+        }
+
+        requestAnimationFrame(loop);
+      }
+
+      loop();
+
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+          isRunning = false;
+        } else {
+          isRunning = true;
+          loop();
+        }
+      });
+    }
+  }
+
 })();

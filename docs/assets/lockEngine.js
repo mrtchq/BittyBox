@@ -291,8 +291,8 @@
     // --- 01. PASSCODE LOCK (Core) ---
     passcode: async (input = {}, params = {}) => {
       const pin = (input.pin ?? input.passcode ?? input.code ?? '').toString().trim();
-      if (!/^\d{8,24}$/.test(pin)) {
-        return { success: false, error: 'Passcode must be a numeric PIN between 8 and 24 digits.' };
+      if (!/^\d{4,8}$/.test(pin)) {
+        return { success: false, error: 'Passcode must be a numeric PIN between 4 and 8 digits.' };
       }
       const salt = parseSalt(params.salt);
       const saltHex = bytesToHex(salt);

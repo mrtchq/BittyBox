@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { BittyNavbar } from './components/BittyNavbar';
 import { HoloBackground } from './components/HoloBackground';
 import { BittyStageView } from './components/stage/BittyStageView';
+import { LuxuryEditorCarousel } from './components/LuxuryEditorCarousel';
 import { PaymentPolicyDraft } from './components/PaymentPolicyLockPanel';
 import { BittyRenderer } from './components/BittyRenderer';
 import { HistoryModal } from './components/HistoryModal';
@@ -58,7 +59,7 @@ import {
   reorderChainDraftPages,
   saveChainDraft,
   updateChainDraftPage,
-  calculateTotalChainCreditCost,
+  calculateTotalChainBreakdown,
 } from './utils/bittyChain';
 
 const DEFAULT_STARTER_HTML = '';
@@ -121,16 +122,19 @@ export default function App() {
   const [lastSavedTimestamp, setLastSavedTimestamp] = useState<number>(() => Date.now());
   const [isSavingSession, setIsSavingSession] = useState<boolean>(false);
 
-  // Persistent Workspace Theme state ('synthwave' | 'monochrome' | 'matrix')
+  // Persistent Workspace Theme state ('skillborn' | 'synthwave' | 'monochrome' | 'matrix')
   const account = useAccount();
   const [workspaceTheme, setWorkspaceTheme] = useState<WorkspaceTheme>(() => {
     try {
       const saved = localStorage.getItem('bitty_workspace_theme');
-      if (saved === 'synthwave' || saved === 'monochrome' || saved === 'matrix') {
+      if (saved === 'skillborn' || saved === 'synthwave' || saved === 'matrix') {
         return saved;
       }
+      if (saved === 'monochrome') {
+        return 'skillborn';
+      }
     } catch {}
-    return 'monochrome';
+    return 'skillborn';
   });
 
   const [bittyUrl, setBittyUrl] = useState<string>(() => (initialUrl.hash ? window.location.href : ''));
@@ -138,6 +142,7 @@ export default function App() {
   const [originalBytes, setOriginalBytes] = useState<number>(0);
   const [compressedBytes, setCompressedBytes] = useState<number>(0);
   const [isCopied, setIsCopied] = useState<boolean>(false);
+  const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [isQrOpen, setIsQrOpen] = useState<boolean>(false);
   const [isLeftTemplatesPanelOpen, setIsLeftTemplatesPanelOpen] = useState<boolean>(false);
   const [isRightToolsPanelOpen, setIsRightToolsPanelOpen] = useState<boolean>(false);
@@ -465,16 +470,6 @@ export default function App() {
   const chainCurrentIndex = chainDraft?.currentIndex ?? 0;
   const chainTotal = chainDraft?.pages.length ?? 1;
   const isLastChainBox = !chainEnabled || chainCurrentIndex >= chainTotal - 1;
-
-  const calculatedCreditCost = useMemo(() => {
-    if (chainEnabled && chainDraft?.pages) {
-      return calculateTotalChainCreditCost(chainDraft.pages).totalCost;
-    }
-    let cost = 0;
-    if (metadata.lockConfig?.timeWindow?.enabled || metadata.lockConfig?.timeWindow?.mode) cost += 10;
-    if (metadata.lockConfig?.openLimit?.enabled) cost += 10;
-    return cost;
-  }, [chainEnabled, chainDraft, metadata.lockConfig]);
 
   const activeLockCount = useMemo(() => {
     const hasPasscode = Boolean(metadata?.password && metadata.password.trim().length > 0);
@@ -1047,8 +1042,7 @@ export default function App() {
 
     const id = await hashString(entryUrl);
     const totalByteSize = baseDraft.pages.reduce((sum, page) => sum + (page.content?.length || 0), 0);
-    const chainCreditCalculation = calculateTotalChainCreditCost(baseDraft.pages);
-    const chainCost = chainCreditCalculation.totalCost;
+    const chainBreakdown = calculateTotalChainBreakdown(baseDraft.pages);
 
     saveToHistory({
       id,
@@ -1068,7 +1062,7 @@ export default function App() {
         title: baseDraft.pages[0]?.metadata.title || currentMetadata.title || 'Chained Bitty Box',
         url: entryUrl,
         format: 'chain',
-        boxBreakdowns: chainCreditCalculation.boxBreakdowns,
+        boxBreakdowns: chainBreakdown.boxBreakdowns,
         byteSize: totalByteSize,
         compressedSize: entryUrl.length,
         encrypted: baseDraft.pages.some(p => Boolean(p.metadata.password)),
@@ -1087,8 +1081,7 @@ export default function App() {
     return {
       entryUrl,
       urls,
-      creditCost: chainCost,
-      boxCreditBreakdowns: chainCreditCalculation.boxBreakdowns,
+      boxBreakdowns: chainBreakdown.boxBreakdowns,
     };
   }, [chainDraft, saveToHistory, account]);
 
@@ -1209,17 +1202,11 @@ export default function App() {
     const hasPasscode = Boolean(metadata.password && metadata.password.trim().length > 0);
     const hasTimeWindow = Boolean(metadata.lockConfig?.timeWindow?.enabled);
     const hasAccessLimit = Boolean(metadata.lockConfig?.openLimit?.enabled);
-    let requiredCost = 0;
-    // Passcode is free (0 CR)
-    if (hasTimeWindow) requiredCost += 10;
-    if (hasAccessLimit) requiredCost += 10;
 
-    if (requiredCost > 0) {
+    if (hasTimeWindow || hasAccessLimit) {
       const userIsPro = Boolean(proStatus.isPro || account.user?.tier === 'pro');
-      const curCredits = account.user?.credits ?? 0;
-      const canProceed = userIsPro || (account.isAuthenticated && curCredits >= requiredCost);
-      if (!canProceed) {
-        proStatus.openPaywall('Time & View Limit Locks (10 CR)');
+      if (!userIsPro) {
+        proStatus.openPaywall('Time & View Limit Locks');
         return;
       }
     }
@@ -1400,7 +1387,7 @@ export default function App() {
       encrypted: !!metadata.password,
     });
 
-    // Auto-record to authenticated User Account Log & Deduct Credits per Slide 05
+    // Auto-record to authenticated User Account Log
     if (account.isAuthenticated || account.user) {
       const hasPasscode = Boolean(metadata.password && metadata.password.trim().length > 0);
       const hasTimeWindow = Boolean(metadata.lockConfig?.timeWindow?.enabled);
@@ -1621,6 +1608,81 @@ export default function App() {
     );
   }
 
+  // Luxury mobile-friendly swipeable atelier for /editor (mirroring bittybox.org/capsule)
+  if (currentView === 'editor') {
+    return (
+      <div className="relative w-screen h-screen overflow-hidden bg-[#06070a] text-[#faf7f2]">
+        <LuxuryEditorCarousel
+          content={content}
+          onChangeContent={handleContentChange}
+          metadata={metadata}
+          onChangeMetadata={handleMetadataChange}
+          bittyUrl={bittyUrl}
+          onGenerate={chainEnabled ? () => handleGenerateChain(content, metadata) : handleGenerate}
+          isGenerating={isGenerating}
+          originalBytes={originalBytes}
+          compressedBytes={compressedBytes}
+          chainEnabled={chainEnabled}
+          chainIndex={chainCurrentIndex}
+          chainTotal={chainTotal}
+          chainMax={BITTY_CHAIN_MAX_PAGES}
+          chainDraft={chainDraft}
+          isLastChainBox={isLastChainBox}
+          onToggleChain={handleSetChainEnabled}
+          onCreateNextChainPage={handleCreateNextChainPage}
+          onGoToChainPage={goToChainPage}
+          onDeleteLastChainBox={handleDeleteLastChainBox}
+          account={account}
+          isPro={proStatus.isPro}
+          onOpenPaywall={proStatus.openPaywall}
+          onOpenQr={() => setIsQrOpen(true)}
+          onOpenTemplates={() => setIsLeftTemplatesPanelOpen(true)}
+          onExportZip={() => exportBittyToZip(content, metadata, bittyUrl)}
+          onShare={handleShare}
+          onNewBox={handleNewBox}
+          onNavigateView={setCurrentView}
+        />
+
+        {/* Global Modals */}
+        <QrModal
+          isOpen={isQrOpen}
+          onClose={() => setIsQrOpen(false)}
+          url={bittyUrl || window.location.href}
+          title={metadata.title || 'Bitty Box'}
+        />
+
+        <TemplatesSidePanel
+          isOpen={isLeftTemplatesPanelOpen}
+          onClose={() => setIsLeftTemplatesPanelOpen(false)}
+          onSelectTemplate={(tpl) => handleSelectTemplate(tpl)}
+          currentContentLength={content.trim().length}
+          sessions={sessions}
+          currentSessionId={currentSessionId}
+          onSwitchSession={handleSwitchSession}
+          onNewSession={handleNewBox}
+          mode={proStatus.mode}
+          isPro={proStatus.isPro}
+          onOpenPaywall={proStatus.openPaywall}
+        />
+
+        <ProPaywallModal
+          isOpen={proStatus.isPaywallOpen}
+          onClose={proStatus.closePaywall}
+          isPro={proStatus.isPro}
+          paywallFeature={proStatus.paywallFeature}
+          onUnlockLifetime={proStatus.unlockLifetimePro}
+          onSwitchToPro={() => proStatus.setMode('pro')}
+        />
+
+        <LegalModal
+          isOpen={isLegalModalOpen}
+          initialTab={legalModalTab}
+          onClose={() => setIsLegalModalOpen(false)}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-transparent text-cyan-100 relative overflow-x-hidden font-sans">
       {/* Background Animated Hologram FX */}
@@ -1682,7 +1744,6 @@ export default function App() {
                 onChangeMetadata={handleMetadataChange}
                 bittyUrl={bittyUrl}
                 onGenerate={chainEnabled ? () => handleGenerateChain(content, metadata) : handleGenerate}
-                calculatedCreditCost={calculatedCreditCost}
                 chainEnabled={chainEnabled}
                 chainIndex={chainCurrentIndex}
                 chainTotal={chainTotal}

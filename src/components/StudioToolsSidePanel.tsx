@@ -28,7 +28,6 @@ import {
   FileText,
   User,
   Key,
-  Coins,
   Bot,
   Trash2,
   Plus,
@@ -79,6 +78,12 @@ interface StudioToolsSidePanelProps {
 
 const THEMES: { id: WorkspaceTheme; name: string; desc: string; previewBg: string }[] = [
   {
+    id: 'skillborn',
+    name: 'Skillborn Obsidian Fire',
+    desc: 'Pitch black, fiery red & ember gold dead-man switch aesthetic',
+    previewBg: 'from-[#080a0e] via-[#ff4247] to-[#e8bd63]',
+  },
+  {
     id: 'synthwave',
     name: 'Neon Synthwave',
     desc: 'Deep cosmic violet, vibrant cyan glow & retro magenta highlights',
@@ -113,7 +118,7 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
   onExportZip,
   onNewBox,
   onNavigateToSlide01,
-  theme = 'synthwave',
+  theme = 'skillborn',
   onThemeChange,
   mode = 'beginner',
   onModeChange,
@@ -134,11 +139,10 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
     generateApiKey,
     revokeApiKey,
     testApiKey,
-    purchaseCredits,
     deleteTrackedBox,
   } = account;
 
-  const [activeTab, setActiveTab] = useState<'account' | 'boxes' | 'keys' | 'credits' | 'mcp'>('account');
+  const [activeTab, setActiveTab] = useState<'account' | 'boxes' | 'keys' | 'mcp'>('account');
   const [isLegalModalOpen, setIsLegalModalOpen] = useState<boolean>(false);
   const [legalModalTab, setLegalModalTab] = useState<LegalTab>('terms');
 
@@ -314,8 +318,8 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
                       <CyberScrambleText text="BITTY TOOLS & ACCOUNT" speed={25} />
                     </h2>
                     {user && (
-                      <span className="text-[10px] font-mono font-bold bg-cyan-950 text-cyan-300 px-2 py-0.5 rounded-full border border-cyan-500/40">
-                        {user.credits} CR
+                      <span className="text-[10px] font-mono font-bold bg-cyan-950 text-cyan-300 px-2 py-0.5 rounded-full border border-cyan-500/40 uppercase">
+                        {user.tier || 'PRO'}
                       </span>
                     )}
                   </div>
@@ -380,18 +384,6 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
                   <span>API KEYS ({(user?.apiKeys || []).length})</span>
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('credits')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition cursor-pointer shrink-0 ${
-                    activeTab === 'credits'
-                      ? 'bg-emerald-950 text-emerald-200 border border-emerald-400/50 shadow-sm'
-                      : 'text-emerald-400/60 hover:text-emerald-200'
-                  }`}
-                >
-                  <Coins className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>CREDITS ({user?.credits || 0})</span>
-                </button>
 
                 <button
                   type="button"
@@ -600,18 +592,15 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                         <div className="p-3 rounded-xl bg-[#030d1a] border border-cyan-500/25">
                           <div className="text-[10px] text-cyan-400/70 uppercase font-bold flex items-center justify-between">
-                            <span>CREDITS</span>
-                            <Coins className="w-3.5 h-3.5 text-cyan-400" />
+                            <span>ACCOUNT TIER</span>
+                            <Crown className="w-3.5 h-3.5 text-cyan-400" />
                           </div>
-                          <div className="text-xl font-bold font-cyber text-cyan-200 mt-1">
-                            {user.credits} <span className="text-xs text-cyan-400/60 font-normal">CR</span>
+                          <div className="text-xl font-bold font-cyber text-cyan-200 mt-1 uppercase">
+                            {user.tier || 'PRO'}
                           </div>
-                          <button
-                            onClick={() => setActiveTab('credits')}
-                            className="text-[10px] text-teal-300 hover:underline mt-1 block"
-                          >
-                            + Refill Credits ?
-                          </button>
+                          <span className="text-[10px] text-teal-300 mt-1 block">
+                            Active Plan
+                          </span>
                         </div>
 
                         <div className="p-3 rounded-xl bg-[#030d1a] border border-fuchsia-500/25">
@@ -652,7 +641,7 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
                             <Bot className="w-3.5 h-3.5 text-purple-400" />
                           </div>
                           <div className="text-xl font-bold font-cyber text-purple-200 mt-1">
-                            {(user.creditsMcpUsed || 0) + (user.creditsApiUsed || 0)}
+                            0
                           </div>
                           <button
                             onClick={() => setActiveTab('mcp')}
@@ -947,106 +936,7 @@ export const StudioToolsSidePanel: React.FC<StudioToolsSidePanelProps> = ({
               )}
 
               {/* =========================================================================
-                  TAB 4: CREDITS & BILLING
-                 ========================================================================= */}
-              {activeTab === 'credits' && isAuthenticated && (
-                <div className="bg-[#06182c]/90 border border-emerald-500/30 rounded-2xl p-4 sm:p-5 shadow-xl font-mono space-y-4">
-                  <div className="flex items-center justify-between border-b border-emerald-500/20 pb-3">
-                    <div>
-                      <h3 className="text-sm font-cyber font-bold text-emerald-200 flex items-center gap-2">
-                        <Coins className="w-4 h-4 text-emerald-400" />
-                        <span>CREDITS BALANCE & REFILLS</span>
-                      </h3>
-                      <p className="text-[11px] text-emerald-300/70 mt-0.5">
-                        Credits power pay-as-you-go passcode locks, time-based locks, and visitor quotas.
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-xl font-cyber font-bold text-emerald-300">{user?.credits || 0} CR</div>
-                      <div className="text-[10px] text-emerald-400/70">{user?.creditsUsedTotal || 0} used total</div>
-                    </div>
-                  </div>
-
-                  {/* Lock Credit Costs Reference */}
-                  <div className="p-3 rounded-xl bg-[#03010b] border border-cyan-500/25 space-y-1.5 text-xs">
-                    <div className="text-[10px] text-cyan-400 font-bold uppercase tracking-wider">
-                      LOCK CREDIT COSTS PER BOX:
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 text-[11px]">
-                      <div className="flex items-center justify-between p-1.5 rounded bg-black/50">
-                        <span className="text-zinc-300">Passcode PIN Lock:</span>
-                        <span className="font-bold text-emerald-400">FREE (0 CR)</span>
-                      </div>
-                      <div className="flex items-center justify-between p-1.5 rounded bg-black/50">
-                        <span className="text-zinc-300">Time-Based Locks:</span>
-                        <span className="font-bold text-amber-400">10 CR</span>
-                      </div>
-                      <div className="flex items-center justify-between p-1.5 rounded bg-black/50">
-                        <span className="text-zinc-300">Reveal + Decay:</span>
-                        <span className="font-bold text-rose-400">10 CR</span>
-                      </div>
-                      <div className="flex items-center justify-between p-1.5 rounded bg-black/50">
-                        <span className="text-zinc-300">Visitor Quota:</span>
-                        <span className="font-bold text-emerald-400">10 CR</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Refill Packages Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div className="p-3.5 rounded-xl bg-[#03010b] border border-emerald-500/30 flex flex-col justify-between gap-3 text-center">
-                      <div>
-                        <div className="text-xs font-cyber font-bold text-emerald-200">STARTER PACK</div>
-                        <div className="text-lg font-bold font-cyber text-white mt-1">50 CR</div>
-                        <div className="text-[11px] text-emerald-400/70 mt-0.5">$5.00 USD</div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => purchaseCredits('pack_50', 50, 500)}
-                        className="w-full py-1.5 rounded-lg bg-emerald-500/20 border border-emerald-400/50 text-emerald-200 text-xs font-bold font-cyber hover:bg-emerald-500/30 transition cursor-pointer"
-                      >
-                        REFILL 50 CR
-                      </button>
-                    </div>
-
-                    <div className="p-3.5 rounded-xl bg-gradient-to-b from-emerald-950/40 to-teal-950/40 border border-emerald-400/50 flex flex-col justify-between gap-3 text-center relative shadow-lg">
-                      <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[9px] font-bold font-mono uppercase bg-emerald-400 text-black px-2 py-0.2 rounded-full">
-                        SAVE 20%
-                      </span>
-                      <div>
-                        <div className="text-xs font-cyber font-bold text-emerald-200">CREATOR PACK</div>
-                        <div className="text-lg font-bold font-cyber text-white mt-1">150 CR</div>
-                        <div className="text-[11px] text-emerald-400/70 mt-0.5">$12.00 USD</div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => purchaseCredits('pack_150', 150, 1200)}
-                        className="w-full py-1.5 rounded-lg bg-emerald-400 text-black text-xs font-bold font-cyber hover:brightness-110 transition cursor-pointer"
-                      >
-                        REFILL 150 CR
-                      </button>
-                    </div>
-
-                    <div className="p-3.5 rounded-xl bg-[#03010b] border border-emerald-500/30 flex flex-col justify-between gap-3 text-center">
-                      <div>
-                        <div className="text-xs font-cyber font-bold text-emerald-200">PRO BUNDLE</div>
-                        <div className="text-lg font-bold font-cyber text-white mt-1">400 CR</div>
-                        <div className="text-[11px] text-emerald-400/70 mt-0.5">$25.00 USD (38% OFF)</div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => purchaseCredits('pack_400', 400, 2500)}
-                        className="w-full py-1.5 rounded-lg bg-emerald-500/20 border border-emerald-400/50 text-emerald-200 text-xs font-bold font-cyber hover:bg-emerald-500/30 transition cursor-pointer"
-                      >
-                        REFILL 400 CR
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* =========================================================================
-                  TAB 5: MCP SERVER CONFIGURATION
+                  TAB 4: MCP SERVER CONFIGURATION
                  ========================================================================= */}
               {activeTab === 'mcp' && isAuthenticated && (
                 <div className="bg-[#06182c]/90 border border-purple-500/30 rounded-2xl p-4 sm:p-5 shadow-xl font-mono space-y-4">

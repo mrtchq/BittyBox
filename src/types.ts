@@ -117,7 +117,7 @@ export interface BittyHistoryItem {
 
 export type EditorMode = 'code' | 'rich';
 export type AppView = 'account' | 'editor' | 'viewer' | 'history' | 'about' | 'agents' | 'funding';
-export type WorkspaceTheme = 'synthwave' | 'monochrome' | 'matrix';
+export type WorkspaceTheme = 'skillborn' | 'synthwave' | 'monochrome' | 'matrix';
 export type WorkspaceMode = 'simple' | 'pro';
 
 export type SyntaxTheme = 'cyber' | 'matrix' | 'dracula' | 'monokai' | 'nord' | 'amber' | 'monochrome';
@@ -179,16 +179,6 @@ export interface TrackedBittyBox {
   createdAt: string;
 }
 
-export interface CreditTransaction {
-  id: string;
-  type: 'grant' | 'purchase' | 'usage';
-  amount: number;
-  costCents?: number;
-  packageId?: string;
-  description: string;
-  createdAt: string;
-}
-
 export interface BittyUser {
   id: string;
   email: string;
@@ -196,12 +186,6 @@ export interface BittyUser {
   tier: string;
   avatar?: string;
   creemCustomerId?: string | null;
-  creemCreditAccountId?: string | null;
-  credits: number;
-  creditsUsedTotal: number;
-  creditsHumanUsed?: number;
-  creditsApiUsed?: number;
-  creditsMcpUsed?: number;
   joinedDate: string;
   lastSignedInAt: string;
   settings?: {
@@ -211,7 +195,6 @@ export interface BittyUser {
   };
   apiKeys: ApiKeyMeta[];
   links: TrackedBittyBox[];
-  transactions: CreditTransaction[];
 }
 
 export interface BittySession {

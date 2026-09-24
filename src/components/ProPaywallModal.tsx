@@ -10,7 +10,6 @@ import {
   ExternalLink,
   Clock,
   Gauge,
-  Coins,
   Flame,
   CheckCheck,
   Zap,
@@ -42,7 +41,7 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
   paywallFeature,
   onUnlockLifetime,
 }) => {
-  const [activeTab, setActiveTab] = useState<'tiers' | 'credits' | 'key'>('tiers');
+  const [activeTab, setActiveTab] = useState<'tiers' | 'key'>('tiers');
   const [licenseInput, setLicenseInput] = useState('');
   const [feedbackMsg, setFeedbackMsg] = useState<{ text: string; isError: boolean } | null>(null);
 
@@ -125,66 +124,6 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
   const handleProCheckout = () => {
     window.open(PRO_MONTHLY_CHECKOUT_URL, '_blank', 'noopener,noreferrer');
   };
-
-  const CREDIT_LOCK_COSTS = [
-    {
-      name: 'Passcode Lock',
-      cost: 'Free (0 CR)',
-      desc: '8-12 digit PIN with zero-knowledge AES-256 client encryption',
-      icon: <Key className="w-3.5 h-3.5 text-fuchsia-400" />,
-    },
-    {
-      name: 'Time-Based Locks',
-      cost: '10 Credits',
-      desc: 'Expires Duration, Time Until Open, or Date Range Schedule',
-      icon: <Clock className="w-3.5 h-3.5 text-amber-400" />,
-    },
-    {
-      name: 'Reveal + Decay',
-      cost: '10 Credits',
-      desc: 'Hybrid timed delay with automatic self-destruct timer',
-      icon: <Flame className="w-3.5 h-3.5 text-rose-400" />,
-    },
-    {
-      name: 'Visitor Quota',
-      cost: '10 Credits',
-      desc: 'Max opens / 1-open burn-on-read & visitor rate caps',
-      icon: <Gauge className="w-3.5 h-3.5 text-emerald-400" />,
-    },
-  ];
-
-  const CREDIT_PACKS = [
-    {
-      id: 'pack_starter',
-      credits: 1000,
-      price: '$10',
-      pricePerCredit: '$0.01 / CR',
-      tag: 'STARTER BATCH',
-      popular: false,
-      desc: 'Test PRO security locks with pay-as-you-go credits. Credits never expire.',
-      checkoutUrl: 'https://creem.io/product/prod_6W2ZUtURJf1Mk02xaq6aJF',
-    },
-    {
-      id: 'pack_growth',
-      credits: 5000,
-      price: '$35',
-      pricePerCredit: '$0.007 / CR',
-      tag: '🔥 MOST POPULAR • SAVE 30%',
-      popular: true,
-      desc: 'Ideal for creators & developers deploying secure encrypted micro-links.',
-      checkoutUrl: 'https://creem.io/product/prod_1ybKpsP1FQPyKvVZUVSg0A',
-    },
-    {
-      id: 'pack_pro',
-      credits: 15000,
-      price: '$90',
-      pricePerCredit: '$0.006 / CR',
-      tag: '⚡ BEST VALUE • 40% OFF',
-      popular: false,
-      desc: 'Maximum capacity for high-volume automated links, agent workflows & API tasks.',
-      checkoutUrl: 'https://creem.io/product/prod_2qRxHcyee2IvOfAiIFKYw6',
-    },
-  ];
 
   return (
     <AnimatePresence>
@@ -319,7 +258,7 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
               >
                 <Lock className="w-4 h-4 text-amber-400 shrink-0 animate-pulse" />
                 <div>
-                  <span className="font-bold text-yellow-300">{paywallFeature}</span> is unlocked with PRO or credits. Lock in the early founder rate now for instant access.
+                  <span className="font-bold text-yellow-300">{paywallFeature}</span> is unlocked with PRO. Lock in the early founder rate now for instant access.
                 </div>
               </motion.div>
             )}
@@ -345,23 +284,6 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
                     <Crown className="w-3.5 h-3.5" />
                     FOUNDER TIERS
                   </span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('credits')}
-                  className={`relative px-3.5 sm:px-4 py-1.5 rounded-lg font-bold transition-colors cursor-pointer flex items-center gap-1.5 ${
-                    activeTab === 'credits' ? 'text-black' : 'text-emerald-400 hover:text-emerald-200'
-                  }`}
-                >
-                  {activeTab === 'credits' && (
-                    <motion.div
-                      layoutId="active-paywall-tab"
-                      className="absolute inset-0 rounded-lg bg-emerald-400 shadow-[0_0_12px_rgba(0,255,150,0.4)]"
-                      transition={{ type: 'spring', stiffness: 450, damping: 30 }}
-                    />
-                  )}
-                  <Coins className="w-3.5 h-3.5 relative z-10" />
-                  <span className="relative z-10">CREDIT PACKS</span>
                 </button>
                 <button
                   type="button"
@@ -404,7 +326,7 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
 
                       <div className="mt-3">
                         <div className="text-3xl font-black font-cyber text-white">$0</div>
-                        <div className="text-[11px] text-cyan-300/70 mt-0.5">Free forever &bull; No credit card</div>
+                        <div className="text-[11px] text-cyan-300/70 mt-0.5">Free forever &bull; No payment card needed</div>
                       </div>
 
                       <p className="text-xs text-zinc-300 mt-2 leading-relaxed">
@@ -431,10 +353,6 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
                         <div className="flex items-start gap-2 text-zinc-500">
                           <X className="w-3.5 h-3.5 text-zinc-600 shrink-0 mt-0.5" />
                           <span>No telemetry or analytics events</span>
-                        </div>
-                        <div className="flex items-start gap-2 text-zinc-500">
-                          <X className="w-3.5 h-3.5 text-zinc-600 shrink-0 mt-0.5" />
-                          <span>No monthly credits included</span>
                         </div>
                       </div>
                     </div>
@@ -511,7 +429,7 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
                         </div>
                         <div className="flex items-start gap-2 text-amber-100 font-bold">
                           <CheckCheck className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
-                          <span>1,000 monthly Credits included free ($10 value)</span>
+                          <span>Unlimited Lock Generation</span>
                         </div>
                         <div className="flex items-start gap-2 text-amber-200">
                           <Check className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
@@ -547,111 +465,7 @@ export const ProPaywallModal: React.FC<ProPaywallModalProps> = ({
             )}
 
             {/* =========================================================================
-                VIEW 2: CREDIT REFILL PACKS (PAY AS YOU GO)
-               ========================================================================= */}
-            {activeTab === 'credits' && (
-              <div className="space-y-6 font-mono">
-                <div className="p-4 rounded-xl bg-gradient-to-r from-emerald-950/70 via-[#071a17] to-cyan-950/70 border border-emerald-500/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  <div>
-                    <h3 className="text-sm font-cyber font-bold text-emerald-200 flex items-center gap-2">
-                      <Coins className="w-4 h-4 text-emerald-400" />
-                      <span>ADD-ON CREDITS (PAY-AS-YOU-GO)</span>
-                    </h3>
-                    <p className="text-xs text-emerald-300/80 mt-1 max-w-xl leading-relaxed">
-                      Deploy PRO locks on-demand without subscribing. Credits never expire and carry over indefinitely.
-                    </p>
-                  </div>
-                  <span className="text-[10px] font-bold px-2 py-1 rounded bg-emerald-950 border border-emerald-400/50 text-emerald-300 whitespace-nowrap">
-                    NO SUBSCRIPTION REQUIRED
-                  </span>
-                </div>
-
-                {/* Lock Credit Costs Reference Table */}
-                <div className="space-y-2">
-                  <div className="text-xs font-bold text-cyan-300 uppercase tracking-wider">
-                    LOCK CREDIT COSTS PER GENERATION:
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
-                    {CREDIT_LOCK_COSTS.map((item, idx) => (
-                      <div
-                        key={idx}
-                        className="p-3 rounded-lg bg-[#04010f] border border-cyan-500/25 flex flex-col justify-between"
-                      >
-                        <div>
-                          <div className="flex items-center justify-between">
-                            <span className="font-bold text-xs text-white flex items-center gap-1.5">
-                              {item.icon}
-                              {item.name}
-                            </span>
-                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-500/40">
-                              {item.cost}
-                            </span>
-                          </div>
-                          <p className="text-[10px] text-zinc-400 mt-1 leading-tight">{item.desc}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Credit Packs Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-                  {CREDIT_PACKS.map(pack => (
-                    <div
-                      key={pack.id}
-                      className={`p-5 rounded-xl flex flex-col justify-between space-y-4 transition ${
-                        pack.popular
-                          ? 'bg-gradient-to-b from-emerald-950/70 to-[#04010f] border-2 border-emerald-400 shadow-[0_0_25px_rgba(0,255,150,0.25)] relative'
-                          : 'bg-[#060214] border border-cyan-500/30 hover:border-cyan-400/60'
-                      }`}
-                    >
-                      {pack.popular && (
-                        <div className="absolute -top-3 right-4 bg-emerald-400 text-black text-[9px] font-cyber font-extrabold px-3 py-0.5 rounded-full uppercase shadow-md">
-                          {pack.tag}
-                        </div>
-                      )}
-
-                      <div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-emerald-300 uppercase">
-                            {pack.credits} CREDITS
-                          </span>
-                          {!pack.popular && (
-                            <span className="text-[9px] text-cyan-400/80 bg-cyan-950 px-2 py-0.5 rounded border border-cyan-500/30">
-                              {pack.tag}
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="mt-2 flex items-baseline gap-2">
-                          <span className="text-3xl font-black font-cyber text-white">{pack.price}</span>
-                          <span className="text-xs text-zinc-400 font-normal">one-time &bull; {pack.pricePerCredit}</span>
-                        </div>
-
-                        <p className="text-xs text-zinc-300 mt-2 leading-relaxed">{pack.desc}</p>
-                      </div>
-
-                      <a
-                        href={pack.checkoutUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={`w-full py-2.5 rounded-lg font-cyber font-bold text-xs tracking-wider flex items-center justify-center gap-1.5 transition cursor-pointer ${
-                          pack.popular
-                            ? 'bg-emerald-400 text-black hover:brightness-110 shadow-[0_0_15px_rgba(0,255,150,0.4)]'
-                            : 'bg-cyan-950/80 border border-cyan-400/50 text-cyan-200 hover:bg-cyan-900/60'
-                        }`}
-                      >
-                        <span>GET {pack.credits} CREDITS ({pack.price})</span>
-                        <ExternalLink className="w-3.5 h-3.5" />
-                      </a>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* =========================================================================
-                VIEW 3: REDEEM LICENSE KEY
+                VIEW 2: REDEEM LICENSE KEY
                ========================================================================= */}
             {activeTab === 'key' && (
               <div className="max-w-md mx-auto py-6 space-y-4 font-mono">

@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Privacy Policy — BITTYBOX</title>
+<meta name="description" content="Privacy Policy for BittyBox.org — Zero-knowledge privacy architecture and data practices.">
+<meta name="theme-color" content="#080a0e">
+<link rel="icon" href="/favicon.png?v=20260924-bittybox-landing-1">
+<link rel="stylesheet" href="/bittybox-landing.css?v=20260924-heartbeat-logo-1">
+<style>
+  .legal-wrap {
+    width: min(840px, calc(100% - 48px));
+    margin: 120px auto 60px;
+    position: relative;
+    z-index: 10;
+  }
+  .legal-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 40px;
+  }
+  .legal-card h1 {
+    font: 800 28px/1.2 var(--mono);
+    color: var(--white);
+    letter-spacing: -0.02em;
+    margin: 0 0 8px;
+  }
+  .legal-card .meta {
+    font: 11px var(--mono);
+    color: var(--purple);
+    margin-bottom: 32px;
+    letter-spacing: 0.05em;
+  }
+  .legal-card h2 {
+    font: 700 16px var(--mono);
+    color: var(--purple);
+    margin: 28px 0 12px;
+    letter-spacing: 0.04em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .legal-card p, .legal-card li {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+  .legal-card ul {
+    padding-left: 20px;
+    margin: 12px 0;
+  }
+  .legal-card li {
+    margin-bottom: 8px;
+  }
+  .legal-card a {
+    color: var(--cyan);
+    text-decoration: underline;
+  }
+  .legal-card code {
+    font-family: var(--mono);
+    color: var(--purple);
+    background: rgba(181, 124, 255, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+  }
+  .callout-box {
+    background: rgba(181, 124, 255, 0.05);
+    border: 1px solid rgba(181, 124, 255, 0.2);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 20px 0;
+  }
+  .callout-box strong {
+    color: var(--purple);
+    font-family: var(--mono);
+    display: block;
+    margin-bottom: 6px;
+  }
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 24px;
+    font: 11px var(--mono);
+    color: var(--cyan);
+    text-decoration: none;
+  }
+  .back-link:hover {
+    color: var(--white);
+  }
+</style>
+</head>
+<body>
+<div class="ambient" aria-hidden="true"><div class="grid"></div><div class="scan"></div><div class="vignette"></div></div>
+
+<header class="topbar">
+  <div class="brand" onclick="location.href='/'" style="cursor:pointer;" role="button" aria-label="BITTYBOX Home">
+    <img class="brand-logo" src="/bittybox-header-mark.png?v=20260924-logo-1" alt="" aria-hidden="true" width="48" height="48">
+    <span><b>BITTYBOX</b><small>URL-NATIVE DEAD MAN'S SWITCH</small></span>
+  </div>
+  <nav>
+    <a class="account-entry" href="/editor">Open Editor</a>
+  </nav>
+</header>
+
+<main class="legal-wrap">
+  <a class="back-link" href="/">← BACK TO HOME</a>
+  <div class="legal-card">
+    <h1>PRIVACY POLICY</h1>
+    <div class="meta">BITTY BOX PROTOCOL · LAST UPDATED: SEPTEMBER 2026</div>
+
+    <div class="callout-box">
+      <strong>ZERO-SERVER PAYLOAD RETENTION BY DESIGN</strong>
+      <p style="margin:0;font-size:13px;">BittyBox is built on an absolute zero-knowledge privacy foundation. When you compile an application capsule, the data is embedded solely into the URL hash fragment. Our servers never log, store, or view the code inside your links.</p>
+    </div>
+
+    <h2>1. Information We Do Not Collect</h2>
+    <p>Due to the mathematical and cryptographic structure of URL hash fragments (<code>#...</code>):</p>
+    <ul>
+      <li><strong>No Capsule Storage:</strong> We do not store, index, or inspect the HTML, JavaScript, CSS, or assets inside generated capsules.</li>
+      <li><strong>No Key Interception:</strong> Client-side encryption keys and passwords never leave your browser runtime.</li>
+      <li><strong>No Third-Party Ad Trackers:</strong> We do not embed ad network trackers, social analytics pixels, or sell user telemetry.</li>
+    </ul>
+
+    <h2>2. Information We Collect for Accounts &amp; Service Delivery</h2>
+    <p>When you opt into optional developer or user services (such as Magic Link authentication or notification delivery):</p>
+    <ul>
+      <li><strong>Email Address:</strong> Used solely to send cryptographic magic login links and check-in notification alerts.</li>
+      <li><strong>Heartbeat Metadata:</strong> Timestamps of check-in pings required to maintain switch status and countdown schedules.</li>
+      <li><strong>Diagnostic Logs:</strong> Transient server operational logs containing IP addresses and request durations, automatically rotated and purged.</li>
+    </ul>
+
+    <h2>3. Local Storage &amp; Client Data Control</h2>
+    <p>BittyBox utilizes your browser's local storage (<code>localStorage</code> / <code>sessionStorage</code>) exclusively to store your workspace theme, draft sessions, walkthrough status, and local box history for your convenience. You can purge this data at any time through your browser settings.</p>
+
+    <h2>4. Data Sharing &amp; Third Parties</h2>
+    <p>We do not sell, rent, or monetize your personal information. Third-party infrastructure providers (such as transactional email providers for heartbeat alerts) process minimal operational data strictly as necessary to execute requested notifications.</p>
+
+    <h2>5. Security Practices</h2>
+    <p>All network communications use modern TLS/HTTPS encryption in transit. Cryptographic primitives and URL-native hashes ensure that secret payloads remain protected even against network intermediaries.</p>
+
+    <h2>6. Contact Regarding Privacy</h2>
+    <p>If you have questions about privacy or wish to request the deletion of your account records, please contact our team at <a href="mailto:support@bittybox.org">support@bittybox.org</a>.</p>
+  </div>
+</main>
+
+<footer class="footer wrap">
+  <div class="brand" onclick="location.href='/'" style="cursor:pointer;" role="button">
+    <span class="brand-mark">B_</span>
+    <span><b>BITTYBOX</b><small>SECRETS · LEGACIES · CONSEQUENCES</small></span>
+  </div>
+  <div class="footer-links">
+    <a href="/terms">Terms of Service</a>
+    <a href="/privacy">Privacy Policy</a>
+    <a href="mailto:support@bittybox.org">Contact Us</a>
+  </div>
+  <span>© 2026 BITTYBOX</span>
+  <a href="/editor">OPEN EDITOR ↗</a>
+</footer>
+</body>
+</html>

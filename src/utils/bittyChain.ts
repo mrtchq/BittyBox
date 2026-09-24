@@ -306,7 +306,7 @@ export interface BlockMechanismCost {
   details?: string;
 }
 
-export interface BoxCreditBreakdown {
+export interface BoxBlockBreakdown {
   index: number;
   title: string;
   isCloned?: boolean;
@@ -316,31 +316,33 @@ export interface BoxCreditBreakdown {
   allBlocks: BlockMechanismCost[];
 }
 
+export type BoxCreditBreakdown = BoxBlockBreakdown;
+
 /**
- * Calculate the credit cost and active block breakdown for an individual box.
- * Blocks / Mechanisms:
- *  1. Base Content (0 CR)
- *  2. Secret PIN / Passcode (0 CR)
- *  3. Time-Based Lock (+10 CR)
- *  4. View Limits (+10 CR)
+ * Calculate the active block breakdown for an individual box.
+ * Mechanisms:
+ *  1. Base Content
+ *  2. Secret PIN / Passcode
+ *  3. Time-Based Lock
+ *  4. View Limits
  */
 export function getBoxBlockBreakdown(
   metadata: BittyMetadata | undefined,
   index: number = 0,
   isCloned: boolean = false
-): BoxCreditBreakdown {
+): BoxBlockBreakdown {
   const isPasscodeActive = Boolean(metadata?.password && metadata.password.trim().length >= 8);
   const isTimeLockActive = Boolean(metadata?.lockConfig?.timeWindow?.enabled);
   const isAccessLimitActive = Boolean(metadata?.lockConfig?.openLimit?.enabled);
 
   const tw = metadata?.lockConfig?.timeWindow;
-  let timeDetails = 'Timer Lock (+10 CR)';
-  if (tw?.mode === 'hybrid') timeDetails = 'Reveal+Decay (+10 CR)';
-  else if (tw?.mode === 'delay') timeDetails = 'Delayed Reveal (+10 CR)';
-  else if (tw?.mode === 'expiry') timeDetails = `Expires ${tw.expiryHours || 24}h (+10 CR)`;
+  let timeDetails = 'Timer Lock';
+  if (tw?.mode === 'hybrid') timeDetails = 'Reveal+Decay';
+  else if (tw?.mode === 'delay') timeDetails = 'Delayed Reveal';
+  else if (tw?.mode === 'expiry') timeDetails = `Expires ${tw.expiryHours || 24}h`;
 
   const ol = metadata?.lockConfig?.openLimit;
-  const openDetails = `Max ${ol?.maxOpens || 1} Views (+10 CR)`;
+  const openDetails = `Max ${ol?.maxOpens || 1} Views`;
 
   const allBlocks: BlockMechanismCost[] = [
     {
@@ -348,33 +350,33 @@ export function getBoxBlockBreakdown(
       name: 'Base Content',
       cost: 0,
       active: true,
-      details: 'Base Link (Free 0 CR)',
+      details: 'Base Link (Free)',
     },
     {
       id: 'password',
       name: 'Secret PIN',
       cost: 0,
       active: isPasscodeActive,
-      details: isPasscodeActive ? 'PIN Protected (Free 0 CR)' : 'Disabled (0 CR)',
+      details: isPasscodeActive ? 'PIN Protected' : 'Disabled',
     },
     {
       id: 'timeWindow',
       name: 'Time Lock',
-      cost: isTimeLockActive ? 10 : 0,
+      cost: 0,
       active: isTimeLockActive,
-      details: isTimeLockActive ? timeDetails : 'Disabled (0 CR)',
+      details: isTimeLockActive ? timeDetails : 'Disabled',
     },
     {
       id: 'openLimit',
       name: 'View Limits',
-      cost: isAccessLimitActive ? 10 : 0,
+      cost: 0,
       active: isAccessLimitActive,
-      details: isAccessLimitActive ? openDetails : 'Disabled (0 CR)',
+      details: isAccessLimitActive ? openDetails : 'Disabled',
     },
   ];
 
   const activeBlocks = allBlocks.filter(b => b.active);
-  const totalCost = (isTimeLockActive ? 10 : 0) + (isAccessLimitActive ? 10 : 0);
+  const totalCost = 0;
 
   return {
     index,
@@ -387,30 +389,30 @@ export function getBoxBlockBreakdown(
   };
 }
 
-export function calculateBoxCreditCost(metadata: BittyMetadata | undefined): number {
-  return getBoxBlockBreakdown(metadata).totalCost;
+export function calculateBoxCost(metadata: BittyMetadata | undefined): number {
+  return 0;
 }
+export const calculateBoxCreditCost = calculateBoxCost;
 
-export function calculateTotalChainCreditCost(
+export function calculateTotalChainBreakdown(
   pages: BittyChainDraftPage[]
 ): {
   totalCost: number;
-  boxBreakdowns: BoxCreditBreakdown[];
+  boxBreakdowns: BoxBlockBreakdown[];
 } {
-  let totalCost = 0;
-  const boxBreakdowns: BoxCreditBreakdown[] = [];
+  const boxBreakdowns: BoxBlockBreakdown[] = [];
 
   for (let i = 0; i < pages.length; i++) {
     const page = pages[i];
     const isCloned = Boolean(page.isCloned || (i > 0 && JSON.stringify(page.metadata.lockConfig) === JSON.stringify(pages[i - 1]?.metadata.lockConfig) && page.metadata.lockConfig && (page.metadata.lockConfig.timeWindow?.enabled || page.metadata.lockConfig.openLimit?.enabled)));
     const breakdown = getBoxBlockBreakdown(page.metadata, i, isCloned);
     boxBreakdowns.push(breakdown);
-    totalCost += breakdown.totalCost;
   }
 
   return {
-    totalCost,
+    totalCost: 0,
     boxBreakdowns,
   };
 }
+export const calculateTotalChainCreditCost = calculateTotalChainBreakdown;
 

@@ -219,32 +219,33 @@ document.addEventListener('DOMContentLoaded', () => {
   initMarquees();
   if (window.lucide) lucide.createIcons();
 
-  document.getElementById('btnModeDashboard').addEventListener('click', () => setMode('dashboard'));
-  document.getElementById('btnModeWizard').addEventListener('click', () => setMode('wizard'));
-  document.getElementById('thresholdSelect').addEventListener('change', (e) => {
+  document.getElementById('btnModeDashboard')?.addEventListener('click', () => setMode('dashboard'));
+  document.getElementById('btnModeWizard')?.addEventListener('click', () => setMode('wizard'));
+  document.getElementById('thresholdSelect')?.addEventListener('change', (e) => {
     state.threshold = e.target.value;
     logCrypto(`Threshold updated: ${state.threshold === 'all' ? 'All Locks Required (M of M)' : state.threshold + ' of N Required'}`, 'info');
     checkResolution();
   });
 
-  document.getElementById('btnResetCeremony').addEventListener('click', () => resetCeremony());
-  document.getElementById('btnClearLog').addEventListener('click', () => {
-    document.getElementById('terminalLog').innerHTML = '';
+  document.getElementById('btnResetCeremony')?.addEventListener('click', () => resetCeremony());
+  document.getElementById('btnClearLog')?.addEventListener('click', () => {
+    const el = document.getElementById('terminalLog');
+    if (el) el.innerHTML = '';
   });
 
-  document.getElementById('btnEmbedUrl').addEventListener('click', () => openShareModal());
+  document.getElementById('btnEmbedUrl')?.addEventListener('click', () => openShareModal());
   document.getElementById('btnQuickShare')?.addEventListener('click', () => openShareModal());
-  document.getElementById('btnCloseShareModal').addEventListener('click', () => {
-    document.getElementById('shareModal').classList.add('hidden');
-    document.getElementById('shareModal').classList.remove('flex');
+  document.getElementById('btnCloseShareModal')?.addEventListener('click', () => {
+    document.getElementById('shareModal')?.classList.add('hidden');
+    document.getElementById('shareModal')?.classList.remove('flex');
   });
-  document.getElementById('btnCopyShareUrl').addEventListener('click', () => {
-    const text = document.getElementById('shareUrlBox').value;
+  document.getElementById('btnCopyShareUrl')?.addEventListener('click', () => {
+    const text = document.getElementById('shareUrlBox')?.value || '';
     navigator.clipboard.writeText(text);
     alert('Encrypted self-decrypting URL copied to clipboard!');
   });
 
-  document.getElementById('btnCopyPayload').addEventListener('click', () => {
+  document.getElementById('btnCopyPayload')?.addEventListener('click', () => {
     navigator.clipboard.writeText(state.customPayload);
     alert('Decrypted secret copied to clipboard!');
   });
@@ -336,7 +337,9 @@ function resetCeremony() {
 
 function renderActiveLocksList() {
   const container = document.getElementById('activeLocksList');
-  document.getElementById('activeLockCount').innerText = state.activeLocks.length;
+  if (!container) return;
+  const countEl = document.getElementById('activeLockCount');
+  if (countEl) countEl.innerText = state.activeLocks.length;
   container.innerHTML = '';
 
   state.activeLocks.forEach((lockId) => {
@@ -397,6 +400,7 @@ function addActiveLock(lockId) {
 
 function renderChallenges() {
   const container = document.getElementById('challengesContainer');
+  if (!container) return;
   container.innerHTML = '';
 
   if (state.mode === 'wizard') {
@@ -1023,6 +1027,7 @@ function resetPayloadReveal() {
 
 function renderPresets() {
   const grid = document.getElementById('presetsGrid');
+  if (!grid) return;
   grid.innerHTML = '';
 
   PRESETS.forEach(p => {

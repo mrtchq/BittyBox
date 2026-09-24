@@ -161,7 +161,7 @@ export async function signOutFirebase(): Promise<void> {
 
 /**
  * Bootstrap/read the authoritative account through the server. The browser
- * proves identity with a Firebase ID token but cannot assign credits or keys.
+ * proves identity with a Firebase ID token but cannot assign keys.
  */
 export async function getOrCreateFirestoreUser(fbUser: FirebaseUser): Promise<BittyUser> {
   const idToken = await fbUser.getIdToken();
@@ -189,17 +189,11 @@ export function subscribeToUserProfile(uid: string, onUpdate: (user: BittyUser |
         displayName: data.displayName || 'Bitty Builder',
         tier: data.tier || 'PRO BUILDER',
         avatar: data.avatar || '⚡',
-        credits: data.credits ?? 100,
-        creditsUsedTotal: data.creditsUsedTotal ?? 0,
-        creditsHumanUsed: data.creditsHumanUsed ?? 0,
-        creditsApiUsed: data.creditsApiUsed ?? 0,
-        creditsMcpUsed: data.creditsMcpUsed ?? 0,
         joinedDate: data.joinedDate || new Date().toISOString(),
         lastSignedInAt: data.lastSignedInAt || new Date().toISOString(),
         settings: data.settings || { autoSaveLinks: true, trustThisDevice: true },
         apiKeys: data.apiKeys || [],
         links: data.links || [],
-        transactions: data.transactions || []
       });
     } else {
       onUpdate(null);

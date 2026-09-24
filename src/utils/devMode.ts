@@ -36,7 +36,7 @@ export function enableDevMode(passcode: string): { success: boolean; error?: str
 }
 
 /**
- * Disable Dev Mode and restore standard user credit enforcement.
+ * Disable Dev Mode.
  */
 export function disableDevMode(): void {
   if (typeof window === 'undefined') return;

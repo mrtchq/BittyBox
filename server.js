@@ -1730,8 +1730,17 @@ if (process.env.NODE_ENV !== 'production') {
     server: { middlewareMode: true, host: '0.0.0.0', port: PORT },
     appType: 'spa',
   });
-  app.use(vite.middlewares);
 } else {
+  // Mobile Vanguard Dead Man's Switch (/test2)
+  app.get(['/test2', '/test2.html'], (_req, res) => {
+    res.sendFile(path.join(DIST_DIR, 'test2.html'));
+  });
+
+  // Bitty Capsule Dead Man's Switch (/capsule)
+  app.get(['/capsule', '/capsule.html'], (_req, res) => {
+    res.sendFile(path.join(DIST_DIR, 'capsule', 'index.html'));
+  });
+
   app.use(express.static(DIST_DIR, {
     maxAge: '1y',
     immutable: true,

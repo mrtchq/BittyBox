@@ -20,7 +20,6 @@ export interface BittyStageViewProps {
   bittyUrl?: string;
   onGenerate?: () => void;
   isGenerating?: boolean;
-  calculatedCreditCost?: number;
   chainEnabled?: boolean;
   chainIndex?: number;
   chainTotal?: number;
@@ -267,7 +266,6 @@ const StageDispatcher: React.FC<BittyStageViewProps> = (props) => {
           <StageEditor
             onGenerate={props.onGenerate}
             isGenerating={props.isGenerating}
-            calculatedCreditCost={props.calculatedCreditCost}
             bittyUrl={props.bittyUrl}
             chainEnabled={props.chainEnabled}
             chainIndex={props.chainIndex}

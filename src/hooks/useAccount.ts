@@ -44,9 +44,7 @@ export interface UseAccountResult {
   generateApiKey: (label?: string, scopes?: string[]) => Promise<{ rawKey: string; key: ApiKeyMeta } | null>;
   revokeApiKey: (keyId: string) => Promise<boolean>;
   testApiKey: (key: string) => Promise<{ valid: boolean; error?: string; user?: any; key?: any }>;
-  purchaseCredits: (packageId: string, amount?: number, costCents?: number) => Promise<boolean>;
   recordCreatedBox: (linkData: FirebaseTrackedBoxInput) => Promise<boolean>;
-  syncUserCreditsWithCreem: () => Promise<boolean>;
   deleteTrackedBox: (linkId: string) => Promise<boolean>;
 }
 
@@ -475,44 +473,6 @@ export function useAccount(): UseAccountResult {
     }
   };
 
-  // SECURITY: credits are NEVER granted client-side. The dashboard's
-  // "Buy" buttons are <a href> links that open the Creem checkout; real
-  // credits are issued ONLY by the server billing webhook after a paid
-  // event (via Creem Customer Credit Accounts). This function is a no-op
-  // guard so no code path can self-grant free credits.
-  const purchaseCredits = async (packageId?: string, amount = 50, costCents = 500): Promise<boolean> => {
-    console.warn('[useAccount] purchaseCredits is disabled: credits are issued only via the Creem paid webhook.');
-    return false;
-  };
-
-  // Reconcile the Firebase display ledger with the authoritative Creem CCA
-  // balance. Firebase users' purchases land in Creem (via webhook), not
-  // Firestore — so we mirror Creem's balance into Firestore here. Call this
-  // on login and after returning from a Creem checkout.
-  const syncUserCreditsWithCreem = async (): Promise<boolean> => {
-    const firebaseUser = auth.currentUser;
-    if (!firebaseUser) return false;
-    try {
-      // Firebase users have no server session. Send the verified Firebase ID
-      // token so the server can prove identity (never trust a raw email).
-      const idToken = await firebaseUser.getIdToken();
-      const headers = buildFirebaseAuthHeaders(idToken);
-      const res = await fetch('/api/accounts/credits/sync-from-creem', {
-        method: 'GET',
-        headers
-      });
-      const data = await res.json();
-      if (res.ok && data.success && data.user) {
-        setUser(data.user);
-        return Boolean(data.synced);
-      }
-      return false;
-    } catch (err) {
-      console.error('[useAccount] syncUserCreditsWithCreem failed:', err);
-      return false;
-    }
-  };
-
   const recordCreatedBox = async (linkData: FirebaseTrackedBoxInput): Promise<boolean> => {
     setError(null);
     if (auth.currentUser) {
@@ -606,9 +566,7 @@ export function useAccount(): UseAccountResult {
     generateApiKey,
     revokeApiKey,
     testApiKey,
-    purchaseCredits,
     recordCreatedBox,
-    syncUserCreditsWithCreem,
     deleteTrackedBox,
   };
 }

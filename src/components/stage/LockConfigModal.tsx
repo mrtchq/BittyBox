@@ -628,8 +628,11 @@ const DeadManSwitchSetupBody: React.FC<DeadManSwitchSetupBodyProps> = ({
             { label: '1 min', minutes: 1 },
             { label: '5 min', minutes: 5 },
             { label: '1 hr', minutes: 60 },
-            { label: '1 day', minutes: 1440 },
-            { label: '7 days', minutes: 10080 },
+            { label: '24h', minutes: 1440 },
+            { label: '3d', minutes: 4320 },
+            { label: '7d', minutes: 10080 },
+            { label: '14d', minutes: 20160 },
+            { label: '30d', minutes: 43200 },
           ]}
         />
       </div>

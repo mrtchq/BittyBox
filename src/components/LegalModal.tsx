@@ -286,11 +286,11 @@ export const LegalModal: React.FC<LegalModalProps> = ({
                     2. Information We Collect for Accounts & Agent APIs
                   </h3>
                   <p>
-                    When you opt into optional developer or agent services (e.g. Magic Link email authentication, API key generation, or credit balance tracking):
+                    When you opt into optional developer or agent services (e.g. Magic Link email authentication or API key generation):
                   </p>
                   <ul className="list-disc pl-5 space-y-1.5 text-purple-200/70">
                     <li><strong className="text-fuchsia-200">Email Address:</strong> Used solely to send cryptographic magic login links and critical platform notifications.</li>
-                    <li><strong className="text-fuchsia-200">API Tokens & Quota Logs:</strong> Token metadata, request counts, and credit transactions required to provision and enforce API quotas for agent workflows.</li>
+                    <li><strong className="text-fuchsia-200">API Tokens & Quota Logs:</strong> Token metadata and request counts required to provision and manage API services for agent workflows.</li>
                   </ul>
                 </div>
 

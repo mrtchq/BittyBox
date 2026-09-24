@@ -3,564 +3,731 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>BITTYBOX — The Dead Man's Switch Reimagined</title>
-<meta name="description" content="A URL-native Dead Man's Switch platform for secrets, legacies, and cinematic Bitty Boxes with heartbeat check-ins and transformed aftermaths.">
+<title>BITTYBOX — URL-Native Pages, Capsules &amp; AI Allies</title>
+<meta name="description" content="A URL-native platform for self-contained micro-sites: Bitty Page (portable webpage), Bitty Capsule (Dead Man's Switch), and Bitty Ally (autonomous AI Agent).">
 <meta name="theme-color" content="#080a0e">
-<meta property="og:title" content="BITTYBOX — The Dead Man's Switch Reimagined">
-<meta property="og:description" content="Freeze a living Bitty Box, set the check-in rules, and design its aftermath.">
+<meta property="og:title" content="BITTYBOX — URL-Native Pages, Capsules &amp; AI Allies">
+<meta property="og:description" content="3 Bitty Box Types: Bitty Page, Bitty Capsule, and Bitty Ally. Zero hosting, pure URL-native architecture.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://bittybox.org/">
 <link rel="icon" href="/favicon.png?v=20260924-bittybox-landing-1">
 <link rel="canonical" href="https://bittybox.org/">
-<link rel="stylesheet" href="/bittybox-landing.css?v=20260924-heartbeat-logo-1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400;1,600;1,700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/bittybox-landing.css?v=20260924-luxury-1">
 </head>
 <body>
-<div class="ambient" aria-hidden="true"><div class="grid"></div><div class="scan"></div><div class="vignette"></div></div>
 
+<!-- Interactive Luxury Stardust Canvas -->
+<canvas id="luxury-canvas" class="luxury-canvas" aria-hidden="true"></canvas>
 
+<!-- Ambient Backdrop -->
+<div class="ambient" aria-hidden="true">
+  <div class="grid"></div>
+  <div class="scan"></div>
+  <div class="vignette"></div>
+</div>
 
+<!-- Fixed Header -->
 <header class="topbar">
-  <a class="brand" href="#top">
+  <div class="brand" onclick="window.goToVerticalSlide(0)" style="cursor:pointer;" role="button" aria-label="BITTYBOX Home">
     <img class="brand-logo" src="/bittybox-header-mark.png?v=20260924-logo-1" alt="" aria-hidden="true" width="48" height="48">
-    <span><b>BITTYBOX</b><small>URL-NATIVE DEAD MAN'S SWITCH</small></span>
-  </a>
-  <nav>
-    <a href="#overview">Overview</a>
-    <a href="#mechanics">10 Mechanics</a>
-    <a href="#simulator">Bitty Box Lab</a>
-    <a href="#capsules">Bitty Boxes</a>
-    <a href="#philosophy">Philosophy</a>
-    <a href="#faq">FAQ</a>
-    <a class="account-entry" href="/editor">Open Editor</a>
-    <a class="top-cta" href="#start">CREATE BITTY BOX ↗</a>
+    <span><b>BITTYBOX</b><small>URL-NATIVE MICRO-WEB</small></span>
+  </div>
+  <nav class="topbar-nav">
+    <button type="button" class="nav-jump active" data-v="0">01 Bitty Page</button>
+    <button type="button" class="nav-jump" data-v="1">02 Bitty Capsule</button>
+    <button type="button" class="nav-jump" data-v="2">03 Bitty Ally</button>
+    <a class="nav-cta" href="/editor">Open Editor ↗</a>
   </nav>
   <button class="menu" aria-label="Open navigation">☰</button>
 </header>
 
-<main id="top">
-
-<!-- Hero Section -->
-<section class="hero wrap" id="overview">
-  <div class="hero-copy">
-    <div class="eyebrow"><i></i> DEAD MAN’S SWITCH REIMAGINED</div>
-    <h1>Don’t just leave a message.<br><em>Leave a world.</em></h1>
-    <p class="lede"><strong>BittyBox.org</strong> stands out as a next‑generation Dead Man’s Switch (DMS) platform because it doesn’t just automate a “release if I don’t check in.” It expands the idea into a cinematic, interactive micro‑web experience built around richer check-in, release, and legacy scenarios.</p>
-    <p class="sub-lede">A URL‑native Dead Man’s Switch platform that turns every switch into a self‑contained micro‑site — a <strong>BittyBox Bitty Box</strong> — capable of evolving, reacting, and transforming based on user‑defined conditions. Unlike traditional DMS tools that simply send an email or unlock a file, BittyBox treats each switch as a living digital artifact with its own logic, personality, and fate.</p>
-    <div class="actions">
-      <a class="btn primary" href="#simulator">OPEN BITTY BOX LAB <span>↗</span></a>
-      <a class="btn ghost" href="#mechanics">EXPLORE 10 MECHANICS ↓</a>
-    </div>
-    <p class="preview-disclaimer">The clock, state changes, dossier, and generator are previews only. This page does not monitor activity, encrypt or publish a real payload, contact recipients, or trigger a release.</p>
-    <div class="hero-meta">
-      <span><b class="pulse"></b> CLOCK PREVIEW ACTIVE</span>
-      <span>URL-NATIVE MICRO-SITES</span>
-      <span>DUAL-STATE SWITCHES</span>
-      <span>VAULT-GRADE LOGIC</span>
-    </div>
+<!-- Floating Vertical Navigation Rail (Right Side) -->
+<nav class="v-nav" aria-label="Vertical Deck Navigation">
+  <button type="button" class="v-nav-btn active" data-v="0" title="Bitty Page (Self-Contained Webpage)">
+    <span class="v-nav-num">01</span>
+    <span class="v-nav-label">BITTY PAGE</span>
+    <span class="v-nav-dot"></span>
+  </button>
+  <button type="button" class="v-nav-btn" data-v="1" title="Bitty Capsule (Dead Man's Switch)">
+    <span class="v-nav-num">02</span>
+    <span class="v-nav-label">BITTY CAPSULE</span>
+    <span class="v-nav-dot heart-dot"></span>
+  </button>
+  <button type="button" class="v-nav-btn" data-v="2" title="Bitty Ally (AI Agent)">
+    <span class="v-nav-num">03</span>
+    <span class="v-nav-label">BITTY ALLY</span>
+    <span class="v-nav-dot"></span>
+  </button>
+  <div class="v-nav-arrows">
+    <button type="button" class="v-arrow-btn" id="vPrevBtn" aria-label="Previous Slide">↑</button>
+    <button type="button" class="v-arrow-btn" id="vNextBtn" aria-label="Next Slide">↓</button>
   </div>
+</nav>
 
-  <div class="hero-art" aria-label="Interactive BittyBox Bitty Box Preview">
-    <div class="status-row">
-      <b>BITTY BOX / BB-001</b>
-      <span id="hero-state-pill" class="badge-alive">ALIVE MODE</span>
-    </div>
+<!-- Main Vertical Deck (Only 3 Vertical Slides) -->
+<main class="v-deck" id="vDeck">
 
-    <div class="clock-meta" aria-label="Heartbeat preview details">
-      <div class="clock-meta-item tag-a" id="radar-tag-a">
-        <span class="clock-meta-label">NEXT CHECK-IN</span>
-        <strong class="clock-meta-value" id="clock-next-checkin">06D 13H</strong>
-      </div>
-      <div class="clock-meta-item tag-b" id="radar-tag-b">
-        <span class="clock-meta-label">HEARTBEAT</span>
-        <strong class="clock-meta-value">SIMULATED</strong>
-      </div>
-    </div>
-
-    <!-- Active DMS heartbeat clock: accelerated visual preview, never a live monitor. -->
-    <div class="radar clock-stage" id="hero-radar" data-mode="alive" aria-label="Heartbeat clock preview">
-      <div class="clock-orbit" aria-hidden="true"></div>
-      <div class="heartbeat-clock" role="img" aria-label="Illustrative active dead man's switch clock with simulated heartbeat">
-        <svg class="clock-face" viewBox="0 0 280 280" aria-hidden="true">
-          <circle class="clock-bezel" cx="140" cy="140" r="119"></circle>
-          <circle class="clock-inner-ring" cx="140" cy="140" r="105"></circle>
-          <g class="clock-ticks">
-            <line x1="140" y1="28" x2="140" y2="43"></line>
-            <line x1="140" y1="28" x2="140" y2="43" transform="rotate(30 140 140)"></line>
-            <line x1="140" y1="28" x2="140" y2="43" transform="rotate(60 140 140)"></line>
-            <line x1="140" y1="24" x2="140" y2="47" transform="rotate(90 140 140)"></line>
-            <line x1="140" y1="28" x2="140" y2="43" transform="rotate(120 140 140)"></line>
-            <line x1="140" y1="28" x2="140" y2="43" transform="rotate(150 140 140)"></line>
-            <line x1="140" y1="24" x2="140" y2="47" transform="rotate(180 140 140)"></line>
-            <line x1="140" y1="28" x2="140" y2="43" transform="rotate(210 140 140)"></line>
-            <line x1="140" y1="28" x2="140" y2="43" transform="rotate(240 140 140)"></line>
-            <line x1="140" y1="24" x2="140" y2="47" transform="rotate(270 140 140)"></line>
-            <line x1="140" y1="28" x2="140" y2="43" transform="rotate(300 140 140)"></line>
-            <line x1="140" y1="28" x2="140" y2="43" transform="rotate(330 140 140)"></line>
-          </g>
-          <text class="clock-top-label" x="140" y="68">CHECK-IN WINDOW</text>
-          <line class="clock-hand clock-hour" x1="140" y1="140" x2="140" y2="99"></line>
-          <line class="clock-hand clock-minute" x1="140" y1="140" x2="140" y2="77"></line>
-          <line class="clock-hand clock-second" x1="140" y1="140" x2="140" y2="53"></line>
-          <circle class="clock-center" cx="140" cy="140" r="6"></circle>
-        </svg>
-        <div class="ecg-shell" aria-hidden="true">
-          <svg viewBox="0 0 260 48" preserveAspectRatio="none">
-            <path class="ecg-trace" pathLength="260" d="M0 25 H45 L57 25 L66 19 L73 31 L82 5 L93 42 L103 20 L111 25 H145 L157 25 L166 19 L173 31 L182 5 L193 42 L203 20 L211 25 H260"></path>
-          </svg>
+  <!-- =====================================================================
+       VERTICAL SLIDE 1: BITTY PAGE (Self-Contained Webpage)
+       ===================================================================== -->
+  <section class="v-slide active" id="slide-page" data-v-index="0" aria-label="Bitty Page">
+    <div class="h-deck-wrapper">
+      
+      <div class="slide-type-header">
+        <div class="type-badge-row">
+          <span class="type-pill">TYPE 01 / 03</span>
+          <h2 class="type-title">Bitty Page <span class="type-sub">(Self-Contained Webpage)</span></h2>
         </div>
+        <a class="type-action-link" href="/editor">Launch Editor ↗</a>
       </div>
-    </div>
 
-    <div class="clock-readout" aria-live="polite">
-      <span class="clock-readout-label">TIME TO CHECK-IN</span>
-      <strong id="clock-countdown" class="clock-countdown">06D 13H 48M</strong>
-      <span class="clock-demo-label">SIMULATED · NOT MONITORING</span>
-    </div>
+      <button class="h-nav-arrow h-prev" aria-label="Previous Card">‹</button>
+      <button class="h-nav-arrow h-next" aria-label="Next Card">›</button>
 
-    <div class="clock-state-strip">
-      <span class="clock-state-label" id="clock-state-label">AFTERMATH</span>
-      <strong id="radar-tag-c" class="clock-state-value">LOCKED</strong>
-    </div>
+      <div class="h-deck">
+        <div class="h-card-track">
 
-    <!-- Quick State Preview Buttons on Hero Art -->
-    <div class="hero-quick-switch" aria-label="Preview Bitty Box State">
-      <span class="switch-label">PREVIEW STATE:</span>
-      <button type="button" class="state-btn active" data-state="alive">Alive</button>
-      <button type="button" class="state-btn" data-state="mutating">Mutating</button>
-      <button type="button" class="state-btn" data-state="aftermath">Aftermath</button>
-      <button type="button" class="state-btn" data-state="burn">Burned</button>
-    </div>
+          <!-- Card 1: Zero-Infrastructure Webpage -->
+          <article class="h-card">
+            <div class="card-content-grid">
+              <div class="card-copy">
+                <div class="card-eyebrow"><i></i> ZERO-SERVER ARCHITECTURE</div>
+                <h3>The entire website<br><em>lives inside the link.</em></h3>
+                <p class="card-desc">Bitty Page compresses full web applications—HTML, CSS, JavaScript, and assets—directly into a portable URL fragment hash. No backend servers, no cloud hosting bills, and no database queries. The browser decompresses and executes the app on arrival.</p>
+                <ul class="card-bullets">
+                  <li><strong>Instant Client-Side Render:</strong> Decompresses and runs in under 5ms via Pako deflate.</li>
+                  <li><strong>Zero Hosting Infrastructure:</strong> Runs anywhere a browser exists without backend maintenance.</li>
+                  <li><strong>Immortal &amp; Decentralized:</strong> As long as the link exists, your page remains accessible forever.</li>
+                </ul>
+                <div class="card-actions">
+                  <a class="btn primary" href="/editor">OPEN BITTY PAGE EDITOR <span>↗</span></a>
+                  <button type="button" class="btn ghost h-jump-next">EXPLORE FORMATS →</button>
+                </div>
+              </div>
 
-    <div class="art-footer">
-      <span>FREEZE STATE: <b id="hero-freeze-state">CRYSTALLIZED</b></span>
-      <span id="hero-pulse-status">● DEMO SIGNAL</span>
-    </div>
-  </div>
-</section>
+              <div class="visual-stage">
+                <div class="sim-code-box">
+                  <div class="sim-code-header">
+                    <span class="sim-tag">PAYLOAD COMPOSER</span>
+                    <span class="sim-status-code">STANDALONE WEB APP</span>
+                  </div>
+                  <pre class="sim-code-body"><code>&lt;!doctype html&gt;
+&lt;html&gt;
+  &lt;body&gt;
+    &lt;h1&gt;Interactive Bitty Page&lt;/h1&gt;
+    &lt;script&gt;
+      // Runs 100% inside visitor browser
+      initMiniApp({ theme: 'crimson' });
+    &lt;/script&gt;
+  &lt;/body&gt;
+&lt;/html&gt;</code></pre>
+                  <div class="sim-arrow">⚡ INSTANT BROWSER DEFLATE &amp; HASH ENCODE</div>
+                  <div class="sim-url-preview">
+                    <span class="url-protocol">https://bittybox.org/#</span><span class="url-hash">H4sIAAAAAAAACmNgYGBg...</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
 
-<div class="rule wrap"></div>
+          <!-- Card 2: Flexible Formats & Sandbox -->
+          <article class="h-card">
+            <div class="card-content-grid">
+              <div class="card-copy">
+                <div class="card-eyebrow"><i></i> FLEXIBLE PAYLOAD ENGINE</div>
+                <h3>HTML, Markdown, SVG<br><em>and dynamic mini-apps.</em></h3>
+                <p class="card-desc">From formatted documentation and personal manifestos to full-blown canvas games, financial calculators, and interactive widgets. Bitty Page executes everything in an isolated, sandboxed iframe protecting both creator and visitor.</p>
+                <ul class="card-bullets">
+                  <li><strong>Markdown with LaTeX &amp; Code:</strong> Write notes, manuals, and papers with high-speed syntax coloring.</li>
+                  <li><strong>Interactive JavaScript &amp; Canvas:</strong> Interactive apps that run entirely offline without network requests.</li>
+                  <li><strong>Native SVG Graphics:</strong> Vector diagrams and procedural generative art.</li>
+                </ul>
+                <div class="card-actions">
+                  <a class="btn primary" href="/editor">TRY TEMPLATES <span>↗</span></a>
+                  <button type="button" class="btn ghost h-jump-next">VIEW SECURITY LOCKS →</button>
+                </div>
+              </div>
 
-<!-- What Makes BittyBox Different (and superior) — All 10 Mechanics -->
-<section class="section wrap" id="mechanics">
-  <div class="section-head">
-    <span class="kicker">WHAT MAKES BITTYBOX DIFFERENT</span>
-    <h2>Traditional DMS sends.<br><em>BittyBox becomes.</em></h2>
-    <p>Below is the complete architectural blueprint of BittyBox's 10 breakthrough mechanics. Every Bitty Box is a self-contained micro-site with its own logic, compound triggers, and cinematic release state.</p>
-  </div>
+              <div class="visual-stage">
+                <div class="feature-tiles-grid">
+                  <div class="feature-tile">
+                    <span class="tile-badge">FORMAT 01</span>
+                    <h4>Web Application</h4>
+                    <p>Interactive single-page apps with reactive state, canvas simulations, or games.</p>
+                  </div>
+                  <div class="feature-tile">
+                    <span class="tile-badge">FORMAT 02</span>
+                    <h4>Markdown Note</h4>
+                    <p>Clean typography, code syntax highlighting, checklists, and formatted documentation.</p>
+                  </div>
+                  <div class="feature-tile">
+                    <span class="tile-badge">FORMAT 03</span>
+                    <h4>Vector SVG Art</h4>
+                    <p>Scalable vector graphics, diagrams, and blueprints encoded with zero quality loss.</p>
+                  </div>
+                  <div class="feature-tile">
+                    <span class="tile-badge">FORMAT 04</span>
+                    <h4>Structured JSON</h4>
+                    <p>Raw configurations, payloads, and data sheets ready for agent-to-human handoff.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
 
-  <div class="mechanic-grid-10">
+          <!-- Card 3: Cryptographic Passcode & Locks -->
+          <article class="h-card">
+            <div class="card-content-grid">
+              <div class="card-copy">
+                <div class="card-eyebrow"><i></i> CLIENT-SIDE CRYPTOGRAPHY</div>
+                <h3>PIN codes, expiration<br><em>and view limit locks.</em></h3>
+                <p class="card-desc">Lock your Bitty Page before sharing. All encryption happens client-side with AES-256 GCM in your browser before the URL is created. The server never sees your unencrypted plaintext.</p>
+                <ul class="card-bullets">
+                  <li><strong>Passcode PIN Lock:</strong> Protect your page with an 8-12 digit PIN known only to you and your recipient.</li>
+                  <li><strong>Time-Based Windows:</strong> Set an expiration timer so the page locks automatically when time is up.</li>
+                  <li><strong>Burn-After-Reading View Limits:</strong> Limit the page to 1 view, 3 views, or custom quota before permanent destruction.</li>
+                </ul>
+                <div class="card-actions">
+                  <a class="btn primary" href="/editor">CREATE ENCRYPTED PAGE <span>↗</span></a>
+                  <button type="button" class="btn ghost h-jump-next">READY TO LAUNCH →</button>
+                </div>
+              </div>
 
-    <!-- 01 Dual-State -->
-    <article class="feature-card f-alive">
-      <div class="card-head">
-        <span class="card-badge">01 / DUAL-STATE ARCHITECTURE</span>
-        <span class="card-status-dot"></span>
-      </div>
-      <h3>Dual‑State Micro‑Sites<br><small>Alive Mode → Aftermath Mode</small></h3>
-      <p>Each BittyBox Bitty Box exists in two distinct, independently styled and programmed states:</p>
-      <ul class="spec-list">
-        <li><strong>Alive Mode:</strong> Normal content, check‑in timer, heartbeat indicators, active personal workspace.</li>
-        <li><strong>Aftermath Mode:</strong> Activated state with transformed visuals, unlocked secrets, final letters, or a completely new micro-site.</li>
-      </ul>
-      <div class="punchline">Competitors only “send something.” BittyBox becomes something.</div>
-    </article>
+              <div class="visual-stage">
+                <div class="feature-tiles-grid">
+                  <div class="feature-tile">
+                    <span class="tile-badge">LOCK 01</span>
+                    <h4>PIN Passcode</h4>
+                    <p>Browser-enforced AES-256 GCM encryption. Only those with the PIN can decrypt.</p>
+                  </div>
+                  <div class="feature-tile">
+                    <span class="tile-badge">LOCK 02</span>
+                    <h4>Expiration Timer</h4>
+                    <p>Countdown clocks and date windows that automatically seal content when elapsed.</p>
+                  </div>
+                  <div class="feature-tile">
+                    <span class="tile-badge">LOCK 03</span>
+                    <h4>Burn on Read</h4>
+                    <p>Single-use contingency drops. Purges decryption key immediately after opening.</p>
+                  </div>
+                  <div class="feature-tile">
+                    <span class="tile-badge">LOCK 04</span>
+                    <h4>Chained Links</h4>
+                    <p>Sequential multi-box chains (Box A → Box B → Box C) for staged reveals.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
 
-    <!-- 02 Multi-Condition Switches -->
-    <article class="feature-card f-triggers">
-      <div class="card-head">
-        <span class="card-badge">02 / COMPOUND LOGIC</span>
-        <span class="card-status-dot"></span>
-      </div>
-      <h3>Multi‑Condition Switches<br><small>Compound Triggers</small></h3>
-      <p>BittyBox rejects brittle single-point triggers. It supports layered compound logic that mirrors real life:</p>
-      <ul class="spec-list">
-        <li>Missed scheduled check‑ins</li>
-        <li>Missed heartbeat URL visits (ping endpoints)</li>
-        <li>Failure to enter a secret phrase</li>
-        <li>Device inactivity sensors</li>
-        <li>Secondary Bitty Box not opened in sequence</li>
-      </ul>
-      <div class="punchline">Creates vault‑grade failsafe logic instead of a single binary trigger.</div>
-    </article>
+          <!-- Card 4: Agent & Human Ready Launch -->
+          <article class="h-card">
+            <div class="card-content-grid">
+              <div class="card-copy">
+                <div class="card-eyebrow"><i></i> AGENT &amp; DEVELOPER TOOLCHAIN</div>
+                <h3>Built for Humans.<br><em>Crafted for AI Agents.</em></h3>
+                <p class="card-desc">Autonomous AI agents use Bitty Pages to present interactive dashboards, visual charts, and reports directly to human operators without cloud infrastructure keys. Humans use it to share ideas instantly without signup.</p>
+                <ul class="card-bullets">
+                  <li><strong>No Account Required:</strong> Jump straight into the editor and generate your link in seconds.</li>
+                  <li><strong>Full Export:</strong> Download single-file HTML or copy the self-contained hash URL.</li>
+                  <li><strong>Private by Default:</strong> Zero tracking pixels, zero analytics scripts, zero cookies.</li>
+                </ul>
+                <div class="card-actions">
+                  <a class="btn primary btn-large" href="/editor">START BUILDING A BITTY PAGE ↗</a>
+                </div>
+              </div>
 
-    <!-- 03 Freeze-and-Release -->
-    <article class="feature-card f-freeze">
-      <div class="card-head">
-        <span class="card-badge">03 / STATE IMMUTABILITY</span>
-        <span class="card-status-dot"></span>
-      </div>
-      <h3>Freeze‑and‑Release Mode<br><small>Cryptographic Bitty Box Lockdown</small></h3>
-      <p>Users can “freeze” a Bitty Box into an immutable state:</p>
-      <ul class="spec-list">
-        <li>Content locked against tampering</li>
-        <li>Theme and layout crystallized</li>
-        <li>Public or private countdown visible</li>
-        <li>No edits allowed without cryptographic thaw</li>
-      </ul>
-      <p class="card-sub">When the DMS triggers, the Bitty Box “thaws” and executes its payload automatically.</p>
-      <div class="punchline">No other DMS platform offers state‑based micro‑site freezing.</div>
-    </article>
+              <div class="visual-stage">
+                <div class="sim-code-box">
+                  <div class="sim-code-header">
+                    <span class="sim-tag">DEVELOPER QUICKSTART</span>
+                    <span class="sim-status-code">CLI &amp; SDK READY</span>
+                  </div>
+                  <pre class="sim-code-body"><code>// Create a Bitty Page from any terminal or agent:
+npx bittybox create --file ./index.html
+# Output:
+# https://bittybox.org/#H4sIAAAAA...</code></pre>
+                  <div class="sim-arrow">INSTANT WEB PUBLISHING WITHOUT CLOUD HOSTS</div>
+                </div>
+              </div>
+            </div>
+          </article>
 
-    <!-- 04 Cascading Drops -->
-    <article class="feature-card f-cascade">
-      <div class="card-head">
-        <span class="card-badge">04 / BRANCHING PAYLOADS</span>
-        <span class="card-status-dot"></span>
-      </div>
-      <h3>Cascading Drops &amp; Multi‑Recipient Payloads<br><small>Branching Release Networks</small></h3>
-      <p>A single switch can orchestrate a multi-stage narrative or asset distribution:</p>
-      <ul class="spec-list">
-        <li>Release different content to different people based on secure links</li>
-        <li>Trigger a chain of Bitty Boxes (Bitty Box A → Bitty Box B → Bitty Box C)</li>
-        <li>Create branching outcomes based on visitor response or behavior</li>
-      </ul>
-      <div class="punchline">Turns BittyBox into a digital will, confession engine, or legacy system.</div>
-    </article>
-
-    <!-- 05 Self-Mutating Capsules -->
-    <article class="feature-card f-mutate">
-      <div class="card-head">
-        <span class="card-badge">05 / LIVING ARTIFACTS</span>
-        <span class="card-status-dot"></span>
-      </div>
-      <h3>Self‑Mutating Bitty Boxes<br><small>Dynamic Overdue Evolution</small></h3>
-      <p>As time passes without owner check‑ins, the Bitty Box dynamically evolves:</p>
-      <ul class="spec-list">
-        <li>Copy and headings become urgent</li>
-        <li>Visuals degrade, glitch, or shift color spectrum</li>
-        <li>Hidden content slowly reveals line-by-line</li>
-        <li>Metadata corrupts to signal imminent release</li>
-      </ul>
-      <div class="punchline">Competitors are static. BittyBox is alive.</div>
-    </article>
-
-    <!-- 06 Burn-After-Trigger -->
-    <article class="feature-card f-burn">
-      <div class="card-head">
-        <span class="card-badge">06 / EPHEMERAL SECRETS</span>
-        <span class="card-status-dot"></span>
-      </div>
-      <h3>Burn‑After‑Trigger Execution<br><small>Zero-Trace Self-Destruction</small></h3>
-      <p>For sensitive drops that must never be archived or re-read:</p>
-      <ul class="spec-list">
-        <li>Content displays exactly once to the designated recipient</li>
-        <li>Bitty Box permanently destroys its stored key and payload</li>
-        <li>Replaced with ashes, glitch art, or a permanent “Executed” seal</li>
-      </ul>
-      <div class="punchline">Perfect for secrets, confessions, or sensitive drops.</div>
-    </article>
-
-    <!-- 07 Spy-Themed Aesthetics -->
-    <article class="feature-card f-spy">
-      <div class="card-head">
-        <span class="card-badge">07 / CINEMATIC ATMOSPHERE</span>
-        <span class="card-status-dot"></span>
-      </div>
-      <h3>Spy‑Themed Payloads &amp; Classified Aesthetics<br><small>Hollywood-Grade Storytelling</small></h3>
-      <p>BittyBox embraces cinematic flair and tactile tension:</p>
-      <ul class="spec-list">
-        <li>Encrypted dossiers and black-bar redacted documents</li>
-        <li>Documents that dynamically un‑redact on verified trigger</li>
-        <li>Tactical mission briefings and audible audio cues</li>
-        <li>Classified release sequences and telemetry animations</li>
-      </ul>
-      <div class="punchline">No other DMS platform leans into storytelling and atmosphere.</div>
-    </article>
-
-    <!-- 08 Puzzle-Locked Aftermath -->
-    <article class="feature-card f-puzzle">
-      <div class="card-head">
-        <span class="card-badge">08 / GAMIFIED SECURITY</span>
-        <span class="card-status-dot"></span>
-      </div>
-      <h3>Puzzle‑Locked Aftermath<br><small>Interactive Decryption Gates</small></h3>
-      <p>Recipients must solve a riddle, enter a childhood memory, or complete an interactive cipher puzzle after the switch triggers to access the payload.</p>
-      <ul class="spec-list">
-        <li>Adds a layer of gamified security, engagement, and mystery</li>
-        <li>Ensures only the true recipient possessing contextual knowledge can view it</li>
-      </ul>
-      <div class="punchline">Adds a layer of gamified security and mystery.</div>
-    </article>
-
-    <!-- 09 Digital Legacy Mode -->
-    <article class="feature-card f-legacy">
-      <div class="card-head">
-        <span class="card-badge">09 / MEMORIAL &amp; MEANING</span>
-        <span class="card-status-dot"></span>
-      </div>
-      <h3>Digital Legacy Mode<br><small>Micro-Sites That Endure</small></h3>
-      <p>Triggered Bitty Boxes can transform into beautiful, permanent memorials:</p>
-      <ul class="spec-list">
-        <li>Memorial micro‑sites with custom typography and music</li>
-        <li>Final letters, advice, and video messages</li>
-        <li>Curated photo galleries and personal archives</li>
-        <li>Digital tombstones and permanent tributes</li>
-      </ul>
-      <div class="punchline">Competitors deliver files. BittyBox delivers meaning.</div>
-    </article>
-
-    <!-- 10 Mystery DMS Generator -->
-    <article class="feature-card f-mystery">
-      <div class="card-head">
-        <span class="card-badge">10 / PROCEDURAL PLAY</span>
-        <span class="card-status-dot"></span>
-      </div>
-      <h3>Mystery DMS Generator<br><small>Procedural Micro-Site Creator</small></h3>
-      <p>A playful, generative mode that auto‑creates randomized Bitty Box blueprints:</p>
-      <ul class="spec-list">
-        <li>Random atmospheric themes (Cyberpunk, Victorian, Minimalist, Orbital)</li>
-        <li>Randomized compound locks and heartbeat schedules</li>
-        <li>Unexpected reveal mechanics and puzzle challenges</li>
-        <li>Creative payload writing prompts</li>
-      </ul>
-      <div class="punchline">Makes BittyBox feel alive, unpredictable, and addictive.</div>
-    </article>
-
-  </div>
-</section>
-
-<!-- Interactive capsule preview lab -->
-<section class="section dark-section" id="simulator">
-  <div class="wrap">
-    <div class="section-head left">
-      <span class="kicker">INTERACTIVE BITTY BOX PREVIEW · DEMO ONLY</span>
-      <h2>Preview a Bitty Box’s lifecycle<br><em>before it goes live.</em></h2>
-      <p>Explore illustrative Bitty Box states and release mechanics. These browser previews do not represent a live check-in, recipient notification, or payload release.</p>
-    </div>
-
-    <div class="lab-grid">
-
-      <!-- Tool 1: Live State Switcher & Capsule Telemetry -->
-      <div class="lab-card">
-        <div class="lab-card-head">
-          <span class="lab-pill">SIMULATOR 01</span>
-          <h4>Dual-State Bitty Box Engine</h4>
-        </div>
-        <p class="lab-desc">Preview how the Bitty Box interface changes as its simulated status shifts from active to overdue, released, or burned.</p>
-
-        <div class="sim-display" id="sim-screen">
-          <div class="sim-header">
-            <span class="sim-code">BITTY BOX // BB-001 / PREVIEW</span>
-            <span class="sim-status" id="sim-status-label">STATUS: ALIVE (NORMAL)</span>
-          </div>
-          <div class="sim-body" id="sim-body-text">
-            <h5>BITTY BOX PAYLOAD: PERSONAL MANIFEST</h5>
-            <p id="sim-content">Welcome. This Bitty Box is currently in <strong>Alive Mode</strong>. Heartbeat ping confirmed 12 minutes ago. All confidential vaults remain encrypted and locked. Check-in window open for 6 days.</p>
-          </div>
-          <div class="sim-telemetry">
-            <div><small>HEARTBEAT</small><span id="sim-hb-val">ONLINE (OK)</span></div>
-            <div><small>LOCK STATE</small><span id="sim-lock-val">CRYSTALLIZED</span></div>
-            <div><small>COUNTDOWN</small><span id="sim-time-val">06D 13H 48M</span></div>
-          </div>
-        </div>
-
-        <div class="sim-controls">
-          <button type="button" class="btn-sim active" onclick="setSimState('alive')">Alive Mode</button>
-          <button type="button" class="btn-sim" onclick="setSimState('mutating')">Self-Mutating (Degraded)</button>
-          <button type="button" class="btn-sim btn-danger" onclick="setSimState('aftermath')">Trigger Aftermath</button>
-          <button type="button" class="btn-sim btn-burn" onclick="setSimState('burn')">Burn-After-Reading</button>
         </div>
       </div>
 
-      <!-- Tool 2: Redacted Dossier & Un-Redact Demo -->
-      <div class="lab-card">
-        <div class="lab-card-head">
-          <span class="lab-pill">SIMULATOR 02</span>
-          <h4>Spy Dossier &amp; Un-Redact Animation</h4>
-        </div>
-        <p class="lab-desc">Preview a classified dossier that reveals its hidden fields when you activate the demo control.</p>
-
-        <div class="dossier-box" id="dossier-box">
-          <div class="dossier-stamp">CLASSIFIED // EYES ONLY</div>
-          <p class="dossier-text">
-            SUBJECT: <span class="redact" data-secret="AGENT PHOENIX">█████████████</span><br>
-            LOCATION: <span class="redact" data-secret="SWISS COLD VAULT 4">██████████████████</span><br>
-            EMERGENCY ACCESS PHRASE: <span class="redact" data-secret="THE NIGHTINGALE SINGS AT DAWN">████████████████████████████</span><br>
-            PRIMARY ASSET INSTRUCTIONS: <span class="redact" data-secret="OPEN THE FAMILY PHOTO ARCHIVE AFTER THE LETTER IS RECEIVED.">██████████████████████████████████████████████████████████████████████████████████████</span>
-          </p>
-        </div>
-
-        <div class="dossier-controls">
-          <button type="button" class="btn ghost" id="btn-unredact" onclick="toggleRedaction()">⚡ PREVIEW TRIGGER: UN-REDACT DOSSIER</button>
-          <span class="dossier-tip">Click to preview the cinematic reveal</span>
-        </div>
-      </div>
-
-      <!-- Tool 3: Procedural Mystery DMS Generator -->
-      <div class="lab-card full-width">
-        <div class="lab-card-head">
-          <span class="lab-pill">SIMULATOR 03</span>
-          <h4>Feature 10: Mystery DMS Generator</h4>
-        </div>
-        <p class="lab-desc">Click below to auto-generate a unique BittyBox Bitty Box spec with random theme, compound locks, reveal mechanics, and payload prompts.</p>
-
-        <div class="mystery-result" id="mystery-result">
-          <div class="mystery-col">
-            <span class="label">ATMOSPHERIC THEME</span>
-            <strong id="res-theme">Orbital Blacksite (Glitch Minimal)</strong>
-          </div>
-          <div class="mystery-col">
-            <span class="label">COMPOUND TRIGGER</span>
-            <strong id="res-trigger">3 missed daily pings + secondary Bitty Box unopened</strong>
-          </div>
-          <div class="mystery-col">
-            <span class="label">REVEAL MECHANIC</span>
-            <strong id="res-reveal">Burn-After-Reading + ashes glitch</strong>
-          </div>
-          <div class="mystery-col">
-            <span class="label">PAYLOAD PROMPT</span>
-            <strong id="res-prompt">“The a letter explaining the family archive.”</strong>
-          </div>
-        </div>
-
-        <div class="mystery-action">
-          <button type="button" class="btn primary" onclick="generateMysteryCapsule()">🎲 ROLL MYSTERY BITTY BOX SPEC</button>
-          <span class="gen-count" id="gen-count-label">Preview Bitty Boxes generated this session: 1</span>
-        </div>
+      <div class="h-pagination">
+        <button type="button" class="h-dot active" data-h="0"><span>01</span> Overview</button>
+        <button type="button" class="h-dot" data-h="1"><span>02</span> Formats</button>
+        <button type="button" class="h-dot" data-h="2"><span>03</span> Cryptography</button>
+        <button type="button" class="h-dot" data-h="3"><span>04</span> Launch</button>
       </div>
 
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- The Capsule Library -->
-<section class="section wrap" id="capsules">
-  <div class="section-head left">
-    <span class="kicker">THE BITTY BOX LIBRARY</span>
-    <h2>Choose your<br><em>kind of aftermath.</em></h2>
-    <p>Start with a battle-tested Bitty Box pattern or customize your own from scratch. Every Bitty Box is an isolated micro-site with its own rules, theme, and fate.</p>
-  </div>
 
-  <div class="capsule-grid">
-    <article class="capsule">
-      <div class="capsule-top"><span class="capsule-icon">◈</span><span class="capsule-state">CLASSIFIED</span></div>
-      <h3>The Dossier</h3>
-      <p>Redacted documents that un-redact on trigger. A classified mission briefing for the person who needs it most.</p>
-      <div class="capsule-code">PAYLOAD / FILES + DOSSIER + CIPHER</div>
-    </article>
+  <!-- =====================================================================
+       VERTICAL SLIDE 2: BITTY CAPSULE (Dead Man's Switch)
+       ===================================================================== -->
+  <section class="v-slide" id="slide-capsule" data-v-index="1" aria-label="Bitty Capsule">
+    <div class="h-deck-wrapper">
+      
+      <div class="slide-type-header">
+        <div class="type-badge-row">
+          <span class="type-pill">TYPE 02 / 03</span>
+          <h2 class="type-title">Bitty Capsule <span class="type-sub">(Dead Man's Switch)</span></h2>
+        </div>
+        <a class="type-action-link" href="/capsule">Arm A Capsule ↗</a>
+      </div>
 
-    <article class="capsule active">
-      <div class="capsule-top"><span class="capsule-icon">◉</span><span class="capsule-state">POPULAR</span></div>
-      <h3>The Legacy</h3>
-      <p>A final message, curated gallery, or digital tombstone that turns an inevitable departure into something meaningful.</p>
-      <div class="capsule-code">PAYLOAD / WORDS + MEMORY + MEDIA</div>
-    </article>
+      <button class="h-nav-arrow h-prev" aria-label="Previous Card">‹</button>
+      <button class="h-nav-arrow h-next" aria-label="Next Card">›</button>
 
-    <article class="capsule">
-      <div class="capsule-top"><span class="capsule-icon">⟁</span><span class="capsule-state">EXPERIMENTAL</span></div>
-      <h3>The Mystery</h3>
-      <p>Random themes, cryptographic locks, reveal mechanics, and prompts. Make the switch unpredictable—even to yourself.</p>
-      <div class="capsule-code">PAYLOAD / PUZZLE + REVEAL + SURPRISE</div>
-    </article>
+      <div class="h-deck">
+        <div class="h-card-track">
 
-    <article class="capsule">
-      <div class="capsule-top"><span class="capsule-icon">⇢</span><span class="capsule-state">CHAINED</span></div>
-      <h3>The Cascade</h3>
-      <p>Different payloads for different people. Bitty Box A opens B, B points to C, and the story branches on visitor response.</p>
-      <div class="capsule-code">PAYLOAD / A → B → C (BRANCHING)</div>
-    </article>
-  </div>
-</section>
+          <!-- Card 1: Dead Man's Switch Reimagined -->
+          <article class="h-card">
+            <div class="card-content-grid">
+              <div class="card-copy">
+                <div class="card-eyebrow"><i></i> DEAD MAN’S SWITCH REIMAGINED</div>
+                <h3>Don’t just leave a message.<br><em>Leave a living world.</em></h3>
+                <p class="card-desc">Bitty Capsule expands the traditional Dead Man’s Switch (DMS) into a cinematic, interactive micro-site. Check in with one tap. If your heartbeat goes silent, your capsule unlocks and executes your legacy, confession, or emergency runbook for your guardian.</p>
+                <ul class="card-bullets">
+                  <li><strong>A Heartbeat You Own:</strong> Set check-in cadences from 24 hours to 90 days.</li>
+                  <li><strong>Guardian Dispatch:</strong> Your recipient hears nothing until the switch fires. Zero preview, zero premature alerts.</li>
+                  <li><strong>Dual-State Lifecycle:</strong> Active Alive Mode transforms into an Unlocked Aftermath Mode upon trigger.</li>
+                </ul>
+                <div class="card-actions">
+                  <a class="btn primary" href="/capsule">ARM A BITTY CAPSULE <span>↗</span></a>
+                  <button type="button" class="btn ghost h-jump-next">EXPLORE DUAL-STATE →</button>
+                </div>
+              </div>
 
-<!-- The Core Philosophy -->
-<section class="section wrap" id="philosophy">
-  <div class="split">
-    <div class="legacy-copy">
-      <span class="kicker">THE CORE PHILOSOPHY</span>
-      <h2>Not just a Dead Man’s Switch.<br><em>A micro‑web engine for legacies.</em></h2>
-      <p class="philosophy-quote">“BittyBox.org isn’t just a Dead Man’s Switch. It’s a micro‑web engine for secrets, legacies, and cinematic digital storytelling. Every Bitty Box is a tiny world with rules, consequences, and emotional weight.”</p>
-      <p>BittyBox is built for the things that need more than a timestamp and an email attachment: the letter you want opened only after you are gone, the instructions your family will need, the confession that requires courage, or the memorial you choose to design yourself.</p>
-      <p class="muted">Notice: Use it for thoughtful contingency and storytelling—not emergencies. BittyBox is not a substitute for legal, financial, medical, or crisis services.</p>
-      <a class="btn ghost" href="#start">DESIGN YOUR FIRST BITTY BOX ↗</a>
-    </div>
+              <!-- Heartbeat Radar Clock Stage -->
+              <div class="visual-stage">
+                <div class="clock-stage" id="hero-radar" data-mode="alive" aria-label="Heartbeat radar clock preview">
+                  <div class="clock-orbit" aria-hidden="true"></div>
+                  <div class="heartbeat-clock" role="img" aria-label="Heartbeat radar clock preview">
+                    <svg class="clock-face" viewBox="0 0 280 280" aria-hidden="true">
+                      <circle class="clock-bezel" cx="140" cy="140" r="119"></circle>
+                      <circle class="clock-inner-ring" cx="140" cy="140" r="105"></circle>
+                      <!-- Haute Horlogerie Guilloché concentric rings -->
+                      <circle cx="140" cy="140" r="90" fill="none" stroke="rgba(246, 241, 230, 0.08)" stroke-width="0.8" stroke-dasharray="2 3"></circle>
+                      <circle cx="140" cy="140" r="74" fill="none" stroke="rgba(223, 194, 145, 0.12)" stroke-width="0.8"></circle>
+                      <circle cx="140" cy="140" r="54" fill="none" stroke="rgba(201, 24, 59, 0.18)" stroke-width="0.8" stroke-dasharray="3 3"></circle>
+                      <!-- Cardinal Ruby Gemstones -->
+                      <circle cx="140" cy="36" r="2.5" fill="#e11d48"></circle>
+                      <circle cx="244" cy="140" r="2.5" fill="#e11d48"></circle>
+                      <circle cx="140" cy="244" r="2.5" fill="#e11d48"></circle>
+                      <circle cx="36" cy="140" r="2.5" fill="#e11d48"></circle>
+                      <g class="clock-ticks">
+                        <line x1="140" y1="28" x2="140" y2="43"></line>
+                        <line x1="140" y1="28" x2="140" y2="43" transform="rotate(30 140 140)"></line>
+                        <line x1="140" y1="28" x2="140" y2="43" transform="rotate(60 140 140)"></line>
+                        <line x1="140" y1="24" x2="140" y2="47" transform="rotate(90 140 140)"></line>
+                        <line x1="140" y1="28" x2="140" y2="43" transform="rotate(120 140 140)"></line>
+                        <line x1="140" y1="28" x2="140" y2="43" transform="rotate(150 140 140)"></line>
+                        <line x1="140" y1="24" x2="140" y2="47" transform="rotate(180 140 140)"></line>
+                        <line x1="140" y1="28" x2="140" y2="43" transform="rotate(210 140 140)"></line>
+                        <line x1="140" y1="28" x2="140" y2="43" transform="rotate(240 140 140)"></line>
+                        <line x1="140" y1="24" x2="140" y2="47" transform="rotate(270 140 140)"></line>
+                        <line x1="140" y1="28" x2="140" y2="43" transform="rotate(300 140 140)"></line>
+                        <line x1="140" y1="28" x2="140" y2="43" transform="rotate(330 140 140)"></line>
+                      </g>
+                      <text class="clock-top-label" x="140" y="68">HEARTBEAT MONITOR</text>
+                      <line class="clock-hand clock-hour" x1="140" y1="140" x2="140" y2="99"></line>
+                      <line class="clock-hand clock-minute" x1="140" y1="140" x2="140" y2="77"></line>
+                      <line class="clock-hand clock-second" x1="140" y1="140" x2="140" y2="53"></line>
+                      <circle class="clock-center" cx="140" cy="140" r="6"></circle>
+                    </svg>
+                    <div class="ecg-shell" aria-hidden="true">
+                      <svg viewBox="0 0 260 48" preserveAspectRatio="none">
+                        <path class="ecg-trace" pathLength="260" d="M0 25 H45 L57 25 L66 19 L73 31 L82 5 L93 42 L103 20 L111 25 H145 L157 25 L166 19 L173 31 L182 5 L193 42 L203 20 L211 25 H260"></path>
+                      </svg>
+                    </div>
+                  </div>
 
-    <div class="timeline">
-      <div class="timeline-line"></div>
-      <div class="timeline-step">
-        <b>01</b>
-        <div>
-          <strong>CREATE</strong>
-          <span>Write the world while it is yours. Choose theme, content, and secrets.</span>
+                  <div class="clock-readout" aria-live="polite">
+                    <span class="clock-readout-label">NEXT CHECK-IN CADENCE</span>
+                    <strong id="clock-countdown" class="clock-countdown">06D 13H 48M</strong>
+                    <span class="clock-demo-label" id="clock-next-checkin">SIMULATED · 1-TAP CHECK-IN</span>
+                  </div>
+
+                  <div class="state-switcher" aria-label="Preview Capsule State">
+                    <button type="button" class="state-btn active" data-state="alive">Alive</button>
+                    <button type="button" class="state-btn" data-state="mutating">Mutating</button>
+                    <button type="button" class="state-btn" data-state="aftermath">Aftermath</button>
+                    <button type="button" class="state-btn" data-state="burn">Burned</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <!-- Card 2: Dual-State Architecture -->
+          <article class="h-card">
+            <div class="card-content-grid">
+              <div class="card-copy">
+                <div class="card-eyebrow"><i></i> DUAL-STATE ARCHITECTURE</div>
+                <h3>Alive Mode →<br><em>Aftermath Mode.</em></h3>
+                <p class="card-desc">Competitors only “send an email.” BittyBox becomes something else entirely. Each capsule exists in two distinct, independently programmed states:</p>
+                <ul class="card-bullets">
+                  <li><strong>Alive Mode:</strong> Normal operational content, heartbeat countdown, and private workspace.</li>
+                  <li><strong>Degraded (Mutating):</strong> Visual glitches, escalating alerts, and countdown acceleration if overdue.</li>
+                  <li><strong>Aftermath Mode:</strong> Unlocks secret vaults, triggers media drops, or deploys permanent digital memorials.</li>
+                </ul>
+                <div class="card-actions">
+                  <a class="btn primary" href="/capsule">ARM CAPSULE <span>↗</span></a>
+                  <button type="button" class="btn ghost h-jump-next">EXPLORE BLUEPRINTS →</button>
+                </div>
+              </div>
+
+              <div class="visual-stage">
+                <div class="feature-tiles-grid">
+                  <div class="feature-tile">
+                    <span class="tile-badge">STATE 01</span>
+                    <h4>Alive Mode</h4>
+                    <p>Protected state while you check in normally. Vaults stay encrypted and locked.</p>
+                  </div>
+                  <div class="feature-tile">
+                    <span class="tile-badge">STATE 02</span>
+                    <h4>Self-Mutating</h4>
+                    <p>Copy becomes urgent and visual telemetry degrades when a check-in is overdue.</p>
+                  </div>
+                  <div class="feature-tile">
+                    <span class="tile-badge">STATE 03</span>
+                    <h4>Aftermath</h4>
+                    <p>The switch executes. Confidential dossiers unlock and guardians receive access.</p>
+                  </div>
+                  <div class="feature-tile">
+                    <span class="tile-badge">STATE 04</span>
+                    <h4>Burn After Trigger</h4>
+                    <p>Single-read execution. Encryption keys are purged permanently from memory.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <!-- Card 3: Tactical Blueprints -->
+          <article class="h-card">
+            <div class="card-content-grid">
+              <div class="card-copy">
+                <div class="card-eyebrow"><i></i> TACTICAL BLUEPRINTS</div>
+                <h3>The Dossier, The Legacy<br><em>and The Cascade.</em></h3>
+                <p class="card-desc">Choose from battle-tested contingency blueprints crafted for high-stakes secrets, emotional legacies, or multi-stage emergency handoffs.</p>
+                <ul class="card-bullets">
+                  <li><strong>The Dossier:</strong> Black-bar redacted documents that automatically un-redact when the failsafe triggers.</li>
+                  <li><strong>The Legacy:</strong> Final letters, curated photo archives, and instructions designed with emotional weight.</li>
+                  <li><strong>The Cascade:</strong> Multi-capsule chained release (Capsule A opens B, and B triggers C).</li>
+                </ul>
+                <div class="card-actions">
+                  <a class="btn primary" href="/capsule">CHOOSE A BLUEPRINT <span>↗</span></a>
+                  <button type="button" class="btn ghost h-jump-next">ARM YOUR SWITCH →</button>
+                </div>
+              </div>
+
+              <div class="visual-stage">
+                <div class="feature-tiles-grid">
+                  <div class="feature-tile">
+                    <span class="tile-badge">BLUEPRINT 01</span>
+                    <h4>The Dossier</h4>
+                    <p>Classified documents that dynamically un-redact upon trigger verification.</p>
+                  </div>
+                  <div class="feature-tile">
+                    <span class="tile-badge">BLUEPRINT 02</span>
+                    <h4>The Legacy</h4>
+                    <p>Memorial micro-site with personal letters, memory galleries, and family advice.</p>
+                  </div>
+                  <div class="feature-tile">
+                    <span class="tile-badge">BLUEPRINT 03</span>
+                    <h4>The Cascade</h4>
+                    <p>Branching multi-recipient release sequences that reveal information in stages.</p>
+                  </div>
+                  <div class="feature-tile">
+                    <span class="tile-badge">BLUEPRINT 04</span>
+                    <h4>The Mystery</h4>
+                    <p>Procedural cryptographic locks, randomized schedules, and puzzle gates.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <!-- Card 4: Arm Your Capsule Studio -->
+          <article class="h-card">
+            <div class="card-content-grid">
+              <div class="card-copy">
+                <div class="card-eyebrow"><i></i> READY TO ARM</div>
+                <h3>Rebuilt for one thumb.<br><em>Armed in two minutes.</em></h3>
+                <p class="card-desc">Designed from the ground up for frictionless mobile arming. Choose your check-in interval, name your guardian, enter your message, and seal the capsule.</p>
+                <ul class="card-bullets">
+                  <li><strong>Zero Complexity:</strong> 6 intuitive swipe steps from signal to sealed.</li>
+                  <li><strong>Grace Window Buffer:</strong> Built-in grace period before release prevents accidental triggers.</li>
+                  <li><strong>One-Tap Check-In:</strong> Simple email or link ping resets the clock in seconds.</li>
+                </ul>
+                <div class="card-actions">
+                  <a class="btn primary btn-large" href="/capsule">OPEN BITTY CAPSULE STUDIO ↗</a>
+                </div>
+              </div>
+
+              <div class="visual-stage">
+                <div class="sim-code-box">
+                  <div class="sim-code-header">
+                    <span class="sim-tag">TELEMETRY CHECKLIST</span>
+                    <span class="sim-status-code">VAULT GRADE</span>
+                  </div>
+                  <pre class="sim-code-body"><code>1. SIGNAL    → Live heartbeat active
+2. SEAL      → Payload encrypted
+3. GUARDIAN  → Recipient assigned
+4. HEARTBEAT → Check-in window set
+5. GRACE     → Safety cushion added
+6. ARMED     → Contingency locked</code></pre>
+                  <div class="sim-arrow">PROTECT YOUR SECRETS &amp; LEGACIES TODAY</div>
+                </div>
+              </div>
+            </div>
+          </article>
+
         </div>
       </div>
-      <div class="timeline-step">
-        <b>02</b>
-        <div>
-          <strong>FREEZE</strong>
-          <span>Lock the state. Set compound triggers and heartbeat intervals.</span>
+
+      <div class="h-pagination">
+        <button type="button" class="h-dot active" data-h="0"><span>01</span> Overview</button>
+        <button type="button" class="h-dot" data-h="1"><span>02</span> Dual-State</button>
+        <button type="button" class="h-dot" data-h="2"><span>03</span> Blueprints</button>
+        <button type="button" class="h-dot" data-h="3"><span>04</span> Arm Studio</button>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- =====================================================================
+       VERTICAL SLIDE 3: BITTY ALLY (AI Agent)
+       ===================================================================== -->
+  <section class="v-slide" id="slide-ally" data-v-index="2" aria-label="Bitty Ally">
+    <div class="h-deck-wrapper">
+      
+      <div class="slide-type-header">
+        <div class="type-badge-row">
+          <span class="type-pill">TYPE 03 / 03</span>
+          <h2 class="type-title">Bitty Ally <span class="type-sub">(Autonomous AI Agent)</span></h2>
+        </div>
+        <a class="type-action-link" href="/editor">Meet Ally ↗</a>
+      </div>
+
+      <button class="h-nav-arrow h-prev" aria-label="Previous Card">‹</button>
+      <button class="h-nav-arrow h-next" aria-label="Next Card">›</button>
+
+      <div class="h-deck">
+        <div class="h-card-track">
+
+          <!-- Card 1: Autonomous Web Ally -->
+          <article class="h-card">
+            <div class="card-content-grid">
+              <div class="card-copy">
+                <div class="card-eyebrow"><i></i> EMBEDDED AGENTIC INTELLIGENCE</div>
+                <h3>An autonomous AI partner<br><em>in your micro-web.</em></h3>
+                <p class="card-desc">Bitty Ally embeds an autonomous agent directly into your Bitty ecosystem. Ally can inspect contingency rules, generate dynamic Bitty Pages, audit lock policies, and coordinate actions across the web through open protocols.</p>
+                <ul class="card-bullets">
+                  <li><strong>Native WebMCP Protocol:</strong> Full Model Context Protocol server exposing tool actions.</li>
+                  <li><strong>Autonomous Execution:</strong> Evaluates conditions, monitors check-ins, and handles workflows.</li>
+                  <li><strong>Agent-to-Human Canvas:</strong> Agents compose full interactive UI apps on the fly.</li>
+                </ul>
+                <div class="card-actions">
+                  <a class="btn primary" href="/editor">MEET BITTY ALLY <span>↗</span></a>
+                  <button type="button" class="btn ghost h-jump-next">EXPLORE MCP TOOLS →</button>
+                </div>
+              </div>
+
+              <!-- AI Core Stage -->
+              <div class="visual-stage">
+                <div class="ally-stage">
+                  <div class="ally-core-wrapper">
+                    <div class="ally-ring ally-ring-1"></div>
+                    <div class="ally-ring ally-ring-2"></div>
+                    <div class="ally-orb"></div>
+                  </div>
+                  <div class="ally-telemetry-badge">
+                    <i></i> BITTY ALLY CORE ONLINE // WebMCP
+                  </div>
+                  <div class="ally-dialog">
+                    <strong>TELEMETRY LOG // 127.0.0.1:3012/mcp</strong>
+                    “Bitty Ally listening. Heartbeat telemetry verified. Tool registry initialized with 10 agentic actions.”
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <!-- Card 2: WebMCP & Protocols -->
+          <article class="h-card">
+            <div class="card-content-grid">
+              <div class="card-copy">
+                <div class="card-eyebrow"><i></i> MODEL CONTEXT PROTOCOL</div>
+                <h3>Native WebMCP tools<br><em>&amp; webhook orchestration.</em></h3>
+                <p class="card-desc">Bitty Ally communicates via the open Model Context Protocol (MCP) using Streamable HTTP. AI agents like Claude, Cursor, and custom Python/TypeScript bots can create, read, and manage boxes programmatically.</p>
+                <ul class="card-bullets">
+                  <li><strong>Streamable HTTP MCP:</strong> Endpoint at <code>bittybox.org/mcp</code> for seamless AI tool calling.</li>
+                  <li><strong>N8n Webhook Integration:</strong> Automated workflow triggers when capsules fire or check-ins arrive.</li>
+                  <li><strong>Cryptographic Safety:</strong> Fine-grained API keys and session grants protect your boxes.</li>
+                </ul>
+                <div class="card-actions">
+                  <a class="btn primary" href="/editor">VIEW PROTOCOL DOCS <span>↗</span></a>
+                  <button type="button" class="btn ghost h-jump-next">VOICE AI &amp; REASONING →</button>
+                </div>
+              </div>
+
+              <div class="visual-stage">
+                <div class="feature-tiles-grid">
+                  <div class="feature-tile">
+                    <span class="tile-badge">PROTOCOL 01</span>
+                    <h4>Streamable MCP</h4>
+                    <p>Live JSON-RPC / MCP tools over HTTP for AI coding assistants and autonomous loops.</p>
+                  </div>
+                  <div class="feature-tile">
+                    <span class="tile-badge">PROTOCOL 02</span>
+                    <h4>N8n Automation</h4>
+                    <p>Trigger automated webhooks and workflows when heartbeat events occur.</p>
+                  </div>
+                  <div class="feature-tile">
+                    <span class="tile-badge">PROTOCOL 03</span>
+                    <h4>Box Creation API</h4>
+                    <p>Programmatically compress and seal Bitty Pages and Capsules via REST.</p>
+                  </div>
+                  <div class="feature-tile">
+                    <span class="tile-badge">PROTOCOL 04</span>
+                    <h4>Session Grants</h4>
+                    <p>Time-bound cryptographic tokens allowing safe delegation to AI subagents.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <!-- Card 3: Voice AI & Realtime Intelligence -->
+          <article class="h-card">
+            <div class="card-content-grid">
+              <div class="card-copy">
+                <div class="card-eyebrow"><i></i> GEMINI LIVE VOICE ENGINE</div>
+                <h3>Realtime voice sessions<br><em>&amp; hands-free check-ins.</em></h3>
+                <p class="card-desc">Converse with Bitty Ally in natural voice. Powered by bidirectional Gemini Live audio streaming, you can check in, query switch statuses, or compose new capsule messages completely hands-free.</p>
+                <ul class="card-bullets">
+                  <li><strong>Low-Latency Bidirectional Audio:</strong> Instant voice conversation with sub-second response times.</li>
+                  <li><strong>Conversational Check-In:</strong> Speak to reset your Dead Man's Switch timer on the move.</li>
+                  <li><strong>Multi-Modal Reasoning:</strong> Ally understands complex instructions and evaluates lock policies.</li>
+                </ul>
+                <div class="card-actions">
+                  <a class="btn primary" href="/editor">TEST VOICE ASSISTANT <span>↗</span></a>
+                  <button type="button" class="btn ghost h-jump-next">DEPLOY AGENTS →</button>
+                </div>
+              </div>
+
+              <div class="visual-stage">
+                <div class="sim-code-box">
+                  <div class="sim-code-header">
+                    <span class="sim-tag">VOICE TELEMETRY</span>
+                    <span class="sim-status-code">LIVE STREAMING</span>
+                  </div>
+                  <pre class="sim-code-body"><code>&gt; "Ally, what is the status of Capsule BB-001?"
+&lt; "Capsule BB-001 is ALIVE. Next check-in is due
+   in 6 days and 13 hours. Grace window: 3 days."
+&gt; "Confirm check-in now."
+&lt; "Check-in recorded. Heartbeat timer reset."</code></pre>
+                  <div class="sim-arrow">CONVERSATIONAL CONTINGENCY MANAGEMENT</div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <!-- Card 4: Deploy & Partner -->
+          <article class="h-card">
+            <div class="card-content-grid">
+              <div class="card-copy">
+                <div class="card-eyebrow"><i></i> UNLOCK THE AGENTIC WEB</div>
+                <h3>Give your agents<br><em>an immortal UI canvas.</em></h3>
+                <p class="card-desc">Whether you are building autonomous AI agents that need a place to deliver work or you want a 24/7 intelligent guardian for your contingencies, Bitty Ally is ready to integrate today.</p>
+                <ul class="card-bullets">
+                  <li><strong>Zero Cloud Infrastructure:</strong> No hosting configs, domain setups, or cluster overhead.</li>
+                  <li><strong>Universal Link Distribution:</strong> Share agent-generated apps via standard web links.</li>
+                  <li><strong>Open Standards:</strong> Built on WebMCP, open standards, and cryptographic privacy.</li>
+                </ul>
+                <div class="card-actions">
+                  <a class="btn primary btn-large" href="/editor">LAUNCH BITTYBOX &amp; MEET ALLY ↗</a>
+                </div>
+              </div>
+
+              <div class="visual-stage">
+                <div class="feature-tiles-grid">
+                  <div class="feature-tile">
+                    <span class="tile-badge">USE CASE 01</span>
+                    <h4>Agent Handoff</h4>
+                    <p>Agents deliver full interactive reports and charts as standalone URLs.</p>
+                  </div>
+                  <div class="feature-tile">
+                    <span class="tile-badge">USE CASE 02</span>
+                    <h4>Smart Guardian</h4>
+                    <p>Ally monitors compound switch conditions and coordinates failsafe releases.</p>
+                  </div>
+                  <div class="feature-tile">
+                    <span class="tile-badge">USE CASE 03</span>
+                    <h4>Voice Runbooks</h4>
+                    <p>Hands-free emergency runbook execution and step-by-step guidance.</p>
+                  </div>
+                  <div class="feature-tile">
+                    <span class="tile-badge">USE CASE 04</span>
+                    <h4>Workflow Loops</h4>
+                    <p>Seamless loops across N8n, WebMCP, and browser sandboxes.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+
         </div>
       </div>
-      <div class="timeline-step">
-        <b>03</b>
-        <div>
-          <strong>RELEASE</strong>
-          <span>Let the Bitty Box thaw, mutate, un-redact, or cascade as you designed.</span>
-        </div>
+
+      <div class="h-pagination">
+        <button type="button" class="h-dot active" data-h="0"><span>01</span> Overview</button>
+        <button type="button" class="h-dot" data-h="1"><span>02</span> WebMCP</button>
+        <button type="button" class="h-dot" data-h="2"><span>03</span> Voice AI</button>
+        <button type="button" class="h-dot" data-h="3"><span>04</span> Deploy</button>
       </div>
-    </div>
-  </div>
-</section>
 
-<!-- Call to Action -->
-<section class="section cta-section" id="start">
-  <div class="wrap cta-card">
-    <div>
-      <span class="kicker">THE FIRST BITTY BOX IS FREE TO DESIGN</span>
-      <h2>What should happen<br><em>if you don't check in?</em></h2>
-      <p>Build a private Bitty Box. Add a heartbeat ping. Decide what the world sees before and after the switch.</p>
     </div>
-    <div class="cta-actions">
-      <a class="btn primary" href="/editor">START BUILDING NOW ↗</a>
-      <span>NO CREDIT CARD REQUIRED · PRIVATE BY DEFAULT</span>
-    </div>
-  </div>
-</section>
-
-<!-- FAQ Section -->
-<section class="section faq wrap" id="faq">
-  <div class="section-head">
-    <span class="kicker">FIELD NOTES &amp; FAQ</span>
-    <h2>Questions before<br><em>the countdown?</em></h2>
-  </div>
-  <div class="faq-grid">
-    <details open>
-      <summary>What exactly is a BittyBox Bitty Box?</summary>
-      <p>A self-contained micro-site with an Alive Mode, an optional Aftermath Mode, and compound trigger rules that determine when the transition occurs. It can contain writing, media, instructions, puzzles, or a full interactive experience with custom styling.</p>
-    </details>
-    <details>
-      <summary>Can I change a Bitty Box after freezing?</summary>
-      <p>Freeze is designed to make the state immutable so that it cannot be altered on a whim or under duress. Before freezing, you can edit freely. Afterward, changing it requires creating a deliberate new version rather than silently altering the one waiting for release.</p>
-    </details>
-    <details>
-      <summary>How does the Burn-After-Trigger execution work?</summary>
-      <p>In Burn-After-Trigger mode, the decryption key is burned in the database as soon as the recipient opens the payload. Once the session ends or is refreshed, the payload is permanently purged and replaced with glitch ashes or an 'Executed' seal.</p>
-    </details>
-    <details>
-      <summary>Can one Bitty Box release to multiple people?</summary>
-      <p>Yes. BittyBox supports multi-recipient payloads and cascading chains (A → B → C). Recipient-specific access and delivery rules can be designed into a Bitty Box before it is frozen.</p>
-    </details>
-    <details>
-      <summary>Is this a guaranteed emergency or legal system?</summary>
-      <p>No. BittyBox is a digital storytelling and contingency tool. Internet access, identity, law, and human circumstances can affect delivery. Keep critical legal wills and safety plans with qualified professionals.</p>
-    </details>
-    <details>
-      <summary>Does the Bitty Box lab run a real switch?</summary>
-      <p>No. It is an illustrative browser preview; it does not monitor check-ins, contact recipients, or trigger a real release.</p>
-    </details>
-  </div>
-</section>
+  </section>
 
 </main>
 
-<footer class="footer wrap">
-  <a class="brand" href="#top">
-    <span class="brand-mark">B_</span>
-    <span><b>BITTYBOX</b><small>SECRETS · LEGACIES · CONSEQUENCES</small></span>
-  </a>
-  <span>© 2026 BITTYBOX</span>
-  <a href="/editor">OPEN EDITOR ↗</a>
+<!-- Bottom Dock / Footer -->
+<footer class="bottom-bar">
+  <div class="bottom-bar-left">
+    <span>© 2026 BITTYBOX</span>
+    <div class="bottom-bar-links">
+      <a href="/terms">Terms</a>
+      <a href="/privacy">Privacy</a>
+      <a href="mailto:support@bittybox.org">Contact</a>
+    </div>
+  </div>
+  <div class="bottom-bar-hint" aria-hidden="true">
+    <span>↑↓ Box Type</span>
+    <span>·</span>
+    <span>←→ Card</span>
+    <span>·</span>
+    <span>Keys 1, 2, 3</span>
+  </div>
+  <div class="bottom-bar-right">
+    <a href="/capsule">Arm Capsule ↗</a>
+    <a href="/editor">Editor ↗</a>
+  </div>
 </footer>
 
-<script src="/bittybox-landing.js?v=20260924-heartbeat-layout-1"></script>
+<script src="/bittybox-landing.js?v=20260924-luxury-1"></script>
 </body>
 </html>

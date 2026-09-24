@@ -109,24 +109,39 @@
       Client-side encrypted vaults residing entirely inside the URL hash. Solved with WebCrypto, Shamir's Secret Sharing, and browser sensor proofs. Zero servers. Zero leaks.
     </p>
 
-    <!-- Key Metrics Pills -->
-    <div class="mt-4 sm:mt-7 grid grid-cols-3 gap-2 sm:gap-4 max-w-3xl mx-auto metrics-row">
-      <div class="bg-slate-900/80 border border-slate-800/80 rounded-2xl p-2 sm:p-3.5 flex flex-col items-center justify-center backdrop-blur-sm shadow-xl">
-        <div class="text-lg sm:text-3xl font-extrabold font-mono text-cyan-400">25</div>
-        <div class="text-[10px] sm:text-xs font-mono uppercase tracking-wider text-slate-400 mt-0.5 text-center">Lock Specs</div>
-        <div class="text-[9px] sm:text-[10px] text-slate-500 mt-0.5 text-center">6 Live • 19 Roadmap</div>
+    <!-- Dead Man's Switch Highlights -->
+    <div class="mt-5 sm:mt-8 grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 max-w-4xl mx-auto">
+      <div class="bg-slate-900/80 border border-cyan-500/25 hover:border-cyan-400/50 rounded-2xl p-4 sm:p-5 flex flex-col items-center text-center backdrop-blur-sm shadow-xl transition-colors">
+        <div class="w-10 h-10 rounded-xl bg-cyan-950/80 border border-cyan-800/60 flex items-center justify-center mb-2.5 shadow-inner">
+          <i data-lucide="heart-pulse" class="w-5 h-5 text-cyan-400"></i>
+        </div>
+        <div class="text-sm sm:text-base font-bold font-mono text-white">Autonomous Hand-Off</div>
+        <div class="text-[10px] sm:text-xs font-mono uppercase tracking-wider text-cyan-400 mt-0.5">When You Can't Be There</div>
+        <p class="text-[11px] sm:text-xs text-slate-400 mt-2 leading-relaxed">
+          Ensure crypto seeds, emergency credentials, and final messages reach the exact people you trust the moment you stop checking in.
+        </p>
       </div>
 
-      <div class="bg-slate-900/80 border border-slate-800/80 rounded-2xl p-2 sm:p-3.5 flex flex-col items-center justify-center backdrop-blur-sm shadow-xl">
-        <div class="text-lg sm:text-3xl font-extrabold font-mono text-purple-400">URL</div>
-        <div class="text-[10px] sm:text-xs font-mono uppercase tracking-wider text-slate-400 mt-0.5 text-center">100% Client-Side</div>
-        <div class="text-[9px] sm:text-[10px] text-slate-500 mt-0.5 text-center">Zero Backend Transfer</div>
+      <div class="bg-slate-900/80 border border-purple-500/25 hover:border-purple-400/50 rounded-2xl p-4 sm:p-5 flex flex-col items-center text-center backdrop-blur-sm shadow-xl transition-colors">
+        <div class="w-10 h-10 rounded-xl bg-purple-950/80 border border-purple-800/60 flex items-center justify-center mb-2.5 shadow-inner">
+          <i data-lucide="shield-check" class="w-5 h-5 text-purple-400"></i>
+        </div>
+        <div class="text-sm sm:text-base font-bold font-mono text-white">Zero-Knowledge Vault</div>
+        <div class="text-[10px] sm:text-xs font-mono uppercase tracking-wider text-purple-400 mt-0.5">100% Client-Side AES-256</div>
+        <p class="text-[11px] sm:text-xs text-slate-400 mt-2 leading-relaxed">
+          Encrypted inside your browser before anything leaves your device. We hold zero custody and zero keys—nobody can read your data early.
+        </p>
       </div>
 
-      <div class="bg-slate-900/80 border border-slate-800/80 rounded-2xl p-2 sm:p-3.5 flex flex-col items-center justify-center backdrop-blur-sm shadow-xl">
-        <div class="text-lg sm:text-3xl font-extrabold font-mono text-emerald-400">K-of-N</div>
-        <div class="text-[10px] sm:text-xs font-mono uppercase tracking-wider text-slate-400 mt-0.5 text-center">Shamir Combos</div>
-        <div class="text-[9px] sm:text-[10px] text-slate-500 mt-0.5 text-center">AND / Threshold OR</div>
+      <div class="bg-slate-900/80 border border-emerald-500/25 hover:border-emerald-400/50 rounded-2xl p-4 sm:p-5 flex flex-col items-center text-center backdrop-blur-sm shadow-xl transition-colors">
+        <div class="w-10 h-10 rounded-xl bg-emerald-950/80 border border-emerald-800/60 flex items-center justify-center mb-2.5 shadow-inner">
+          <i data-lucide="bell-ring" class="w-5 h-5 text-emerald-400"></i>
+        </div>
+        <div class="text-sm sm:text-base font-bold font-mono text-white">Zero False Alarms</div>
+        <div class="text-[10px] sm:text-xs font-mono uppercase tracking-wider text-emerald-400 mt-0.5">Multi-Stage Grace Periods</div>
+        <p class="text-[11px] sm:text-xs text-slate-400 mt-2 leading-relaxed">
+          Gentle heartbeat reminders and customizable grace delays ensure your contingency switch never triggers accidentally while offline.
+        </p>
       </div>
     </div>
 

@@ -36,6 +36,12 @@ interface SettingsModalProps {
 
 const THEME_OPTIONS: { id: WorkspaceTheme; name: string; desc: string; previewBg: string }[] = [
   {
+    id: 'skillborn',
+    name: 'Skillborn Obsidian Fire',
+    desc: 'Pitch black, fiery red & ember gold dead-man switch aesthetic',
+    previewBg: 'from-[#080a0e] via-[#ff4247] to-[#e8bd63]',
+  },
+  {
     id: 'synthwave',
     name: 'Neon Synthwave',
     desc: 'Deep cosmic violet, vibrant cyan glow & retro magenta highlights',
@@ -58,7 +64,7 @@ const THEME_OPTIONS: { id: WorkspaceTheme; name: string; desc: string; previewBg
 export const SettingsModal: React.FC<SettingsModalProps> = ({
   isOpen,
   onClose,
-  theme = 'monochrome',
+  theme = 'skillborn',
   onThemeChange,
   mode = 'simple',
   onModeChange,
@@ -103,7 +109,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       // If already enabled, toggle turns it off
       disableDevMode();
       setShowPrompt(false);
-      setSuccessMsg('Developer Mode deactivated. Credits system restored.');
+      setSuccessMsg('Developer Mode deactivated.');
       setTimeout(() => setSuccessMsg(null), 3000);
     } else {
       // If currently disabled, show prompt to enter passcode
@@ -118,7 +124,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
     const res = enableDevMode(passcode);
     if (res.success) {
-      setSuccessMsg('Developer Mode unlocked! Credits system disabled for unrestricted testing.');
+      setSuccessMsg('Developer Mode unlocked! Unrestricted testing enabled.');
       setPasscode('');
       setShowPrompt(false);
       setTimeout(() => setSuccessMsg(null), 4000);
@@ -205,7 +211,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   {isDevMode ? (
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-950/90 text-emerald-300 border border-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.3)]">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                      ACTIVE // CREDITS DISABLED
+                      ACTIVE // UNRESTRICTED
                     </span>
                   ) : (
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-purple-950/60 text-purple-300/80 border border-purple-500/30">
@@ -214,7 +220,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   )}
                 </div>
                 <p className="text-xs text-purple-200/80 font-mono mt-1 leading-relaxed">
-                  When enabled, the credits system is disabled, allowing unlimited testing of server locks, box chains, and agent workflows without cost constraints.
+                  When enabled, Developer Mode unlocks unrestricted testing of server locks, box chains, and agent workflows.
                 </p>
               </div>
             </div>
@@ -305,7 +311,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             >
               <div className="flex items-center gap-1.5">
                 <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span>Credits system disabled (0 CR costs)</span>
+                <span>Unrestricted server locks &amp; testing</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />

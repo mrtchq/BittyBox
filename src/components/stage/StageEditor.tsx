@@ -23,7 +23,6 @@ import { PaymentPolicyLockPanel, PaymentPolicyDraft } from '../PaymentPolicyLock
 interface StageEditorProps {
   onGenerate?: () => void;
   isGenerating?: boolean;
-  calculatedCreditCost?: number;
   bittyUrl?: string;
   chainEnabled?: boolean;
   chainIndex?: number;
@@ -80,7 +79,6 @@ const DEFAULT_STARTER_CODE = `<!DOCTYPE html>
 export const StageEditor: React.FC<StageEditorProps> = ({
   onGenerate,
   isGenerating = false,
-  calculatedCreditCost = 0,
   bittyUrl = '',
   chainEnabled = false,
   chainIndex = 0,
@@ -263,18 +261,14 @@ export const StageEditor: React.FC<StageEditorProps> = ({
             </AnimatePresence>
           </div>
 
-          {/* Credit cost — moved to the far right of the header */}
+          {/* Status badge */}
           <div
             className="flex items-center gap-1 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg bg-cyan-950/40 border border-cyan-500/20 text-cyan-300/80 text-[10px] sm:text-xs font-bold"
-            title="Generation cost with active server locks"
+            title="Client-side self-contained Bitty Box"
           >
             <Zap className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-400 shrink-0" />
             <span>
-              {calculatedCreditCost === 0 ? (
-                <strong className="text-emerald-400">100% Free (0 CR)</strong>
-              ) : (
-                <span>Requires <strong className="text-amber-300">{calculatedCreditCost} CR</strong></span>
-              )}
+              <strong className="text-emerald-400">100% Free</strong>
             </span>
           </div>
         </div>
@@ -544,13 +538,13 @@ export const StageEditor: React.FC<StageEditorProps> = ({
         )}
       </AnimatePresence>
 
-      {/* Generation & Credit Cost Footer - Mobile optimized */}
+      {/* Generation Footer - Mobile optimized */}
       <div className="pt-2 sm:pt-3 border-t border-cyan-500/20 flex flex-col items-center justify-center gap-2 text-center">
         <div className="w-full flex items-center justify-center text-center">
           <HoloGenerateButton
             onClick={handleGenerateClick}
             isCopied={isCopied}
-            label={calculatedCreditCost > 0 && (!account?.user || (account.user.credits || 0) < calculatedCreditCost) && !isPro ? `GET CREDITS (${calculatedCreditCost} CR)` : 'GENERATE BOX'}
+            label="GENERATE BOX"
             className="my-0 mx-auto scale-[0.82] sm:scale-[0.88] origin-center"
           />
         </div>

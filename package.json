@@ -9,7 +9,7 @@
     "start": "node server.js",
     "build:v2": "vite build --config v2/vite.config.ts",
     "test": "npm run test:v2",
-    "test:v2": "tsx --test tests/capsuleV2.test.ts tests/viewerPolicy.test.ts && node --test tests/v2SimpleUx.test.mjs tests/landingHeaderFooter.test.mjs tests/deadmanSwitch.regression.test.mjs tests/bittyChain.regression.test.mjs",
+    "test:v2": "tsx --test tests/capsuleV2.test.ts tests/viewerPolicy.test.ts && node --test tests/v2SimpleUx.test.mjs tests/landingHeaderFooter.test.mjs tests/deadmanSwitch.regression.test.mjs tests/deadmanPresets.test.mjs tests/bittyChain.regression.test.mjs",
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit"

@@ -1,0 +1,2691 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#05020c">
+  <title>Dead Man’s Switch · Mobile Vanguard · Bitty Box</title>
+  <meta name="description" content="Autonomous Sovereign Dead Man's Switch protocol by Bitty Box. Mobile-native liveness escrow with Zero-Knowledge encryption.">
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #05020c;
+      --bg-surface: #0a0418;
+      --bg-card: rgba(16, 9, 32, 0.88);
+      --bg-card-border: rgba(168, 85, 247, 0.28);
+      --cyan: #00f0ff;
+      --cyan-dim: rgba(0, 240, 255, 0.15);
+      --cyan-glow: 0 0 20px rgba(0, 240, 255, 0.4);
+      --violet: #a855f7;
+      --violet-dim: rgba(168, 85, 247, 0.16);
+      --violet-glow: 0 0 24px rgba(168, 85, 247, 0.45);
+      --fuchsia: #ec4899;
+      --emerald: #10b981;
+      --emerald-glow: 0 0 20px rgba(16, 185, 129, 0.5);
+      --amber: #f59e0b;
+      --amber-glow: 0 0 20px rgba(245, 158, 11, 0.45);
+      --crimson: #ef4444;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --font-display: 'Orbitron', -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --font-body: 'Inter', -apple-system, sans-serif;
+      --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-tactile: cubic-bezier(0.2, 0, 0, 1);
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    input, textarea {
+      user-select: text;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      min-height: 100dvh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      overflow: hidden;
+      position: fixed;
+    }
+
+    /* Ambient Canvas */
+    #ambient-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0.85;
+    }
+
+    /* Holographic Scanline Overlay */
+    .scanlines {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background: linear-gradient(rgba(18, 16, 38, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
+                  linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02));
+      background-size: 100% 4px, 6px 100%;
+      opacity: 0.6;
+    }
+
+    /* Outer Viewport App Container */
+    .app-viewport {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Top Brand & Tactical Navigation Bar */
+    .top-header {
+      padding-top: max(12px, var(--safe-top));
+      padding-left: 18px;
+      padding-right: 18px;
+      padding-bottom: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .brand-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+    }
+
+    .brand-emblem {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #180933, #090314);
+      border: 1px solid var(--violet);
+      display: grid;
+      place-items: center;
+      box-shadow: var(--violet-glow);
+      position: relative;
+    }
+
+    .brand-emblem::after {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: 12px;
+      border: 1px solid var(--cyan);
+      opacity: 0.4;
+      animation: rotateRing 8s linear infinite;
+    }
+
+    @keyframes rotateRing {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .brand-title {
+      font-family: var(--font-display);
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 0.14em;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand-subtitle {
+      font-family: var(--font-mono);
+      font-size: 8.5px;
+      font-weight: 500;
+      letter-spacing: 0.16em;
+      color: var(--cyan);
+      text-transform: uppercase;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .pill-btn {
+      height: 30px;
+      padding: 0 10px;
+      border-radius: 99px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(16, 9, 32, 0.7);
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      backdrop-filter: blur(12px);
+      transition: all 0.2s var(--ease-tactile);
+    }
+
+    .pill-btn:active {
+      transform: scale(0.96);
+      background: rgba(168, 85, 247, 0.25);
+      border-color: var(--violet);
+      color: #fff;
+    }
+
+    .pill-btn.active {
+      border-color: var(--cyan);
+      color: var(--cyan);
+      background: rgba(0, 240, 255, 0.12);
+    }
+
+    .pill-btn .live-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--emerald);
+      box-shadow: var(--emerald-glow);
+      animation: heartbeat 2s ease-in-out infinite;
+    }
+
+    /* Segmented Progress Stepper */
+    .stepper-rail {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      width: 100%;
+      padding: 0 2px;
+    }
+
+    .step-track {
+      flex: 1;
+      height: 4px;
+      border-radius: 99px;
+      background: rgba(255, 255, 255, 0.08);
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.3s var(--ease-spring);
+    }
+
+    .step-track.completed {
+      background: var(--violet);
+      box-shadow: 0 0 8px rgba(168, 85, 247, 0.6);
+    }
+
+    .step-track.current {
+      background: linear-gradient(90deg, var(--violet), var(--cyan));
+      box-shadow: 0 0 12px rgba(0, 240, 255, 0.7);
+    }
+
+    /* Stage Header Info Banner */
+    .stage-indicator {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      padding: 4px 18px 0;
+      flex-shrink: 0;
+    }
+
+    .stage-counter {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--cyan);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .stage-label {
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 0.04em;
+      text-shadow: 0 0 16px rgba(168, 85, 247, 0.5);
+    }
+
+    /* Carousel Outer Viewport */
+    .carousel-wrap {
+      flex: 1;
+      width: 100%;
+      position: relative;
+      overflow: hidden;
+      touch-action: pan-y;
+      margin-top: 6px;
+    }
+
+    /* Carousel Sliding Track */
+    .carousel-track {
+      display: flex;
+      width: 100%;
+      height: 100%;
+      will-change: transform;
+      transition: transform 0.42s var(--ease-spring);
+    }
+
+    .carousel-track.dragging {
+      transition: none;
+    }
+
+    /* Individual Slide Card Container */
+    .slide-card {
+      flex: 0 0 100%;
+      width: 100%;
+      height: 100%;
+      padding: 6px 16px 14px;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+
+    .slide-card::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* Card Inner Body with Concentric Radius & Holographic Glow */
+    .card-surface {
+      background: var(--bg-card);
+      border: 1px solid var(--bg-card-border);
+      border-radius: 24px;
+      padding: 18px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(24px);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card-surface::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--cyan), var(--violet), transparent);
+    }
+
+    /* Card Section Titles */
+    .card-title-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .card-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--cyan);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .card-heading {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.01em;
+      line-height: 1.2;
+      text-wrap: balance;
+    }
+
+    .card-desc {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      text-wrap: pretty;
+    }
+
+    /* Thumb Chips / Option Grid */
+    .chip-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .chip-grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .tactile-chip {
+      background: rgba(14, 8, 28, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 14px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.22s var(--ease-tactile);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .tactile-chip:active {
+      transform: scale(0.96);
+    }
+
+    .tactile-chip.selected {
+      background: rgba(168, 85, 247, 0.22);
+      border-color: var(--violet);
+      box-shadow: 0 0 16px rgba(168, 85, 247, 0.35);
+    }
+
+    .tactile-chip.selected .chip-label {
+      color: #fff;
+      text-shadow: 0 0 10px rgba(168, 85, 247, 0.6);
+    }
+
+    .tactile-chip.test-mode {
+      border-color: rgba(245, 158, 11, 0.5);
+      background: rgba(245, 158, 11, 0.08);
+    }
+
+    .tactile-chip.test-mode.selected {
+      background: rgba(245, 158, 11, 0.25);
+      border-color: var(--amber);
+      box-shadow: var(--amber-glow);
+    }
+
+    .chip-icon {
+      font-size: 14px;
+      margin-bottom: 2px;
+    }
+
+    .chip-label {
+      font-family: var(--font-display);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: 0.02em;
+    }
+
+    .chip-sub {
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      color: var(--text-dim);
+    }
+
+    .tactile-chip.selected .chip-sub {
+      color: var(--cyan);
+    }
+
+    /* Mobile Textarea and Inputs */
+    .field-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .field-label-tag {
+      color: var(--cyan);
+      font-size: 9px;
+    }
+
+    .holo-input, .holo-textarea {
+      width: 100%;
+      background: rgba(8, 4, 18, 0.9);
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      border-radius: 14px;
+      padding: 12px 14px;
+      color: #fff;
+      font-family: var(--font-body);
+      font-size: 13.5px;
+      outline: none;
+      transition: all 0.25s var(--ease-tactile);
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    .holo-input:focus, .holo-textarea:focus {
+      border-color: var(--cyan);
+      box-shadow: 0 0 16px rgba(0, 240, 255, 0.25), inset 0 1px 2px rgba(0, 0, 0, 0.6);
+      background: rgba(12, 6, 26, 0.95);
+    }
+
+    .holo-input::placeholder, .holo-textarea::placeholder {
+      color: rgba(148, 163, 184, 0.4);
+    }
+
+    .holo-textarea {
+      resize: none;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    /* EKG Pulse Visualizer Card */
+    .pulse-meter-container {
+      background: #04020a;
+      border: 1px solid rgba(0, 240, 255, 0.25);
+      border-radius: 18px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: inset 0 0 25px rgba(0, 240, 255, 0.08);
+    }
+
+    .pulse-canvas-wrap {
+      width: 100%;
+      height: 70px;
+      position: relative;
+    }
+
+    #ekg-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .pulse-meta-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding-top: 8px;
+    }
+
+    .pulse-stat {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .pulse-stat-val {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--cyan);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .pulse-stat-lbl {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    /* Timeline Stepper (Grace Period Visualizer) */
+    .timeline-escalation {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: rgba(10, 5, 22, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 12px;
+    }
+
+    .timeline-node {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      position: relative;
+    }
+
+    .timeline-node:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      left: 11px;
+      top: 24px;
+      bottom: -10px;
+      width: 2px;
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .timeline-node.active:not(:last-child)::after {
+      background: linear-gradient(180deg, var(--emerald), var(--amber));
+    }
+
+    .node-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 11px;
+      background: #14092b;
+      border: 1px solid var(--violet);
+      z-index: 1;
+      flex-shrink: 0;
+    }
+
+    .node-content {
+      flex: 1;
+    }
+
+    .node-title {
+      font-family: var(--font-display);
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .node-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.35;
+      margin-top: 1px;
+    }
+
+    /* Switch Toggle */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: rgba(16, 9, 32, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 14px;
+      cursor: pointer;
+    }
+
+    .toggle-switch {
+      width: 44px;
+      height: 24px;
+      border-radius: 99px;
+      background: rgba(255, 255, 255, 0.15);
+      position: relative;
+      transition: all 0.25s var(--ease-spring);
+    }
+
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #fff;
+      top: 3px;
+      left: 3px;
+      transition: all 0.25s var(--ease-spring);
+    }
+
+    .toggle-switch.active {
+      background: var(--emerald);
+      box-shadow: var(--emerald-glow);
+    }
+
+    .toggle-switch.active::after {
+      transform: translateX(20px);
+    }
+
+    /* Slider Track */
+    .slider-container {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .thumb-slider {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 8px;
+      border-radius: 99px;
+      background: rgba(255, 255, 255, 0.12);
+      outline: none;
+    }
+
+    .thumb-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: var(--cyan);
+      box-shadow: var(--cyan-glow);
+      border: 2px solid #fff;
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+
+    .thumb-slider::-webkit-slider-thumb:active {
+      transform: scale(1.18);
+    }
+
+    /* Defense Matrix Option Rows */
+    .defense-card {
+      background: rgba(14, 8, 28, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: 16px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .defense-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .defense-title-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .defense-title {
+      font-family: var(--font-display);
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .defense-badge {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      padding: 2px 6px;
+      border-radius: 6px;
+      background: rgba(0, 240, 255, 0.15);
+      color: var(--cyan);
+      border: 1px solid rgba(0, 240, 255, 0.3);
+    }
+
+    /* Command Center Review Matrix */
+    .review-grid {
+      display: grid;
+      gap: 8px;
+      background: rgba(8, 4, 18, 0.9);
+      border: 1px solid rgba(168, 85, 247, 0.35);
+      border-radius: 16px;
+      padding: 14px;
+    }
+
+    .review-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .review-row:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .review-lbl {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+    }
+
+    .review-val {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--cyan);
+      max-width: 60%;
+      text-align: right;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Cinematic "Slide To Arm" Track */
+    .slide-to-arm-wrap {
+      width: 100%;
+      height: 60px;
+      background: linear-gradient(135deg, #14072b, #090214);
+      border: 1px solid var(--violet);
+      border-radius: 99px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 0 30px rgba(168, 85, 247, 0.3);
+      display: flex;
+      align-items: center;
+      padding: 4px;
+    }
+
+    .slide-track-label {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.16em;
+      color: rgba(255, 255, 255, 0.7);
+      text-transform: uppercase;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+
+    .slide-handle {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--cyan), var(--violet));
+      box-shadow: 0 0 20px var(--cyan);
+      border: 2px solid #fff;
+      display: grid;
+      place-items: center;
+      color: #05020c;
+      font-size: 20px;
+      font-weight: 900;
+      cursor: grab;
+      touch-action: none;
+      z-index: 2;
+      will-change: transform;
+    }
+
+    .slide-track-fill {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: 0;
+      background: linear-gradient(90deg, rgba(0, 240, 255, 0.3), rgba(168, 85, 247, 0.6));
+      border-radius: 99px;
+      pointer-events: none;
+    }
+
+    /* Armed Live Operations HUD */
+    .armed-deck {
+      display: none;
+      flex-direction: column;
+      gap: 14px;
+      animation: riseFade 0.6s var(--ease-spring) forwards;
+    }
+
+    @keyframes riseFade {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .armed-status-banner {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 2, 12, 0.9));
+      border: 1px solid var(--emerald);
+      border-radius: 20px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: var(--emerald-glow);
+    }
+
+    .radar-circle {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 1px solid var(--emerald);
+      position: relative;
+      display: grid;
+      place-items: center;
+      background: rgba(16, 185, 129, 0.1);
+    }
+
+    .radar-sweep {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border-top: 2px solid var(--emerald);
+      animation: sweepRadar 2s linear infinite;
+    }
+
+    @keyframes sweepRadar {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .armed-countdown {
+      font-family: var(--font-mono);
+      font-size: 26px;
+      font-weight: 900;
+      color: #fff;
+      text-shadow: 0 0 16px var(--emerald);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.02em;
+    }
+
+    .armed-countdown-sub {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--emerald);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .tactical-actions-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .tactical-btn {
+      padding: 14px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(14, 8, 28, 0.85);
+      color: #fff;
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      transition: all 0.2s var(--ease-tactile);
+      text-align: center;
+    }
+
+    .tactical-btn:active {
+      transform: scale(0.96);
+    }
+
+    .tactical-btn.primary-pulse {
+      grid-column: span 2;
+      background: linear-gradient(135deg, #059669, #10b981);
+      border-color: #6ee7b7;
+      box-shadow: 0 0 25px rgba(16, 185, 129, 0.5);
+      font-size: 14px;
+      padding: 16px;
+      color: #05020c;
+    }
+
+    .tactical-btn.danger-btn {
+      grid-column: span 2;
+      border-color: rgba(239, 68, 68, 0.4);
+      background: rgba(239, 68, 68, 0.1);
+      color: #fca5a5;
+    }
+
+    /* Bottom Persistent Thumb Dock */
+    .thumb-dock {
+      padding-bottom: max(14px, var(--safe-bottom));
+      padding-left: 18px;
+      padding-right: 18px;
+      padding-top: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-shrink: 0;
+      background: linear-gradient(180deg, transparent, rgba(5, 2, 12, 0.95) 40%);
+      z-index: 10;
+    }
+
+    .dock-nav-btn {
+      min-width: 80px;
+      height: 48px;
+      padding: 0 16px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(18, 10, 36, 0.7);
+      color: var(--text-muted);
+      font-family: var(--font-display);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      backdrop-filter: blur(16px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s var(--ease-tactile);
+    }
+
+    .dock-nav-btn:active {
+      transform: scale(0.96);
+    }
+
+    .dock-nav-btn.primary-next {
+      flex: 1;
+      background: linear-gradient(135deg, var(--cyan), var(--violet));
+      color: #05020c;
+      border-color: #fff;
+      box-shadow: 0 0 25px rgba(0, 240, 255, 0.4);
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .dock-dots {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .dock-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      transition: all 0.25s var(--ease-spring);
+    }
+
+    .dock-dot.active {
+      width: 14px;
+      border-radius: 99px;
+      background: var(--cyan);
+      box-shadow: var(--cyan-glow);
+    }
+
+    /* Modal / Bottom Drawer for Stage Selector */
+    .drawer-scrim {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      z-index: 50;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s var(--ease-tactile);
+    }
+
+    .drawer-scrim.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .drawer-sheet {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      max-width: 480px;
+      margin: 0 auto;
+      background: #0d051c;
+      border-top: 1px solid var(--violet);
+      border-radius: 28px 28px 0 0;
+      padding: 16px 20px max(24px, var(--safe-bottom));
+      z-index: 51;
+      transform: translateY(100%);
+      transition: transform 0.35s var(--ease-spring);
+      box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.8);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .drawer-sheet.open {
+      transform: translateY(0);
+    }
+
+    .drawer-drag-pill {
+      width: 38px;
+      height: 4px;
+      border-radius: 99px;
+      background: rgba(255, 255, 255, 0.25);
+      margin: 0 auto 4px;
+    }
+
+    .drawer-stage-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(22, 11, 44, 0.6);
+      cursor: pointer;
+      transition: all 0.2s var(--ease-tactile);
+    }
+
+    .drawer-stage-item:active {
+      transform: scale(0.97);
+      border-color: var(--cyan);
+    }
+
+    .drawer-stage-item.current {
+      border-color: var(--cyan);
+      background: rgba(0, 240, 255, 0.12);
+    }
+
+    /* Toast Notification */
+    .toast-pill {
+      position: fixed;
+      bottom: calc(max(14px, var(--safe-bottom)) + 65px);
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      opacity: 0;
+      pointer-events: none;
+      background: #0f0724;
+      border: 1px solid var(--cyan);
+      box-shadow: var(--cyan-glow);
+      color: #fff;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: 99px;
+      z-index: 100;
+      transition: all 0.3s var(--ease-spring);
+      white-space: nowrap;
+    }
+
+    .toast-pill.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    @keyframes heartbeat {
+      0%, 100% { transform: scale(1); opacity: 0.9; }
+      50% { transform: scale(1.3); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background Ambient Particles -->
+  <canvas id="ambient-canvas"></canvas>
+  <div class="scanlines"></div>
+
+  <!-- Mobile Viewport Shell -->
+  <main class="app-viewport">
+
+    <!-- Top Strategic Navigation Bar -->
+    <header class="top-header">
+      <div class="brand-row">
+        <div class="brand-left" id="btn-home" title="Bitty Box Flagship">
+          <div class="brand-emblem">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00f0ff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+            </svg>
+          </div>
+          <div class="brand-title">
+            <span>BITTY BOX</span>
+            <span class="brand-subtitle">DEAD MAN'S SWITCH</span>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <button type="button" class="pill-btn" id="btn-sound-toggle" aria-label="Toggle audio feedback">
+            <span id="sound-icon">🔊</span>
+          </button>
+          <button type="button" class="pill-btn" id="btn-stages-drawer">
+            <span class="live-dot"></span>
+            <span id="header-stage-pill">STAGES</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Segmented Stepper Track -->
+      <nav class="stepper-rail" id="stepper-rail" aria-label="Carousel navigation">
+        <div class="step-track current" data-slide="0"></div>
+        <div class="step-track" data-slide="1"></div>
+        <div class="step-track" data-slide="2"></div>
+        <div class="step-track" data-slide="3"></div>
+        <div class="step-track" data-slide="4"></div>
+        <div class="step-track" data-slide="5"></div>
+      </nav>
+    </header>
+
+    <!-- Stage Meta Indicator -->
+    <div class="stage-indicator">
+      <span class="stage-counter" id="stage-counter">STAGE 01 / 06</span>
+      <h2 class="stage-label" id="stage-label">ESCROW VAULT</h2>
+    </div>
+
+    <!-- Swipeable Carousel Viewport -->
+    <section class="carousel-wrap" id="carousel-wrap">
+      <div class="carousel-track" id="carousel-track">
+
+        <!-- SLIDE 1: ESCROW VAULT (PAYLOAD & IDENTITY) -->
+        <article class="slide-card" data-index="0">
+          <div class="card-surface">
+            <div class="card-title-group">
+              <span class="card-eyebrow">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                Zero-Knowledge Capsule
+              </span>
+              <h1 class="card-heading">What is your contingency payload?</h1>
+              <p class="card-desc">Your secret data is compressed, client-side encrypted, and sealed. It remains dormant until released by liveness failure.</p>
+            </div>
+
+            <!-- Vault Title -->
+            <div class="field-wrap">
+              <label class="field-label" for="vault-title">
+                <span>Vault Designation</span>
+                <span class="field-label-tag">IDENTIFIER</span>
+              </label>
+              <input type="text" id="vault-title" class="holo-input" value="Sovereign Contingency Protocol" placeholder="e.g. Master Keys, Final Will, Root Passwords">
+            </div>
+
+            <!-- Category Presets -->
+            <div class="field-wrap">
+              <label class="field-label">
+                <span>Contingency Category</span>
+                <span class="field-label-tag">PRE-FILL TEMPLATE</span>
+              </label>
+              <div class="chip-grid">
+                <button type="button" class="tactile-chip selected" data-template="crypto">
+                  <span class="chip-icon">🔑</span>
+                  <span class="chip-label">Crypto Seeds</span>
+                  <span class="chip-sub">BIP-39 &amp; 2FA Keys</span>
+                </button>
+                <button type="button" class="tactile-chip" data-template="will">
+                  <span class="chip-icon">📜</span>
+                  <span class="chip-label">Last Will</span>
+                  <span class="chip-sub">Testament &amp; Estate</span>
+                </button>
+                <button type="button" class="tactile-chip" data-template="infra">
+                  <span class="chip-icon">🛡️</span>
+                  <span class="chip-label">Server Root</span>
+                  <span class="chip-sub">SSH, Tokens &amp; DBs</span>
+                </button>
+                <button type="button" class="tactile-chip" data-template="farewell">
+                  <span class="chip-icon">💌</span>
+                  <span class="chip-label">Personal Letter</span>
+                  <span class="chip-sub">Confession &amp; Legacy</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Payload Input Area -->
+            <div class="field-wrap">
+              <label class="field-label" for="vault-payload">
+                <span>Confidential Content</span>
+                <span id="char-counter" class="field-label-tag">0 BYTES</span>
+              </label>
+              <textarea id="vault-payload" class="holo-textarea" rows="5" placeholder="Enter sensitive keys, instructions, or private testament..."></textarea>
+            </div>
+          </div>
+        </article>
+
+        <!-- SLIDE 2: LIVENESS CADENCE (PULSE HEARTBEAT) -->
+        <article class="slide-card" data-index="1">
+          <div class="card-surface">
+            <div class="card-title-group">
+              <span class="card-eyebrow">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                Liveness Radar
+              </span>
+              <h2 class="card-heading">How often will you signal life?</h2>
+              <p class="card-desc">Bitty Box monitors your check-in pulse. We email you a 1-tap cryptographic confirmation at this cadence.</p>
+            </div>
+
+            <!-- EKG Oscilloscope Monitor -->
+            <div class="pulse-meter-container">
+              <div class="pulse-canvas-wrap">
+                <canvas id="ekg-canvas"></canvas>
+              </div>
+              <div class="pulse-meta-row">
+                <div class="pulse-stat">
+                  <span class="pulse-stat-val" id="cadence-readout">7 DAYS</span>
+                  <span class="pulse-stat-lbl">CHECK-IN INTERVAL</span>
+                </div>
+                <div class="pulse-stat" style="text-align: right;">
+                  <span class="pulse-stat-val" id="cadence-rate-readout">0.14 Hz</span>
+                  <span class="pulse-stat-lbl">PULSE FREQUENCY</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Interval Grid -->
+            <div class="field-wrap">
+              <label class="field-label">
+                <span>Selected Cadence</span>
+                <span class="field-label-tag">THUMB PRESETS</span>
+              </label>
+              <div class="chip-grid-3">
+                <button type="button" class="tactile-chip test-mode" data-minutes="1">
+                  <span class="chip-icon">⚡</span>
+                  <span class="chip-label">1 MIN</span>
+                  <span class="chip-sub">Rapid Test</span>
+                </button>
+                <button type="button" class="tactile-chip" data-minutes="60">
+                  <span class="chip-icon">⏱️</span>
+                  <span class="chip-label">1 HOUR</span>
+                  <span class="chip-sub">High Alert</span>
+                </button>
+                <button type="button" class="tactile-chip" data-minutes="1440">
+                  <span class="chip-icon">☀️</span>
+                  <span class="chip-label">24 HOURS</span>
+                  <span class="chip-sub">Daily Pulse</span>
+                </button>
+                <button type="button" class="tactile-chip" data-minutes="4320">
+                  <span class="chip-icon">🗓️</span>
+                  <span class="chip-label">3 DAYS</span>
+                  <span class="chip-sub">Bi-weekly</span>
+                </button>
+                <button type="button" class="tactile-chip selected" data-minutes="10080">
+                  <span class="chip-icon">🌟</span>
+                  <span class="chip-label">7 DAYS</span>
+                  <span class="chip-sub">Recommended</span>
+                </button>
+                <button type="button" class="tactile-chip" data-minutes="43200">
+                  <span class="chip-icon">🌖</span>
+                  <span class="chip-label">30 DAYS</span>
+                  <span class="chip-sub">Monthly</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Creator Email for Pings -->
+            <div class="field-wrap">
+              <label class="field-label" for="creator-email">
+                <span>Your Email Address</span>
+                <span class="field-label-tag">CHECK-IN RECIPIENT</span>
+              </label>
+              <input type="email" id="creator-email" class="holo-input" placeholder="you@domain.com" autocomplete="email">
+            </div>
+          </div>
+        </article>
+
+        <!-- SLIDE 3: FAILSAVE GRACE BUFFER -->
+        <article class="slide-card" data-index="2">
+          <div class="card-surface">
+            <div class="card-title-group">
+              <span class="card-eyebrow">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                Safety Buffer
+              </span>
+              <h2 class="card-heading">The fail-safe grace window.</h2>
+              <p class="card-desc">If a scheduled check-in is missed, the grace window begins. Urgent escalation alerts are sent before the vault unlocks.</p>
+            </div>
+
+            <!-- Grace Period Toggle -->
+            <div class="toggle-row" id="toggle-grace-row">
+              <div>
+                <div class="chip-label">Enable Grace Period</div>
+                <div class="chip-sub" id="grace-toggle-desc">Active buffer before trigger</div>
+              </div>
+              <div class="toggle-switch active" id="toggle-grace-switch"></div>
+            </div>
+
+            <!-- Grace Presets -->
+            <div class="field-wrap" id="grace-presets-wrap">
+              <label class="field-label">
+                <span>Grace Window Duration</span>
+                <span class="field-label-tag">ESCROW DELAY</span>
+              </label>
+              <div class="chip-grid-3">
+                <button type="button" class="tactile-chip test-mode" data-grace-minutes="1">
+                  <span class="chip-icon">⚡</span>
+                  <span class="chip-label">1 MIN</span>
+                  <span class="chip-sub">Test Mode</span>
+                </button>
+                <button type="button" class="tactile-chip" data-grace-minutes="60">
+                  <span class="chip-icon">⏱️</span>
+                  <span class="chip-label">1 HOUR</span>
+                  <span class="chip-sub">Quick Alert</span>
+                </button>
+                <button type="button" class="tactile-chip selected" data-grace-minutes="1440">
+                  <span class="chip-icon">🛡️</span>
+                  <span class="chip-label">24 HOURS</span>
+                  <span class="chip-sub">1 Full Day</span>
+                </button>
+                <button type="button" class="tactile-chip" data-grace-minutes="4320">
+                  <span class="chip-icon">🗓️</span>
+                  <span class="chip-label">3 DAYS</span>
+                  <span class="chip-sub">Extended</span>
+                </button>
+                <button type="button" class="tactile-chip" data-grace-minutes="10080">
+                  <span class="chip-icon">⏳</span>
+                  <span class="chip-label">7 DAYS</span>
+                  <span class="chip-sub">High Margin</span>
+                </button>
+                <button type="button" class="tactile-chip" data-grace-minutes="20160">
+                  <span class="chip-icon">🔒</span>
+                  <span class="chip-label">14 DAYS</span>
+                  <span class="chip-sub">Maximum</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Timeline Escalation Diagram -->
+            <div class="timeline-escalation">
+              <div class="timeline-node active">
+                <div class="node-icon" style="color: var(--emerald);">01</div>
+                <div class="node-content">
+                  <div class="node-title">Normal Cadence Active</div>
+                  <div class="node-desc">You receive standard 1-click check-in pulses.</div>
+                </div>
+              </div>
+              <div class="timeline-node active">
+                <div class="node-icon" style="color: var(--amber);">02</div>
+                <div class="node-content">
+                  <div class="node-title">Missed Pulse Alert</div>
+                  <div class="node-desc">Grace begins. Urgent warning emails dispatched.</div>
+                </div>
+              </div>
+              <div class="timeline-node">
+                <div class="node-icon" style="color: var(--crimson);">03</div>
+                <div class="node-content">
+                  <div class="node-title">Autonomous Release Triggered</div>
+                  <div class="node-desc">Vault link delivered directly to your beneficiary.</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Total Math Banner -->
+            <div class="toggle-row" style="background: rgba(0, 240, 255, 0.08); border-color: rgba(0, 240, 255, 0.3);">
+              <div class="chip-sub" style="color: var(--text);">Total Silence Until Trigger:</div>
+              <div class="pulse-stat-val" id="total-silence-math">8 DAYS</div>
+            </div>
+          </div>
+        </article>
+
+        <!-- SLIDE 4: BENEFICIARY DISPATCH PROTOCOL -->
+        <article class="slide-card" data-index="3">
+          <div class="card-surface">
+            <div class="card-title-group">
+              <span class="card-eyebrow">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                Beneficiary Escrow
+              </span>
+              <h2 class="card-heading">Who receives the sealed vault?</h2>
+              <p class="card-desc">When the switch fires, the encrypted Box link is delivered straight to their inbox with your personal release directive.</p>
+            </div>
+
+            <!-- Recipient Email -->
+            <div class="field-wrap">
+              <label class="field-label" for="recipient-email">
+                <span>Beneficiary Email</span>
+                <span class="field-label-tag">MANDATORY</span>
+              </label>
+              <input type="email" id="recipient-email" class="holo-input" placeholder="trusted-contact@example.com" autocomplete="email">
+            </div>
+
+            <!-- Recipient Alias -->
+            <div class="field-wrap">
+              <label class="field-label" for="recipient-name">
+                <span>Beneficiary Name / Alias</span>
+                <span class="field-label-tag">OPTIONAL</span>
+              </label>
+              <input type="text" id="recipient-name" class="holo-input" placeholder="e.g. Sarah, Estate Trustee, Security Lead">
+            </div>
+
+            <!-- Tone Templates -->
+            <div class="field-wrap">
+              <label class="field-label">
+                <span>Release Message Directive</span>
+                <span class="field-label-tag">SELECT TONE</span>
+              </label>
+              <div class="chip-grid-3">
+                <button type="button" class="tactile-chip selected" data-tone="operational">
+                  <span class="chip-icon">🎯</span>
+                  <span class="chip-label">Operational</span>
+                </button>
+                <button type="button" class="tactile-chip" data-tone="legal">
+                  <span class="chip-icon">⚖️</span>
+                  <span class="chip-label">Legal</span>
+                </button>
+                <button type="button" class="tactile-chip" data-tone="cinematic">
+                  <span class="chip-icon">🎬</span>
+                  <span class="chip-label">Cinematic</span>
+                </button>
+              </div>
+              <textarea id="release-note" class="holo-textarea" rows="3" placeholder="Directive message included in the release email..."></textarea>
+            </div>
+          </div>
+        </article>
+
+        <!-- SLIDE 5: DEFENSE MATRIX (SUPPORTING FEATURES) -->
+        <article class="slide-card" data-index="4">
+          <div class="card-surface">
+            <div class="card-title-group">
+              <span class="card-eyebrow">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                Flagship Shield Matrix
+              </span>
+              <h2 class="card-heading">Reinforce with secondary defenses.</h2>
+              <p class="card-desc">Bitty Box features wrap around the Dead Man's Switch as protective outer layers to ensure total sovereign integrity.</p>
+            </div>
+
+            <!-- Feature 1: Dual-Custody Passphrase -->
+            <div class="defense-card">
+              <div class="defense-header">
+                <div class="defense-title-box">
+                  <span style="font-size: 16px;">🔐</span>
+                  <div>
+                    <div class="defense-title">Dual-Key Passphrase</div>
+                    <div class="chip-sub">Recipient requires secondary password</div>
+                  </div>
+                </div>
+                <div class="toggle-switch" id="toggle-passphrase"></div>
+              </div>
+              <div id="passphrase-input-wrap" style="display: none;">
+                <input type="password" id="secondary-passphrase" class="holo-input" placeholder="Set pre-shared master key...">
+              </div>
+            </div>
+
+            <!-- Feature 2: Self-Destruct Burn On Read -->
+            <div class="defense-card">
+              <div class="defense-header">
+                <div class="defense-title-box">
+                  <span style="font-size: 16px;">🔥</span>
+                  <div>
+                    <div class="defense-title">Burn-After-Reading</div>
+                    <div class="chip-sub">Self-destructs after 1 opening</div>
+                  </div>
+                </div>
+                <div class="toggle-switch active" id="toggle-burn"></div>
+              </div>
+            </div>
+
+            <!-- Feature 3: Time-Lock Quarantine -->
+            <div class="defense-card">
+              <div class="defense-header">
+                <div class="defense-title-box">
+                  <span style="font-size: 16px;">⏳</span>
+                  <div>
+                    <div class="defense-title">Time-Lock Quarantine</div>
+                    <div class="chip-sub">Cannot be opened before designated date</div>
+                  </div>
+                </div>
+                <div class="toggle-switch" id="toggle-timelock"></div>
+              </div>
+            </div>
+
+            <!-- Feature 4: x402 Micropayment Escrow -->
+            <div class="defense-card">
+              <div class="defense-header">
+                <div class="defense-title-box">
+                  <span style="font-size: 16px;">⚡</span>
+                  <div>
+                    <div class="defense-title">x402 Protocol Settlement</div>
+                    <div class="chip-sub">Micro-bounty released upon decryption</div>
+                  </div>
+                </div>
+                <div class="defense-badge">VERIFIED</div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- SLIDE 6: COMMAND CENTER & ARMING -->
+        <article class="slide-card" data-index="5">
+          <div class="card-surface">
+
+            <!-- Pre-Arming Review Deck -->
+            <div id="pre-arm-deck" style="display: flex; flex-direction: column; gap: 14px;">
+              <div class="card-title-group">
+                <span class="card-eyebrow">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+                  Tactical Deployment
+                </span>
+                <h2 class="card-heading">Engage Dead Man’s Switch.</h2>
+                <p class="card-desc">Review your telemetry configuration. Slide the trigger track below to arm the autonomous escrow.</p>
+              </div>
+
+              <!-- Telemetry Review Matrix -->
+              <div class="review-grid">
+                <div class="review-row">
+                  <span class="review-lbl">Capsule Designation</span>
+                  <span class="review-val" id="rev-title">Sovereign Contingency</span>
+                </div>
+                <div class="review-row">
+                  <span class="review-lbl">Liveness Cadence</span>
+                  <span class="review-val" id="rev-cadence">7 Days</span>
+                </div>
+                <div class="review-row">
+                  <span class="review-lbl">Fail-Safe Grace</span>
+                  <span class="review-val" id="rev-grace">24 Hours (1d)</span>
+                </div>
+                <div class="review-row">
+                  <span class="review-lbl">Check-In Email</span>
+                  <span class="review-val" id="rev-creator">None</span>
+                </div>
+                <div class="review-row">
+                  <span class="review-lbl">Beneficiary</span>
+                  <span class="review-val" id="rev-recipient">None</span>
+                </div>
+                <div class="review-row">
+                  <span class="review-lbl">Cipher Protection</span>
+                  <span class="review-val" id="rev-cipher">AES-GCM (Zero-Knowledge)</span>
+                </div>
+              </div>
+
+              <!-- SLIDE TO ARM Mechanism -->
+              <div class="slide-to-arm-wrap" id="slide-to-arm-wrap">
+                <div class="slide-track-fill" id="slide-track-fill"></div>
+                <div class="slide-track-label" id="slide-track-label">SLIDE TO ENGAGE SWITCH ➔</div>
+                <div class="slide-handle" id="slide-handle">
+                  <span>⚡</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Post-Arming Live Command Deck -->
+            <div class="armed-deck" id="post-arm-deck">
+              <div class="armed-status-banner">
+                <div>
+                  <div class="armed-countdown-sub">SWITCH ACTIVE &amp; ARMED</div>
+                  <div class="armed-countdown" id="live-countdown">06d 23h 59m 59s</div>
+                  <div style="font-family: var(--font-mono); font-size: 10px; color: var(--text-dim); margin-top: 3px;" id="live-switch-id">ID: dms_...</div>
+                </div>
+                <div class="radar-circle">
+                  <div class="radar-sweep"></div>
+                  <span style="font-size: 18px;">🛡️</span>
+                </div>
+              </div>
+
+              <!-- Tactical Actions -->
+              <div class="tactical-actions-grid">
+                <button type="button" class="tactical-btn primary-pulse" id="btn-checkin-now">
+                  <span>💓 SIGNAL LIVENESS NOW</span>
+                  <span style="font-size: 10px; font-weight: 500; opacity: 0.85;">1-TAP PULSE CHECK-IN</span>
+                </button>
+
+                <button type="button" class="tactical-btn" id="btn-test-email">
+                  <span>📧 TEST EMAIL</span>
+                  <span class="chip-sub">Test Check-In Link</span>
+                </button>
+
+                <button type="button" class="tactical-btn" id="btn-test-fire">
+                  <span>🚨 SIMULATE FIRE</span>
+                  <span class="chip-sub">Test Recipient Release</span>
+                </button>
+
+                <button type="button" class="tactical-btn" id="btn-copy-checkin">
+                  <span>📋 COPY LINK</span>
+                  <span class="chip-sub">Secret Check-in URL</span>
+                </button>
+
+                <button type="button" class="tactical-btn" id="btn-view-box">
+                  <span>📦 VAULT LINK</span>
+                  <span class="chip-sub">Bitty Box Payload</span>
+                </button>
+
+                <button type="button" class="tactical-btn danger-btn" id="btn-disarm-switch">
+                  <span>🔴 DISARM &amp; CANCEL SWITCH</span>
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- Bottom Ergonomic Thumb Dock -->
+    <footer class="thumb-dock">
+      <button type="button" class="dock-nav-btn" id="dock-btn-prev" aria-label="Previous stage">
+        <span>← PREV</span>
+      </button>
+
+      <div class="dock-dots" id="dock-dots">
+        <span class="dock-dot active"></span>
+        <span class="dock-dot"></span>
+        <span class="dock-dot"></span>
+        <span class="dock-dot"></span>
+        <span class="dock-dot"></span>
+        <span class="dock-dot"></span>
+      </div>
+
+      <button type="button" class="dock-nav-btn primary-next" id="dock-btn-next" aria-label="Next stage">
+        <span id="dock-next-label">NEXT →</span>
+      </button>
+    </footer>
+
+  </main>
+
+  <!-- Quick Stage Jump Bottom Sheet Drawer -->
+  <div class="drawer-scrim" id="drawer-scrim"></div>
+  <aside class="drawer-sheet" id="drawer-sheet">
+    <div class="drawer-drag-pill"></div>
+    <div style="font-family: var(--font-display); font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 4px;">
+      TACTICAL JUMP DECK
+    </div>
+    <div class="drawer-stage-item current" data-jump="0">
+      <span class="chip-label">01. Escrow Vault</span>
+      <span class="chip-sub">Payload &amp; Identity</span>
+    </div>
+    <div class="drawer-stage-item" data-jump="1">
+      <span class="chip-label">02. Liveness Cadence</span>
+      <span class="chip-sub">Heartbeat Rhythm</span>
+    </div>
+    <div class="drawer-stage-item" data-jump="2">
+      <span class="chip-label">03. Grace Buffer</span>
+      <span class="chip-sub">Safety Escalation</span>
+    </div>
+    <div class="drawer-stage-item" data-jump="3">
+      <span class="chip-label">04. Beneficiary Dispatch</span>
+      <span class="chip-sub">Recipient Directives</span>
+    </div>
+    <div class="drawer-stage-item" data-jump="4">
+      <span class="chip-label">05. Defense Matrix</span>
+      <span class="chip-sub">Supporting Layers</span>
+    </div>
+    <div class="drawer-stage-item" data-jump="5">
+      <span class="chip-label">06. Command &amp; Arm</span>
+      <span class="chip-sub">Live Trigger Deck</span>
+    </div>
+  </aside>
+
+  <!-- Floating Toast Pill -->
+  <div class="toast-pill" id="toast-pill">Switch Armed Successfully</div>
+
+  <!-- Audio Context & Haptic Sound Engine -->
+  <script>
+    const SoundFX = (() => {
+      let ctx = null;
+      let enabled = true;
+
+      const init = () => {
+        if (!ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) ctx = new AudioContext();
+        }
+        if (ctx && ctx.state === 'suspended') {
+          ctx.resume();
+        }
+      };
+
+      const playTone = (freq, type, duration, gainVal = 0.08) => {
+        if (!enabled) return;
+        try {
+          init();
+          if (!ctx) return;
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, ctx.currentTime);
+          gain.gain.setValueAtTime(gainVal, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start();
+          osc.stop(ctx.currentTime + duration);
+        } catch {}
+      };
+
+      return {
+        toggle: () => {
+          enabled = !enabled;
+          return enabled;
+        },
+        isEnabled: () => enabled,
+        click: () => {
+          playTone(850, 'sine', 0.04, 0.05);
+          if (navigator.vibrate) navigator.vibrate(10);
+        },
+        heartbeat: () => {
+          playTone(65, 'sine', 0.12, 0.15);
+          if (navigator.vibrate) navigator.vibrate([15, 40, 10]);
+        },
+        charge: (pitch = 440) => {
+          playTone(pitch, 'triangle', 0.05, 0.08);
+          if (navigator.vibrate) navigator.vibrate(8);
+        },
+        engage: () => {
+          try {
+            init();
+            if (!ctx) return;
+            // Fanfare arpeggio
+            [523.25, 659.25, 783.99, 1046.50].forEach((f, i) => {
+              setTimeout(() => playTone(f, 'sine', 0.28, 0.12), i * 70);
+            });
+            if (navigator.vibrate) navigator.vibrate([25, 60, 30, 80, 50]);
+          } catch {}
+        },
+        alert: () => {
+          playTone(320, 'sawtooth', 0.15, 0.09);
+          if (navigator.vibrate) navigator.vibrate([40, 80, 40]);
+        }
+      };
+    })();
+  </script>
+
+  <!-- Background Particle Field Canvas -->
+  <script>
+    (() => {
+      const canvas = document.getElementById('ambient-canvas');
+      const ctx = canvas.getContext('2d');
+      let w, h;
+      const particles = [];
+      const PARTICLE_COUNT = 38;
+
+      const resize = () => {
+        w = canvas.width = window.innerWidth;
+        h = canvas.height = window.innerHeight;
+      };
+      window.addEventListener('resize', resize);
+      resize();
+
+      for (let i = 0; i < PARTICLE_COUNT; i++) {
+        particles.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          radius: Math.random() * 1.6 + 0.4,
+          vx: (Math.random() - 0.5) * 0.3,
+          vy: -Math.random() * 0.45 - 0.1,
+          alpha: Math.random() * 0.6 + 0.2,
+          hue: Math.random() > 0.6 ? 280 : 185
+        });
+      }
+
+      const draw = () => {
+        ctx.clearRect(0, 0, w, h);
+
+        // Subtle gradient sheen
+        const grad = ctx.createRadialGradient(w / 2, h * 0.2, 10, w / 2, h * 0.4, w * 0.85);
+        grad.addColorStop(0, 'rgba(168, 85, 247, 0.08)');
+        grad.addColorStop(0.5, 'rgba(0, 240, 255, 0.03)');
+        grad.addColorStop(1, 'rgba(5, 2, 12, 0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+
+        for (const p of particles) {
+          p.x += p.vx;
+          p.y += p.vy;
+          if (p.y < -10) {
+            p.y = h + 10;
+            p.x = Math.random() * w;
+          }
+          if (p.x < -10) p.x = w + 10;
+          if (p.x > w + 10) p.x = -10;
+
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+          ctx.fillStyle = `hsla(${p.hue}, 100%, 75%, ${p.alpha})`;
+          ctx.shadowBlur = 10;
+          ctx.shadowColor = `hsla(${p.hue}, 100%, 75%, 0.8)`;
+          ctx.fill();
+        }
+        ctx.shadowBlur = 0;
+        requestAnimationFrame(draw);
+      };
+      draw();
+    })();
+  </script>
+
+  <!-- EKG Oscilloscope Visualizer -->
+  <script>
+    const EKGVisualizer = (() => {
+      const canvas = document.getElementById('ekg-canvas');
+      const ctx = canvas.getContext('2d');
+      let w, h;
+      let sweepX = 0;
+      let speed = 2.4; // Controlled by cadence
+      const points = [];
+      const MAX_POINTS = 300;
+
+      const resize = () => {
+        if (!canvas) return;
+        w = canvas.width = canvas.parentElement.clientWidth;
+        h = canvas.height = canvas.parentElement.clientHeight;
+      };
+      window.addEventListener('resize', resize);
+      resize();
+
+      let phase = 0;
+
+      const getY = (x) => {
+        const mid = h / 2;
+        const cycle = (x + phase) % 180;
+        // P-Q-R-S-T wave pattern
+        if (cycle > 50 && cycle < 65) {
+          // P wave
+          return mid - Math.sin((cycle - 50) / 15 * Math.PI) * 6;
+        } else if (cycle >= 75 && cycle < 82) {
+          // Q wave
+          return mid + 5;
+        } else if (cycle >= 82 && cycle < 95) {
+          // R peak
+          return mid - Math.sin((cycle - 82) / 13 * Math.PI) * (h * 0.42);
+        } else if (cycle >= 95 && cycle < 105) {
+          // S wave
+          return mid + Math.sin((cycle - 95) / 10 * Math.PI) * 9;
+        } else if (cycle >= 120 && cycle < 145) {
+          // T wave
+          return mid - Math.sin((cycle - 120) / 25 * Math.PI) * 8;
+        }
+        return mid + (Math.random() - 0.5) * 1.5;
+      };
+
+      const animate = () => {
+        if (!ctx || !w) {
+          requestAnimationFrame(animate);
+          return;
+        }
+        phase += speed;
+
+        ctx.fillStyle = 'rgba(4, 2, 10, 0.28)';
+        ctx.fillRect(0, 0, w, h);
+
+        // Draw grid
+        ctx.strokeStyle = 'rgba(0, 240, 255, 0.06)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let x = 0; x < w; x += 24) {
+          ctx.moveTo(x, 0); ctx.lineTo(x, h);
+        }
+        for (let y = 0; y < h; y += 18) {
+          ctx.moveTo(0, y); ctx.lineTo(w, y);
+        }
+        ctx.stroke();
+
+        // Draw Heartbeat Wave
+        ctx.beginPath();
+        ctx.strokeStyle = '#00f0ff';
+        ctx.lineWidth = 2.2;
+        ctx.shadowColor = '#00f0ff';
+        ctx.shadowBlur = 12;
+
+        for (let x = 0; x < w; x += 2) {
+          const y = getY(x);
+          if (x === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        requestAnimationFrame(animate);
+      };
+      animate();
+
+      return {
+        setSpeedByCadence: (minutes) => {
+          // Faster cadence = faster EKG wave
+          if (minutes <= 5) speed = 5.2;
+          else if (minutes <= 60) speed = 3.8;
+          else if (minutes <= 1440) speed = 2.8;
+          else if (minutes <= 10080) speed = 1.9;
+          else speed = 1.2;
+        }
+      };
+    })();
+  </script>
+
+  <!-- Core State Machine & Touch Carousel Engine -->
+  <script>
+    (() => {
+      // ── Application State ──────────────────────────────────────────────────
+      const state = {
+        currentSlide: 0,
+        totalSlides: 6,
+        vaultTitle: 'Sovereign Contingency Protocol',
+        payload: '',
+        cadenceMinutes: 10080, // Default 7 days
+        graceEnabled: true,
+        graceMinutes: 1440, // Default 24 hours
+        creatorEmail: '',
+        recipientEmail: '',
+        recipientName: '',
+        releaseNote: '',
+        passphraseEnabled: false,
+        passphrase: '',
+        burnAfterReading: true,
+        timelockEnabled: false,
+        isArmed: false,
+        switchId: '',
+        checkInToken: '',
+        nextDueAt: null,
+        releasesAt: null,
+        bittyBoxUrl: ''
+      };
+
+      // ── Presets Registry ───────────────────────────────────────────────────
+      const TEMPLATES = {
+        crypto: `=== EMERGENCY SEED & 2FA VAULT ===\n\nPrimary Wallet Recovery Words:\n1. anchor 2. velvet 3. orbital 4. sovereign\n5. matrix 6. cipher 7. beacon  8. genesis\n9. zenith 10. pulsar 11. kinetic 12. harbor\n\nPassphrase Hint: Our first shared mountain trip (lowercase)`,
+        will: `=== LAST WILL & ASSET DIRECTIVES ===\n\nI hereby declare all digital assets, cold storage reserves, and private accounts referenced herein are to be transferred to my designated beneficiary immediately upon verification of this switch.\n\nAttorney Contact: contingency-legal@vault.net`,
+        infra: `=== INFRASTRUCTURE ROOT DISASTER RECOVERY ===\n\nRoot SSH Key Fingerprint:\nSHA256:42b781bc09a1ff09930f81881ae9b433\n\nEmergency AWS IAM Recovery Seed:\nAKIA_CONTINGENCY_ESCROW_MASTER\n\nMaster Vault Decrypt Command:\ngpg --decrypt /srv/backup/sovereign-master.tar.enc`,
+        farewell: `If you are reading this, I was unable to check in and the switch has carried these words forward in my absence.\n\nInside this sealed box are the things I carried quietly. Take your time, read them gently, and know that everything I built was meant to secure our future.\n\nWith all my love,\nAlways.`
+      };
+
+      const NOTES = {
+        operational: 'Operational inactivity has elapsed. Follow enclosed directives in exact order and maintain confidentiality.',
+        legal: 'Release conditions have been satisfied. All enclosed materials are now under your formal jurisdiction.',
+        cinematic: 'The silence was not accidental. Inside this box is the key to what was left behind. Follow the directives carefully.'
+      };
+
+      // DOM Elements
+      const track = document.getElementById('carousel-track');
+      const wrap = document.getElementById('carousel-wrap');
+      const counterEl = document.getElementById('stage-counter');
+      const labelEl = document.getElementById('stage-label');
+      const prevBtn = document.getElementById('dock-btn-prev');
+      const nextBtn = document.getElementById('dock-btn-next');
+      const nextLabel = document.getElementById('dock-next-label');
+      const headerStagePill = document.getElementById('header-stage-pill');
+      const toastEl = document.getElementById('toast-pill');
+
+      const stageLabels = [
+        'ESCROW VAULT',
+        'LIVENESS CADENCE',
+        'GRACE BUFFER',
+        'BENEFICIARY DISPATCH',
+        'DEFENSE MATRIX',
+        'COMMAND & ARM'
+      ];
+
+      const showToast = (msg) => {
+        toastEl.textContent = msg;
+        toastEl.classList.add('show');
+        setTimeout(() => toastEl.classList.remove('show'), 2800);
+      };
+
+      // ── Scramble Text Effect ───────────────────────────────────────────────
+      const scrambleText = (el, finalStr) => {
+        const chars = '0123456789ABCDEF$#@*&';
+        let iteration = 0;
+        const original = finalStr;
+        clearInterval(el._scrambleTimer);
+        el._scrambleTimer = setInterval(() => {
+          el.innerText = original.split('').map((letter, index) => {
+            if (index < iteration) return original[index];
+            return chars[Math.floor(Math.random() * chars.length)];
+          }).join('');
+          if (iteration >= original.length) clearInterval(el._scrambleTimer);
+          iteration += 1 / 2;
+        }, 22);
+      };
+
+      // ── Update Carousel Position ──────────────────────────────────────────
+      const goToSlide = (index, playSfx = true) => {
+        state.currentSlide = Math.max(0, Math.min(state.totalSlides - 1, index));
+        track.style.transform = `translateX(-${state.currentSlide * 100}%)`;
+
+        // Update Stepper Tracks
+        document.querySelectorAll('.step-track').forEach((st, i) => {
+          st.classList.remove('completed', 'current');
+          if (i < state.currentSlide) st.classList.add('completed');
+          else if (i === state.currentSlide) st.classList.add('current');
+        });
+
+        // Update Dock Dots
+        document.querySelectorAll('.dock-dot').forEach((dd, i) => {
+          dd.classList.toggle('active', i === state.currentSlide);
+        });
+
+        // Update Labels
+        counterEl.textContent = `STAGE 0${state.currentSlide + 1} / 06`;
+        scrambleText(labelEl, stageLabels[state.currentSlide]);
+        headerStagePill.textContent = `0${state.currentSlide + 1} / 06`;
+
+        // Update Dock Navigation Buttons
+        prevBtn.style.opacity = state.currentSlide === 0 ? '0.4' : '1';
+        prevBtn.style.pointerEvents = state.currentSlide === 0 ? 'none' : 'auto';
+
+        if (state.currentSlide === state.totalSlides - 1) {
+          nextLabel.textContent = state.isArmed ? 'ARMED' : 'ARM SWITCH ⚡';
+          nextBtn.classList.remove('primary-next');
+          nextBtn.style.background = 'rgba(168, 85, 247, 0.3)';
+          updateReviewMatrix();
+        } else {
+          nextLabel.textContent = 'NEXT →';
+          nextBtn.classList.add('primary-next');
+          nextBtn.style.background = '';
+        }
+
+        // Drawer synchronization
+        document.querySelectorAll('.drawer-stage-item').forEach((item, i) => {
+          item.classList.toggle('current', i === state.currentSlide);
+        });
+
+        if (playSfx) SoundFX.click();
+      };
+
+      // ── Touch Gesture Swiping with Resistance ─────────────────────────────
+      let startX = 0;
+      let currentX = 0;
+      let isDragging = false;
+      let startTime = 0;
+
+      wrap.addEventListener('touchstart', (e) => {
+        startX = e.touches[0].clientX;
+        currentX = startX;
+        isDragging = true;
+        startTime = Date.now();
+        track.classList.add('dragging');
+      }, { passive: true });
+
+      wrap.addEventListener('touchmove', (e) => {
+        if (!isDragging) return;
+        currentX = e.touches[0].clientX;
+        const diffX = currentX - startX;
+
+        // Apply resistance if past boundaries
+        let offset = -state.currentSlide * wrap.clientWidth + diffX;
+        if ((state.currentSlide === 0 && diffX > 0) || (state.currentSlide === state.totalSlides - 1 && diffX < 0)) {
+          offset = -state.currentSlide * wrap.clientWidth + diffX * 0.35;
+        }
+        track.style.transform = `translateX(${offset}px)`;
+      }, { passive: true });
+
+      const finishDrag = () => {
+        if (!isDragging) return;
+        isDragging = false;
+        track.classList.remove('dragging');
+        const diffX = currentX - startX;
+        const timeDiff = Date.now() - startTime;
+        const velocity = Math.abs(diffX) / timeDiff;
+
+        // Threshold check: flick gesture or 25% displacement
+        if (diffX < -50 || (velocity > 0.4 && diffX < -25)) {
+          if (state.currentSlide < state.totalSlides - 1) goToSlide(state.currentSlide + 1);
+          else goToSlide(state.currentSlide);
+        } else if (diffX > 50 || (velocity > 0.4 && diffX > 25)) {
+          if (state.currentSlide > 0) goToSlide(state.currentSlide - 1);
+          else goToSlide(state.currentSlide);
+        } else {
+          goToSlide(state.currentSlide, false);
+        }
+      };
+
+      wrap.addEventListener('touchend', finishDrag);
+      wrap.addEventListener('touchcancel', finishDrag);
+
+      // Stepper & Dock Clicks
+      document.querySelectorAll('.step-track').forEach((st, idx) => {
+        st.addEventListener('click', () => goToSlide(idx));
+      });
+
+      prevBtn.addEventListener('click', () => {
+        if (state.currentSlide > 0) goToSlide(state.currentSlide - 1);
+      });
+
+      nextBtn.addEventListener('click', () => {
+        if (state.currentSlide < state.totalSlides - 1) {
+          goToSlide(state.currentSlide + 1);
+        } else {
+          // On slide 6, highlight slide-to-arm
+          const armWrap = document.getElementById('slide-to-arm-wrap');
+          if (armWrap) {
+            armWrap.style.boxShadow = '0 0 40px rgba(0, 240, 255, 0.8)';
+            setTimeout(() => armWrap.style.boxShadow = '', 600);
+            SoundFX.alert();
+            showToast('Slide the trigger track to engage switch!');
+          }
+        }
+      });
+
+      // ── Drawer Open/Close ─────────────────────────────────────────────────
+      const drawer = document.getElementById('drawer-sheet');
+      const scrim = document.getElementById('drawer-scrim');
+      const openDrawer = () => {
+        drawer.classList.add('open');
+        scrim.classList.add('open');
+        SoundFX.click();
+      };
+      const closeDrawer = () => {
+        drawer.classList.remove('open');
+        scrim.classList.remove('open');
+      };
+
+      document.getElementById('btn-stages-drawer').addEventListener('click', openDrawer);
+      scrim.addEventListener('click', closeDrawer);
+
+      document.querySelectorAll('.drawer-stage-item').forEach((item) => {
+        item.addEventListener('click', () => {
+          const idx = parseInt(item.dataset.jump, 10);
+          goToSlide(idx);
+          closeDrawer();
+        });
+      });
+
+      // Sound Toggle
+      document.getElementById('btn-sound-toggle').addEventListener('click', () => {
+        const on = SoundFX.toggle();
+        document.getElementById('sound-icon').textContent = on ? '🔊' : '🔇';
+        showToast(on ? 'Audio feedback enabled' : 'Muted');
+      });
+
+      // ── Template Selection ────────────────────────────────────────────────
+      const payloadEl = document.getElementById('vault-payload');
+      const charCounterEl = document.getElementById('char-counter');
+
+      const updatePayloadStats = () => {
+        state.payload = payloadEl.value;
+        const bytes = new TextEncoder().encode(state.payload).length;
+        charCounterEl.textContent = `${bytes} BYTES · ${state.payload.length} CHARS`;
+      };
+      payloadEl.addEventListener('input', updatePayloadStats);
+
+      document.querySelectorAll('[data-template]').forEach((chip) => {
+        chip.addEventListener('click', () => {
+          document.querySelectorAll('[data-template]').forEach(c => c.classList.remove('selected'));
+          chip.classList.add('selected');
+          const key = chip.dataset.template;
+          payloadEl.value = TEMPLATES[key] || '';
+          updatePayloadStats();
+          SoundFX.click();
+        });
+      });
+
+      // Set initial payload
+      payloadEl.value = TEMPLATES.crypto;
+      updatePayloadStats();
+
+      // ── Cadence Rhythm Selector ───────────────────────────────────────────
+      const formatDuration = (mins) => {
+        if (mins < 60) return `${mins} MIN${mins > 1 ? 'S' : ''}`;
+        if (mins < 1440) return `${Math.round(mins / 60)} HOUR${mins >= 120 ? 'S' : ''}`;
+        const days = Math.round(mins / 1440);
+        return `${days} DAY${days > 1 ? 'S' : ''}`;
+      };
+
+      const updateCadenceVisuals = () => {
+        const text = formatDuration(state.cadenceMinutes);
+        document.getElementById('cadence-readout').textContent = text;
+        const freq = (1 / (state.cadenceMinutes * 60)).toExponential(2);
+        document.getElementById('cadence-rate-readout').textContent = `${(10080 / state.cadenceMinutes).toFixed(2)}x NORM`;
+        EKGVisualizer.setSpeedByCadence(state.cadenceMinutes);
+        updateTotalSilence();
+      };
+
+      document.querySelectorAll('[data-minutes]').forEach((chip) => {
+        chip.addEventListener('click', () => {
+          document.querySelectorAll('[data-minutes]').forEach(c => c.classList.remove('selected'));
+          chip.classList.add('selected');
+          state.cadenceMinutes = parseInt(chip.dataset.minutes, 10);
+          updateCadenceVisuals();
+          SoundFX.heartbeat();
+        });
+      });
+
+      // ── Grace Period Controls ─────────────────────────────────────────────
+      const toggleGraceRow = document.getElementById('toggle-grace-row');
+      const toggleGraceSwitch = document.getElementById('toggle-grace-switch');
+      const gracePresetsWrap = document.getElementById('grace-presets-wrap');
+      const graceToggleDesc = document.getElementById('grace-toggle-desc');
+
+      const updateTotalSilence = () => {
+        const total = state.cadenceMinutes + (state.graceEnabled ? state.graceMinutes : 0);
+        document.getElementById('total-silence-math').textContent = formatDuration(total);
+      };
+
+      toggleGraceRow.addEventListener('click', () => {
+        state.graceEnabled = !state.graceEnabled;
+        toggleGraceSwitch.classList.toggle('active', state.graceEnabled);
+        gracePresetsWrap.style.display = state.graceEnabled ? 'flex' : 'none';
+        graceToggleDesc.textContent = state.graceEnabled ? 'Active buffer before trigger' : 'No Grace: Instant release upon missed pulse';
+        updateTotalSilence();
+        SoundFX.click();
+      });
+
+      document.querySelectorAll('[data-grace-minutes]').forEach((chip) => {
+        chip.addEventListener('click', () => {
+          document.querySelectorAll('[data-grace-minutes]').forEach(c => c.classList.remove('selected'));
+          chip.classList.add('selected');
+          state.graceMinutes = parseInt(chip.dataset.graceMinutes, 10);
+          updateTotalSilence();
+          SoundFX.click();
+        });
+      });
+
+      // ── Release Tone Templates ────────────────────────────────────────────
+      const releaseNoteEl = document.getElementById('release-note');
+      document.querySelectorAll('[data-tone]').forEach((chip) => {
+        chip.addEventListener('click', () => {
+          document.querySelectorAll('[data-tone]').forEach(c => c.classList.remove('selected'));
+          chip.classList.add('selected');
+          const tone = chip.dataset.tone;
+          releaseNoteEl.value = NOTES[tone] || '';
+          state.releaseNote = releaseNoteEl.value;
+          SoundFX.click();
+        });
+      });
+      releaseNoteEl.value = NOTES.operational;
+      state.releaseNote = NOTES.operational;
+
+      // ── Secondary Defense Toggles ─────────────────────────────────────────
+      const togglePass = document.getElementById('toggle-passphrase');
+      const passWrap = document.getElementById('passphrase-input-wrap');
+      togglePass.parentElement.addEventListener('click', () => {
+        state.passphraseEnabled = !state.passphraseEnabled;
+        togglePass.classList.toggle('active', state.passphraseEnabled);
+        passWrap.style.display = state.passphraseEnabled ? 'block' : 'none';
+        SoundFX.click();
+      });
+
+      const toggleBurn = document.getElementById('toggle-burn');
+      toggleBurn.parentElement.addEventListener('click', () => {
+        state.burnAfterReading = !state.burnAfterReading;
+        toggleBurn.classList.toggle('active', state.burnAfterReading);
+        SoundFX.click();
+      });
+
+      const toggleTime = document.getElementById('toggle-timelock');
+      toggleTime.parentElement.addEventListener('click', () => {
+        state.timelockEnabled = !state.timelockEnabled;
+        toggleTime.classList.toggle('active', state.timelockEnabled);
+        SoundFX.click();
+      });
+
+      // ── Review Matrix Sync ────────────────────────────────────────────────
+      const updateReviewMatrix = () => {
+        state.vaultTitle = document.getElementById('vault-title').value.trim() || 'Sovereign Contingency Protocol';
+        state.creatorEmail = document.getElementById('creator-email').value.trim();
+        state.recipientEmail = document.getElementById('recipient-email').value.trim();
+        state.recipientName = document.getElementById('recipient-name').value.trim();
+        state.releaseNote = releaseNoteEl.value.trim();
+        state.passphrase = document.getElementById('secondary-passphrase').value.trim();
+
+        document.getElementById('rev-title').textContent = state.vaultTitle;
+        document.getElementById('rev-cadence').textContent = formatDuration(state.cadenceMinutes);
+        document.getElementById('rev-grace').textContent = state.graceEnabled ? formatDuration(state.graceMinutes) : 'OFF (Instant Release)';
+        document.getElementById('rev-creator').textContent = state.creatorEmail || 'Not entered';
+        document.getElementById('rev-recipient').textContent = state.recipientEmail || 'Not entered';
+        document.getElementById('rev-cipher').textContent = state.passphraseEnabled && state.passphrase ? 'AES-GCM (Dual-Passphrase)' : 'Zero-Knowledge Sealed';
+      };
+
+      // ── Compression & Bitty URL Generation Engine ─────────────────────────
+      const generateBittyBoxUrl = async (payload, title, password) => {
+        try {
+          // Native browser CompressionStream gzip
+          const encoder = new TextEncoder();
+          const data = encoder.encode(payload);
+          const cs = new CompressionStream('gzip');
+          const writer = cs.writable.getWriter();
+          writer.write(data);
+          writer.close();
+          const compressedBuffer = await new Response(cs.readable).arrayBuffer();
+          const bytes = new Uint8Array(compressedBuffer);
+
+          // Base64URL encoding
+          let binary = '';
+          const len = bytes.byteLength;
+          for (let i = 0; i < len; i += 8192) {
+            binary += String.fromCharCode.apply(null, bytes.subarray(i, Math.min(i + 8192, len)));
+          }
+          const base64Url = btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+          const safeTitle = encodeURIComponent(title.replace(/\s+/g, '-'));
+          return `${window.location.origin}/#/${safeTitle}/?${base64Url}`;
+        } catch {
+          // Fallback plain encoded URL
+          return `${window.location.origin}/#/${encodeURIComponent(title)}/?data:text/plain,${encodeURIComponent(payload)}`;
+        }
+      };
+
+      // ── Slide To Arm Mechanism ────────────────────────────────────────────
+      const slideWrap = document.getElementById('slide-to-arm-wrap');
+      const slideHandle = document.getElementById('slide-handle');
+      const slideFill = document.getElementById('slide-track-fill');
+      const slideLabel = document.getElementById('slide-track-label');
+      let slideStartX = 0;
+      let handleMaxX = 0;
+      let isSliding = false;
+
+      const initSlider = () => {
+        handleMaxX = slideWrap.clientWidth - slideHandle.clientWidth - 8;
+      };
+      window.addEventListener('resize', initSlider);
+      setTimeout(initSlider, 300);
+
+      const resetSlideHandle = () => {
+        slideHandle.style.transform = 'translateX(0px)';
+        slideFill.style.width = '0px';
+        slideLabel.style.opacity = '1';
+      };
+
+      const triggerArmSequence = async () => {
+        updateReviewMatrix();
+
+        if (!state.creatorEmail || !state.creatorEmail.includes('@')) {
+          showToast('Enter your valid Check-In Email on Stage 02!');
+          resetSlideHandle();
+          goToSlide(1);
+          return;
+        }
+        if (!state.recipientEmail || !state.recipientEmail.includes('@')) {
+          showToast('Enter your Beneficiary Email on Stage 04!');
+          resetSlideHandle();
+          goToSlide(3);
+          return;
+        }
+
+        slideLabel.textContent = 'SEALING & ARMING...';
+        SoundFX.engage();
+
+        try {
+          // 1. Generate real compressed bitty link
+          const boxUrl = await generateBittyBoxUrl(state.payload, state.vaultTitle, state.passphrase);
+          state.bittyBoxUrl = boxUrl;
+
+          // 2. Call real backend API /api/deadman/arm
+          const generatedId = 'dms_' + Math.random().toString(36).substring(2, 10);
+          const response = await fetch('/api/deadman/arm', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({
+              id: generatedId,
+              boxTitle: state.vaultTitle,
+              boxUrl: boxUrl,
+              creatorEmail: state.creatorEmail,
+              recipientEmail: state.recipientEmail,
+              recipientName: state.recipientName,
+              note: state.releaseNote,
+              intervalMinutes: state.cadenceMinutes,
+              graceMinutes: state.graceEnabled ? state.graceMinutes : 0,
+              graceDisabled: !state.graceEnabled,
+              sendFirstEmail: true
+            })
+          });
+
+          const data = await response.json().catch(() => null);
+
+          if (response.ok && data?.success) {
+            state.isArmed = true;
+            state.switchId = data.switch?.id || generatedId;
+            state.checkInToken = data.checkInToken || '';
+            state.nextDueAt = data.switch?.nextDueAt || new Date(Date.now() + state.cadenceMinutes * 60000).toISOString();
+            state.releasesAt = data.switch?.releasesAt;
+
+            // Persist to localStorage
+            try {
+              localStorage.setItem('bitty_deadman_v2_active', JSON.stringify({
+                switchId: state.switchId,
+                token: state.checkInToken,
+                nextDueAt: state.nextDueAt,
+                creatorEmail: state.creatorEmail,
+                title: state.vaultTitle
+              }));
+              localStorage.setItem(`bitty_deadman_token_${state.switchId}`, state.checkInToken);
+            } catch {}
+
+            // Switch to Armed View
+            document.getElementById('pre-arm-deck').style.display = 'none';
+            document.getElementById('post-arm-deck').style.display = 'flex';
+            document.getElementById('live-switch-id').textContent = `ID: ${state.switchId}`;
+            nextLabel.textContent = 'ARMED';
+
+            startCountdown();
+            showToast('Dead Man’s Switch Armed & Watching!');
+          } else {
+            throw new Error(data?.error || 'Server arming failed');
+          }
+        } catch (err) {
+          resetSlideHandle();
+          slideLabel.textContent = 'SLIDE TO ENGAGE SWITCH ➔';
+          showToast(`Arming Alert: ${err.message}. Check network connection.`);
+          SoundFX.alert();
+        }
+      };
+
+      slideHandle.addEventListener('touchstart', (e) => {
+        isSliding = true;
+        slideStartX = e.touches[0].clientX;
+        initSlider();
+      }, { passive: true });
+
+      slideHandle.addEventListener('touchmove', (e) => {
+        if (!isSliding) return;
+        const current = e.touches[0].clientX;
+        let delta = current - slideStartX;
+        delta = Math.max(0, Math.min(handleMaxX, delta));
+
+        slideHandle.style.transform = `translateX(${delta}px)`;
+        slideFill.style.width = `${delta + 26}px`;
+        slideLabel.style.opacity = `${1 - delta / handleMaxX}`;
+
+        const pct = delta / handleMaxX;
+        SoundFX.charge(220 + pct * 440);
+
+        if (pct >= 0.94) {
+          isSliding = false;
+          triggerArmSequence();
+        }
+      }, { passive: true });
+
+      const endSlider = () => {
+        if (!isSliding) return;
+        isSliding = false;
+        resetSlideHandle();
+      };
+      slideHandle.addEventListener('touchend', endSlider);
+      slideHandle.addEventListener('touchcancel', endSlider);
+
+      // Mouse support for desktop testing
+      slideHandle.addEventListener('mousedown', (e) => {
+        isSliding = true;
+        slideStartX = e.clientX;
+        initSlider();
+
+        const onMove = (ev) => {
+          if (!isSliding) return;
+          let delta = ev.clientX - slideStartX;
+          delta = Math.max(0, Math.min(handleMaxX, delta));
+          slideHandle.style.transform = `translateX(${delta}px)`;
+          slideFill.style.width = `${delta + 26}px`;
+          slideLabel.style.opacity = `${1 - delta / handleMaxX}`;
+          if (delta / handleMaxX >= 0.94) {
+            isSliding = false;
+            window.removeEventListener('mousemove', onMove);
+            window.removeEventListener('mouseup', onUp);
+            triggerArmSequence();
+          }
+        };
+
+        const onUp = () => {
+          isSliding = false;
+          window.removeEventListener('mousemove', onMove);
+          window.removeEventListener('mouseup', onUp);
+          resetSlideHandle();
+        };
+
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup', onUp);
+      });
+
+      // ── Armed Live Operations Timer ───────────────────────────────────────
+      let countdownTimer = null;
+      const countdownEl = document.getElementById('live-countdown');
+
+      const startCountdown = () => {
+        clearInterval(countdownTimer);
+        const updateTick = () => {
+          if (!state.nextDueAt) return;
+          const diff = new Date(state.nextDueAt).getTime() - Date.now();
+          if (diff <= 0) {
+            countdownEl.textContent = 'CHECK-IN DUE NOW';
+            countdownEl.style.color = 'var(--amber)';
+            return;
+          }
+          const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+          const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+          const mins = Math.floor((diff / (1000 * 60)) % 60);
+          const secs = Math.floor((diff / 1000) % 60);
+
+          countdownEl.textContent = `${String(days).padStart(2, '0')}d ${String(hours).padStart(2, '0')}h ${String(mins).padStart(2, '0')}m ${String(secs).padStart(2, '0')}s`;
+          countdownEl.style.color = '#fff';
+        };
+        updateTick();
+        countdownTimer = setInterval(updateTick, 1000);
+      };
+
+      // Tactical Action Buttons
+      document.getElementById('btn-checkin-now').addEventListener('click', async () => {
+        if (!state.checkInToken) return;
+        SoundFX.engage();
+        showToast('Sending liveness pulse to server...');
+        try {
+          const res = await fetch(`/api/deadman/checkin/${encodeURIComponent(state.checkInToken)}`, {
+            method: 'POST',
+            headers: { 'Accept': 'application/json' }
+          });
+          const data = await res.json().catch(() => ({}));
+          if (res.ok && data.success) {
+            state.nextDueAt = data.switch?.nextDueAt;
+            showToast('Checked in! Liveness pulse registered.');
+            SoundFX.heartbeat();
+          } else {
+            showToast('Check-in link not recognized or expired.');
+          }
+        } catch {
+          showToast('Network error verifying pulse.');
+        }
+      });
+
+      document.getElementById('btn-test-email').addEventListener('click', async () => {
+        if (!state.checkInToken) return;
+        SoundFX.click();
+        showToast('Dispatched test reminder email to inbox...');
+        try {
+          const res = await fetch('/api/deadman/test-remind', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ token: state.checkInToken })
+          });
+          const data = await res.json().catch(() => ({}));
+          if (res.ok && data.success) {
+            showToast('Test check-in email delivered!');
+          } else {
+            showToast(data.error || 'Test email failed to deliver.');
+          }
+        } catch {
+          showToast('Network error during test dispatch.');
+        }
+      });
+
+      document.getElementById('btn-test-fire').addEventListener('click', async () => {
+        if (!state.checkInToken) return;
+        SoundFX.alert();
+        if (!confirm('Simulate release email to beneficiary right now?')) return;
+        showToast('Simulating trigger release...');
+        try {
+          const res = await fetch('/api/deadman/test-fire', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ token: state.checkInToken })
+          });
+          const data = await res.json().catch(() => ({}));
+          if (res.ok && data.success) {
+            showToast('Test release email delivered to beneficiary!');
+          } else {
+            showToast(data.error || 'Test fire simulation failed.');
+          }
+        } catch {
+          showToast('Network error executing simulation.');
+        }
+      });
+
+      document.getElementById('btn-copy-checkin').addEventListener('click', async () => {
+        if (!state.checkInToken) return;
+        const url = `${window.location.origin}/api/deadman/checkin/${state.checkInToken}`;
+        await navigator.clipboard.writeText(url).catch(() => {});
+        showToast('Copied secret Check-in URL!');
+        SoundFX.click();
+      });
+
+      document.getElementById('btn-view-box').addEventListener('click', async () => {
+        if (state.bittyBoxUrl) {
+          await navigator.clipboard.writeText(state.bittyBoxUrl).catch(() => {});
+          showToast('Copied Bitty Box Vault URL!');
+          SoundFX.click();
+        }
+      });
+
+      document.getElementById('btn-disarm-switch').addEventListener('click', async () => {
+        if (!confirm('Deactivate and disarm this Dead Man’s Switch?')) return;
+        SoundFX.alert();
+        try {
+          await fetch('/api/deadman/disarm', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: state.switchId, token: state.checkInToken })
+          });
+        } catch {}
+
+        state.isArmed = false;
+        clearInterval(countdownTimer);
+        try { localStorage.removeItem('bitty_deadman_v2_active'); } catch {}
+
+        document.getElementById('post-arm-deck').style.display = 'none';
+        document.getElementById('pre-arm-deck').style.display = 'flex';
+        resetSlideHandle();
+        slideLabel.textContent = 'SLIDE TO ENGAGE SWITCH ➔';
+        nextLabel.textContent = 'ARM SWITCH ⚡';
+        showToast('Dead Man’s Switch Disarmed.');
+      });
+
+      // ── Check Existing Armed Switch in Storage ────────────────────────────
+      try {
+        const saved = JSON.parse(localStorage.getItem('bitty_deadman_v2_active') || 'null');
+        if (saved && saved.switchId && saved.token) {
+          state.switchId = saved.switchId;
+          state.checkInToken = saved.token;
+          state.nextDueAt = saved.nextDueAt;
+          state.creatorEmail = saved.creatorEmail || '';
+          state.vaultTitle = saved.title || 'Sovereign Contingency';
+          state.isArmed = true;
+
+          // Fetch authoritative live status
+          fetch(`/api/deadman/status/${encodeURIComponent(saved.switchId)}`)
+            .then(r => r.json())
+            .then(data => {
+              if (data?.success && data.switch) {
+                state.nextDueAt = data.switch.nextDueAt;
+                startCountdown();
+              }
+            })
+            .catch(() => {});
+
+          document.getElementById('pre-arm-deck').style.display = 'none';
+          document.getElementById('post-arm-deck').style.display = 'flex';
+          document.getElementById('live-switch-id').textContent = `ID: ${state.switchId}`;
+          startCountdown();
+        }
+      } catch {}
+
+      // Initial Slide
+      goToSlide(0, false);
+    })();
+  </script>
+</body>
+</html>
