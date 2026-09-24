@@ -134,6 +134,12 @@
   var elDisarmEcho = $('#dmsDisarmEcho');
   var elTestEcho = $('#dmsTestEcho');
 
+  /* The live pane is the last step, the payload pane is the second. Derive
+     them — a hard-coded 5 here silently pointed at the ARM pane and froze the
+     countdown ticker. */
+  var SEALED_INDEX = STEPS.length - 1;
+  var SEAL_INDEX = 1;
+
   /* ── State ───────────────────────────────────────────────────────────── */
   var state = {
     step: 0,
@@ -144,7 +150,8 @@
     switch: null,      /* publicSwitchView from the API */
     token: '',
     switchId: '',
-    checkedIn: false
+    checkedIn: false,
+    dueOverride: null  /* test affordance: forces the countdown reference time */
   };
 
   /* ── Persistence: survive an accidental reload mid-setup ────────────── */
@@ -660,7 +667,7 @@
           }));
         } catch (e) { /* ignore */ }
         elCheckInLink.value = data.checkInUrl || (state.token ? location.origin + '/api/deadman/checkin/' + state.token : '');
-        goTo(5 + 1);
+        goTo(SEALED_INDEX);
         buzz([12, 60, 18, 60, 26]);
         toast(state.sendFirstEmail
           ? 'Armed. Your check-in link is on its way.'
@@ -744,7 +751,7 @@
   function startTicker() {
     if (tickTimer) return;
     tickTimer = setInterval(function () {
-      if (state.step !== 5) { return; }
+      if (state.step !== SEALED_INDEX) { return; }
       paintCountdown();
     }, 1000);
     setTimeout(refreshStatus, 2500);
@@ -755,7 +762,7 @@
     if (!sw || !elCdValue) return;
     if (sw.status === 'triggered') { elCdValue.textContent = 'released'; return; }
     if (sw.status === 'disarmed') { elCdValue.textContent = 'disarmed'; return; }
-    var due = sw.nextDueAt ? new Date(sw.nextDueAt).getTime() : 0;
+    var due = state.dueOverride || (sw.nextDueAt ? new Date(sw.nextDueAt).getTime() : 0);
     elCdValue.textContent = countdown(due - Date.now());
   }
 
@@ -836,7 +843,7 @@
     elCheckInLink.value = '';
     elSwitchId.textContent = '—';
     elCdValue.textContent = '—';
-    goTo(1, { instant: true });
+    goTo(SEAL_INDEX, { instant: true });
     toast('Fresh canvas. Your details are still here.');
     buzz(10);
   }
@@ -1006,11 +1013,16 @@
         };
       },
       formatCountdown: function (ms) { return countdown(ms); },
-      /* Test affordance: move the switch's due time without touching the server,
-         so the 1s ticker can be proven to be live. */
+      /* Test affordance: pin the countdown's reference time without touching the
+         server, so the 1s ticker can be proven to actually repaint. Pass null to
+         release the override. */
       simulateDue: function (msFromNow) {
         if (!state.switch) return null;
-        state.switch.nextDueAt = new Date(Date.now() + Math.max(0, Number(msFromNow) || 0)).toISOString();
+        if (msFromNow === null || msFromNow === undefined) {
+          state.dueOverride = null;
+        } else {
+          state.dueOverride = Date.now() + Math.max(0, Number(msFromNow) || 0);
+        }
         paintCountdown();
         return elCdValue.textContent;
       },
