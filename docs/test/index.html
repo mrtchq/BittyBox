@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#07090e" />
+  <meta name="color-scheme" content="dark" />
+  <title>Arm a Dead Man’s Switch — Bitty Box</title>
+  <meta name="description" content="The Bitty Box Dead Man’s Switch, rebuilt from the ground up for one thumb. Set a heartbeat, name a guardian, and let the box release itself if you go quiet." />
+  <link rel="icon" type="image/png" href="/bittybox-logo.png" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/test/dms.css?v=1" />
+</head>
+<body>
+  <div class="dms-app" id="dmsApp" data-step="0" data-state="alive">
+
+    <!-- ── Ambient depth layers ─────────────────────────────────────────── -->
+    <div class="dms-ambient" aria-hidden="true">
+      <div class="dms-aurora dms-aurora-a"></div>
+      <div class="dms-aurora dms-aurora-b"></div>
+      <div class="dms-aurora dms-aurora-c"></div>
+      <div class="dms-grid"></div>
+      <div class="dms-grain"></div>
+      <div class="dms-scan"></div>
+    </div>
+
+    <!-- ── Rail: brand, step name, tappable progress ────────────────────── -->
+    <header class="dms-rail">
+      <div class="dms-rail-head">
+        <span class="dms-brand">
+          <span class="dms-brand-dot" aria-hidden="true"></span>
+          BITTY&nbsp;BOX
+        </span>
+        <span class="dms-stepname" id="dmsStepName">SIGNAL</span>
+      </div>
+      <nav class="dms-progress" id="dmsProgress" aria-label="Setup progress">
+        <button type="button" class="dms-seg" data-goto="0" aria-label="Step 1: Signal"><i></i></button>
+        <button type="button" class="dms-seg" data-goto="1" aria-label="Step 2: Seal"><i></i></button>
+        <button type="button" class="dms-seg" data-goto="2" aria-label="Step 3: Guardian"><i></i></button>
+        <button type="button" class="dms-seg" data-goto="3" aria-label="Step 4: Heartbeat"><i></i></button>
+        <button type="button" class="dms-seg" data-goto="4" aria-label="Step 5: Grace"><i></i></button>
+        <button type="button" class="dms-seg" data-goto="5" aria-label="Step 6: Arm"><i></i></button>
+        <button type="button" class="dms-seg" data-goto="6" aria-label="Step 7: Sealed"><i></i></button>
+        <span class="dms-progress-fill" id="dmsProgressFill" aria-hidden="true"></span>
+      </nav>
+    </header>
+
+    <!-- ── Horizontal snap carousel ─────────────────────────────────────── -->
+    <main class="dms-track" id="dmsTrack" tabindex="-1">
+
+      <!-- 00 · SIGNAL ---------------------------------------------------- -->
+      <section class="dms-pane dms-pane-signal" data-pane="signal" data-index="0" aria-label="Signal">
+        <div class="dms-pane-body dms-center">
+          <div class="dms-pulse" aria-hidden="true">
+            <span class="dms-pulse-ring"></span>
+            <span class="dms-pulse-ring dms-d2"></span>
+            <span class="dms-pulse-ring dms-d3"></span>
+            <svg class="dms-ecg" viewBox="0 0 240 64" preserveAspectRatio="none" role="presentation">
+              <path class="dms-ecg-line" d="M0 32 H44 l7 -22 l9 44 l8 -30 l6 8 H240" />
+            </svg>
+            <span class="dms-pulse-core"></span>
+          </div>
+
+          <p class="dms-kicker dms-reveal" data-r="0">BITTY BOX · FLAGSHIP</p>
+          <h1 class="dms-display dms-reveal" data-r="1">
+            The Dead Man’s<br /><em>Switch</em>
+          </h1>
+          <p class="dms-lead dms-reveal" data-r="2">
+            A heartbeat you own. If it stops, your box opens itself — for the one
+            person you chose, in the words you left behind.
+          </p>
+
+          <ul class="dms-stats dms-reveal" data-r="3">
+            <li><b>2&nbsp;min</b><span>to arm</span></li>
+            <li><b>1&nbsp;tap</b><span>to check in</span></li>
+            <li><b>0</b><span>work to release</span></li>
+          </ul>
+
+          <p class="dms-swipecue dms-reveal" data-r="4" aria-hidden="true">
+            <span>Swipe through the six stages</span>
+            <i class="dms-swipe-arrow"></i>
+          </p>
+        </div>
+      </section>
+
+      <!-- 01 · SEAL ------------------------------------------------------ -->
+      <section class="dms-pane" data-pane="seal" data-index="1" aria-label="Seal the payload">
+        <div class="dms-pane-body">
+          <p class="dms-kicker dms-reveal" data-r="0">01 — SEAL</p>
+          <h2 class="dms-h2 dms-reveal" data-r="1">What are you handing over?</h2>
+          <p class="dms-help dms-reveal" data-r="2">
+            Name it, say it, and point at the box they should receive.
+          </p>
+
+          <div class="dms-field dms-reveal" data-r="3">
+            <label for="dmsTitle">NAME THIS BOX</label>
+            <input id="dmsTitle" class="dms-input" type="text" maxlength="200"
+              autocomplete="off" enterkeyhint="next"
+              placeholder="The thing they should have if I’m gone" />
+          </div>
+
+          <div class="dms-field dms-reveal" data-r="4">
+            <label for="dmsBoxUrl">BITTY LINK <span class="dms-opt">optional</span></label>
+            <input id="dmsBoxUrl" class="dms-input dms-mono" type="url" maxlength="2048"
+              inputmode="url" autocomplete="off" spellcheck="false" autocapitalize="off"
+              placeholder="https://bittybox.org/#…" />
+            <p class="dms-hint">The box that gets released. Leave blank to release only your message.</p>
+          </div>
+
+          <div class="dms-field dms-reveal" data-r="5">
+            <label for="dmsNote">WORDS FOR THEM</label>
+            <textarea id="dmsNote" class="dms-input dms-textarea" maxlength="2000" rows="5"
+              placeholder="Write it the way you’d say it. They’ll read this the moment the switch fires."></textarea>
+            <div class="dms-row dms-between">
+              <p class="dms-hint">Delivered verbatim in the release email.</p>
+              <p class="dms-count"><span id="dmsNoteCount">0</span>/2000</p>
+            </div>
+          </div>
+
+          <div class="dms-field dms-reveal" data-r="6">
+            <p class="dms-hint dms-hint-top">START FROM A LINE</p>
+            <div class="dms-chips" id="dmsNoteChips">
+              <button type="button" class="dms-chip" data-note="If you’re reading this, the clock ran out and the failsafe fired exactly as I designed it. Everything you need is inside.">Failsafe fired</button>
+              <button type="button" class="dms-chip" data-note="I’m okay. Something changed and I couldn’t check in — here is what happens next, and what I need you to do.">I’m okay, read this</button>
+              <button type="button" class="dms-chip" data-note="You are the only person I trusted with this. Take your time. Nothing here needs an answer today.">Only you</button>
+              <button type="button" class="dms-chip" data-note="Passwords, accounts and instructions are listed in order of importance. Do the first one before you tell anyone else.">Do this first</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 02 · GUARDIAN -------------------------------------------------- -->
+      <section class="dms-pane" data-pane="guardian" data-index="2" aria-label="Guardian">
+        <div class="dms-pane-body">
+          <p class="dms-kicker dms-reveal" data-r="0">02 — GUARDIAN</p>
+          <h2 class="dms-h2 dms-reveal" data-r="1">Who receives it?</h2>
+          <p class="dms-help dms-reveal" data-r="2">
+            They hear nothing until the switch fires. No preview, no notification,
+            no way for them to know it exists.
+          </p>
+
+          <div class="dms-field dms-reveal" data-r="3">
+            <label for="dmsRecipientEmail">THEIR EMAIL</label>
+            <input id="dmsRecipientEmail" class="dms-input" type="email" inputmode="email"
+              autocomplete="off" spellcheck="false" autocapitalize="off" enterkeyhint="next"
+              placeholder="name@example.com" />
+            <p class="dms-hint dms-warn" id="dmsRecipientWarn" hidden>That doesn’t look like an email address.</p>
+          </div>
+
+          <div class="dms-field dms-reveal" data-r="4">
+            <label for="dmsRecipientName">WHAT YOU CALL THEM <span class="dms-opt">optional</span></label>
+            <input id="dmsRecipientName" class="dms-input" type="text" maxlength="120"
+              autocomplete="off" enterkeyhint="done" placeholder="Sam" />
+          </div>
+
+          <div class="dms-card dms-guardiancard dms-reveal" data-r="5">
+            <div class="dms-guardian-orb" aria-hidden="true"><span></span></div>
+            <div class="dms-guardian-text">
+              <p class="dms-cardlabel">DESIGNATED GUARDIAN</p>
+              <p class="dms-guardian-name" id="dmsGuardianName">Not chosen yet</p>
+              <p class="dms-guardian-mail dms-mono" id="dmsGuardianMail">—</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 03 · HEARTBEAT ------------------------------------------------- -->
+      <section class="dms-pane" data-pane="heartbeat" data-index="3" aria-label="Heartbeat">
+        <div class="dms-pane-body">
+          <p class="dms-kicker dms-reveal" data-r="0">03 — HEARTBEAT</p>
+          <h2 class="dms-h2 dms-reveal" data-r="1">How often will you check in?</h2>
+          <p class="dms-help dms-reveal" data-r="2">
+            We email you a one-tap check-in link on this cadence. Miss one and the
+            countdown starts.
+          </p>
+
+          <div class="dms-dialwrap dms-reveal" data-r="3">
+            <div class="dms-dial" id="dmsIntervalDial" role="slider" tabindex="0"
+              aria-label="Check-in interval" aria-valuemin="1" aria-valuemax="400"
+              aria-valuenow="7" aria-valuetext="7 days">
+              <svg class="dms-dial-svg" viewBox="0 0 200 200" aria-hidden="true">
+                <defs>
+                  <linearGradient id="dmsDialGrad" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="#00e5ff" />
+                    <stop offset="100%" stop-color="#10b981" />
+                  </linearGradient>
+                </defs>
+                <circle class="dms-dial-track" cx="100" cy="100" r="86" />
+                <circle class="dms-dial-arc" id="dmsDialArc" cx="100" cy="100" r="86" />
+                <g class="dms-dial-ticks" id="dmsDialTicks"></g>
+              </svg>
+              <div class="dms-dial-face">
+                <span class="dms-dial-value" id="dmsDialValue">7</span>
+                <span class="dms-dial-unit" id="dmsDialUnit">days</span>
+                <span class="dms-dial-cap" id="dmsDialCap">between check-ins</span>
+              </div>
+              <span class="dms-dial-knob" id="dmsDialKnob" aria-hidden="true"></span>
+            </div>
+
+            <div class="dms-stepper">
+              <button type="button" class="dms-step-btn" id="dmsIntervalDown" aria-label="Shorter interval">−</button>
+              <div class="dms-units" id="dmsIntervalUnits" role="group" aria-label="Interval unit">
+                <button type="button" class="dms-unit" data-unit="minutes">MIN</button>
+                <button type="button" class="dms-unit" data-unit="hours">HRS</button>
+                <button type="button" class="dms-unit" data-unit="days" aria-pressed="true">DAYS</button>
+              </div>
+              <button type="button" class="dms-step-btn" id="dmsIntervalUp" aria-label="Longer interval">+</button>
+            </div>
+          </div>
+
+          <div class="dms-chips dms-chips-center dms-reveal" data-r="4" id="dmsIntervalPresets">
+            <button type="button" class="dms-chip" data-minutes="1">1 min</button>
+            <button type="button" class="dms-chip" data-minutes="60">1 hr</button>
+            <button type="button" class="dms-chip" data-minutes="1440">24 hrs</button>
+            <button type="button" class="dms-chip" data-minutes="4320">3 days</button>
+            <button type="button" class="dms-chip dms-on" data-minutes="10080">7 days</button>
+            <button type="button" class="dms-chip" data-minutes="43200">30 days</button>
+          </div>
+
+          <p class="dms-caption dms-reveal" data-r="5">
+            You’ll hear from us every <b id="dmsHeartbeatEcho">7 days</b>. Ignoring the
+            reminder starts the grace window.
+          </p>
+        </div>
+      </section>
+
+      <!-- 04 · GRACE ----------------------------------------------------- -->
+      <section class="dms-pane" data-pane="grace" data-index="4" aria-label="Grace window">
+        <div class="dms-pane-body">
+          <p class="dms-kicker dms-reveal" data-r="0">04 — GRACE</p>
+          <h2 class="dms-h2 dms-reveal" data-r="1">How long do they wait after you go quiet?</h2>
+          <p class="dms-help dms-reveal" data-r="2">
+            A grace window absorbs the boring reasons — dead phone, long flight, bad
+            week. Set it to zero for a hard edge.
+          </p>
+
+          <button type="button" class="dms-switch dms-reveal" data-r="3" id="dmsGraceToggle"
+            role="switch" aria-checked="true">
+            <span class="dms-switch-track"><i></i></span>
+            <span class="dms-switch-text">
+              <b>Give me a grace window</b>
+              <em id="dmsGraceToggleEcho">3 days of silence before release</em>
+            </span>
+          </button>
+
+          <div class="dms-dialwrap dms-reveal" data-r="4" id="dmsGraceWrap">
+            <div class="dms-dial dms-dial-amber" id="dmsGraceDial" role="slider" tabindex="0"
+              aria-label="Grace window" aria-valuemin="0" aria-valuemax="90"
+              aria-valuenow="3" aria-valuetext="3 days">
+              <svg class="dms-dial-svg" viewBox="0 0 200 200" aria-hidden="true">
+                <defs>
+                  <linearGradient id="dmsGraceGrad" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="#f59e0b" />
+                    <stop offset="100%" stop-color="#ff3366" />
+                  </linearGradient>
+                </defs>
+                <circle class="dms-dial-track" cx="100" cy="100" r="86" />
+                <circle class="dms-dial-arc dms-arc-amber" id="dmsGraceArc" cx="100" cy="100" r="86" />
+                <g class="dms-dial-ticks" id="dmsGraceTicks"></g>
+              </svg>
+              <div class="dms-dial-face">
+                <span class="dms-dial-value" id="dmsGraceValue">3</span>
+                <span class="dms-dial-unit" id="dmsGraceUnit">days</span>
+                <span class="dms-dial-cap">of silence</span>
+              </div>
+              <span class="dms-dial-knob dms-knob-amber" id="dmsGraceKnob" aria-hidden="true"></span>
+            </div>
+
+            <div class="dms-stepper">
+              <button type="button" class="dms-step-btn" id="dmsGraceDown" aria-label="Shorter grace">−</button>
+              <div class="dms-units" id="dmsGraceUnits" role="group" aria-label="Grace unit">
+                <button type="button" class="dms-unit" data-unit="minutes">MIN</button>
+                <button type="button" class="dms-unit" data-unit="hours">HRS</button>
+                <button type="button" class="dms-unit" data-unit="days" aria-pressed="true">DAYS</button>
+              </div>
+              <button type="button" class="dms-step-btn" id="dmsGraceUp" aria-label="Longer grace">+</button>
+            </div>
+          </div>
+
+          <div class="dms-timeline dms-reveal" data-r="5">
+            <div class="dms-tl-row">
+              <span class="dms-tl-dot dms-tl-alive"></span>
+              <span class="dms-tl-label">Last check-in</span>
+              <span class="dms-tl-val dms-mono" id="dmsTlLast">now</span>
+            </div>
+            <div class="dms-tl-bar" aria-hidden="true">
+              <span class="dms-tl-seg dms-tl-seg-a" id="dmsTlSegA"></span>
+              <span class="dms-tl-seg dms-tl-seg-b" id="dmsTlSegB"></span>
+            </div>
+            <div class="dms-tl-row">
+              <span class="dms-tl-dot dms-tl-due"></span>
+              <span class="dms-tl-label">Reminder fires</span>
+              <span class="dms-tl-val dms-mono" id="dmsTlDue">in 7 days</span>
+            </div>
+            <div class="dms-tl-row">
+              <span class="dms-tl-dot dms-tl-fire"></span>
+              <span class="dms-tl-label">Box released</span>
+              <span class="dms-tl-val dms-mono" id="dmsTlFire">in 10 days</span>
+            </div>
+          </div>
+
+          <p class="dms-caption dms-reveal" data-r="6">
+            Total silence before release: <b id="dmsTotalEcho">10 days</b>.
+          </p>
+        </div>
+      </section>
+
+      <!-- 05 · ARM ------------------------------------------------------- -->
+      <section class="dms-pane" data-pane="arm" data-index="5" aria-label="Arm the switch">
+        <div class="dms-pane-body">
+          <p class="dms-kicker dms-reveal" data-r="0">05 — ARM</p>
+          <h2 class="dms-h2 dms-reveal" data-r="1">Where do we send your check-in link?</h2>
+          <p class="dms-help dms-reveal" data-r="2">
+            This address is the whole safety catch. Whoever holds it can keep your
+            switch alive — so use one you actually read.
+          </p>
+
+          <div class="dms-field dms-reveal" data-r="3">
+            <label for="dmsCreatorEmail">YOUR EMAIL</label>
+            <input id="dmsCreatorEmail" class="dms-input" type="email" inputmode="email"
+              autocomplete="email" spellcheck="false" autocapitalize="off" enterkeyhint="done"
+              placeholder="you@example.com" />
+            <p class="dms-hint dms-warn" id="dmsCreatorWarn" hidden>That doesn’t look like an email address.</p>
+          </div>
+
+          <button type="button" class="dms-switch dms-reveal" data-r="4" id="dmsSendToggle"
+            role="switch" aria-checked="true">
+            <span class="dms-switch-track"><i></i></span>
+            <span class="dms-switch-text">
+              <b>Email me the check-in link now</b>
+              <em>Your first check-in link arrives the moment you arm.</em>
+            </span>
+          </button>
+
+          <div class="dms-review dms-reveal" data-r="5">
+            <p class="dms-cardlabel">FINAL READ</p>
+            <dl class="dms-review-list">
+              <div><dt>Box</dt><dd id="dmsRvTitle">Untitled Bitty Box</dd></div>
+              <div><dt>Guardian</dt><dd id="dmsRvGuardian">—</dd></div>
+              <div><dt>Heartbeat</dt><dd id="dmsRvInterval">every 7 days</dd></div>
+              <div><dt>Grace</dt><dd id="dmsRvGrace">3 days</dd></div>
+              <div><dt>Releases after</dt><dd id="dmsRvTotal" class="dms-rv-hot">10 days of silence</dd></div>
+              <div><dt>Check-in to</dt><dd id="dmsRvCreator">—</dd></div>
+            </dl>
+          </div>
+
+          <p class="dms-fineprint dms-reveal" data-r="6">
+            Arming creates a real switch on Bitty Box and starts the clock
+            immediately. Nothing is sent to your guardian until it fires. You can
+            disarm at any time from the next screen.
+          </p>
+        </div>
+      </section>
+
+      <!-- 06 · SEALED ---------------------------------------------------- -->
+      <section class="dms-pane" data-pane="sealed" data-index="6" aria-label="Switch armed">
+        <div class="dms-pane-body">
+          <div class="dms-sealed-head">
+            <div class="dms-sealmark" aria-hidden="true">
+              <span class="dms-seal-ring"></span>
+              <span class="dms-seal-ring dms-d2"></span>
+              <span class="dms-seal-check">✓</span>
+            </div>
+            <p class="dms-kicker dms-reveal" data-r="0">06 — SEALED</p>
+            <h2 class="dms-h2 dms-reveal" data-r="1" id="dmsSealedHeadline">Your switch is armed.</h2>
+            <p class="dms-help dms-reveal" data-r="2" id="dmsSealedSub">
+              The clock is running. One tap on your check-in link resets it.
+            </p>
+          </div>
+
+          <div class="dms-livecard dms-reveal" data-r="3">
+            <div class="dms-row dms-between">
+              <span class="dms-livepill" id="dmsLivePill"><i></i> ARMING…</span>
+              <span class="dms-mono dms-dim" id="dmsSwitchId">—</span>
+            </div>
+            <div class="dms-countdown">
+              <span class="dms-cd-value dms-mono" id="dmsCdValue">—</span>
+              <span class="dms-cd-label">until your next check-in</span>
+            </div>
+            <div class="dms-livegrid">
+              <div><span>Releases at</span><b id="dmsLiveRelease">—</b></div>
+              <div><span>Guardian</span><b id="dmsLiveGuardian">—</b></div>
+            </div>
+          </div>
+
+          <div class="dms-field dms-reveal" data-r="4">
+            <label for="dmsCheckInLink">YOUR SECRET CHECK-IN LINK</label>
+            <div class="dms-copyrow">
+              <input id="dmsCheckInLink" class="dms-input dms-mono dms-small" type="text" readonly value="" />
+              <button type="button" class="dms-btn dms-btn-ghost dms-btn-copy" id="dmsCopyLink">Copy</button>
+            </div>
+            <p class="dms-hint">
+              Anyone holding this link can keep your switch alive. Keep it, forward it
+              to yourself, save it in a password manager.
+            </p>
+          </div>
+
+          <div class="dms-field dms-reveal" data-r="5">
+            <p class="dms-hint dms-hint-top">PROVE IT WORKS</p>
+            <div class="dms-actions">
+              <button type="button" class="dms-btn dms-btn-ghost" id="dmsTestRemind">Send test reminder</button>
+              <button type="button" class="dms-btn dms-btn-ghost dms-btn-danger" id="dmsTestFire">Fire it now</button>
+            </div>
+            <p class="dms-hint" id="dmsTestEcho">Fire it now releases the box to your guardian for real. Use a throwaway switch when you rehearse.</p>
+          </div>
+
+          <div class="dms-field dms-reveal" data-r="6">
+            <button type="button" class="dms-btn dms-btn-quiet" id="dmsDisarm">Disarm this switch</button>
+            <p class="dms-hint" id="dmsDisarmEcho">Disarming cancels the release permanently. Nothing is sent to your guardian.</p>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- ── Thumb-reachable action bar ───────────────────────────────────── -->
+    <footer class="dms-bar">
+      <button type="button" class="dms-btn dms-btn-back" id="dmsBack">
+        <span aria-hidden="true">←</span> Back
+      </button>
+      <button type="button" class="dms-btn dms-btn-primary" id="dmsNext">
+        <span class="dms-btn-label" id="dmsNextLabel">Begin setup</span>
+        <span class="dms-btn-glow" aria-hidden="true"></span>
+      </button>
+    </footer>
+
+    <!-- Toast -->
+    <div class="dms-toast" id="dmsToast" role="status" aria-live="polite"></div>
+  </div>
+
+  <script src="/test/dms.js?v=1" defer></script>
+</body>
+</html>
