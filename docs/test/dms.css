@@ -12,10 +12,13 @@
   --line:          #ffffff14;
   --line-bright:   #ffffff2e;
 
-  /* Ink */
+  /* Ink
+     --ink-3 is used for hint/micro text at 9.5-12px, so it must clear WCAG AA
+     (4.5:1) against the page background. The live palette's --ink-muted
+     (#5e6878) only reaches 3.28:1 there, so this is deliberately lighter. */
   --ink:           #f2f5f8;
   --ink-2:         #9aa4b2;
-  --ink-3:         #5e6878;
+  --ink-3:         #7f8896;
 
   /* Accents — ALIVE (armed) → AFTERMATH (released) */
   --alive:         #10b981;
