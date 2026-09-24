@@ -1,577 +1,549 @@
-<!DOCTYPE html>
-<html lang="en" class="dark">
+<!doctype html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Bitty Box • Autonomous Dead Man's Switch &amp; Programmable Release Vaults</title>
-  <meta name="description" content="Autonomous Zero-Knowledge Dead Man's Switch with Programmable Release Conditions. Securely deliver confidential credentials, digital assets, and emergency contingency vaults if you become inactive, guarded by 25 WebCrypto release locks." />
-  <link rel="icon" type="image/png" href="/bittybox-logo.png" />
-  <!-- Splash gate: deep app links (hash/query state) belong to the editor. -->
-  <script>
-    (function () {
-      try {
-        var h = window.location.hash || '';
-        var s = window.location.search || '';
-        var splashAnchors = ['#console', '#combinations', '#catalog'];
-        var isSplashAnchor = splashAnchors.indexOf(h) !== -1 || h === '' || h === '#';
-        var hasAppState = !isSplashAnchor || (s && s.length > 1 && s !== '?');
-        if (hasAppState) {
-          window.location.replace('/editor' + s + h);
-        }
-      } catch (e) { /* stay on splash */ }
-    })();
-  </script>
-  
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            brand: {
-              cyan: '#00e5ff',
-              purple: '#c084fc',
-              blue: '#38bdf8',
-              amber: '#f59e0b',
-              emerald: '#10b981',
-              dark: '#070a13',
-              card: '#0d1322',
-              cardBorder: '#1e293b'
-            }
-          },
-          fontFamily: {
-            mono: ['JetBrains Mono', 'Fira Code', 'ui-monospace', 'monospace'],
-            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif']
-          }
-        }
-      }
-    }
-  </script>
-
-  <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
-  
-  <!-- Lock Engine Script -->
-  <script src="/assets/lockEngine.js"></script>
-  <link rel="stylesheet" href="/style.css?v=20260918-no-scrollbars">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>BITTYBOX — The Dead Man's Switch Reimagined</title>
+<meta name="description" content="A URL-native Dead Man's Switch platform for secrets, legacies, and cinematic Bitty Boxes with heartbeat check-ins and transformed aftermaths.">
+<meta name="theme-color" content="#080a0e">
+<meta property="og:title" content="BITTYBOX — The Dead Man's Switch Reimagined">
+<meta property="og:description" content="Freeze a living Bitty Box, set the check-in rules, and design its aftermath.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://bittybox.org/">
+<link rel="icon" href="/favicon.png?v=20260924-bittybox-landing-1">
+<link rel="canonical" href="https://bittybox.org/">
+<link rel="stylesheet" href="/bittybox-landing.css?v=20260924-landing-1">
 </head>
-<body class="font-sans antialiased text-slate-200">
+<body>
+<div class="ambient" aria-hidden="true"><div class="grid"></div><div class="scan"></div><div class="vignette"></div></div>
 
-  <!-- Parallax starfield: three drifting star layers behind every section -->
-  <div class="starfield" id="starfield" aria-hidden="true">
-    <div class="star-layer" data-depth="0.55"><div id="stars"></div></div>
-    <div class="star-layer" data-depth="1"><div id="stars2"></div></div>
-    <div class="star-layer" data-depth="1.8"><div id="stars3"></div></div>
+
+
+<header class="topbar">
+  <a class="brand" href="#top">
+    <span class="brand-mark">B_</span>
+    <span><b>BITTYBOX</b><small>URL-NATIVE DEAD MAN'S SWITCH</small></span>
+  </a>
+  <nav>
+    <a href="#overview">Overview</a>
+    <a href="#mechanics">10 Mechanics</a>
+    <a href="#simulator">Bitty Box Lab</a>
+    <a href="#capsules">Bitty Boxes</a>
+    <a href="#philosophy">Philosophy</a>
+    <a href="#faq">FAQ</a>
+    <a class="account-entry" href="/editor">Open Editor</a>
+    <a class="top-cta" href="#start">CREATE BITTY BOX ↗</a>
+  </nav>
+  <button class="menu" aria-label="Open navigation">☰</button>
+</header>
+
+<main id="top">
+
+<!-- Hero Section -->
+<section class="hero wrap" id="overview">
+  <div class="hero-copy">
+    <div class="eyebrow"><i></i> DEAD MAN’S SWITCH REIMAGINED</div>
+    <h1>Don’t just leave a message.<br><em>Leave a world.</em></h1>
+    <p class="lede"><strong>BittyBox.org</strong> stands out as a next‑generation Dead Man’s Switch (DMS) platform because it doesn’t just automate a “release if I don’t check in.” It expands the idea into a cinematic, interactive micro‑web experience built around richer check-in, release, and legacy scenarios.</p>
+    <p class="sub-lede">A URL‑native Dead Man’s Switch platform that turns every switch into a self‑contained micro‑site — a <strong>BittyBox Bitty Box</strong> — capable of evolving, reacting, and transforming based on user‑defined conditions. Unlike traditional DMS tools that simply send an email or unlock a file, BittyBox treats each switch as a living digital artifact with its own logic, personality, and fate.</p>
+    <div class="actions">
+      <a class="btn primary" href="#simulator">OPEN BITTY BOX LAB <span>↗</span></a>
+      <a class="btn ghost" href="#mechanics">EXPLORE 10 MECHANICS ↓</a>
+    </div>
+    <p class="preview-disclaimer">The clock, state changes, dossier, and generator are previews only. This page does not monitor activity, encrypt or publish a real payload, contact recipients, or trigger a release.</p>
+    <div class="hero-meta">
+      <span><b class="pulse"></b> CLOCK PREVIEW ACTIVE</span>
+      <span>URL-NATIVE MICRO-SITES</span>
+      <span>DUAL-STATE SWITCHES</span>
+      <span>VAULT-GRADE LOGIC</span>
+    </div>
   </div>
 
-  <!-- Top Navigation Header -->
-  <header class="border-b border-slate-800/80 bg-slate-950/70 backdrop-blur-md sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-      <div class="flex items-center space-x-3 landing-brand">
-        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-400 to-purple-600 flex items-center justify-center p-0.5 shadow-lg shadow-cyan-500/20 shrink-0">
-          <div class="w-full h-full bg-slate-950 rounded-[6px] flex items-center justify-center">
-            <i data-lucide="lock" class="w-4 h-4 text-cyan-400"></i>
+  <div class="hero-art" aria-label="Interactive BittyBox Bitty Box Preview">
+    <div class="status-row">
+      <b>BITTY BOX / BB-001</b>
+      <span id="hero-state-pill" class="badge-alive">ALIVE MODE</span>
+    </div>
+
+    <!-- Active DMS heartbeat clock: accelerated visual preview, never a live monitor. -->
+    <div class="radar clock-stage" id="hero-radar" data-mode="alive" aria-label="Heartbeat clock preview">
+      <div class="clock-orbit" aria-hidden="true"></div>
+      <div class="heartbeat-clock" role="img" aria-label="Illustrative active dead man's switch clock with simulated heartbeat">
+        <svg class="clock-face" viewBox="0 0 280 280" aria-hidden="true">
+          <circle class="clock-bezel" cx="140" cy="140" r="119"></circle>
+          <circle class="clock-inner-ring" cx="140" cy="140" r="105"></circle>
+          <g class="clock-ticks">
+            <line x1="140" y1="28" x2="140" y2="43"></line>
+            <line x1="140" y1="28" x2="140" y2="43" transform="rotate(30 140 140)"></line>
+            <line x1="140" y1="28" x2="140" y2="43" transform="rotate(60 140 140)"></line>
+            <line x1="140" y1="24" x2="140" y2="47" transform="rotate(90 140 140)"></line>
+            <line x1="140" y1="28" x2="140" y2="43" transform="rotate(120 140 140)"></line>
+            <line x1="140" y1="28" x2="140" y2="43" transform="rotate(150 140 140)"></line>
+            <line x1="140" y1="24" x2="140" y2="47" transform="rotate(180 140 140)"></line>
+            <line x1="140" y1="28" x2="140" y2="43" transform="rotate(210 140 140)"></line>
+            <line x1="140" y1="28" x2="140" y2="43" transform="rotate(240 140 140)"></line>
+            <line x1="140" y1="24" x2="140" y2="47" transform="rotate(270 140 140)"></line>
+            <line x1="140" y1="28" x2="140" y2="43" transform="rotate(300 140 140)"></line>
+            <line x1="140" y1="28" x2="140" y2="43" transform="rotate(330 140 140)"></line>
+          </g>
+          <text class="clock-top-label" x="140" y="68">CHECK-IN WINDOW</text>
+          <line class="clock-hand clock-hour" x1="140" y1="140" x2="140" y2="99"></line>
+          <line class="clock-hand clock-minute" x1="140" y1="140" x2="140" y2="77"></line>
+          <line class="clock-hand clock-second" x1="140" y1="140" x2="140" y2="53"></line>
+          <circle class="clock-center" cx="140" cy="140" r="6"></circle>
+          <text id="clock-countdown" class="clock-countdown" x="140" y="224">06D 13H 48M</text>
+          <text class="clock-demo-label" x="140" y="239">SIMULATED · NOT MONITORING</text>
+        </svg>
+        <div class="ecg-shell" aria-hidden="true">
+          <svg viewBox="0 0 260 48" preserveAspectRatio="none">
+            <path class="ecg-trace" pathLength="260" d="M0 25 H45 L57 25 L66 19 L73 31 L82 5 L93 42 L103 20 L111 25 H145 L157 25 L166 19 L173 31 L182 5 L193 42 L203 20 L211 25 H260"></path>
+          </svg>
+        </div>
+      </div>
+      <span class="radar-tag tag-a" id="radar-tag-a">NEXT CHECK-IN / 06D 13H</span>
+      <span class="radar-tag tag-b" id="radar-tag-b">HEARTBEAT // SIMULATED</span>
+      <span class="radar-tag tag-c" id="radar-tag-c">AFTERMATH / LOCKED</span>
+    </div>
+
+    <!-- Quick State Preview Buttons on Hero Art -->
+    <div class="hero-quick-switch" aria-label="Preview Bitty Box State">
+      <span class="switch-label">PREVIEW STATE:</span>
+      <button type="button" class="state-btn active" data-state="alive">Alive</button>
+      <button type="button" class="state-btn" data-state="mutating">Mutating</button>
+      <button type="button" class="state-btn" data-state="aftermath">Aftermath</button>
+      <button type="button" class="state-btn" data-state="burn">Burned</button>
+    </div>
+
+    <div class="art-footer">
+      <span>FREEZE STATE: <b id="hero-freeze-state">CRYSTALLIZED</b></span>
+      <span id="hero-pulse-status">● DEMO SIGNAL</span>
+    </div>
+  </div>
+</section>
+
+<div class="rule wrap"></div>
+
+<!-- What Makes BittyBox Different (and superior) — All 10 Mechanics -->
+<section class="section wrap" id="mechanics">
+  <div class="section-head">
+    <span class="kicker">WHAT MAKES BITTYBOX DIFFERENT</span>
+    <h2>Traditional DMS sends.<br><em>BittyBox becomes.</em></h2>
+    <p>Below is the complete architectural blueprint of BittyBox's 10 breakthrough mechanics. Every Bitty Box is a self-contained micro-site with its own logic, compound triggers, and cinematic release state.</p>
+  </div>
+
+  <div class="mechanic-grid-10">
+
+    <!-- 01 Dual-State -->
+    <article class="feature-card f-alive">
+      <div class="card-head">
+        <span class="card-badge">01 / DUAL-STATE ARCHITECTURE</span>
+        <span class="card-status-dot"></span>
+      </div>
+      <h3>Dual‑State Micro‑Sites<br><small>Alive Mode → Aftermath Mode</small></h3>
+      <p>Each BittyBox Bitty Box exists in two distinct, independently styled and programmed states:</p>
+      <ul class="spec-list">
+        <li><strong>Alive Mode:</strong> Normal content, check‑in timer, heartbeat indicators, active personal workspace.</li>
+        <li><strong>Aftermath Mode:</strong> Activated state with transformed visuals, unlocked secrets, final letters, or a completely new micro-site.</li>
+      </ul>
+      <div class="punchline">Competitors only “send something.” BittyBox becomes something.</div>
+    </article>
+
+    <!-- 02 Multi-Condition Switches -->
+    <article class="feature-card f-triggers">
+      <div class="card-head">
+        <span class="card-badge">02 / COMPOUND LOGIC</span>
+        <span class="card-status-dot"></span>
+      </div>
+      <h3>Multi‑Condition Switches<br><small>Compound Triggers</small></h3>
+      <p>BittyBox rejects brittle single-point triggers. It supports layered compound logic that mirrors real life:</p>
+      <ul class="spec-list">
+        <li>Missed scheduled check‑ins</li>
+        <li>Missed heartbeat URL visits (ping endpoints)</li>
+        <li>Failure to enter a secret phrase</li>
+        <li>Device inactivity sensors</li>
+        <li>Secondary Bitty Box not opened in sequence</li>
+      </ul>
+      <div class="punchline">Creates vault‑grade failsafe logic instead of a single binary trigger.</div>
+    </article>
+
+    <!-- 03 Freeze-and-Release -->
+    <article class="feature-card f-freeze">
+      <div class="card-head">
+        <span class="card-badge">03 / STATE IMMUTABILITY</span>
+        <span class="card-status-dot"></span>
+      </div>
+      <h3>Freeze‑and‑Release Mode<br><small>Cryptographic Bitty Box Lockdown</small></h3>
+      <p>Users can “freeze” a Bitty Box into an immutable state:</p>
+      <ul class="spec-list">
+        <li>Content locked against tampering</li>
+        <li>Theme and layout crystallized</li>
+        <li>Public or private countdown visible</li>
+        <li>No edits allowed without cryptographic thaw</li>
+      </ul>
+      <p class="card-sub">When the DMS triggers, the Bitty Box “thaws” and executes its payload automatically.</p>
+      <div class="punchline">No other DMS platform offers state‑based micro‑site freezing.</div>
+    </article>
+
+    <!-- 04 Cascading Drops -->
+    <article class="feature-card f-cascade">
+      <div class="card-head">
+        <span class="card-badge">04 / BRANCHING PAYLOADS</span>
+        <span class="card-status-dot"></span>
+      </div>
+      <h3>Cascading Drops &amp; Multi‑Recipient Payloads<br><small>Branching Release Networks</small></h3>
+      <p>A single switch can orchestrate a multi-stage narrative or asset distribution:</p>
+      <ul class="spec-list">
+        <li>Release different content to different people based on secure links</li>
+        <li>Trigger a chain of Bitty Boxes (Bitty Box A → Bitty Box B → Bitty Box C)</li>
+        <li>Create branching outcomes based on visitor response or behavior</li>
+      </ul>
+      <div class="punchline">Turns BittyBox into a digital will, confession engine, or legacy system.</div>
+    </article>
+
+    <!-- 05 Self-Mutating Capsules -->
+    <article class="feature-card f-mutate">
+      <div class="card-head">
+        <span class="card-badge">05 / LIVING ARTIFACTS</span>
+        <span class="card-status-dot"></span>
+      </div>
+      <h3>Self‑Mutating Bitty Boxes<br><small>Dynamic Overdue Evolution</small></h3>
+      <p>As time passes without owner check‑ins, the Bitty Box dynamically evolves:</p>
+      <ul class="spec-list">
+        <li>Copy and headings become urgent</li>
+        <li>Visuals degrade, glitch, or shift color spectrum</li>
+        <li>Hidden content slowly reveals line-by-line</li>
+        <li>Metadata corrupts to signal imminent release</li>
+      </ul>
+      <div class="punchline">Competitors are static. BittyBox is alive.</div>
+    </article>
+
+    <!-- 06 Burn-After-Trigger -->
+    <article class="feature-card f-burn">
+      <div class="card-head">
+        <span class="card-badge">06 / EPHEMERAL SECRETS</span>
+        <span class="card-status-dot"></span>
+      </div>
+      <h3>Burn‑After‑Trigger Execution<br><small>Zero-Trace Self-Destruction</small></h3>
+      <p>For sensitive drops that must never be archived or re-read:</p>
+      <ul class="spec-list">
+        <li>Content displays exactly once to the designated recipient</li>
+        <li>Bitty Box permanently destroys its stored key and payload</li>
+        <li>Replaced with ashes, glitch art, or a permanent “Executed” seal</li>
+      </ul>
+      <div class="punchline">Perfect for secrets, confessions, or sensitive drops.</div>
+    </article>
+
+    <!-- 07 Spy-Themed Aesthetics -->
+    <article class="feature-card f-spy">
+      <div class="card-head">
+        <span class="card-badge">07 / CINEMATIC ATMOSPHERE</span>
+        <span class="card-status-dot"></span>
+      </div>
+      <h3>Spy‑Themed Payloads &amp; Classified Aesthetics<br><small>Hollywood-Grade Storytelling</small></h3>
+      <p>BittyBox embraces cinematic flair and tactile tension:</p>
+      <ul class="spec-list">
+        <li>Encrypted dossiers and black-bar redacted documents</li>
+        <li>Documents that dynamically un‑redact on verified trigger</li>
+        <li>Tactical mission briefings and audible audio cues</li>
+        <li>Classified release sequences and telemetry animations</li>
+      </ul>
+      <div class="punchline">No other DMS platform leans into storytelling and atmosphere.</div>
+    </article>
+
+    <!-- 08 Puzzle-Locked Aftermath -->
+    <article class="feature-card f-puzzle">
+      <div class="card-head">
+        <span class="card-badge">08 / GAMIFIED SECURITY</span>
+        <span class="card-status-dot"></span>
+      </div>
+      <h3>Puzzle‑Locked Aftermath<br><small>Interactive Decryption Gates</small></h3>
+      <p>Recipients must solve a riddle, enter a childhood memory, or complete an interactive cipher puzzle after the switch triggers to access the payload.</p>
+      <ul class="spec-list">
+        <li>Adds a layer of gamified security, engagement, and mystery</li>
+        <li>Ensures only the true recipient possessing contextual knowledge can view it</li>
+      </ul>
+      <div class="punchline">Adds a layer of gamified security and mystery.</div>
+    </article>
+
+    <!-- 09 Digital Legacy Mode -->
+    <article class="feature-card f-legacy">
+      <div class="card-head">
+        <span class="card-badge">09 / MEMORIAL &amp; MEANING</span>
+        <span class="card-status-dot"></span>
+      </div>
+      <h3>Digital Legacy Mode<br><small>Micro-Sites That Endure</small></h3>
+      <p>Triggered Bitty Boxes can transform into beautiful, permanent memorials:</p>
+      <ul class="spec-list">
+        <li>Memorial micro‑sites with custom typography and music</li>
+        <li>Final letters, advice, and video messages</li>
+        <li>Curated photo galleries and personal archives</li>
+        <li>Digital tombstones and permanent tributes</li>
+      </ul>
+      <div class="punchline">Competitors deliver files. BittyBox delivers meaning.</div>
+    </article>
+
+    <!-- 10 Mystery DMS Generator -->
+    <article class="feature-card f-mystery">
+      <div class="card-head">
+        <span class="card-badge">10 / PROCEDURAL PLAY</span>
+        <span class="card-status-dot"></span>
+      </div>
+      <h3>Mystery DMS Generator<br><small>Procedural Micro-Site Creator</small></h3>
+      <p>A playful, generative mode that auto‑creates randomized Bitty Box blueprints:</p>
+      <ul class="spec-list">
+        <li>Random atmospheric themes (Cyberpunk, Victorian, Minimalist, Orbital)</li>
+        <li>Randomized compound locks and heartbeat schedules</li>
+        <li>Unexpected reveal mechanics and puzzle challenges</li>
+        <li>Creative payload writing prompts</li>
+      </ul>
+      <div class="punchline">Makes BittyBox feel alive, unpredictable, and addictive.</div>
+    </article>
+
+  </div>
+</section>
+
+<!-- Interactive capsule preview lab -->
+<section class="section dark-section" id="simulator">
+  <div class="wrap">
+    <div class="section-head left">
+      <span class="kicker">INTERACTIVE BITTY BOX PREVIEW · DEMO ONLY</span>
+      <h2>Preview a Bitty Box’s lifecycle<br><em>before it goes live.</em></h2>
+      <p>Explore illustrative Bitty Box states and release mechanics. These browser previews do not represent a live check-in, recipient notification, or payload release.</p>
+    </div>
+
+    <div class="lab-grid">
+
+      <!-- Tool 1: Live State Switcher & Capsule Telemetry -->
+      <div class="lab-card">
+        <div class="lab-card-head">
+          <span class="lab-pill">SIMULATOR 01</span>
+          <h4>Dual-State Bitty Box Engine</h4>
+        </div>
+        <p class="lab-desc">Preview how the Bitty Box interface changes as its simulated status shifts from active to overdue, released, or burned.</p>
+
+        <div class="sim-display" id="sim-screen">
+          <div class="sim-header">
+            <span class="sim-code">BITTY BOX // BB-001 / PREVIEW</span>
+            <span class="sim-status" id="sim-status-label">STATUS: ALIVE (NORMAL)</span>
+          </div>
+          <div class="sim-body" id="sim-body-text">
+            <h5>BITTY BOX PAYLOAD: PERSONAL MANIFEST</h5>
+            <p id="sim-content">Welcome. This Bitty Box is currently in <strong>Alive Mode</strong>. Heartbeat ping confirmed 12 minutes ago. All confidential vaults remain encrypted and locked. Check-in window open for 6 days.</p>
+          </div>
+          <div class="sim-telemetry">
+            <div><small>HEARTBEAT</small><span id="sim-hb-val">ONLINE (OK)</span></div>
+            <div><small>LOCK STATE</small><span id="sim-lock-val">CRYSTALLIZED</span></div>
+            <div><small>COUNTDOWN</small><span id="sim-time-val">06D 13H 48M</span></div>
           </div>
         </div>
-        <div class="landing-brand-copy">
-          <span class="text-xs font-mono font-bold tracking-widest text-cyan-400 uppercase whitespace-nowrap">BITTY BOX<span class="landing-brand-qualifier"> • DEAD MAN'S SWITCH</span></span>
-          <div class="text-[10px] font-mono text-slate-400 landing-brand-subtitle whitespace-nowrap">Autonomous Liveness &amp; Release Engine</div>
+
+        <div class="sim-controls">
+          <button type="button" class="btn-sim active" onclick="setSimState('alive')">Alive Mode</button>
+          <button type="button" class="btn-sim" onclick="setSimState('mutating')">Self-Mutating (Degraded)</button>
+          <button type="button" class="btn-sim btn-danger" onclick="setSimState('aftermath')">Trigger Aftermath</button>
+          <button type="button" class="btn-sim btn-burn" onclick="setSimState('burn')">Burn-After-Reading</button>
         </div>
       </div>
 
-      <nav class="flex items-center gap-2 header-actions" aria-label="Primary">
-        <a href="/api/docs" aria-label="API/MCP Server" class="inline-flex items-center px-2.5 py-1.5 rounded-lg text-xs font-mono font-semibold text-cyan-300 border border-cyan-500/40 hover:bg-cyan-500/10 hover:text-white transition">
-          <i data-lucide="server" class="w-3.5 h-3.5 sm:mr-1.5" aria-hidden="true"></i>
-          <span class="sm:hidden ml-1.5">API/MCP</span><span class="hidden sm:inline">API/MCP Server</span>
-        </a>
-        <a href="/editor" aria-label="Create Switch" class="inline-flex items-center px-2.5 py-1.5 rounded-lg text-xs font-mono font-semibold bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white hover:brightness-110 shadow-lg shadow-purple-500/20 transition">
-          <i data-lucide="radio" class="w-3.5 h-3.5 sm:mr-1.5" aria-hidden="true"></i>
-          <span class="sm:hidden ml-1.5">Switch Studio</span><span class="hidden sm:inline">Create a Switch</span>
-        </a>
-      </nav>
-    </div>
-  </header>
+      <!-- Tool 2: Redacted Dossier & Un-Redact Demo -->
+      <div class="lab-card">
+        <div class="lab-card-head">
+          <span class="lab-pill">SIMULATOR 02</span>
+          <h4>Spy Dossier &amp; Un-Redact Animation</h4>
+        </div>
+        <p class="lab-desc">Preview a classified dossier that reveals its hidden fields when you activate the demo control.</p>
 
-  <!-- Hero Section -->
-  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-8 pb-4 sm:pb-6 text-center">
-    <div class="inline-flex items-center px-3 py-1 rounded-full text-[10px] sm:text-[11px] font-mono font-semibold uppercase tracking-wider text-cyan-400 bg-cyan-950/60 border border-cyan-800/60 mb-3 sm:mb-4">
-      <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping mr-2"></span>
-      Autonomous Liveness Monitoring • Zero-Knowledge Release
-    </div>
-
-    <h1 class="text-2xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white max-w-4xl mx-auto leading-tight">
-      The Zero-Knowledge <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-sky-300 to-purple-400">Dead Man's Switch</span> with Programmable Release Conditions
-    </h1>
-
-    <p class="mt-2.5 sm:mt-4 text-xs sm:text-base lg:text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
-      Ensure your critical credentials, contingency plans, and confidential assets are delivered autonomously if you become inactive. Guarded by client-side WebCrypto AES-256-GCM encryption and 25 programmable release locks—from multi-party Shamir quorums to geofences, time windows, and biometric seals. Zero unencrypted server data. Zero leaks.
-    </p>
-
-    <!-- Key Metrics Pills -->
-    <div class="mt-4 sm:mt-7 grid grid-cols-3 gap-2 sm:gap-4 max-w-3xl mx-auto metrics-row">
-      <div class="bg-slate-900/80 border border-slate-800/80 rounded-2xl p-2 sm:p-3.5 flex flex-col items-center justify-center backdrop-blur-sm shadow-xl">
-        <div class="text-lg sm:text-3xl font-extrabold font-mono text-cyan-400">Liveness</div>
-        <div class="text-[10px] sm:text-xs font-mono uppercase tracking-wider text-slate-400 mt-0.5 text-center">Autonomous Heartbeat</div>
-        <div class="text-[9px] sm:text-[10px] text-slate-500 mt-0.5 text-center">Inactivity &amp; Interval Triggers</div>
-      </div>
-
-      <div class="bg-slate-900/80 border border-slate-800/80 rounded-2xl p-2 sm:p-3.5 flex flex-col items-center justify-center backdrop-blur-sm shadow-xl">
-        <div class="text-lg sm:text-3xl font-extrabold font-mono text-purple-400">Zero-Know</div>
-        <div class="text-[10px] sm:text-xs font-mono uppercase tracking-wider text-slate-400 mt-0.5 text-center">100% Client-Side</div>
-        <div class="text-[9px] sm:text-[10px] text-slate-500 mt-0.5 text-center">AES-256-GCM • Zero Custody</div>
-      </div>
-
-      <div class="bg-slate-900/80 border border-slate-800/80 rounded-2xl p-2 sm:p-3.5 flex flex-col items-center justify-center backdrop-blur-sm shadow-xl">
-        <div class="text-lg sm:text-3xl font-extrabold font-mono text-emerald-400">25+ Locks</div>
-        <div class="text-[10px] sm:text-xs font-mono uppercase tracking-wider text-slate-400 mt-0.5 text-center">Release Conditions</div>
-        <div class="text-[9px] sm:text-[10px] text-slate-500 mt-0.5 text-center">Shamir Quorum • Time • Geo</div>
-      </div>
-    </div>
-
-    <!-- Enter the editor -->
-    <div class="mt-6 sm:mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
-      <a href="/editor" class="px-6 py-3 rounded-xl text-sm font-mono font-bold bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white hover:brightness-110 shadow-lg shadow-purple-500/25 transition">
-        Create a Dead Man's Switch →
-      </a>
-      <a href="#console" class="px-6 py-3 rounded-xl text-sm font-mono font-semibold text-cyan-300 border border-cyan-500/40 hover:bg-cyan-500/10 transition">
-        Test Switch &amp; Release Console ↓
-      </a>
-    </div>
-  </section>
-
-  <!-- Section 1: Interactive Lock Combiner & Ceremony Console -->
-  <section id="console" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
-    <div class="bg-slate-900/90 border border-cyan-500/30 rounded-2xl sm:rounded-3xl p-3.5 sm:p-6 lg:p-8 backdrop-blur-xl shadow-2xl relative overflow-hidden neon-glow-cyan">
-      
-      <!-- Console Header -->
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-800 pb-3.5 sm:pb-5">
-        <div>
-          <div class="flex items-center space-x-2">
-            <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse"></span>
-            <h2 class="text-lg sm:text-2xl font-bold font-mono text-white tracking-wide">Interactive Switch &amp; Multi-Condition Release Console</h2>
-          </div>
-          <p class="text-xs sm:text-sm text-slate-400 mt-0.5 sm:mt-1">
-            Simulate Inactivity Triggers, Heartbeat Proofs &amp; Multi-Lock Release Rules • AES-GCM (256-bit)
+        <div class="dossier-box" id="dossier-box">
+          <div class="dossier-stamp">CLASSIFIED // EYES ONLY</div>
+          <p class="dossier-text">
+            SUBJECT: <span class="redact" data-secret="AGENT PHOENIX">█████████████</span><br>
+            LOCATION: <span class="redact" data-secret="SWISS COLD VAULT 4">██████████████████</span><br>
+            EMERGENCY ACCESS PHRASE: <span class="redact" data-secret="THE NIGHTINGALE SINGS AT DAWN">████████████████████████████</span><br>
+            PRIMARY ASSET INSTRUCTIONS: <span class="redact" data-secret="OPEN THE FAMILY PHOTO ARCHIVE AFTER THE LETTER IS RECEIVED.">██████████████████████████████████████████████████████████████████████████████████████</span>
           </p>
         </div>
 
-        <div class="flex flex-wrap items-center gap-2">
-          <!-- Ceremony Mode Toggle -->
-          <div class="bg-slate-950 p-1 rounded-xl border border-slate-800 flex items-center">
-            <button id="btnModeDashboard" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-mono font-medium bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 transition">
-              <i data-lucide="layout-grid" class="w-3.5 h-3.5 inline mr-1"></i> Dashboard
-            </button>
-            <button id="btnModeWizard" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-mono font-medium text-slate-400 hover:text-white transition">
-              <i data-lucide="list-ordered" class="w-3.5 h-3.5 inline mr-1"></i> Step Wizard
-            </button>
-          </div>
-
-          <button id="btnEmbedUrl" class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs font-mono font-semibold bg-gradient-to-r from-purple-500 to-indigo-600 text-white hover:brightness-110 shadow-lg shadow-purple-500/20 transition flex items-center">
-            <i data-lucide="link" class="w-3.5 h-3.5 mr-1.5"></i> Embed Self-Decrypting URL
-          </button>
+        <div class="dossier-controls">
+          <button type="button" class="btn ghost" id="btn-unredact" onclick="toggleRedaction()">⚡ PREVIEW TRIGGER: UN-REDACT DOSSIER</button>
+          <span class="dossier-tip">Click to preview the cinematic reveal</span>
         </div>
       </div>
 
-      <!-- Active Selected Locks Row & Threshold Config -->
-      <div class="mt-3.5 sm:mt-5 flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-slate-950/70 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-800/80">
+      <!-- Tool 3: Procedural Mystery DMS Generator -->
+      <div class="lab-card full-width">
+        <div class="lab-card-head">
+          <span class="lab-pill">SIMULATOR 03</span>
+          <h4>Feature 10: Mystery DMS Generator</h4>
+        </div>
+        <p class="lab-desc">Click below to auto-generate a unique BittyBox Bitty Box spec with random theme, compound locks, reveal mechanics, and payload prompts.</p>
+
+        <div class="mystery-result" id="mystery-result">
+          <div class="mystery-col">
+            <span class="label">ATMOSPHERIC THEME</span>
+            <strong id="res-theme">Orbital Blacksite (Glitch Minimal)</strong>
+          </div>
+          <div class="mystery-col">
+            <span class="label">COMPOUND TRIGGER</span>
+            <strong id="res-trigger">3 missed daily pings + secondary Bitty Box unopened</strong>
+          </div>
+          <div class="mystery-col">
+            <span class="label">REVEAL MECHANIC</span>
+            <strong id="res-reveal">Burn-After-Reading + ashes glitch</strong>
+          </div>
+          <div class="mystery-col">
+            <span class="label">PAYLOAD PROMPT</span>
+            <strong id="res-prompt">“The a letter explaining the family archive.”</strong>
+          </div>
+        </div>
+
+        <div class="mystery-action">
+          <button type="button" class="btn primary" onclick="generateMysteryCapsule()">🎲 ROLL MYSTERY BITTY BOX SPEC</button>
+          <span class="gen-count" id="gen-count-label">Preview Bitty Boxes generated this session: 1</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- The Capsule Library -->
+<section class="section wrap" id="capsules">
+  <div class="section-head left">
+    <span class="kicker">THE BITTY BOX LIBRARY</span>
+    <h2>Choose your<br><em>kind of aftermath.</em></h2>
+    <p>Start with a battle-tested Bitty Box pattern or customize your own from scratch. Every Bitty Box is an isolated micro-site with its own rules, theme, and fate.</p>
+  </div>
+
+  <div class="capsule-grid">
+    <article class="capsule">
+      <div class="capsule-top"><span class="capsule-icon">◈</span><span class="capsule-state">CLASSIFIED</span></div>
+      <h3>The Dossier</h3>
+      <p>Redacted documents that un-redact on trigger. A classified mission briefing for the person who needs it most.</p>
+      <div class="capsule-code">PAYLOAD / FILES + DOSSIER + CIPHER</div>
+    </article>
+
+    <article class="capsule active">
+      <div class="capsule-top"><span class="capsule-icon">◉</span><span class="capsule-state">POPULAR</span></div>
+      <h3>The Legacy</h3>
+      <p>A final message, curated gallery, or digital tombstone that turns an inevitable departure into something meaningful.</p>
+      <div class="capsule-code">PAYLOAD / WORDS + MEMORY + MEDIA</div>
+    </article>
+
+    <article class="capsule">
+      <div class="capsule-top"><span class="capsule-icon">⟁</span><span class="capsule-state">EXPERIMENTAL</span></div>
+      <h3>The Mystery</h3>
+      <p>Random themes, cryptographic locks, reveal mechanics, and prompts. Make the switch unpredictable—even to yourself.</p>
+      <div class="capsule-code">PAYLOAD / PUZZLE + REVEAL + SURPRISE</div>
+    </article>
+
+    <article class="capsule">
+      <div class="capsule-top"><span class="capsule-icon">⇢</span><span class="capsule-state">CHAINED</span></div>
+      <h3>The Cascade</h3>
+      <p>Different payloads for different people. Bitty Box A opens B, B points to C, and the story branches on visitor response.</p>
+      <div class="capsule-code">PAYLOAD / A → B → C (BRANCHING)</div>
+    </article>
+  </div>
+</section>
+
+<!-- The Core Philosophy -->
+<section class="section wrap" id="philosophy">
+  <div class="split">
+    <div class="legacy-copy">
+      <span class="kicker">THE CORE PHILOSOPHY</span>
+      <h2>Not just a Dead Man’s Switch.<br><em>A micro‑web engine for legacies.</em></h2>
+      <p class="philosophy-quote">“BittyBox.org isn’t just a Dead Man’s Switch. It’s a micro‑web engine for secrets, legacies, and cinematic digital storytelling. Every Bitty Box is a tiny world with rules, consequences, and emotional weight.”</p>
+      <p>BittyBox is built for the things that need more than a timestamp and an email attachment: the letter you want opened only after you are gone, the instructions your family will need, the confession that requires courage, or the memorial you choose to design yourself.</p>
+      <p class="muted">Notice: Use it for thoughtful contingency and storytelling—not emergencies. BittyBox is not a substitute for legal, financial, medical, or crisis services.</p>
+      <a class="btn ghost" href="#start">DESIGN YOUR FIRST BITTY BOX ↗</a>
+    </div>
+
+    <div class="timeline">
+      <div class="timeline-line"></div>
+      <div class="timeline-step">
+        <b>01</b>
         <div>
-          <div class="text-xs font-mono uppercase tracking-wider text-slate-400 mb-2 flex items-center justify-between">
-            <span>Configured Conditions in Current Switch (<span id="activeLockCount">3</span>):</span>
-            <span class="text-[11px] text-cyan-400">Click any condition to remove or simulate trigger proof</span>
-          </div>
-          <div id="activeLocksList" class="flex flex-wrap gap-2"></div>
-        </div>
-
-        <div class="flex items-center space-x-3 border-t lg:border-t-0 lg:border-l border-slate-800 pt-3 lg:pt-0 lg:pl-4">
-          <div class="text-xs font-mono text-slate-400">
-            <div>Release Rule (K of N):</div>
-            <div class="text-[10px] text-slate-500">Shamir polynomial target</div>
-          </div>
-          <select id="thresholdSelect" class="bg-slate-900 border border-slate-700 text-cyan-400 text-xs font-mono rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-cyan-400">
-            <option value="all">All Conditions Required (AND)</option>
-            <option value="1">1 of N (Any Condition)</option>
-            <option value="2">2 of N (Threshold Quorum)</option>
-          </select>
-          <button id="btnResetCeremony" class="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition" title="Reset Locks">
-            <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
-          </button>
+          <strong>CREATE</strong>
+          <span>Write the world while it is yours. Choose theme, content, and secrets.</span>
         </div>
       </div>
-
-      <!-- Live Challenge Arena (Dashboard / Wizard View) -->
-      <div class="mt-3.5 sm:mt-6 grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-6">
-        
-        <!-- Left 7 Cols: Active Challenges -->
-        <div class="lg:col-span-7 space-y-3 sm:space-y-4">
-          <div class="flex items-center justify-between">
-            <h3 class="text-xs sm:text-sm font-mono font-semibold text-slate-300 uppercase tracking-wider flex items-center">
-              <i data-lucide="shield-alert" class="w-4 h-4 text-cyan-400 mr-1.5 sm:mr-2"></i>
-              Active Liveness &amp; Release Verification Gates
-            </h3>
-            <span id="wizardStepIndicator" class="hidden text-[11px] font-mono text-purple-400 bg-purple-950/60 px-2 py-0.5 rounded border border-purple-800">
-              Step 1 of 3
-            </span>
-          </div>
-
-          <div id="challengesContainer" class="space-y-3 sm:space-y-4"></div>
-        </div>
-
-        <!-- Right 5 Cols: Terminal Log & Decrypted Payload Reveal -->
-        <div class="lg:col-span-5 space-y-3 sm:space-y-4 flex flex-col">
-          
-          <!-- Crypto Status & Shamir Progress Meter -->
-          <div class="bg-slate-950/80 border border-slate-800 rounded-xl sm:rounded-2xl p-3 sm:p-4">
-            <div class="flex items-center justify-between mb-1.5">
-              <span class="text-[11px] sm:text-xs font-mono text-slate-400">Switch Resolution:</span>
-              <span id="ceremonyProgressText" class="text-[11px] sm:text-xs font-mono font-bold text-cyan-400">0 of 3 Conditions Satisfied</span>
-            </div>
-            <div class="w-full bg-slate-800 h-2 sm:h-2.5 rounded-full overflow-hidden">
-              <div id="ceremonyProgressBar" class="bg-gradient-to-r from-cyan-400 to-purple-500 h-full w-0 transition-all duration-500"></div>
-            </div>
-          </div>
-
-          <!-- Live Cryptographic Terminal Log -->
-          <div class="bg-black/90 border border-slate-800 rounded-xl sm:rounded-2xl p-3 sm:p-4 flex-1 flex flex-col font-mono text-xs overflow-hidden">
-            <div class="flex items-center justify-between border-b border-slate-800/80 pb-1.5 mb-1.5 text-[11px] text-slate-400">
-              <div class="flex items-center space-x-1.5">
-                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-                <span class="text-slate-300">WebCrypto Live Inspector</span>
-              </div>
-              <button id="btnClearLog" class="text-slate-500 hover:text-slate-300 text-[10px]">Clear</button>
-            </div>
-            
-            <div id="terminalLog" class="space-y-1 text-slate-400 overflow-y-auto max-h-40 sm:max-h-56 pr-2">
-              <div class="text-cyan-400/90">&gt; [Init] Dead Man's Switch WebCrypto engine ready.</div>
-              <div class="text-slate-500">&gt; [Setup] Initialized Shamir Secret Sharing polynomial for release conditions.</div>
-              <div class="text-slate-500">&gt; [Ready] Monitoring heartbeat status and awaiting release proofs...</div>
-            </div>
-          </div>
-
-          <!-- Decrypted Payload Reveal Box -->
-          <div id="vaultPayloadBox" class="border border-slate-800 bg-slate-950/90 rounded-xl sm:rounded-2xl p-3 sm:p-4 transition-all duration-500">
-            <div class="flex items-center justify-between mb-1.5">
-              <span class="text-xs font-mono font-bold text-slate-400 flex items-center">
-                <i data-lucide="key-round" class="w-3.5 h-3.5 mr-1.5 text-slate-500" id="payloadIcon"></i>
-                Decrypted Contingency Vault
-              </span>
-              <span id="payloadStatusBadge" class="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-slate-800 text-slate-400">
-                Sealed
-              </span>
-            </div>
-
-            <div id="payloadContent" class="text-xs text-slate-500 italic p-2.5 sm:p-3 bg-slate-900/60 rounded-xl border border-slate-800 min-h-[50px] flex items-center justify-center text-center font-mono">
-              Ciphertext locked. Trigger dead-man switch inactivity or satisfy required release conditions to reconstruct the AES-256-GCM master key.
-            </div>
-
-            <div id="payloadActions" class="mt-2.5 hidden flex justify-end space-x-2">
-              <button id="btnCopyPayload" class="px-3 py-1 text-xs font-mono bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 rounded-lg hover:bg-cyan-500/30 transition">
-                Copy Contingency Secret
-              </button>
-            </div>
-          </div>
-
-        </div>
-
-      </div>
-
-    </div>
-  </section>
-
-  <!-- Section 2: Dead Man's Switch Scenarios & Playbooks -->
-  <section id="combinations" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
-    <div class="mb-3.5 sm:mb-6 flex items-end justify-between gap-3">
-      <div class="min-w-0">
-        <div class="inline-flex items-center text-xs font-mono text-purple-400 uppercase tracking-wider mb-1.5">
-          <i data-lucide="layers" class="w-3.5 h-3.5 mr-1.5"></i> Switch Scenarios &amp; Playbooks
-        </div>
-        <h2 class="text-xl sm:text-3xl font-bold font-mono text-white">Dead Man's Switch &amp; Contingency Playbooks</h2>
-        <p class="text-xs sm:text-sm text-slate-400 mt-0.5">Battle-tested release recipes for estate planning, whistleblower safeguarding, infrastructure failover, and executive escrow. <span class="text-slate-500">Swipe sideways →</span></p>
-      </div>
-      <div class="hidden sm:flex items-center gap-2 shrink-0">
-        <button class="marquee-nav" data-target="presetsGrid" data-dir="-1" aria-label="Scroll presets left">‹</button>
-        <button class="marquee-nav" data-target="presetsGrid" data-dir="1" aria-label="Scroll presets right">›</button>
-      </div>
-    </div>
-
-    <div class="marquee" id="presetsGrid" tabindex="0" aria-label="Lock combination presets, scroll horizontally"></div>
-    <div class="marquee-hint">← swipe to explore all 8 playbooks →</div>
-  </section>
-
-  <!-- Section 3: Release Conditions Specification -->
-  <section id="catalog" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 border-t border-slate-800">
-    <div class="flex flex-col md:flex-row md:items-end justify-between mb-4 sm:mb-6 gap-3">
-      <div class="min-w-0">
-        <div class="inline-flex items-center text-xs font-mono text-cyan-400 uppercase tracking-wider mb-1.5">
-          <i data-lucide="cpu" class="w-3.5 h-3.5 mr-1.5"></i> Release Condition Specifications
-        </div>
-        <h2 class="text-xl sm:text-3xl font-bold font-mono text-white flex items-center gap-2 flex-wrap">
-          <span>Active Release Conditions &amp; Cryptographic Locks</span>
-          <span class="text-xs font-mono font-normal text-emerald-400 bg-emerald-950/60 border border-emerald-800/60 px-2.5 py-0.5 rounded-full">All on 1 Marquee Row</span>
-        </h2>
-        <p class="text-xs sm:text-sm text-slate-400 mt-1">Autonomous heartbeat timeouts plus 4 client-side WebCrypto release conditions ready today. 8 extended conditions requiring hardware or backend relays are in the roadmap modal.</p>
-      </div>
-
-      <!-- Filter Tabs -->
-      <div class="filter-tabs flex gap-1.5 bg-slate-950 p-1.5 rounded-2xl border border-slate-800 text-xs font-mono items-center">
-        <button class="filter-tab active px-3 py-1.5 rounded-xl text-cyan-400 bg-cyan-950/80 border border-cyan-800/60" data-cat="all">All Live (5)</button>
-        <button class="filter-tab px-3 py-1.5 rounded-xl text-slate-400 hover:text-white" data-cat="core">Core (4)</button>
-        <button class="filter-tab px-3 py-1.5 rounded-xl text-slate-400 hover:text-white" data-cat="identity">Identity &amp; Switch (1)</button>
-        <button class="filter-tab px-3 py-1.5 rounded-xl text-slate-400 hover:text-white" data-cat="context">Contextual (0)</button>
-        <button id="btnOpenRoadmapTab" class="px-3 py-1.5 rounded-xl text-amber-400 bg-amber-950/70 border border-amber-800/70 hover:bg-amber-900/80 transition flex items-center shrink-0">
-          <span class="mr-1">⚡ Extended Roadmap (8)</span>
-          <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i>
-        </button>
-      </div>
-    </div>
-
-    <!-- Active Live Locks Single Horizontal Marquee Row (5) -->
-    <div class="mb-4 sm:mb-6">
-      <div class="flex items-center justify-between gap-3 mb-3">
-        <div class="flex items-center space-x-2 min-w-0">
-          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
-          <h3 class="text-xs sm:text-sm font-mono font-bold text-white uppercase tracking-wider truncate">All 5 Live Release Conditions <span class="text-slate-500 normal-case font-normal hidden sm:inline">— swipe horizontally →</span></h3>
-        </div>
-        <div class="flex items-center gap-2 shrink-0">
-          <button id="btnOpenRoadmapHeader" class="px-2.5 py-1.5 rounded-lg text-xs font-mono text-amber-400 bg-amber-950/50 border border-amber-800/50 hover:bg-amber-900/60 transition flex items-center">
-            <i data-lucide="map" class="w-3 h-3 mr-1.5"></i> View Roadmap (8)
-          </button>
-          <button class="marquee-nav" data-target="liveLocksGrid" data-dir="-1" aria-label="Scroll live locks left">‹</button>
-          <button class="marquee-nav" data-target="liveLocksGrid" data-dir="1" aria-label="Scroll live locks right">›</button>
+      <div class="timeline-step">
+        <b>02</b>
+        <div>
+          <strong>FREEZE</strong>
+          <span>Lock the state. Set compound triggers and heartbeat intervals.</span>
         </div>
       </div>
-      <div class="marquee" id="liveLocksGrid" tabindex="0" aria-label="Live locks, scroll horizontally"></div>
-      <div class="marquee-hint">← swipe horizontally to explore all 5 live release conditions →</div>
-    </div>
-  </section>
-
-  <!-- Roadmap Modal (8 Locks requiring Physical Hardware or Special Software Engineering) -->
-  <div id="roadmapModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden items-center justify-center p-3 sm:p-4">
-    <div class="bg-slate-900 border border-amber-500/40 rounded-3xl max-w-2xl w-full shadow-2xl flex flex-col max-h-[90vh] sm:max-h-[85vh] overflow-hidden">
-      <!-- Modal Header -->
-      <div class="flex items-center justify-between border-b border-slate-800 px-5 py-3.5 sm:py-4 bg-slate-950/95 shrink-0">
-        <div class="flex items-center space-x-2.5 min-w-0">
-          <div class="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0">
-            <i data-lucide="map" class="w-4 h-4"></i>
-          </div>
-          <div class="min-w-0">
-            <h3 class="text-sm sm:text-base font-mono font-bold text-white flex items-center truncate">
-              Extended Release Conditions Roadmap (8 Conditions)
-            </h3>
-            <p class="text-[11px] text-slate-400 font-mono truncate">Conditions that require physical hardware or specialized software engineering</p>
-          </div>
+      <div class="timeline-step">
+        <b>03</b>
+        <div>
+          <strong>RELEASE</strong>
+          <span>Let the Bitty Box thaw, mutate, un-redact, or cascade as you designed.</span>
         </div>
-        <button id="btnCloseRoadmapModal" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition shrink-0">
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
-      </div>
-
-      <!-- Filter Sub-bar inside Modal -->
-      <div class="px-5 py-2.5 bg-slate-950/60 border-b border-slate-800/80 flex flex-wrap items-center justify-between gap-2 shrink-0 text-xs font-mono">
-        <div class="text-[11px] text-slate-400">Scroll vertically through upcoming locks:</div>
-        <div class="flex items-center gap-1.5">
-          <button class="roadmap-filter px-2.5 py-1 rounded-lg text-[11px] bg-amber-950/70 border border-amber-800/70 text-amber-300" data-rf="all">All (8)</button>
-          <button class="roadmap-filter px-2.5 py-1 rounded-lg text-[11px] text-slate-400 hover:text-white" data-rf="software">Special Engineering (6)</button>
-          <button class="roadmap-filter px-2.5 py-1 rounded-lg text-[11px] text-slate-400 hover:text-white" data-rf="hardware">Physical Hardware (2)</button>
-        </div>
-      </div>
-
-      <!-- Vertically Scrollable Locks List -->
-      <div class="overflow-y-auto p-4 sm:p-6 space-y-3.5 flex-1" id="roadmapLocksList">
-        <!-- Rendered dynamically by app.js -->
-      </div>
-
-      <!-- Modal Footer -->
-      <div class="border-t border-slate-800 px-5 py-3 bg-slate-950/95 flex items-center justify-between text-xs font-mono shrink-0">
-        <span class="text-slate-500 text-[11px]">Dead-Man Switch &amp; 4 release locks are 100% Live in WebCrypto</span>
-        <button id="btnDismissRoadmapModal" class="px-4 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold transition">
-          Close
-        </button>
       </div>
     </div>
   </div>
+</section>
 
-  <!-- Share & Embed Modal -->
-  <div id="shareModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden items-center justify-center p-4">
-    <div class="bg-slate-900 border border-cyan-500/40 rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-4">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <h3 class="text-base font-mono font-bold text-white flex items-center">
-          <i data-lucide="share-2" class="w-4 h-4 text-cyan-400 mr-2"></i>
-          Self-Decrypting Dead Man's Switch Vault URL
-        </h3>
-        <button id="btnCloseShareModal" class="text-slate-400 hover:text-white">
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
-      </div>
-
-      <p class="text-xs text-slate-400 leading-relaxed">
-        The cryptographic release recipe, liveness interval, and ciphertext are compressed into the URL hash fragment. No server has custody of your plaintext. Anyone with this link must satisfy the configured switch conditions to decrypt.
-      </p>
-
-      <div class="space-y-2">
-        <label class="text-[11px] font-mono uppercase text-slate-400">Encrypted URL Fragment:</label>
-        <textarea id="shareUrlBox" readonly rows="4" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 font-mono text-xs text-cyan-300 focus:outline-none select-all break-all"></textarea>
-      </div>
-
-      <div class="flex items-center justify-end space-x-3 pt-2">
-        <button id="btnCopyShareUrl" class="px-4 py-2 rounded-xl text-xs font-mono font-semibold bg-cyan-500 text-slate-950 hover:bg-cyan-400 transition flex items-center">
-          <i data-lucide="copy" class="w-3.5 h-3.5 mr-1.5"></i> Copy Link
-        </button>
-      </div>
+<!-- Call to Action -->
+<section class="section cta-section" id="start">
+  <div class="wrap cta-card">
+    <div>
+      <span class="kicker">THE FIRST BITTY BOX IS FREE TO DESIGN</span>
+      <h2>What should happen<br><em>if you don't check in?</em></h2>
+      <p>Build a private Bitty Box. Add a heartbeat ping. Decide what the world sees before and after the switch.</p>
+    </div>
+    <div class="cta-actions">
+      <a class="btn primary" href="/editor">START BUILDING NOW ↗</a>
+      <span>NO CREDIT CARD REQUIRED · PRIVATE BY DEFAULT</span>
     </div>
   </div>
+</section>
 
-  <!-- Footer -->
-  <footer class="border-t border-slate-800/80 bg-slate-950/80 py-5 sm:py-6 mt-8 sm:mt-12 text-center text-xs font-mono text-slate-500">
-    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-      <div>BITTY BOX • AUTONOMOUS DEAD MAN'S SWITCH PROTOCOL</div>
-      <div class="flex flex-col items-center sm:items-end gap-2">
-        <div>Designed for <a href="https://bittybox.org" class="text-cyan-400 hover:underline">bittybox.org</a> • Zero-Knowledge Contingency Vaults</div>
-        <nav class="flex flex-wrap items-center justify-center gap-x-3 gap-y-1" aria-label="Legal and support">
-          <a href="/editor#/terms" class="text-cyan-400 hover:text-cyan-300 hover:underline transition">Terms of Service</a>
-          <span aria-hidden="true">•</span>
-          <a href="/editor#/privacy" class="text-cyan-400 hover:text-cyan-300 hover:underline transition">Privacy Policy</a>
-          <span aria-hidden="true">•</span>
-          <a href="mailto:support@bittybox.org" class="text-cyan-400 hover:text-cyan-300 hover:underline transition">Contact Us</a>
-        </nav>
-      </div>
-    </div>
-  </footer>
+<!-- FAQ Section -->
+<section class="section faq wrap" id="faq">
+  <div class="section-head">
+    <span class="kicker">FIELD NOTES &amp; FAQ</span>
+    <h2>Questions before<br><em>the countdown?</em></h2>
+  </div>
+  <div class="faq-grid">
+    <details open>
+      <summary>What exactly is a BittyBox Bitty Box?</summary>
+      <p>A self-contained micro-site with an Alive Mode, an optional Aftermath Mode, and compound trigger rules that determine when the transition occurs. It can contain writing, media, instructions, puzzles, or a full interactive experience with custom styling.</p>
+    </details>
+    <details>
+      <summary>Can I change a Bitty Box after freezing?</summary>
+      <p>Freeze is designed to make the state immutable so that it cannot be altered on a whim or under duress. Before freezing, you can edit freely. Afterward, changing it requires creating a deliberate new version rather than silently altering the one waiting for release.</p>
+    </details>
+    <details>
+      <summary>How does the Burn-After-Trigger execution work?</summary>
+      <p>In Burn-After-Trigger mode, the decryption key is burned in the database as soon as the recipient opens the payload. Once the session ends or is refreshed, the payload is permanently purged and replaced with glitch ashes or an 'Executed' seal.</p>
+    </details>
+    <details>
+      <summary>Can one Bitty Box release to multiple people?</summary>
+      <p>Yes. BittyBox supports multi-recipient payloads and cascading chains (A → B → C). Recipient-specific access and delivery rules can be designed into a Bitty Box before it is frozen.</p>
+    </details>
+    <details>
+      <summary>Is this a guaranteed emergency or legal system?</summary>
+      <p>No. BittyBox is a digital storytelling and contingency tool. Internet access, identity, law, and human circumstances can affect delivery. Keep critical legal wills and safety plans with qualified professionals.</p>
+    </details>
+    <details>
+      <summary>Does the Bitty Box lab run a real switch?</summary>
+      <p>No. It is an illustrative browser preview; it does not monitor check-ins, contact recipients, or trigger a real release.</p>
+    </details>
+  </div>
+</section>
 
-  <!-- Landing page behaviour: lock console, presets, live locks, marquee rails -->
-  <script src="/app.js?v=20260923-dms-simulation"></script>
+</main>
 
-  <!-- Parallax starfield driver: scroll + pointer depth on the star layers -->
-  <script>
-    (function () {
-      if (typeof window === 'undefined') return;
-      var field = document.getElementById('starfield');
-      if (!field) return;
-      var layers = Array.prototype.slice.call(field.querySelectorAll('.star-layer'));
-      if (!layers.length) return;
-      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+<footer class="footer wrap">
+  <a class="brand" href="#top">
+    <span class="brand-mark">B_</span>
+    <span><b>BITTYBOX</b><small>SECRETS · LEGACIES · CONSEQUENCES</small></span>
+  </a>
+  <span>© 2026 BITTYBOX</span>
+  <a href="/editor">OPEN EDITOR ↗</a>
+</footer>
 
-      var px = 0, py = 0, sy = 0, queued = false;
-
-      function apply() {
-        queued = false;
-        for (var i = 0; i < layers.length; i++) {
-          var d = parseFloat(layers[i].getAttribute('data-depth')) || 1;
-          var tx = px * d;
-          var ty = py * d - sy * 0.06 * d;
-          layers[i].style.transform = 'translate3d(' + tx.toFixed(2) + 'px,' + ty.toFixed(2) + 'px,0)';
-        }
-      }
-      function queue() {
-        if (!queued) { queued = true; requestAnimationFrame(apply); }
-      }
-
-      window.addEventListener('scroll', function () {
-        sy = window.pageYOffset || document.documentElement.scrollTop || 0;
-        queue();
-      }, { passive: true });
-
-      window.addEventListener('pointermove', function (e) {
-        px = (e.clientX / Math.max(1, window.innerWidth) - 0.5) * 26;
-        py = (e.clientY / Math.max(1, window.innerHeight) - 0.5) * 26;
-        queue();
-      }, { passive: true });
-
-      apply();
-    })();
-  </script>
-
-  <!-- Tap/Click Confetti FX -->
-  <script>
-    (function () {
-      if (typeof window === 'undefined') return;
-      var canvas = document.createElement('canvas');
-      canvas.setAttribute('aria-hidden', 'true');
-      canvas.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:99999;';
-      document.body.appendChild(canvas);
-      var ctx = canvas.getContext('2d');
-      var width = canvas.width = window.innerWidth;
-      var height = canvas.height = window.innerHeight;
-      window.addEventListener('resize', function () {
-        width = canvas.width = window.innerWidth;
-        height = canvas.height = window.innerHeight;
-      }, { passive: true });
-
-      var colors = ['#00f2ff', '#d946ef', '#f59e0b', '#10b981', '#a855f7', '#38bdf8', '#f43f5e', '#fbbf24'];
-      var particles = [];
-      var animId = null;
-
-      function render() {
-        if (!ctx) return;
-        ctx.clearRect(0, 0, width, height);
-        for (var i = particles.length - 1; i >= 0; i--) {
-          var p = particles[i];
-          p.vx *= 0.96;
-          p.vy = p.vy * 0.96 + 0.16;
-          p.x += p.vx;
-          p.y += p.vy;
-          p.rotation += p.rotSpeed;
-          p.wobble += p.wobbleSpeed;
-          p.life -= p.decay;
-          if (p.life <= 0) {
-            particles.splice(i, 1);
-            continue;
-          }
-          ctx.save();
-          ctx.translate(p.x, p.y);
-          ctx.rotate(p.rotation);
-          ctx.scale(Math.cos(p.wobble), 1);
-          ctx.globalAlpha = Math.max(0, p.life);
-          ctx.fillStyle = p.color;
-          if (p.isCircle) {
-            ctx.beginPath();
-            ctx.arc(0, 0, p.w / 2, 0, Math.PI * 2);
-            ctx.fill();
-          } else {
-            ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
-          }
-          ctx.restore();
-        }
-        if (particles.length > 0) {
-          animId = requestAnimationFrame(render);
-        } else {
-          ctx.clearRect(0, 0, width, height);
-          animId = null;
-        }
-      }
-
-      function spawn(ox, oy) {
-        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-        var count = 16 + Math.floor(Math.random() * 8);
-        for (var i = 0; i < count; i++) {
-          var angle = Math.random() * Math.PI * 2;
-          var speed = 2.0 + Math.random() * 4.5;
-          var size = 4 + Math.random() * 4;
-          particles.push({
-            x: ox,
-            y: oy,
-            vx: Math.cos(angle) * speed,
-            vy: Math.sin(angle) * speed - 1.6,
-            w: size,
-            h: size * (Math.random() < 0.3 ? 1 : 1.4),
-            color: colors[Math.floor(Math.random() * colors.length)],
-            isCircle: Math.random() < 0.3,
-            rotation: Math.random() * Math.PI * 2,
-            rotSpeed: (Math.random() - 0.5) * 0.25,
-            wobble: Math.random() * Math.PI * 2,
-            wobbleSpeed: 0.12 + Math.random() * 0.12,
-            life: 1.0,
-            decay: 0.022 + Math.random() * 0.016
-          });
-        }
-        if (!animId) animId = requestAnimationFrame(render);
-      }
-
-      window.addEventListener('pointerdown', function (e) {
-        spawn(e.clientX, e.clientY);
-      }, { passive: true });
-    })();
-  </script>
+<script src="/bittybox-landing.js?v=20260924-landing-1"></script>
 </body>
 </html>
