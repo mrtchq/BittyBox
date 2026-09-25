@@ -443,7 +443,7 @@ export const AnimatedSplash: React.FC<AnimatedSplashProps> = ({ onComplete }) =>
         <div className="flex items-center gap-3">
           <div className="relative flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-cyan-950/90 border border-cyan-400/60 shadow-[0_0_18px_rgba(0,242,255,0.4)] overflow-hidden p-1">
             <img
-              src="/bittybox.png"
+              src="https://www.image2url.com/r2/default/images/1790357087489-d68cf9c6-4af5-4130-a9b5-9b8ffe618889.png"
               onError={(e) => {
                 // Fallback to svg icon if custom logo png not loaded
                 (e.currentTarget as HTMLImageElement).style.display = 'none';

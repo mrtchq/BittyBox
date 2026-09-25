@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400;1,600;1,700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/bittybox-landing.css?v=20260924-luxury-1">
+<link rel="stylesheet" href="/bittybox-landing.css?v=20260925-arrow-fix-1">
 </head>
 <body>
 
@@ -32,12 +32,12 @@
 <!-- Fixed Header -->
 <header class="topbar">
   <div class="brand" onclick="window.goToVerticalSlide(0)" style="cursor:pointer;" role="button" aria-label="BITTYBOX Home">
-    <img class="brand-logo" src="/bittybox-header-mark.png?v=20260924-logo-1" alt="" aria-hidden="true" width="48" height="48">
+    <img class="brand-logo" src="https://www.image2url.com/r2/default/images/1790357087489-d68cf9c6-4af5-4130-a9b5-9b8ffe618889.png" alt="" aria-hidden="true" width="48" height="48">
     <span><b>BITTYBOX</b><small>URL-NATIVE MICRO-WEB</small></span>
   </div>
   <nav class="topbar-nav">
-    <button type="button" class="nav-jump active" data-v="0">01 Bitty Page</button>
-    <button type="button" class="nav-jump" data-v="1">02 Bitty Capsule</button>
+    <button type="button" class="nav-jump active" data-v="0">01 Bitty Capsule</button>
+    <button type="button" class="nav-jump" data-v="1">02 Bitty Page</button>
     <button type="button" class="nav-jump" data-v="2">03 Bitty Ally</button>
     <a class="nav-cta" href="/editor">Open Editor ↗</a>
   </nav>
@@ -46,15 +46,15 @@
 
 <!-- Floating Vertical Navigation Rail (Right Side) -->
 <nav class="v-nav" aria-label="Vertical Deck Navigation">
-  <button type="button" class="v-nav-btn active" data-v="0" title="Bitty Page (Self-Contained Webpage)">
+  <button type="button" class="v-nav-btn active" data-v="0" title="Bitty Capsule (Dead Man's Switch)">
     <span class="v-nav-num">01</span>
-    <span class="v-nav-label">BITTY PAGE</span>
-    <span class="v-nav-dot"></span>
-  </button>
-  <button type="button" class="v-nav-btn" data-v="1" title="Bitty Capsule (Dead Man's Switch)">
-    <span class="v-nav-num">02</span>
     <span class="v-nav-label">BITTY CAPSULE</span>
     <span class="v-nav-dot heart-dot"></span>
+  </button>
+  <button type="button" class="v-nav-btn" data-v="1" title="Bitty Page (Self-Contained Webpage)">
+    <span class="v-nav-num">02</span>
+    <span class="v-nav-label">BITTY PAGE</span>
+    <span class="v-nav-dot"></span>
   </button>
   <button type="button" class="v-nav-btn" data-v="2" title="Bitty Ally (AI Agent)">
     <span class="v-nav-num">03</span>
@@ -71,214 +71,14 @@
 <main class="v-deck" id="vDeck">
 
   <!-- =====================================================================
-       VERTICAL SLIDE 1: BITTY PAGE (Self-Contained Webpage)
+       VERTICAL SLIDE 1: BITTY CAPSULE (Dead Man's Switch)
        ===================================================================== -->
-  <section class="v-slide active" id="slide-page" data-v-index="0" aria-label="Bitty Page">
+  <section class="v-slide active" id="slide-capsule" data-v-index="0" aria-label="Bitty Capsule">
     <div class="h-deck-wrapper">
       
       <div class="slide-type-header">
         <div class="type-badge-row">
           <span class="type-pill">TYPE 01 / 03</span>
-          <h2 class="type-title">Bitty Page <span class="type-sub">(Self-Contained Webpage)</span></h2>
-        </div>
-        <a class="type-action-link" href="/editor">Launch Editor ↗</a>
-      </div>
-
-      <button class="h-nav-arrow h-prev" aria-label="Previous Card">‹</button>
-      <button class="h-nav-arrow h-next" aria-label="Next Card">›</button>
-
-      <div class="h-deck">
-        <div class="h-card-track">
-
-          <!-- Card 1: Zero-Infrastructure Webpage -->
-          <article class="h-card">
-            <div class="card-content-grid">
-              <div class="card-copy">
-                <div class="card-eyebrow"><i></i> ZERO-SERVER ARCHITECTURE</div>
-                <h3>The entire website<br><em>lives inside the link.</em></h3>
-                <p class="card-desc">Bitty Page compresses full web applications—HTML, CSS, JavaScript, and assets—directly into a portable URL fragment hash. No backend servers, no cloud hosting bills, and no database queries. The browser decompresses and executes the app on arrival.</p>
-                <ul class="card-bullets">
-                  <li><strong>Instant Client-Side Render:</strong> Decompresses and runs in under 5ms via Pako deflate.</li>
-                  <li><strong>Zero Hosting Infrastructure:</strong> Runs anywhere a browser exists without backend maintenance.</li>
-                  <li><strong>Immortal &amp; Decentralized:</strong> As long as the link exists, your page remains accessible forever.</li>
-                </ul>
-                <div class="card-actions">
-                  <a class="btn primary" href="/editor">OPEN BITTY PAGE EDITOR <span>↗</span></a>
-                  <button type="button" class="btn ghost h-jump-next">EXPLORE FORMATS →</button>
-                </div>
-              </div>
-
-              <div class="visual-stage">
-                <div class="sim-code-box">
-                  <div class="sim-code-header">
-                    <span class="sim-tag">PAYLOAD COMPOSER</span>
-                    <span class="sim-status-code">STANDALONE WEB APP</span>
-                  </div>
-                  <pre class="sim-code-body"><code>&lt;!doctype html&gt;
-&lt;html&gt;
-  &lt;body&gt;
-    &lt;h1&gt;Interactive Bitty Page&lt;/h1&gt;
-    &lt;script&gt;
-      // Runs 100% inside visitor browser
-      initMiniApp({ theme: 'crimson' });
-    &lt;/script&gt;
-  &lt;/body&gt;
-&lt;/html&gt;</code></pre>
-                  <div class="sim-arrow">⚡ INSTANT BROWSER DEFLATE &amp; HASH ENCODE</div>
-                  <div class="sim-url-preview">
-                    <span class="url-protocol">https://bittybox.org/#</span><span class="url-hash">H4sIAAAAAAAACmNgYGBg...</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </article>
-
-          <!-- Card 2: Flexible Formats & Sandbox -->
-          <article class="h-card">
-            <div class="card-content-grid">
-              <div class="card-copy">
-                <div class="card-eyebrow"><i></i> FLEXIBLE PAYLOAD ENGINE</div>
-                <h3>HTML, Markdown, SVG<br><em>and dynamic mini-apps.</em></h3>
-                <p class="card-desc">From formatted documentation and personal manifestos to full-blown canvas games, financial calculators, and interactive widgets. Bitty Page executes everything in an isolated, sandboxed iframe protecting both creator and visitor.</p>
-                <ul class="card-bullets">
-                  <li><strong>Markdown with LaTeX &amp; Code:</strong> Write notes, manuals, and papers with high-speed syntax coloring.</li>
-                  <li><strong>Interactive JavaScript &amp; Canvas:</strong> Interactive apps that run entirely offline without network requests.</li>
-                  <li><strong>Native SVG Graphics:</strong> Vector diagrams and procedural generative art.</li>
-                </ul>
-                <div class="card-actions">
-                  <a class="btn primary" href="/editor">TRY TEMPLATES <span>↗</span></a>
-                  <button type="button" class="btn ghost h-jump-next">VIEW SECURITY LOCKS →</button>
-                </div>
-              </div>
-
-              <div class="visual-stage">
-                <div class="feature-tiles-grid">
-                  <div class="feature-tile">
-                    <span class="tile-badge">FORMAT 01</span>
-                    <h4>Web Application</h4>
-                    <p>Interactive single-page apps with reactive state, canvas simulations, or games.</p>
-                  </div>
-                  <div class="feature-tile">
-                    <span class="tile-badge">FORMAT 02</span>
-                    <h4>Markdown Note</h4>
-                    <p>Clean typography, code syntax highlighting, checklists, and formatted documentation.</p>
-                  </div>
-                  <div class="feature-tile">
-                    <span class="tile-badge">FORMAT 03</span>
-                    <h4>Vector SVG Art</h4>
-                    <p>Scalable vector graphics, diagrams, and blueprints encoded with zero quality loss.</p>
-                  </div>
-                  <div class="feature-tile">
-                    <span class="tile-badge">FORMAT 04</span>
-                    <h4>Structured JSON</h4>
-                    <p>Raw configurations, payloads, and data sheets ready for agent-to-human handoff.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </article>
-
-          <!-- Card 3: Cryptographic Passcode & Locks -->
-          <article class="h-card">
-            <div class="card-content-grid">
-              <div class="card-copy">
-                <div class="card-eyebrow"><i></i> CLIENT-SIDE CRYPTOGRAPHY</div>
-                <h3>PIN codes, expiration<br><em>and view limit locks.</em></h3>
-                <p class="card-desc">Lock your Bitty Page before sharing. All encryption happens client-side with AES-256 GCM in your browser before the URL is created. The server never sees your unencrypted plaintext.</p>
-                <ul class="card-bullets">
-                  <li><strong>Passcode PIN Lock:</strong> Protect your page with an 8-12 digit PIN known only to you and your recipient.</li>
-                  <li><strong>Time-Based Windows:</strong> Set an expiration timer so the page locks automatically when time is up.</li>
-                  <li><strong>Burn-After-Reading View Limits:</strong> Limit the page to 1 view, 3 views, or custom quota before permanent destruction.</li>
-                </ul>
-                <div class="card-actions">
-                  <a class="btn primary" href="/editor">CREATE ENCRYPTED PAGE <span>↗</span></a>
-                  <button type="button" class="btn ghost h-jump-next">READY TO LAUNCH →</button>
-                </div>
-              </div>
-
-              <div class="visual-stage">
-                <div class="feature-tiles-grid">
-                  <div class="feature-tile">
-                    <span class="tile-badge">LOCK 01</span>
-                    <h4>PIN Passcode</h4>
-                    <p>Browser-enforced AES-256 GCM encryption. Only those with the PIN can decrypt.</p>
-                  </div>
-                  <div class="feature-tile">
-                    <span class="tile-badge">LOCK 02</span>
-                    <h4>Expiration Timer</h4>
-                    <p>Countdown clocks and date windows that automatically seal content when elapsed.</p>
-                  </div>
-                  <div class="feature-tile">
-                    <span class="tile-badge">LOCK 03</span>
-                    <h4>Burn on Read</h4>
-                    <p>Single-use contingency drops. Purges decryption key immediately after opening.</p>
-                  </div>
-                  <div class="feature-tile">
-                    <span class="tile-badge">LOCK 04</span>
-                    <h4>Chained Links</h4>
-                    <p>Sequential multi-box chains (Box A → Box B → Box C) for staged reveals.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </article>
-
-          <!-- Card 4: Agent & Human Ready Launch -->
-          <article class="h-card">
-            <div class="card-content-grid">
-              <div class="card-copy">
-                <div class="card-eyebrow"><i></i> AGENT &amp; DEVELOPER TOOLCHAIN</div>
-                <h3>Built for Humans.<br><em>Crafted for AI Agents.</em></h3>
-                <p class="card-desc">Autonomous AI agents use Bitty Pages to present interactive dashboards, visual charts, and reports directly to human operators without cloud infrastructure keys. Humans use it to share ideas instantly without signup.</p>
-                <ul class="card-bullets">
-                  <li><strong>No Account Required:</strong> Jump straight into the editor and generate your link in seconds.</li>
-                  <li><strong>Full Export:</strong> Download single-file HTML or copy the self-contained hash URL.</li>
-                  <li><strong>Private by Default:</strong> Zero tracking pixels, zero analytics scripts, zero cookies.</li>
-                </ul>
-                <div class="card-actions">
-                  <a class="btn primary btn-large" href="/editor">START BUILDING A BITTY PAGE ↗</a>
-                </div>
-              </div>
-
-              <div class="visual-stage">
-                <div class="sim-code-box">
-                  <div class="sim-code-header">
-                    <span class="sim-tag">DEVELOPER QUICKSTART</span>
-                    <span class="sim-status-code">CLI &amp; SDK READY</span>
-                  </div>
-                  <pre class="sim-code-body"><code>// Create a Bitty Page from any terminal or agent:
-npx bittybox create --file ./index.html
-# Output:
-# https://bittybox.org/#H4sIAAAAA...</code></pre>
-                  <div class="sim-arrow">INSTANT WEB PUBLISHING WITHOUT CLOUD HOSTS</div>
-                </div>
-              </div>
-            </div>
-          </article>
-
-        </div>
-      </div>
-
-      <div class="h-pagination">
-        <button type="button" class="h-dot active" data-h="0"><span>01</span> Overview</button>
-        <button type="button" class="h-dot" data-h="1"><span>02</span> Formats</button>
-        <button type="button" class="h-dot" data-h="2"><span>03</span> Cryptography</button>
-        <button type="button" class="h-dot" data-h="3"><span>04</span> Launch</button>
-      </div>
-
-    </div>
-  </section>
-
-
-  <!-- =====================================================================
-       VERTICAL SLIDE 2: BITTY CAPSULE (Dead Man's Switch)
-       ===================================================================== -->
-  <section class="v-slide" id="slide-capsule" data-v-index="1" aria-label="Bitty Capsule">
-    <div class="h-deck-wrapper">
-      
-      <div class="slide-type-header">
-        <div class="type-badge-row">
-          <span class="type-pill">TYPE 02 / 03</span>
           <h2 class="type-title">Bitty Capsule <span class="type-sub">(Dead Man's Switch)</span></h2>
         </div>
         <a class="type-action-link" href="/capsule">Arm A Capsule ↗</a>
@@ -509,6 +309,206 @@ npx bittybox create --file ./index.html
 
 
   <!-- =====================================================================
+       VERTICAL SLIDE 2: BITTY PAGE (Self-Contained Webpage)
+       ===================================================================== -->
+  <section class="v-slide" id="slide-page" data-v-index="1" aria-label="Bitty Page">
+    <div class="h-deck-wrapper">
+      
+      <div class="slide-type-header">
+        <div class="type-badge-row">
+          <span class="type-pill">TYPE 02 / 03</span>
+          <h2 class="type-title">Bitty Page <span class="type-sub">(Self-Contained Webpage)</span></h2> <span class="coming-soon-badge">COMING SOON</span>
+        </div>
+        <a class="type-action-link" href="/editor">Launch Editor ↗</a>
+      </div>
+
+      <button class="h-nav-arrow h-prev" aria-label="Previous Card">‹</button>
+      <button class="h-nav-arrow h-next" aria-label="Next Card">›</button>
+
+      <div class="h-deck">
+        <div class="h-card-track">
+
+          <!-- Card 1: Zero-Infrastructure Webpage -->
+          <article class="h-card">
+            <div class="card-content-grid">
+              <div class="card-copy">
+                <div class="card-eyebrow"><i></i> ZERO-SERVER ARCHITECTURE</div>
+                <h3>The entire website<br><em>lives inside the link.</em></h3>
+                <p class="card-desc">Bitty Page compresses full web applications—HTML, CSS, JavaScript, and assets—directly into a portable URL fragment hash. No backend servers, no cloud hosting bills, and no database queries. The browser decompresses and executes the app on arrival.</p>
+                <ul class="card-bullets">
+                  <li><strong>Instant Client-Side Render:</strong> Decompresses and runs in under 5ms via Pako deflate.</li>
+                  <li><strong>Zero Hosting Infrastructure:</strong> Runs anywhere a browser exists without backend maintenance.</li>
+                  <li><strong>Immortal &amp; Decentralized:</strong> As long as the link exists, your page remains accessible forever.</li>
+                </ul>
+                <div class="card-actions">
+                  <a class="btn primary" href="/editor">OPEN BITTY PAGE EDITOR <span>↗</span></a>
+                  <button type="button" class="btn ghost h-jump-next">EXPLORE FORMATS →</button>
+                </div>
+              </div>
+
+              <div class="visual-stage">
+                <div class="sim-code-box">
+                  <div class="sim-code-header">
+                    <span class="sim-tag">PAYLOAD COMPOSER</span>
+                    <span class="sim-status-code">STANDALONE WEB APP</span>
+                  </div>
+                  <pre class="sim-code-body"><code>&lt;!doctype html&gt;
+&lt;html&gt;
+  &lt;body&gt;
+    &lt;h1&gt;Interactive Bitty Page&lt;/h1&gt;
+    &lt;script&gt;
+      // Runs 100% inside visitor browser
+      initMiniApp({ theme: 'crimson' });
+    &lt;/script&gt;
+  &lt;/body&gt;
+&lt;/html&gt;</code></pre>
+                  <div class="sim-arrow">⚡ INSTANT BROWSER DEFLATE &amp; HASH ENCODE</div>
+                  <div class="sim-url-preview">
+                    <span class="url-protocol">https://bittybox.org/#</span><span class="url-hash">H4sIAAAAAAAACmNgYGBg...</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <!-- Card 2: Flexible Formats & Sandbox -->
+          <article class="h-card">
+            <div class="card-content-grid">
+              <div class="card-copy">
+                <div class="card-eyebrow"><i></i> FLEXIBLE PAYLOAD ENGINE</div>
+                <h3>HTML, Markdown, SVG<br><em>and dynamic mini-apps.</em></h3>
+                <p class="card-desc">From formatted documentation and personal manifestos to full-blown canvas games, financial calculators, and interactive widgets. Bitty Page executes everything in an isolated, sandboxed iframe protecting both creator and visitor.</p>
+                <ul class="card-bullets">
+                  <li><strong>Markdown with LaTeX &amp; Code:</strong> Write notes, manuals, and papers with high-speed syntax coloring.</li>
+                  <li><strong>Interactive JavaScript &amp; Canvas:</strong> Interactive apps that run entirely offline without network requests.</li>
+                  <li><strong>Native SVG Graphics:</strong> Vector diagrams and procedural generative art.</li>
+                </ul>
+                <div class="card-actions">
+                  <a class="btn primary" href="/editor">TRY TEMPLATES <span>↗</span></a>
+                  <button type="button" class="btn ghost h-jump-next">VIEW SECURITY LOCKS →</button>
+                </div>
+              </div>
+
+              <div class="visual-stage">
+                <div class="feature-tiles-grid">
+                  <div class="feature-tile">
+                    <span class="tile-badge">FORMAT 01</span>
+                    <h4>Web Application</h4>
+                    <p>Interactive single-page apps with reactive state, canvas simulations, or games.</p>
+                  </div>
+                  <div class="feature-tile">
+                    <span class="tile-badge">FORMAT 02</span>
+                    <h4>Markdown Note</h4>
+                    <p>Clean typography, code syntax highlighting, checklists, and formatted documentation.</p>
+                  </div>
+                  <div class="feature-tile">
+                    <span class="tile-badge">FORMAT 03</span>
+                    <h4>Vector SVG Art</h4>
+                    <p>Scalable vector graphics, diagrams, and blueprints encoded with zero quality loss.</p>
+                  </div>
+                  <div class="feature-tile">
+                    <span class="tile-badge">FORMAT 04</span>
+                    <h4>Structured JSON</h4>
+                    <p>Raw configurations, payloads, and data sheets ready for agent-to-human handoff.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <!-- Card 3: Cryptographic Passcode & Locks -->
+          <article class="h-card">
+            <div class="card-content-grid">
+              <div class="card-copy">
+                <div class="card-eyebrow"><i></i> CLIENT-SIDE CRYPTOGRAPHY</div>
+                <h3>PIN codes, expiration<br><em>and view limit locks.</em></h3>
+                <p class="card-desc">Lock your Bitty Page before sharing. All encryption happens client-side with AES-256 GCM in your browser before the URL is created. The server never sees your unencrypted plaintext.</p>
+                <ul class="card-bullets">
+                  <li><strong>Passcode PIN Lock:</strong> Protect your page with an 8-12 digit PIN known only to you and your recipient.</li>
+                  <li><strong>Time-Based Windows:</strong> Set an expiration timer so the page locks automatically when time is up.</li>
+                  <li><strong>Burn-After-Reading View Limits:</strong> Limit the page to 1 view, 3 views, or custom quota before permanent destruction.</li>
+                </ul>
+                <div class="card-actions">
+                  <a class="btn primary" href="/editor">CREATE ENCRYPTED PAGE <span>↗</span></a>
+                  <button type="button" class="btn ghost h-jump-next">READY TO LAUNCH →</button>
+                </div>
+              </div>
+
+              <div class="visual-stage">
+                <div class="feature-tiles-grid">
+                  <div class="feature-tile">
+                    <span class="tile-badge">LOCK 01</span>
+                    <h4>PIN Passcode</h4>
+                    <p>Browser-enforced AES-256 GCM encryption. Only those with the PIN can decrypt.</p>
+                  </div>
+                  <div class="feature-tile">
+                    <span class="tile-badge">LOCK 02</span>
+                    <h4>Expiration Timer</h4>
+                    <p>Countdown clocks and date windows that automatically seal content when elapsed.</p>
+                  </div>
+                  <div class="feature-tile">
+                    <span class="tile-badge">LOCK 03</span>
+                    <h4>Burn on Read</h4>
+                    <p>Single-use contingency drops. Purges decryption key immediately after opening.</p>
+                  </div>
+                  <div class="feature-tile">
+                    <span class="tile-badge">LOCK 04</span>
+                    <h4>Chained Links</h4>
+                    <p>Sequential multi-box chains (Box A → Box B → Box C) for staged reveals.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <!-- Card 4: Agent & Human Ready Launch -->
+          <article class="h-card">
+            <div class="card-content-grid">
+              <div class="card-copy">
+                <div class="card-eyebrow"><i></i> AGENT &amp; DEVELOPER TOOLCHAIN</div>
+                <h3>Built for Humans.<br><em>Crafted for AI Agents.</em></h3>
+                <p class="card-desc">Autonomous AI agents use Bitty Pages to present interactive dashboards, visual charts, and reports directly to human operators without cloud infrastructure keys. Humans use it to share ideas instantly without signup.</p>
+                <ul class="card-bullets">
+                  <li><strong>No Account Required:</strong> Jump straight into the editor and generate your link in seconds.</li>
+                  <li><strong>Full Export:</strong> Download single-file HTML or copy the self-contained hash URL.</li>
+                  <li><strong>Private by Default:</strong> Zero tracking pixels, zero analytics scripts, zero cookies.</li>
+                </ul>
+                <div class="card-actions">
+                  <a class="btn primary btn-large" href="/editor">START BUILDING A BITTY PAGE ↗</a>
+                </div>
+              </div>
+
+              <div class="visual-stage">
+                <div class="sim-code-box">
+                  <div class="sim-code-header">
+                    <span class="sim-tag">DEVELOPER QUICKSTART</span>
+                    <span class="sim-status-code">CLI &amp; SDK READY</span>
+                  </div>
+                  <pre class="sim-code-body"><code>// Create a Bitty Page from any terminal or agent:
+npx bittybox create --file ./index.html
+# Output:
+# https://bittybox.org/#H4sIAAAAA...</code></pre>
+                  <div class="sim-arrow">INSTANT WEB PUBLISHING WITHOUT CLOUD HOSTS</div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+        </div>
+      </div>
+
+      <div class="h-pagination">
+        <button type="button" class="h-dot active" data-h="0"><span>01</span> Overview</button>
+        <button type="button" class="h-dot" data-h="1"><span>02</span> Formats</button>
+        <button type="button" class="h-dot" data-h="2"><span>03</span> Cryptography</button>
+        <button type="button" class="h-dot" data-h="3"><span>04</span> Launch</button>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- =====================================================================
        VERTICAL SLIDE 3: BITTY ALLY (AI Agent)
        ===================================================================== -->
   <section class="v-slide" id="slide-ally" data-v-index="2" aria-label="Bitty Ally">
@@ -517,7 +517,7 @@ npx bittybox create --file ./index.html
       <div class="slide-type-header">
         <div class="type-badge-row">
           <span class="type-pill">TYPE 03 / 03</span>
-          <h2 class="type-title">Bitty Ally <span class="type-sub">(Autonomous AI Agent)</span></h2>
+          <h2 class="type-title">Bitty Ally <span class="type-sub">(Autonomous AI Agent)</span></h2> <span class="coming-soon-badge">COMING SOON</span>
         </div>
         <a class="type-action-link" href="/editor">Meet Ally ↗</a>
       </div>
@@ -728,6 +728,6 @@ npx bittybox create --file ./index.html
   </div>
 </footer>
 
-<script src="/bittybox-landing.js?v=20260924-luxury-1"></script>
+<script src="/bittybox-landing.js?v=20260925-capsule-first-1"></script>
 </body>
 </html>

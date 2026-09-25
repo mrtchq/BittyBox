@@ -527,7 +527,7 @@ export const LuxuryEditorCarousel: React.FC<LuxuryEditorCarouselProps> = ({
           <a href="/" className="dms-brand" aria-label="BITTYBOX Home">
             <img
               className="dms-brand-logo"
-              src="/bittybox-header-mark.png?v=20260924-logo-1"
+              src="https://www.image2url.com/r2/default/images/1790357087489-d68cf9c6-4af5-4130-a9b5-9b8ffe618889.png"
               alt="Bitty Box"
               width={26}
               height={26}

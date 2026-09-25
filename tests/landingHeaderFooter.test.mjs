@@ -16,7 +16,7 @@ test('header uses the supplied transparent Bitty Box mark without distortion', a
     readFile(headerLogoPath),
   ]);
 
-  assert.match(html, /<img class="brand-logo" src="\/bittybox-header-mark\.png\?v=20260924-logo-1" alt="" aria-hidden="true" width="48" height="48">/);
+  assert.match(html, /<img class="brand-logo" src="https:\/\/www\.image2url\.com\/r2\/default\/images\/1790357087489-d68cf9c6-4af5-4130-a9b5-9b8ffe618889\.png" alt="" aria-hidden="true" width="48" height="48">/);
   assert.equal(logo.subarray(0, 8).toString('hex'), '89504e470d0a1a0a');
   assert.match(css, /\.brand-logo\s*\{[^}]*object-fit:\s*contain/);
   assert.match(css, /\.brand-logo\s*\{\s*width:\s*40px;\s*height:\s*40px;\s*flex-basis:\s*40px;/);
